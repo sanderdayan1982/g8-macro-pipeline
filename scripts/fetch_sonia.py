@@ -3,13 +3,13 @@ fetch_sonia.py
 ==============
 Scraper for Sterling Overnight Index Average (SONIA) from Bank of England.
 
-Source: Bank of England Interactive Database (IADB)
-Series code: IUDSOIA (Daily Sterling Overnight Index Average)
+Source:   Bank of England Interactive Database (IADB)
 Endpoint: https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp
+Series:   IUDSOIA (Daily Sterling Overnight Index Average)
+Format:   CSV with DATE, VALUE columns
 
-Output: data/SONIA.csv in Pine Seeds format
-        DATE,OPEN,HIGH,LOW,CLOSE,VOLUME
-        YYYYMMDD,value,value,value,value,0
+Output:
+    data/SONIA.csv  — SONIA historical series in OHLCV format
 
 License: Data sourced from Bank of England public statistics.
          Bank of England retains all rights to source data.
@@ -30,7 +30,7 @@ BOE_URL = "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumn
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "SONIA.csv"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 30
-USER_AGENT = "xccy-g8-seeds/1.0 (https://github.com/sanderdayan1982/xccy-g8-seeds)"
+USER_AGENT = "xccy-g8/1.0 (https://github.com/sanderdayan1982/xccy-g8)"
 
 
 def build_request_url(date_from: datetime, date_to: datetime) -> str:
@@ -66,16 +66,20 @@ def fetch_sonia_data(date_from: datetime, date_to: datetime) -> list[tuple[str, 
     Returns list of (date_str_YYYYMMDD, rate_value) tuples sorted ascending.
     """
     url = build_request_url(date_from, date_to)
-    headers = {"User-Agent": USER_AGENT}
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/csv",
+    }
 
     response = requests.get(url, headers=headers, timeout=TIMEOUT_SECONDS)
     response.raise_for_status()
 
-    if not response.text or "DATE" not in response.text.upper():
+    text = response.text
+    if not text or "DATE" not in text.upper():
         raise ValueError("BoE response empty or missing DATE header")
 
     rows: list[tuple[str, float]] = []
-    reader = csv.reader(response.text.splitlines())
+    reader = csv.reader(text.splitlines())
     header = next(reader, None)
     if not header:
         raise ValueError("BoE response has no rows")
@@ -95,7 +99,7 @@ def fetch_sonia_data(date_from: datetime, date_to: datetime) -> list[tuple[str, 
 
 
 def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
-    """Write rows to Pine Seeds OHLCV format."""
+    """Write rows to OHLCV format CSV (O=H=L=C for daily rates, V=0)."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="") as f:
         writer = csv.writer(f)
@@ -110,8 +114,16 @@ def main() -> int:
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
     print(f"Fetching SONIA from {date_from.date()} to {today.date()}")
+    print(f"BoE IADB series: {SERIES_CODE}")
+
     try:
         rows = fetch_sonia_data(date_from, today)
+    except requests.HTTPError as exc:
+        print(f"ERROR: BoE HTTP error: {exc}", file=sys.stderr)
+        return 1
+    except requests.RequestException as exc:
+        print(f"ERROR: BoE network error: {exc}", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(f"ERROR: SONIA fetch failed: {exc}", file=sys.stderr)
         return 1
@@ -121,8 +133,9 @@ def main() -> int:
         return 1
 
     write_csv(rows, OUTPUT_PATH)
-    print(f"Wrote {len(rows)} rows to {OUTPUT_PATH}")
-    print(f"Latest: {rows[-1][0]} = {rows[-1][1]:.4f}%")
+    print(f"OK: Wrote {len(rows)} rows to {OUTPUT_PATH}")
+    print(f"     Latest: {rows[-1][0]} = {rows[-1][1]:.4f}%")
+    print(f"     Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
     return 0
 
 
