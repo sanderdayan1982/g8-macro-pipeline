@@ -1,24 +1,34 @@
 """
 fetch_aonia.py
 ==============
-Scraper for AUD Overnight Index Average (AONIA / Interbank Overnight Cash Rate)
-from Reserve Bank of Australia.
+Scraper for AUD Overnight Index Average / Cash Rate from
+Reserve Bank of Australia.
 
-Source:   RBA Statistical Tables — F1.1 Money Market Daily
-Endpoint: https://www.rba.gov.au/statistics/tables/csv/f1.1-data.csv
-Format:   CSV with descriptive header rows (10 rows of metadata)
+Source:   RBA Statistical Tables — F1 Money Market Daily
+Endpoint: https://www.rba.gov.au/statistics/tables/csv/f1-data.csv
+Table:    F1 — "Interest Rates and Yields – Money Market – Daily"
+          Verified against RBA Statistical Tables index page (May 2026):
+          https://www.rba.gov.au/statistics/tables/
+Format:   CSV with descriptive header rows (metadata block)
           then data rows in format: DATE, Value1, Value2, ...
 
 Output:
-    data/AONIA.csv  — AONIA historical series in OHLCV format
+    data/AONIA.csv  — AONIA / Cash Rate historical series in OHLCV format
 
 License: Data sourced from Reserve Bank of Australia public statistics.
-         RBA retains all rights to source data.
+         RBA retains all rights. RBA data is licensed under
+         Creative Commons Attribution 4.0 International (CC BY 4.0).
 
 Notes:
-    RBA changes column ordering occasionally. This script identifies the
-    Interbank Overnight Cash Rate column by NAME (not position) to be
-    resilient to future format changes.
+    Historical bug (pre-2026-05): this script previously pointed to
+    f1.1-data.csv which is the MONTHLY version of the same statistical
+    series. F1 is the DAILY version. The two tables share methodology
+    but different frequency. F1 is correct for daily basis analysis.
+
+    F1 contains multiple money-market series, including the Cash Rate
+    Target and the Interbank Overnight Cash Rate (AONIA). This scraper
+    identifies the AONIA column by name (not position) for resilience
+    against future column reordering by RBA.
 """
 
 import csv
@@ -29,11 +39,12 @@ from pathlib import Path
 import requests
 
 
-# Constants
-RBA_URL = "https://www.rba.gov.au/statistics/tables/csv/f1.1-data.csv"
+# Constants — F1 daily (corrected from F1.1 monthly)
+RBA_URL = "https://www.rba.gov.au/statistics/tables/csv/f1-data.csv"
 TARGET_COLUMN_HINTS = [
     "Interbank Overnight Cash Rate",
     "Cash Rate Target",
+    "Cash Rate",
 ]
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "AONIA.csv"
 HISTORY_YEARS = 5
@@ -50,7 +61,7 @@ def find_data_column_index(rows: list[list[str]]) -> tuple[int, int]:
     Raises ValueError if structure cannot be parsed.
     """
     title_row_idx = None
-    for i, row in enumerate(rows[:20]):
+    for i, row in enumerate(rows[:25]):
         if not row:
             continue
         joined = " | ".join(cell for cell in row if cell).lower()
@@ -60,8 +71,8 @@ def find_data_column_index(rows: list[list[str]]) -> tuple[int, int]:
 
     if title_row_idx is None:
         raise ValueError(
-            "RBA F1.1 CSV structure unexpected: target column hints not found "
-            f"({TARGET_COLUMN_HINTS})"
+            "RBA F1 CSV structure unexpected: target column hints not found "
+            f"({TARGET_COLUMN_HINTS}). RBA may have changed table format."
         )
 
     title_row = rows[title_row_idx]
@@ -75,10 +86,10 @@ def find_data_column_index(rows: list[list[str]]) -> tuple[int, int]:
             break
 
     if aonia_col_idx is None:
-        raise ValueError("RBA F1.1 CSV: AONIA column not found in title row")
+        raise ValueError("RBA F1 CSV: AONIA column not found in title row")
 
     data_start_idx = None
-    for i in range(title_row_idx + 1, min(title_row_idx + 15, len(rows))):
+    for i in range(title_row_idx + 1, min(title_row_idx + 20, len(rows))):
         row = rows[i]
         if not row or not row[0]:
             continue
@@ -87,7 +98,7 @@ def find_data_column_index(rows: list[list[str]]) -> tuple[int, int]:
             break
 
     if data_start_idx is None:
-        raise ValueError("RBA F1.1 CSV: no data rows found after title row")
+        raise ValueError("RBA F1 CSV: no data rows found after title row")
 
     return data_start_idx, aonia_col_idx
 
@@ -105,7 +116,7 @@ def _try_parse_rba_date(s: str) -> datetime | None:
 
 def fetch_aonia_data(date_from: datetime, date_to: datetime) -> list[tuple[str, float]]:
     """
-    Fetch AONIA daily data from RBA Statistical Tables F1.1.
+    Fetch AONIA daily data from RBA Statistical Tables F1.
 
     Returns list of (date_str_YYYYMMDD, rate_value) tuples sorted ascending.
     """
@@ -118,7 +129,7 @@ def fetch_aonia_data(date_from: datetime, date_to: datetime) -> list[tuple[str, 
     response.raise_for_status()
 
     text = response.text
-    if not text or "RBA" not in text and "Reserve Bank" not in text:
+    if not text or ("RBA" not in text and "Reserve Bank" not in text):
         raise ValueError("RBA response empty or missing expected header content")
 
     all_rows = list(csv.reader(text.splitlines()))
@@ -170,7 +181,7 @@ def main() -> int:
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
     print(f"Fetching AONIA from {date_from.date()} to {today.date()}")
-    print(f"RBA Statistical Table: F1.1 Money Market Daily")
+    print(f"RBA Statistical Table: F1 (Money Market Daily)")
 
     try:
         rows = fetch_aonia_data(date_from, today)
