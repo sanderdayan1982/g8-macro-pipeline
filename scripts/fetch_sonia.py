@@ -26,7 +26,7 @@ import requests
 
 # Constants
 SERIES_CODE = "IUDSOIA"
-BOE_URL = "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp"
+BOE_URL = "https://www.bankofengland.co.uk/boeapps/database/_iadb-FromShowColumns.asp"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "SONIA.csv"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 30
