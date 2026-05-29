@@ -1,0 +1,149 @@
+# .github/workflows/daily_update.yml
+name: Daily Data Update
+
+on:
+  schedule:
+    # 18:00 UTC Mon-Fri — captures all G8 central bank publications for the day
+    - cron: '0 18 * * 1-5'
+  workflow_dispatch:
+    # Allows manual trigger from the Actions tab
+
+permissions:
+  contents: write  # Required to commit and push CSV updates
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout repository ─────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Python setup ────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Run scrapers — TOLERANT mode (each independent) ────────────────
+      # CHF is intentionally NOT here — it uses convert_chf_bills.py with
+      # manual Excel download (SNB blocked automated access in Sept 2025).
+
+      - name: Fetch SOFR (USD anchor)
+        run: python scripts/fetch_sofr.py
+        continue-on-error: true
+        id: sofr
+
+      - name: Fetch ESTR (EUR RFR)
+        run: python scripts/fetch_estr.py
+        continue-on-error: true
+        id: estr
+
+      - name: Fetch SONIA (GBP RFR)
+        run: python scripts/fetch_sonia.py
+        continue-on-error: true
+        id: sonia
+
+      - name: Fetch SARON (CHF RFR)
+        run: python scripts/fetch_saron.py
+        continue-on-error: true
+        id: saron
+
+      - name: Fetch AONIA (AUD RFR)
+        run: python scripts/fetch_aonia.py
+        continue-on-error: true
+        id: aonia
+
+      - name: Fetch TONA (JPY RFR)
+        run: python scripts/fetch_tona.py
+        continue-on-error: true
+        id: tona
+
+      - name: Fetch CORRA (CAD RFR)
+        run: python scripts/fetch_corra.py
+        continue-on-error: true
+        id: corra
+
+      - name: Fetch NZD OCR via BIS (NZD reference)
+        run: python scripts/fetch_ocr.py
+        continue-on-error: true
+        id: ocr
+
+      - name: Fetch US Bills (3M/6M/1Y/2Y)
+        run: python scripts/fetch_us_bills.py
+        continue-on-error: true
+        id: us_bills
+
+      - name: Fetch CAD Bills (3M/6M/1Y)
+        run: python scripts/fetch_cad_bills.py
+        continue-on-error: true
+        id: cad_bills
+
+      - name: Fetch AUD Bills (1M/3M/6M)
+        run: python scripts/fetch_aud_bills.py
+        continue-on-error: true
+        id: aud_bills
+
+      - name: Fetch EUR AAA Curve (3M/6M/1Y/2Y/5Y/10Y)
+        run: python scripts/fetch_eur_bills.py
+        continue-on-error: true
+        id: eur_bills
+
+      - name: Fetch GBP Gilt Curve (6M/1Y/2Y/5Y/10Y)
+        run: python scripts/fetch_gbp_bills.py
+        continue-on-error: true
+        id: gbp_bills
+
+      - name: Fetch JPY JGB Curve (1Y/2Y/3Y/5Y/10Y/20Y)
+        run: python scripts/fetch_jpy_bills.py
+        continue-on-error: true
+        id: jpy_bills
+
+      # ── 5. Status summary ──────────────────────────────────────────────────
+      - name: Report scraper results
+        if: always()
+        run: |
+          echo "## Scraper Results — $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scraper | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| SOFR       | ${{ steps.sofr.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ESTR       | ${{ steps.estr.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SONIA      | ${{ steps.sonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SARON      | ${{ steps.saron.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AONIA      | ${{ steps.aonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TONA       | ${{ steps.tona.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CORRA      | ${{ steps.corra.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| NZD OCR    | ${{ steps.ocr.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| US Bills   | ${{ steps.us_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CAD Bills  | ${{ steps.cad_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AUD Bills  | ${{ steps.aud_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| EUR Bills  | ${{ steps.eur_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
+
+      # ── 6. Commit CSVs only if changes detected ───────────────────────────
+      - name: Commit updated data files
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No data changes detected — skipping commit"
+          else
+            CHANGED=$(git diff --staged --name-only | wc -l)
+            git commit -m "chore: daily data update $(date -u '+%Y-%m-%d') [${CHANGED} files]"
+            git push
+          fi
