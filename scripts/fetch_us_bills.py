@@ -59,9 +59,10 @@ USER_AGENT = "xccy-g8/1.0 (https://github.com/sanderdayan1982/xccy-g8)"
 # Tenor -> FRED series ID mapping
 # All series: Treasury Constant Maturity Rate, Investment Basis (H.15)
 BILL_SERIES = {
-    "3M": "DGS3MO",  # 3-Month Treasury Constant Maturity
-    "6M": "DGS6MO",  # 6-Month Treasury Constant Maturity
-    "1Y": "DGS1",    # 1-Year Treasury Constant Maturity
+    "3M": "DGS3MO",  # engine basis for USD/EUR/CAD/AUD
+    "6M": "DGS6MO",  # engine basis for GBP
+    "1Y": "DGS1",    # engine basis for JPY
+    "2Y": "DGS2",    # engine basis for CHF (Confederation short-end is 2Y minimum)
 }
 
 # Output filenames
@@ -70,6 +71,7 @@ OUTPUT_NAMES = {
     "3M": "US_BILL_3M.csv",
     "6M": "US_BILL_6M.csv",
     "1Y": "US_BILL_1Y.csv",
+    "2Y": "US_BILL_2Y.csv",
 }
 
 
