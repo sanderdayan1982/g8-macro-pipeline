@@ -4,31 +4,45 @@ fetch_jpy_bills.py
 Scraper for Japanese Government Bond (JGB) constant-maturity yields from the
 Japanese Ministry of Finance (MOF).
 
-Source:   MOF Japan — JGB Interest Rate Historical Data
-Endpoint: https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/
-              historical/jgbcme_all.csv
-Note:     Direct static CSV download (Apache, no auth, no session token).
-          Verified empirically 2026-05-28: returns 1.18 MB plain CSV,
-          identical across requests, last update Apr 30, 2026.
+Source:   MOF Japan — JGB Interest Rate data (two endpoints, merged)
+Endpoints:
+    1. CURRENT MONTH (fresh, daily):
+       https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv
+       Small file (~2 KB), holds the running current month, updated on MOF's
+       daily-ish cycle. THIS is the source of fresh data.
+    2. HISTORICAL (stable base):
+       https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv
+       Large file (~1.1 MB), full history back to 1974. NOTE: this file is
+       only refreshed periodically (observed last-modified 2026-01-06), so it
+       must NOT be the sole source — it lags by months. It provides the stable
+       multi-year history; the current-month file provides freshness.
 
-Tenors:   The CSV publishes daily JGB yields across 15 maturities:
-          1Y, 2Y, 3Y, 4Y, 5Y, 6Y, 7Y, 8Y, 9Y, 10Y, 15Y, 20Y, 25Y, 30Y, 40Y.
-          We extract a curated set used in the engine and the synthetic curve.
+Why both:
+    Using `jgbcme_all.csv` alone (the previous design) froze the data at the
+    file's last server-side refresh (~Jan 2026 -> data died Apr 30). The
+    current-month `jgbcme.csv` carries the live tail. Merging the two yields
+    full 5-year history AND fresh data, deduplicating on date with the
+    current-month file winning on any overlap.
+
+Anti-cache:
+    MOF's current-month CSV carries a note: "If you cannot download the latest
+    csv data, please clear the browser's cache." We send Cache-Control and
+    Pragma no-cache headers plus a cache-busting query param to force a fresh
+    copy on every run.
+
+Tenors:   1Y, 2Y, 3Y, 4Y, 5Y, 6Y, 7Y, 8Y, 9Y, 10Y, 15Y, 20Y, 25Y, 30Y, 40Y
+          (we extract a curated subset).
 
 Why 1Y as bill_short_JPY (not 3M):
-    Japan does not publish a daily constant-maturity yield below 1Y. The MOF
-    Treasury Discount Bills page only provides AUCTION results (weekly, not
-    continuous daily). The 1Y JGB is the shortest live daily curve point.
-    This mirrors the CHF case (2Y minimum from SNB). In the engine, JPY is
-    paired against US 1Y (DGS1, already in fetch_us_bills.py) for tenor
-    symmetry, eliminating curve-slope bias.
+    Japan does not publish a daily constant-maturity yield below 1Y. The 1Y
+    JGB is the shortest live daily curve point. In the engine, JPY is paired
+    against US 1Y for tenor symmetry.
 
-Format:   CSV with 2-line preamble:
-            Line 1: "Interest Rate,,,...,(Unit : %)"
+Format:   Both CSVs share the same shape:
+            Line 1: "Interest Rate (Month YYYY),,,...,(Unit : %)"
             Line 2: "Date,1Y,2Y,3Y,...,40Y"
-          Then dated data rows: "YYYY/M/D,val,val,..." (no zero-padding).
-          Missing values appear as "-" (long tenors before issuance).
-          CRLF line endings.
+          Then dated rows: "YYYY/M/D,val,val,..." (no zero-padding).
+          Missing values appear as "-". CRLF line endings.
 
 Output:
     data/JPY_BILL_1Y.csv   — 1-year JGB yield (bill_short_JPY for engine)
@@ -45,24 +59,28 @@ License: MOF Japan public data. Usage permitted per Japanese government open
 
 import csv
 import sys
-from datetime import datetime, timedelta
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import requests
 
 
 # Constants
-MOF_URL = (
+MOF_CURRENT_URL = (
+    "https://www.mof.go.jp/english/policy/jgbs/reference/"
+    "interest_rate/jgbcme.csv"
+)
+MOF_HISTORICAL_URL = (
     "https://www.mof.go.jp/english/policy/jgbs/reference/"
     "interest_rate/historical/jgbcme_all.csv"
 )
 HISTORY_YEARS = 5
-TIMEOUT_SECONDS = 60  # The full CSV is ~1.2 MB; allow generous timeout
-USER_AGENT = "xccy-g8/1.0 (https://github.com/sanderdayan1982/xccy-g8)"
+TIMEOUT_SECONDS = 60
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # Curated tenors to extract: short-end for engine + curve benchmarks
-# (Other tenors 4Y/6Y/7Y/8Y/9Y/15Y/25Y/30Y/40Y are in the CSV but not extracted
-#  to keep the data/ folder focused. Can be added later if needed.)
 TENORS = {
     "1Y": "JPY_BILL_1Y.csv",   # bill_short_JPY for engine
     "2Y": "JPY_BILL_2Y.csv",
@@ -78,11 +96,10 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data"
 MISSING_MARKER = "-"
 
 
-def _parse_mof_date(s: str) -> datetime | None:
+def _parse_mof_date(s: str) -> Optional[datetime]:
     """
     MOF date format is YYYY/M/D (no zero-padding), e.g. '2026/4/30'.
-    Python's %m and %d are tolerant of unpadded values when reading, so this
-    works for both '2026/4/30' and '2026/04/30'.
+    Python's %m and %d are tolerant of unpadded values when reading.
     """
     s = s.strip()
     try:
@@ -91,68 +108,84 @@ def _parse_mof_date(s: str) -> datetime | None:
         return None
 
 
-def fetch_jpy_bills(
+def _fetch_one(url: str, label: str, cache_bust: bool) -> str:
+    """
+    Download a single MOF CSV with anti-cache headers.
+    Returns the response text. Raises on HTTP/network error.
+    """
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/csv,*/*",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+    }
+    params = {}
+    if cache_bust:
+        # Cache-busting query param to defeat any intermediary caching
+        params["_"] = str(int(time.time()))
+
+    print(f"  Fetching {label}: {url}")
+    response = requests.get(
+        url, headers=headers, params=params, timeout=TIMEOUT_SECONDS
+    )
+    response.raise_for_status()
+    return response.text
+
+
+def _parse_mof_csv(
+    text: str,
     date_from: datetime,
     date_to: datetime,
-) -> dict[str, list[tuple[str, float]]]:
+    col_for_tenor: Optional[Dict[str, int]] = None,
+) -> Tuple[Dict[str, Dict[str, float]], Dict[str, int]]:
     """
-    Fetch all curated JGB tenors from MOF in a single download.
+    Parse one MOF CSV body.
 
-    Returns dict mapping tenor name ("1Y"/"2Y"/etc) to a list of
-    (date_str_YYYYMMDD, value) tuples sorted ascending.
+    Returns:
+        - dict mapping tenor -> {date_str_YYYYMMDD: value}
+        - the resolved col_for_tenor mapping (so caller can reuse / verify)
+
+    If col_for_tenor is provided, it's reused (both files share schema); else
+    it's resolved from this file's header.
     """
-    headers = {"User-Agent": USER_AGENT, "Accept": "text/csv"}
-    response = requests.get(MOF_URL, headers=headers, timeout=TIMEOUT_SECONDS)
-    response.raise_for_status()
-
-    text = response.text
     if not text or "Interest Rate" not in text[:200]:
-        raise ValueError(
-            "MOF response empty or unexpected header. URL may have changed."
-        )
+        raise ValueError("MOF response empty or unexpected header.")
 
     lines = text.splitlines()
     if len(lines) < 3:
-        raise ValueError("MOF CSV has fewer than 3 lines (preamble + data expected)")
+        raise ValueError("MOF CSV has fewer than 3 lines.")
 
-    # Line 2 (index 1) is the header. Line 1 (index 0) is title/units.
-    header_line = lines[1]
-    header = next(csv.reader([header_line]))
+    # Line 2 (index 1) is the header row
+    header = next(csv.reader([lines[1]]))
     if not header or header[0].strip() != "Date":
         raise ValueError(
-            f"MOF CSV: header row 2 should start with 'Date', got: {header[:3]}"
+            f"MOF CSV header row should start with 'Date', got: {header[:3]}"
         )
 
-    # Map each wanted tenor to its column index
-    col_for_tenor: dict[str, int] = {}
-    for tenor in TENORS:
-        for j, cell in enumerate(header):
-            if cell.strip() == tenor:
-                col_for_tenor[tenor] = j
-                break
+    if col_for_tenor is None:
+        col_for_tenor = {}
+        for tenor in TENORS:
+            for j, cell in enumerate(header):
+                if cell.strip() == tenor:
+                    col_for_tenor[tenor] = j
+                    break
+        missing = [t for t in TENORS if t not in col_for_tenor]
+        if missing:
+            raise ValueError(
+                f"MOF CSV: requested tenors {missing} not in header: {header}"
+            )
 
-    missing = [t for t in TENORS if t not in col_for_tenor]
-    if missing:
-        raise ValueError(
-            f"MOF CSV: requested tenors {missing} not in header: {header}"
-        )
+    out: Dict[str, Dict[str, float]] = {t: {} for t in TENORS}
 
-    # Parse data rows (lines from index 2 onward)
-    results: dict[str, list[tuple[str, float]]] = {t: [] for t in TENORS}
-
-    data_reader = csv.reader(lines[2:])
-    for row in data_reader:
+    for row in csv.reader(lines[2:]):
         if not row or not row[0]:
             continue
-
         date_obj = _parse_mof_date(row[0])
         if date_obj is None:
             continue
         if date_obj < date_from or date_obj > date_to:
             continue
-
         date_str = date_obj.strftime("%Y%m%d")
-
         for tenor, col_idx in col_for_tenor.items():
             if col_idx >= len(row):
                 continue
@@ -163,15 +196,76 @@ def fetch_jpy_bills(
                 value = float(value_raw)
             except ValueError:
                 continue
-            results[tenor].append((date_str, value))
+            out[tenor][date_str] = value
 
-    for tenor in results:
-        results[tenor].sort(key=lambda r: r[0])
+    return out, col_for_tenor
+
+
+def fetch_jpy_bills(
+    date_from: datetime,
+    date_to: datetime,
+) -> Dict[str, List[Tuple[str, float]]]:
+    """
+    Fetch JGB tenors from BOTH MOF endpoints and merge.
+
+    Strategy:
+        1. Parse historical file (stable multi-year base).
+        2. Parse current-month file (fresh tail).
+        3. Merge per tenor per date; current-month wins on overlap.
+        4. Return sorted lists.
+
+    Resilience:
+        If the current-month fetch fails, we still return historical data
+        (degraded but not broken). If historical fails but current-month
+        works, we return current-month only (fresh but short). Only if BOTH
+        fail do we raise.
+    """
+    hist_data: Dict[str, Dict[str, float]] = {t: {} for t in TENORS}
+    curr_data: Dict[str, Dict[str, float]] = {t: {} for t in TENORS}
+    col_map: Optional[Dict[str, int]] = None
+
+    hist_ok = False
+    curr_ok = False
+
+    # 1. Historical (stable base) — no cache-bust needed, it's large/static
+    try:
+        hist_text = _fetch_one(MOF_HISTORICAL_URL, "historical (jgbcme_all)", cache_bust=False)
+        hist_data, col_map = _parse_mof_csv(hist_text, date_from, date_to, None)
+        hist_ok = True
+        hist_count = sum(len(v) for v in hist_data.values())
+        print(f"  Historical parsed: {hist_count} (tenor,date) points")
+    except (requests.RequestException, ValueError) as e:
+        print(f"  WARNING: historical fetch/parse failed: {e}", file=sys.stderr)
+
+    # 2. Current month (fresh tail) — cache-bust ON
+    try:
+        curr_text = _fetch_one(MOF_CURRENT_URL, "current month (jgbcme)", cache_bust=True)
+        curr_data, col_map = _parse_mof_csv(curr_text, date_from, date_to, col_map)
+        curr_ok = True
+        curr_count = sum(len(v) for v in curr_data.values())
+        print(f"  Current-month parsed: {curr_count} (tenor,date) points")
+    except (requests.RequestException, ValueError) as e:
+        print(f"  WARNING: current-month fetch/parse failed: {e}", file=sys.stderr)
+
+    if not hist_ok and not curr_ok:
+        raise ValueError("Both MOF endpoints failed — no JPY data available")
+
+    # 3. Merge: start with historical, overlay current-month (current wins)
+    merged: Dict[str, Dict[str, float]] = {t: {} for t in TENORS}
+    for tenor in TENORS:
+        merged[tenor].update(hist_data.get(tenor, {}))
+        merged[tenor].update(curr_data.get(tenor, {}))  # current overwrites
+
+    # 4. Convert to sorted lists
+    results: Dict[str, List[Tuple[str, float]]] = {}
+    for tenor in TENORS:
+        rows = sorted(merged[tenor].items(), key=lambda kv: kv[0])
+        results[tenor] = [(d, v) for d, v in rows]
 
     return results
 
 
-def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
+def write_csv(rows: List[Tuple[str, float]], output_path: Path) -> None:
     """Write rows to OHLCV format CSV (O=H=L=C for daily rates, V=0)."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="") as f:
@@ -183,11 +277,11 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
 
 
 def main() -> int:
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc).replace(tzinfo=None)
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
     print(f"Fetching JGB yields from {date_from.date()} to {today.date()}")
-    print(f"Source: MOF Japan Interest Rate Historical Data")
+    print(f"Source: MOF Japan (current-month + historical, merged)")
     print(f"Tenors: {list(TENORS.keys())}")
     print()
 
@@ -203,6 +297,7 @@ def main() -> int:
         print(f"ERROR: JPY bills fetch failed: {exc}", file=sys.stderr)
         return 1
 
+    print()
     successes = 0
     failures = 0
 
@@ -219,9 +314,8 @@ def main() -> int:
         print(f"[{tenor}] OK: Wrote {len(rows)} rows to {filename}")
         print(f"        Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
         print(f"        Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
-        print()
-        successes += 1
 
+    print()
     print(f"Summary: {successes} OK, {failures} failed (of {len(TENORS)} total)")
     return 0 if failures == 0 else 1
 

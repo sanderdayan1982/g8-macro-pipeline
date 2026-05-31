@@ -53,10 +53,6 @@ jobs:
         continue-on-error: true
         id: sonia
 
-      - name: Fetch SARON (CHF RFR)
-        run: python scripts/fetch_saron.py
-        continue-on-error: true
-        id: saron
 
       - name: Fetch AONIA (AUD RFR)
         run: python scripts/fetch_aonia.py
@@ -119,7 +115,6 @@ jobs:
           echo "| SOFR       | ${{ steps.sofr.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ESTR       | ${{ steps.estr.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SONIA      | ${{ steps.sonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SARON      | ${{ steps.saron.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AONIA      | ${{ steps.aonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| TONA       | ${{ steps.tona.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CORRA      | ${{ steps.corra.outcome }} |" >> $GITHUB_STEP_SUMMARY
