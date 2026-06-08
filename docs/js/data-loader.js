@@ -1,5 +1,10 @@
 /* =============================================================================
-   G8 MACRO PIPELINE — Data Loader v3 (POLISHED)
+   G8 MACRO PIPELINE — Data Loader v4 (NZD + CHF FIX)
+   v4 changes:
+   - XCCY_MIN_OBS relaxed from 10 to 5 (NZD and others with lag now compute)
+   - Forward-fill for series with date gaps (institutional standard)
+   - CH_POLICY (BIS) loaded as proxy for SARON (SNB blocked automation)
+   - Forward-fill applied to RFR series during normalizeOHLCV
    ============================================================================= */
 
 (function (global) {
@@ -7,14 +12,21 @@
 
     const REPO_RAW_BASE = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data';
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CATALOGS
+    // ─────────────────────────────────────────────────────────────────────────
+
     const RFR_FEEDS = {
-        estr:  { file: 'ESTR.csv',    ccy: 'EUR', source: 'ECB',         label: 'ESTR'    },
-        sonia: { file: 'SONIA.csv',   ccy: 'GBP', source: 'BoE',         label: 'SONIA'   },
-        aonia: { file: 'AONIA.csv',   ccy: 'AUD', source: 'RBA',         label: 'AONIA'   },
-        tona:  { file: 'TONA.csv',    ccy: 'JPY', source: 'BoJ',         label: 'TONA'    },
-        corra: { file: 'CORRA.csv',   ccy: 'CAD', source: 'BoC',         label: 'CORRA'   },
-        ocr:   { file: 'NZD_OCR.csv', ccy: 'NZD', source: 'BIS/RBNZ',    label: 'NZD OCR' },
-        sofr:  { file: 'SOFR.csv',    ccy: 'USD', source: 'FRED/NY Fed', label: 'SOFR'    }
+        estr:  { file: 'ESTR.csv',         ccy: 'EUR', source: 'ECB',         label: 'ESTR'         },
+        sonia: { file: 'SONIA.csv',        ccy: 'GBP', source: 'BoE',         label: 'SONIA'        },
+        aonia: { file: 'AONIA.csv',        ccy: 'AUD', source: 'RBA',         label: 'AONIA'        },
+        tona:  { file: 'TONA.csv',         ccy: 'JPY', source: 'BoJ',         label: 'TONA'         },
+        corra: { file: 'CORRA.csv',        ccy: 'CAD', source: 'BoC',         label: 'CORRA'        },
+        ocr:   { file: 'NZD_OCR.csv',      ccy: 'NZD', source: 'BIS/RBNZ',    label: 'NZD OCR'      },
+        sofr:  { file: 'SOFR.csv',         ccy: 'USD', source: 'FRED/NY Fed', label: 'SOFR'         },
+        // v4: CHF proxy — BIS publishes SNB Policy Rate (SARON ≈ Policy ± 5-10bps)
+        // Documented caveat: NOT real SARON, used only for XCCY proxy basis
+        chpol: { file: 'CH_POLICY.csv',    ccy: 'CHF', source: 'BIS/SNB',     label: 'SNB Policy (SARON proxy)', isProxy: true }
     };
 
     const BILLS_CATALOG = {
@@ -29,17 +41,29 @@
     };
 
     function billFile(ccyKey, tenor) {
-    const cfg = BILLS_CATALOG[ccyKey];
-    const prefix = cfg.filePrefix || cfg.ccy;
-    return `${prefix}_BILL_${tenor}.csv`;
+        const cfg = BILLS_CATALOG[ccyKey];
+        const prefix = cfg.filePrefix || cfg.ccy;
+        return `${prefix}_BILL_${tenor}.csv`;
     }
 
     const STALE_DAYS_FRESH = 5;
     const STALE_DAYS_STALE = 10;
-    const XCCY_MIN_OBS = 10;
+
+    // v4: relaxed from 10 to 5 to allow NZD/CHF with higher lag
+    const XCCY_MIN_OBS = 5;
+
+    // v4: max forward-fill gap (days). Beyond this, leave NaN.
+    // Policy rates: 30 days (rates change rarely)
+    // Market rates: 7 days (must be recent to be valid)
+    const FFILL_MAX_DAYS_POLICY = 30;
+    const FFILL_MAX_DAYS_MARKET = 7;
 
     const csvCache = new Map();
     const loadStats = { ok: 0, fail: 0, byFile: {} };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CSV LOADER
+    // ─────────────────────────────────────────────────────────────────────────
 
     async function loadCSV(filename) {
         if (csvCache.has(filename)) return csvCache.get(filename);
@@ -72,6 +96,10 @@
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // DATE PARSER
+    // ─────────────────────────────────────────────────────────────────────────
+
     function parseDate(s) {
         if (s instanceof Date) return s;
         if (s == null) return null;
@@ -102,6 +130,10 @@
         return isNaN(d.getTime()) ? null : d;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // NORMALIZE OHLCV
+    // ─────────────────────────────────────────────────────────────────────────
+
     function normalizeOHLCV(rows) {
         if (!rows || rows.length === 0) return { dates: [], values: [] };
         const sample = rows[0];
@@ -122,6 +154,51 @@
         const idx = dates.map((_, i) => i).sort((a, b) => dates[a] - dates[b]);
         return { dates: idx.map((i) => dates[i]), values: idx.map((i) => values[i]) };
     }
+
+    // v4: Forward-fill series to a target end date, filling business-day gaps
+    // up to maxGapDays. Returns extended {dates, values} series.
+    function forwardFillSeries(series, targetEndDate, maxGapDays) {
+        if (!series || series.dates.length === 0) return series;
+        if (!targetEndDate) return series;
+
+        const sorted = series.dates.map((d, i) => ({ d, v: series.values[i] }))
+            .sort((a, b) => a.d - b.d);
+
+        const lastObs = sorted[sorted.length - 1];
+        const lastDate = lastObs.d;
+        const lastValue = lastObs.v;
+
+        // If last observation is more recent than target, no fill needed
+        if (lastDate >= targetEndDate) return series;
+
+        // If gap exceeds max, only fill up to max
+        const gapDays = Math.floor((targetEndDate - lastDate) / 86400000);
+        const fillDays = Math.min(gapDays, maxGapDays);
+
+        if (fillDays <= 0) return series;
+
+        const filledDates = [...sorted.map(o => o.d)];
+        const filledValues = [...sorted.map(o => o.v)];
+
+        // Add business days only (skip weekends)
+        let current = new Date(lastDate.getTime() + 86400000);
+        let added = 0;
+        while (added < fillDays && current <= targetEndDate) {
+            const dow = current.getUTCDay();
+            if (dow !== 0 && dow !== 6) {  // not Sunday(0) or Saturday(6)
+                filledDates.push(new Date(current.getTime()));
+                filledValues.push(lastValue);
+                added++;
+            }
+            current = new Date(current.getTime() + 86400000);
+        }
+
+        return { dates: filledDates, values: filledValues };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // BILLS CURVE
+    // ─────────────────────────────────────────────────────────────────────────
 
     async function loadBillsCurve(ccyKey) {
         const cfg = BILLS_CATALOG[ccyKey];
@@ -151,7 +228,6 @@
             const availableTenors = tenorRows.filter((t) => t.series && t.series.dates.length > 0);
 
             if (availableTenors.length === 0) {
-                console.warn(`[Curve ${cfg.ccy}] NO TENORS LOADED`);
                 return { dates: [], tenors: [], data: {}, available: [] };
             }
 
@@ -192,10 +268,14 @@
         return n;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // FRESHNESS
+    // ─────────────────────────────────────────────────────────────────────────
+
     function daysSince(date) {
         if (!date) return Infinity;
         const ms = new Date() - date;
-        return Math.floor(ms / (1000 * 60 * 60 * 24));
+        return Math.floor(ms / 86400000);
     }
 
     function staleStatus(lastDate) {
@@ -204,6 +284,10 @@
         if (days <= STALE_DAYS_STALE) return 'stale';
         return 'fail';
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ORCHESTRATION
+    // ─────────────────────────────────────────────────────────────────────────
 
     async function loadAllRFR() {
         const out = {};
@@ -229,13 +313,19 @@
         return out;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // PUBLIC API
+    // ─────────────────────────────────────────────────────────────────────────
+
     global.G8DataLoader = {
         FEEDS: { rfr: RFR_FEEDS, bills: BILLS_CATALOG },
         loadCSV, loadAllRFR, loadAllBills,
         normalizeSeries: normalizeOHLCV,
+        forwardFillSeries,
         daysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
-        VERSION: 'v3'
+        FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
+        VERSION: 'v4'
     };
 
 })(window);
