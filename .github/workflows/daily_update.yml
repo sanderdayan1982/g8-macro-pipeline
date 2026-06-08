@@ -75,6 +75,25 @@ jobs:
         run: python scripts/fetch_bis_ocr.py
         continue-on-error: true
         id: ocr
+      - name: Fetch BoE Bank Rate via BIS (GBP policy)
+        run: python scripts/fetch_bis_policy.py GB
+        continue-on-error: true
+        id: gb_policy
+
+      - name: Fetch BoJ Policy Rate via BIS (JPY policy)
+        run: python scripts/fetch_bis_policy.py JP
+        continue-on-error: true
+        id: jp_policy
+
+      - name: Fetch SNB Policy Rate via BIS (CHF policy)
+        run: python scripts/fetch_bis_policy.py CH
+        continue-on-error: true
+        id: ch_policy
+
+      - name: Fetch RBA Cash Rate via BIS (AUD policy)
+        run: python scripts/fetch_bis_policy.py AU
+        continue-on-error: true
+        id: au_policy
 
       - name: Fetch US Bills (3M/6M/1Y/2Y)
         run: python scripts/fetch_us_bills.py
@@ -126,6 +145,10 @@ jobs:
           echo "| TONA       | ${{ steps.tona.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CORRA      | ${{ steps.corra.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NZD OCR    | ${{ steps.ocr.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| BoE Bank Rate (GB)  | ${{ steps.gb_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| BoJ Policy Rate (JP)| ${{ steps.jp_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SNB Policy Rate (CH)| ${{ steps.ch_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| RBA Cash Rate (AU)  | ${{ steps.au_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| US Bills   | ${{ steps.us_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CAD Bills  | ${{ steps.cad_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AUD Bills  | ${{ steps.aud_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
