@@ -125,11 +125,6 @@ jobs:
         continue-on-error: true
         id: jpy_bills
 
-      - name: Fetch BoE Bank Rate (GBP policy rate)
-        run: python scripts/fetch_boe_bank_rate.py
-        continue-on-error: true
-        id: boe_bank_rate
-
       # ── 5. Status summary ──────────────────────────────────────────────────
       - name: Report scraper results
         if: always()
@@ -155,7 +150,6 @@ jobs:
           echo "| EUR Bills  | ${{ steps.eur_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| BoE Bank Rate | ${{ steps.boe_bank_rate.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
 
