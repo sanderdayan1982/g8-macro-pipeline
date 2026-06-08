@@ -7,6 +7,11 @@ Statistical Database (IADB).
 
 Output: data/BOE_BANK_RATE.csv
 Format: DATE,OPEN,HIGH,LOW,CLOSE,VOLUME (YYYYMMDD dates)
+
+v2 fixes:
+- Strips optional metadata preamble before CSV header
+- Detects HTML error responses
+- More descriptive error messages for debugging
 """
 
 import sys
@@ -62,7 +67,7 @@ def fetch_with_retry(url):
             last_err = f"timeout after {TIMEOUT_SEC}s"
             print(f"[Attempt {attempt}/{MAX_RETRIES}] BoE network error: {last_err}")
         except requests.exceptions.HTTPError:
-            last_err = f"HTTP {resp.status_code}"
+            last_err = f"HTTP error"
             print(f"[Attempt {attempt}/{MAX_RETRIES}] BoE HTTP error: {last_err}")
         except Exception as e:
             last_err = f"{type(e).__name__}: {e}"
@@ -77,28 +82,80 @@ def fetch_with_retry(url):
 
 
 def parse_boe_csv(csv_text, series_code):
-    df = pd.read_csv(io.StringIO(csv_text), skipinitialspace=True)
-    if df.empty:
-        raise ValueError("BoE returned empty CSV")
+    """
+    Parse BoE IADB CSV response, handling optional metadata preamble.
 
+    BoE may prepend descriptive text lines before the actual CSV header.
+    We detect the real CSV start by looking for a line containing 'DATE'
+    AND the series code.
+    """
+    # Detect HTML error response (BoE returns HTML when something is wrong)
+    if csv_text.strip().lower().startswith(('<!doctype', '<html', '<?xml')):
+        raise ValueError(
+            "BoE returned HTML instead of CSV — likely an error page. "
+            f"First 200 chars: {csv_text[:200]}"
+        )
+
+    # Normalize line endings
+    lines = csv_text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+
+    # Print first few lines for debugging (visible in GitHub Actions logs)
+    print(f"[parse] Response has {len(lines)} lines total")
+    print(f"[parse] First 3 lines:")
+    for i, line in enumerate(lines[:3]):
+        print(f"  Line {i+1}: {line[:100]}")
+
+    # Find the header line — must contain both 'DATE' and the series code
+    header_idx = -1
+    for i, line in enumerate(lines):
+        line_upper = line.upper()
+        if 'DATE' in line_upper and series_code.upper() in line_upper:
+            header_idx = i
+            break
+
+    if header_idx == -1:
+        raise ValueError(
+            f"Could not find CSV header with 'DATE' and '{series_code}'. "
+            f"First 5 lines: {[l[:80] for l in lines[:5]]}"
+        )
+
+    print(f"[parse] CSV header found at line {header_idx + 1}")
+
+    # Reconstruct clean CSV starting from the header
+    clean_csv = '\n'.join(lines[header_idx:])
+
+    try:
+        df = pd.read_csv(io.StringIO(clean_csv), skipinitialspace=True)
+    except Exception as e:
+        raise ValueError(f"pandas could not parse CSV after preamble strip: {e}")
+
+    if df.empty:
+        raise ValueError("BoE returned empty CSV body")
+
+    # Identify columns (case-insensitive)
     date_col = None
     rate_col = None
     for col in df.columns:
         col_clean = str(col).strip().upper()
-        if 'DATE' in col_clean:
+        if 'DATE' in col_clean and date_col is None:
             date_col = col
-        elif series_code.upper() in col_clean:
+        elif series_code.upper() in col_clean and rate_col is None:
             rate_col = col
 
     if date_col is None or rate_col is None:
-        raise ValueError(f"Could not detect DATE/{series_code} columns. Columns: {list(df.columns)}")
+        raise ValueError(
+            f"Could not detect DATE/{series_code} columns. "
+            f"Columns found: {list(df.columns)}"
+        )
+
+    print(f"[parse] Detected columns: date='{date_col}', rate='{rate_col}'")
 
     df['_date'] = pd.to_datetime(df[date_col], format='%d %b %Y', errors='coerce')
     df['_rate'] = pd.to_numeric(df[rate_col], errors='coerce')
     df = df.dropna(subset=['_date', '_rate']).sort_values('_date')
 
     if df.empty:
-        raise ValueError("No valid rows after parsing")
+        raise ValueError("No valid rows after parsing dates/rates")
 
     return df[['_date', '_rate']].rename(columns={'_date': 'date', '_rate': 'rate'})
 
