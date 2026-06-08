@@ -125,6 +125,11 @@ jobs:
         continue-on-error: true
         id: jpy_bills
 
+      - name: Fetch ACM 10Y Term Premium (NY Fed)
+        run: python scripts/fetch_acm.py
+        continue-on-error: true
+        id: acm
+
       # ── 5. Status summary ──────────────────────────────────────────────────
       - name: Report scraper results
         if: always()
@@ -150,6 +155,7 @@ jobs:
           echo "| EUR Bills  | ${{ steps.eur_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ACM TP 10Y | ${{ steps.acm.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
 
