@@ -1,7 +1,5 @@
 /* =============================================================================
-   G8 MACRO PIPELINE — Data Loader v2 (FIXED)
-   Real schema discovered: DATE,OPEN,HIGH,LOW,CLOSE,VOLUME · YYYYMMDD format
-   Bills are split into ONE FILE PER TENOR — reconstructed client-side
+   G8 MACRO PIPELINE — Data Loader v3 (POLISHED)
    ============================================================================= */
 
 (function (global) {
@@ -26,32 +24,29 @@
         jpy: { ccy: 'JPY', source: 'MoF Japan',      label: 'JGB',               tenors: ['1Y', '2Y', '3Y', '5Y', '10Y', '20Y']            },
         aud: { ccy: 'AUD', source: 'RBA F1',         label: 'AGS',               tenors: ['1M', '3M', '6M']                                },
         cad: { ccy: 'CAD', source: 'BoC Valet',      label: 'GoC Bills',         tenors: ['3M', '6M', '1Y']                                },
-        chf: { ccy: 'CHF', source: 'SNB manual',     label: 'CHF Confederation', tenors: ['1Y', '3M', '6M']                                },
-        nzd: { ccy: 'NZD', source: 'RBNZ/NZDM',      label: 'NZ Govt Bonds',     tenors: ['1Y', '3M', '6M']                                }
+        chf: { ccy: 'CHF', source: 'SNB manual',     label: 'CHF Confederation', tenors: ['3M', '6M', '1Y']                                },
+        nzd: { ccy: 'NZD', source: 'RBNZ/NZDM',      label: 'NZ Govt Bonds',     tenors: ['3M', '6M', '1Y']                                }
     };
 
     function billFile(ccyKey, tenor) {
-        const cfg = BILLS_CATALOG[ccyKey];
-        return `${cfg.ccy}_BILL_${tenor}.csv`;
+        return `${BILLS_CATALOG[ccyKey].ccy}_BILL_${tenor}.csv`;
     }
 
-    const STALE_DAYS_FRESH = 3;
-    const STALE_DAYS_STALE = 7;
+    const STALE_DAYS_FRESH = 5;
+    const STALE_DAYS_STALE = 10;
+    const XCCY_MIN_OBS = 10;
 
     const csvCache = new Map();
+    const loadStats = { ok: 0, fail: 0, byFile: {} };
 
     async function loadCSV(filename) {
-        if (csvCache.has(filename)) {
-            return csvCache.get(filename);
-        }
+        if (csvCache.has(filename)) return csvCache.get(filename);
 
         const url = `${REPO_RAW_BASE}/${filename}?t=${Date.now()}`;
 
         try {
             const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status} on ${filename}`);
-            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const text = await response.text();
 
             const parsed = Papa.parse(text, {
@@ -61,15 +56,16 @@
                 transformHeader: (h) => h.trim().toLowerCase()
             });
 
-            if (parsed.errors.length > 0) {
-                console.warn(`[CSV] Parse warnings for ${filename}:`, parsed.errors);
-            }
-
+            const rowCount = parsed.data.length;
             csvCache.set(filename, parsed.data);
+            loadStats.ok++;
+            loadStats.byFile[filename] = `OK (${rowCount} rows)`;
             return parsed.data;
         } catch (err) {
-            console.error(`[CSV] Failed to load ${filename}:`, err.message);
+            console.error(`[CSV] ${filename}: ${err.message}`);
             csvCache.set(filename, null);
+            loadStats.fail++;
+            loadStats.byFile[filename] = `FAIL (${err.message})`;
             return null;
         }
     }
@@ -95,19 +91,10 @@
         const trimmed = s.trim();
 
         const compactMatch = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
-        if (compactMatch) {
-            return new Date(Date.UTC(+compactMatch[1], +compactMatch[2] - 1, +compactMatch[3]));
-        }
+        if (compactMatch) return new Date(Date.UTC(+compactMatch[1], +compactMatch[2] - 1, +compactMatch[3]));
 
         const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch) {
-            return new Date(Date.UTC(+isoMatch[1], +isoMatch[2] - 1, +isoMatch[3]));
-        }
-
-        const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-        if (slashMatch) {
-            return new Date(Date.UTC(+slashMatch[3], +slashMatch[2] - 1, +slashMatch[1]));
-        }
+        if (isoMatch) return new Date(Date.UTC(+isoMatch[1], +isoMatch[2] - 1, +isoMatch[3]));
 
         const d = new Date(trimmed);
         return isNaN(d.getTime()) ? null : d;
@@ -115,20 +102,11 @@
 
     function normalizeOHLCV(rows) {
         if (!rows || rows.length === 0) return { dates: [], values: [] };
-
         const sample = rows[0];
-
         const dateCol = ['date', 'time', 'timestamp', 'datetime'].find((c) => c in sample);
-        if (!dateCol) {
-            console.warn('[OHLCV] No date column detected. Keys:', Object.keys(sample));
-            return { dates: [], values: [] };
-        }
-
+        if (!dateCol) return { dates: [], values: [] };
         const valueCol = ['close', 'value', 'rate', 'yield', 'price', 'level'].find((c) => c in sample);
-        if (!valueCol) {
-            console.warn('[OHLCV] No value column detected. Keys:', Object.keys(sample));
-            return { dates: [], values: [] };
-        }
+        if (!valueCol) return { dates: [], values: [] };
 
         const dates = [];
         const values = [];
@@ -136,64 +114,68 @@
         for (const row of rows) {
             const d = parseDate(row[dateCol]);
             const v = typeof row[valueCol] === 'number' ? row[valueCol] : parseFloat(row[valueCol]);
-            if (d && !isNaN(v)) {
-                dates.push(d);
-                values.push(v);
-            }
+            if (d && !isNaN(v)) { dates.push(d); values.push(v); }
         }
 
         const idx = dates.map((_, i) => i).sort((a, b) => dates[a] - dates[b]);
-        return {
-            dates:  idx.map((i) => dates[i]),
-            values: idx.map((i) => values[i])
-        };
+        return { dates: idx.map((i) => dates[i]), values: idx.map((i) => values[i]) };
     }
 
     async function loadBillsCurve(ccyKey) {
         const cfg = BILLS_CATALOG[ccyKey];
         if (!cfg) return { dates: [], tenors: [], data: {}, available: [] };
 
-        const sortedTenors = [...cfg.tenors].sort((a, b) => tenorToMonths(a) - tenorToMonths(b));
+        try {
+            const sortedTenors = [...cfg.tenors].sort((a, b) => tenorToMonths(a) - tenorToMonths(b));
 
-        const tenorRows = await Promise.all(
-            sortedTenors.map(async (tenor) => {
-                const rows = await loadCSV(billFile(ccyKey, tenor));
-                return { tenor, series: rows ? normalizeOHLCV(rows) : null };
-            })
-        );
+            const tenorRows = await Promise.all(
+                sortedTenors.map(async (tenor) => {
+                    try {
+                        const rows = await loadCSV(billFile(ccyKey, tenor));
+                        const series = rows ? normalizeOHLCV(rows) : null;
+                        return { tenor, series };
+                    } catch (err) {
+                        console.error(`[Curve ${cfg.ccy}] tenor ${tenor} threw: ${err.message}`);
+                        return { tenor, series: null };
+                    }
+                })
+            );
 
-        const availableTenors = tenorRows.filter((t) => t.series && t.series.dates.length > 0);
+            const tenorStatus = tenorRows.map((t) =>
+                `${t.tenor}=${t.series && t.series.dates.length > 0 ? t.series.dates.length + 'obs' : 'EMPTY'}`
+            ).join(', ');
+            console.log(`[Curve ${cfg.ccy}] ${tenorStatus}`);
 
-        if (availableTenors.length === 0) {
+            const availableTenors = tenorRows.filter((t) => t.series && t.series.dates.length > 0);
+
+            if (availableTenors.length === 0) {
+                console.warn(`[Curve ${cfg.ccy}] NO TENORS LOADED`);
+                return { dates: [], tenors: [], data: {}, available: [] };
+            }
+
+            const allDatesSet = new Set();
+            for (const t of availableTenors) {
+                for (const d of t.series.dates) allDatesSet.add(d.getTime());
+            }
+            const allDates = [...allDatesSet].sort((a, b) => a - b).map((ts) => new Date(ts));
+
+            const data = {};
+            const tenors = [];
+
+            for (const t of availableTenors) {
+                tenors.push(t.tenor);
+                const lookup = new Map();
+                for (let i = 0; i < t.series.dates.length; i++) {
+                    lookup.set(t.series.dates[i].getTime(), t.series.values[i]);
+                }
+                data[t.tenor] = allDates.map((d) => lookup.get(d.getTime()) ?? null);
+            }
+
+            return { dates: allDates, tenors, data, available: tenors };
+        } catch (err) {
+            console.error(`[Curve ${cfg.ccy}] FATAL:`, err);
             return { dates: [], tenors: [], data: {}, available: [] };
         }
-
-        const allDatesSet = new Set();
-        for (const t of availableTenors) {
-            for (const d of t.series.dates) {
-                allDatesSet.add(d.getTime());
-            }
-        }
-        const allDates = [...allDatesSet].sort((a, b) => a - b).map((ts) => new Date(ts));
-
-        const data = {};
-        const tenors = [];
-
-        for (const t of availableTenors) {
-            tenors.push(t.tenor);
-            const lookup = new Map();
-            for (let i = 0; i < t.series.dates.length; i++) {
-                lookup.set(t.series.dates[i].getTime(), t.series.values[i]);
-            }
-            data[t.tenor] = allDates.map((d) => lookup.get(d.getTime()) ?? null);
-        }
-
-        return {
-            dates: allDates,
-            tenors,
-            data,
-            available: tenors
-        };
     }
 
     function tenorToMonths(t) {
@@ -210,8 +192,7 @@
 
     function daysSince(date) {
         if (!date) return Infinity;
-        const now = new Date();
-        const ms = now - date;
+        const ms = new Date() - date;
         return Math.floor(ms / (1000 * 60 * 60 * 24));
     }
 
@@ -226,13 +207,11 @@
         const out = {};
         const promises = Object.entries(RFR_FEEDS).map(async ([key, cfg]) => {
             const rows = await loadCSV(cfg.file);
-            out[key] = {
-                ...cfg,
-                rows,
-                series: rows ? normalizeOHLCV(rows) : null
-            };
+            out[key] = { ...cfg, rows, series: rows ? normalizeOHLCV(rows) : null };
         });
         await Promise.all(promises);
+        const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
+        console.log(`[RFR Summary] ${okCount}/${Object.keys(RFR_FEEDS).length} feeds loaded`);
         return out;
     }
 
@@ -240,28 +219,21 @@
         const out = {};
         const promises = Object.entries(BILLS_CATALOG).map(async ([key, cfg]) => {
             const curve = await loadBillsCurve(key);
-            out[key] = {
-                ...cfg,
-                rows: null,
-                curve
-            };
+            out[key] = { ...cfg, rows: null, curve };
         });
         await Promise.all(promises);
+        const okCount = Object.values(out).filter((f) => f.curve && f.curve.dates.length > 0).length;
+        console.log(`[Bills Summary] ${okCount}/${Object.keys(BILLS_CATALOG).length} currencies with curve data`);
         return out;
     }
 
     global.G8DataLoader = {
         FEEDS: { rfr: RFR_FEEDS, bills: BILLS_CATALOG },
-        loadCSV,
-        loadAllRFR,
-        loadAllBills,
+        loadCSV, loadAllRFR, loadAllBills,
         normalizeSeries: normalizeOHLCV,
-        normalizeCurve: null,
-        daysSince,
-        staleStatus,
-        parseDate,
-        tenorToMonths,
-        REPO_RAW_BASE
+        daysSince, staleStatus, parseDate, tenorToMonths,
+        loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
+        VERSION: 'v3'
     };
 
 })(window);
