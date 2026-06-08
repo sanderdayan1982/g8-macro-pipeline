@@ -18,7 +18,7 @@
     };
 
     const BILLS_CATALOG = {
-        us:  { ccy: 'USD', source: 'FRED',           label: 'US Treasuries',     tenors: ['3M', '6M', '1Y', '2Y']                          },
+        us:  { ccy: 'USD', source: 'FRED',           label: 'US Treasuries',     tenors: ['3M', '6M', '1Y', '2Y'], filePrefix: 'US'         },
         eur: { ccy: 'EUR', source: 'ECB AAA Curve',  label: 'EUR AAA Curve',     tenors: ['3M', '6M', '1Y', '2Y', '5Y', '10Y']             },
         gbp: { ccy: 'GBP', source: 'BoE',            label: 'UK Gilts',          tenors: ['6M', '1Y', '2Y', '5Y', '10Y']                   },
         jpy: { ccy: 'JPY', source: 'MoF Japan',      label: 'JGB',               tenors: ['1Y', '2Y', '3Y', '5Y', '10Y', '20Y']            },
@@ -29,7 +29,9 @@
     };
 
     function billFile(ccyKey, tenor) {
-        return `${BILLS_CATALOG[ccyKey].ccy}_BILL_${tenor}.csv`;
+    const cfg = BILLS_CATALOG[ccyKey];
+    const prefix = cfg.filePrefix || cfg.ccy;
+    return `${prefix}_BILL_${tenor}.csv`;
     }
 
     const STALE_DAYS_FRESH = 5;
