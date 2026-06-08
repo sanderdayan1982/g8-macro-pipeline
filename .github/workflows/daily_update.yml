@@ -140,6 +140,7 @@ jobs:
           echo "| TONA       | ${{ steps.tona.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CORRA      | ${{ steps.corra.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NZD OCR    | ${{ steps.ocr.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| BoE Bank Rate (GB)  | ${{ steps.gb_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| BoJ Policy Rate (JP)| ${{ steps.jp_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SNB Policy Rate (CH)| ${{ steps.ch_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| RBA Cash Rate (AU)  | ${{ steps.au_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
