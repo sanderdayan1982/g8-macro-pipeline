@@ -41,9 +41,6 @@ jobs:
         run: pip install -r requirements.txt
 
       # ── 4. Run scrapers — TOLERANT mode (each independent) ────────────────
-      # CHF is intentionally NOT here — it uses convert_chf_bills.py with
-      # manual Excel download (SNB blocked automated access in Sept 2025).
-
       - name: Fetch SOFR (USD anchor)
         run: python scripts/fetch_sofr.py
         continue-on-error: true
@@ -58,7 +55,6 @@ jobs:
         run: python scripts/fetch_sonia.py
         continue-on-error: true
         id: sonia
-
 
       - name: Fetch AONIA (AUD RFR)
         run: python scripts/fetch_aonia.py
@@ -135,7 +131,7 @@ jobs:
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
 
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
-      # Fix v2026-06-07: handles concurrent pushes (manual re-runs, rename
+      # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
       - name: Commit updated data files
         if: always()
@@ -144,7 +140,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
 
-          # Exit cleanly if no changes
           if git diff --staged --quiet; then
             echo "No data changes detected — skipping commit"
             exit 0
@@ -153,13 +148,11 @@ jobs:
           CHANGED=$(git diff --staged --name-only | wc -l)
           git commit -m "chore: daily data update $(date -u '+%Y-%m-%d') [${CHANGED} files]"
 
-          # Retry loop: pull-rebase + push, up to 5 attempts
           max_attempts=5
           attempt=1
           while [ $attempt -le $max_attempts ]; do
             echo "Push attempt $attempt of $max_attempts"
 
-            # Integrate any remote changes that arrived during the run
             git pull --rebase origin main
 
             if git push origin main; then
