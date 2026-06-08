@@ -189,9 +189,7 @@
             { rfrKey: 'sonia', billsKey: 'gbp', label: 'GBP',   isProxy: false },
             { rfrKey: 'aonia', billsKey: 'aud', label: 'AUD',   isProxy: false },
             { rfrKey: 'tona',  billsKey: 'jpy', label: 'JPY',   isProxy: false },
-            { rfrKey: 'corra', billsKey: 'cad', label: 'CAD',   isProxy: false },
-            { rfrKey: 'ocr',   billsKey: 'nzd', label: 'NZD',   isProxy: false },
-            { rfrKey: 'chpol', billsKey: 'chf', label: 'CHF*',  isProxy: true   }  // v4: CHF proxy
+            { rfrKey: 'corra', billsKey: 'cad', label: 'CAD',   isProxy: false }
         ];
 
         const results = pairs.map((p) => {
