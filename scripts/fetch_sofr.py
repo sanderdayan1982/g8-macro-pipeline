@@ -1,46 +1,30 @@
 """
-fetch_us_bills.py
-=================
-Scraper for US Treasury Constant Maturity yields (3M, 6M, 1Y, 2Y) from FRED.
+fetch_sofr.py
+=============
+Scraper for USD Secured Overnight Financing Rate (SOFR) from FRED.
 
 Source:   FRED (Federal Reserve Economic Data, St. Louis Fed)
-          Series sourced via H.15 Statistical Release (Federal Reserve Board)
 Endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
-Series:   DGS3MO, DGS6MO, DGS1, DGS2 (constant maturity, investment basis)
-
-Format:   CSV with header "DATE,<SERIES_ID>" and rows "YYYY-MM-DD,value"
+Series:   SOFR
+          (Federal Reserve Bank of New York, Secured Overnight Financing Rate)
+Format:   CSV with header "DATE,SOFR" and rows "YYYY-MM-DD,value"
 Note:     Missing values (weekends, holidays) appear as "." and are filtered.
 
 Output:
-    data/US_BILL_3M.csv  — 3-month T-bill constant maturity yield
-    data/US_BILL_6M.csv  — 6-month T-bill constant maturity yield
-    data/US_BILL_1Y.csv  — 1-year T-bill constant maturity yield
-    data/US_BILL_2Y.csv  — 2-year T-note constant maturity yield
-
-Why constant maturity (DGS*) vs discount basis (DTB*):
-    Constant maturity series are quoted on investment basis (BEY), making them
-    directly comparable with European bund yields, JGBs, gilts, etc. This is
-    the institutional standard used by Bloomberg/Refinitiv terminals and
-    required for cross-currency basis analysis. Discount basis (DTB3/DTB6) is
-    only used for direct T-bill trading and is not unit-comparable across
-    currencies.
-
-Why three tenors (not just 3M):
-    The XCCY basis term structure carries information per institutional
-    research (Borio, McCauley, McGuire, Sushko — "Covered Interest Parity Lost",
-    BIS Quarterly Review, Sept 2016):
-      - 3M basis: captures short-term funding stress (interbank liquidity,
-        year-end / quarter-end effects, Libor-OIS dynamics).
-      - 6M basis: intermediate tenor, useful for synthetic curve smoothing.
-      - 1Y basis: captures structural hedging demand (FX-hedged investment
-        flows, ALM matching by insurance / pension funds).
-    Having all three available at backfill time avoids the cost of partial
-    history reconstruction in Phase 6 (synthetic sovereign curve).
+    data/SOFR.csv  — SOFR historical series in OHLCV format
 
 License: FRED data is publicly available without API key for fredgraph endpoint.
-         Source citation: Board of Governors of the Federal Reserve System (US),
-         retrieved from FRED, Federal Reserve Bank of St. Louis.
-         Treasury constant maturity data is from the H.15 Statistical Release.
+         SOFR is published by the Federal Reserve Bank of New York.
+         Citation required for academic/commercial use:
+         Federal Reserve Bank of New York, Secured Overnight Financing Rate [SOFR],
+         retrieved from FRED, Federal Reserve Bank of St. Louis;
+         https://fred.stlouisfed.org/series/SOFR.
+
+Notes:
+    SOFR is the institutional reference rate for USD in the XCCY G8 basis engine,
+    serving as the equivalent of €STR for EUR, SONIA for GBP, SARON for CHF, etc.
+    All other RFRs are normalized against SOFR in the proxy formula:
+      XCCY_basis(X) = (RFR_X - bill_short_X) - (SOFR - bill_short_US) + asw_correction
 
 Robustness (v2 — 2026-06-09):
     FRED endpoint exhibits intermittent Read timeouts from GitHub Actions
@@ -61,29 +45,13 @@ import requests
 
 # Constants
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+FRED_SERIES_ID = "SOFR"
+OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "SOFR.csv"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 90
 RETRY_ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = (0, 5, 15)  # delay before attempts 1, 2, 3
 USER_AGENT = "g8-macro-pipeline/1.0 (https://github.com/sanderdayan1982/g8-macro-pipeline)"
-
-# Tenor -> FRED series ID mapping
-# All series: Treasury Constant Maturity Rate, Investment Basis (H.15)
-BILL_SERIES = {
-    "3M": "DGS3MO",  # engine basis for USD/EUR/CAD/AUD
-    "6M": "DGS6MO",  # engine basis for GBP
-    "1Y": "DGS1",    # engine basis for JPY
-    "2Y": "DGS2",    # engine basis for CHF (Confederation short-end is 2Y minimum)
-}
-
-# Output filenames
-OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data"
-OUTPUT_NAMES = {
-    "3M": "US_BILL_3M.csv",
-    "6M": "US_BILL_6M.csv",
-    "1Y": "US_BILL_1Y.csv",
-    "2Y": "US_BILL_2Y.csv",
-}
 
 
 def _request_with_retry(
@@ -105,7 +73,7 @@ def _request_with_retry(
         delay = RETRY_BACKOFF_SECONDS[attempt_idx]
         if delay > 0:
             print(
-                f"    Retry attempt {attempt_idx + 1}/{RETRY_ATTEMPTS} "
+                f"  Retry attempt {attempt_idx + 1}/{RETRY_ATTEMPTS} "
                 f"after {delay}s backoff",
                 file=sys.stderr,
             )
@@ -115,27 +83,23 @@ def _request_with_retry(
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
             last_exc = exc
             print(
-                f"    Transient network error on attempt {attempt_idx + 1}: {exc}",
+                f"  Transient network error on attempt {attempt_idx + 1}: {exc}",
                 file=sys.stderr,
             )
             continue
+    # All attempts exhausted
     assert last_exc is not None
     raise last_exc
 
 
-def fetch_fred_series(
-    series_id: str,
-    date_from: datetime,
-    date_to: datetime,
-) -> list[tuple[str, float]]:
+def fetch_sofr_data(date_from: datetime, date_to: datetime) -> list[tuple[str, float]]:
     """
-    Fetch a single FRED series via fredgraph CSV endpoint.
+    Fetch SOFR daily data from FRED via fredgraph CSV endpoint.
 
-    Returns list of (date_str_YYYYMMDD, value) tuples sorted ascending.
-    Missing observations (FRED "." marker) are filtered out.
+    Returns list of (date_str_YYYYMMDD, rate_value) tuples sorted ascending.
     """
     params = {
-        "id": series_id,
+        "id": FRED_SERIES_ID,
         "cosd": date_from.strftime("%Y-%m-%d"),
         "coed": date_to.strftime("%Y-%m-%d"),
     }
@@ -154,14 +118,12 @@ def fetch_fred_series(
 
     text = response.text
     if not text or "DATE" not in text.upper():
-        raise ValueError(
-            f"FRED response empty or missing CSV header for {series_id}"
-        )
+        raise ValueError("FRED response empty or missing CSV header")
 
     reader = csv.reader(text.splitlines())
     header = next(reader, None)
     if not header or len(header) < 2:
-        raise ValueError(f"FRED CSV header malformed for {series_id}")
+        raise ValueError("FRED CSV header malformed")
 
     rows: list[tuple[str, float]] = []
     for raw_row in reader:
@@ -206,50 +168,31 @@ def main() -> int:
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
-    print(f"Fetching US T-bills from {date_from.date()} to {today.date()}")
-    print(f"Tenors: {list(BILL_SERIES.keys())}")
-    print()
+    print(f"Fetching SOFR from {date_from.date()} to {today.date()}")
+    print(f"FRED Series: {FRED_SERIES_ID}")
 
-    successes = 0
-    failures = 0
+    try:
+        rows = fetch_sofr_data(date_from, today)
+    except requests.HTTPError as exc:
+        print(f"ERROR: FRED HTTP error: {exc}", file=sys.stderr)
+        return 1
+    except requests.RequestException as exc:
+        print(f"ERROR: FRED network error after {RETRY_ATTEMPTS} attempts: {exc}",
+              file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"ERROR: SOFR fetch failed: {exc}", file=sys.stderr)
+        return 1
 
-    for tenor, series_id in BILL_SERIES.items():
-        output_path = OUTPUT_DIR / OUTPUT_NAMES[tenor]
-        print(f"[{tenor}] FRED series: {series_id}")
+    if not rows:
+        print("ERROR: No SOFR rows returned from FRED", file=sys.stderr)
+        return 1
 
-        try:
-            rows = fetch_fred_series(series_id, date_from, today)
-        except requests.HTTPError as exc:
-            print(f"[{tenor}] ERROR: FRED HTTP error: {exc}", file=sys.stderr)
-            failures += 1
-            continue
-        except requests.RequestException as exc:
-            print(f"[{tenor}] ERROR: FRED network error after {RETRY_ATTEMPTS} attempts: {exc}",
-                  file=sys.stderr)
-            failures += 1
-            continue
-        except Exception as exc:
-            print(f"[{tenor}] ERROR: fetch failed: {exc}", file=sys.stderr)
-            failures += 1
-            continue
-
-        if not rows:
-            print(f"[{tenor}] ERROR: No rows returned from FRED", file=sys.stderr)
-            failures += 1
-            continue
-
-        write_csv(rows, output_path)
-        print(f"[{tenor}] OK: Wrote {len(rows)} rows to {output_path.name}")
-        print(f"        Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
-        print(f"        Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
-        print()
-        successes += 1
-
-    print(f"Summary: {successes} OK, {failures} failed (of {len(BILL_SERIES)} total)")
-
-    # Exit code: 0 if all succeeded, 1 if any failed
-    # This semantic allows partial-success runs to be visible in Actions
-    return 0 if failures == 0 else 1
+    write_csv(rows, OUTPUT_PATH)
+    print(f"OK: Wrote {len(rows)} rows to {OUTPUT_PATH}")
+    print(f"     Latest: {rows[-1][0]} = {rows[-1][1]:.4f}%")
+    print(f"     Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
+    return 0
 
 
 if __name__ == "__main__":
