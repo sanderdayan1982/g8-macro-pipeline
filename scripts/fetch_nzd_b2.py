@@ -14,6 +14,12 @@ Outputs (one CSV per series, Date,Value with YYYY-MM-DD dates):
 
 Frequency: daily, T-1 lag, released by RBNZ around 17:00 NZT.
 
+Network architecture:
+  RBNZ's WAF blocks ASN datacenter IPs (Azure GitHub Actions runners → 403).
+  The workflow YAML wraps THIS step inside a Tailscale exit node tunnel,
+  routing traffic through a residential Mac in Bata. From this script's
+  perspective the network is transparent — a plain `requests.get` works.
+
 Column matching is done by Series Id (row 5 of the Data sheet), NOT by column
 position — this is resilient to RBNZ reordering columns in future releases.
 """
@@ -21,13 +27,8 @@ position — this is resilient to RBNZ reordering columns in future releases.
 import os
 import sys
 import time
+import requests
 from io import BytesIO
-
-# curl_cffi impersonates the TLS fingerprint of a real Chrome browser, which
-# is required to bypass RBNZ's WAF. The default `requests` library exposes a
-# Python/OpenSSL TLS signature (JA3 hash) that modern WAFs flag as bot traffic,
-# triggering a 403 Forbidden even with browser-like User-Agent headers.
-from curl_cffi import requests
 from openpyxl import load_workbook
 
 # ---------------------------------------------------------------------------
@@ -39,11 +40,21 @@ URL = (
     "statistics/series/b/b2/hb2-daily-close.xlsx"
 )
 
-# RBNZ's WAF applies TLS fingerprinting (likely Cloudflare) — it blocks any
-# client whose TLS handshake doesn't match a real browser, regardless of
-# User-Agent header. curl_cffi's impersonate="chrome" replicates Chrome's
-# JA3 fingerprint + HTTP/2 settings + headers in a single call.
-IMPERSONATE = "chrome"
+# Browser-like headers — defensive. With Tailscale routing traffic through a
+# residential IP, RBNZ should accept us, but realistic UA + Accept headers
+# add a second layer (some WAFs cross-check IP-class against header signature).
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+        "Version/17.0 Safari/605.1.15"
+    ),
+    "Accept": (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,"
+        "application/octet-stream,*/*;q=0.8"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 OUTPUT_DIR = "data"
 TIMEOUT_SECONDS = 90
@@ -63,9 +74,9 @@ SERIES_MAP = {
 }
 
 SHEET_NAME = "Data"
-SERIES_ID_ROW = 5  # row index (1-based) holding the Series Id labels
-DATA_START_ROW = 6  # first row of observations
-DATE_COL = 1        # column A holds dates
+SERIES_ID_ROW = 5    # row index (1-based) holding the Series Id labels
+DATA_START_ROW = 6   # first row of observations
+DATE_COL = 1         # column A holds dates
 
 # ---------------------------------------------------------------------------
 # Download with retry
@@ -74,9 +85,8 @@ DATE_COL = 1        # column A holds dates
 def download_xlsx(url: str) -> bytes:
     """Fetch the XLSX bytes with exponential-style retry on transient errors.
 
-    Uses curl_cffi with Chrome TLS impersonation to bypass RBNZ's WAF, which
-    blocks non-browser TLS fingerprints (Python/OpenSSL signature) on requests
-    coming from datacenter IPs like GitHub Actions runners.
+    Network egress is via Tailscale exit node (workflow-level config). This
+    function does not need to know about that — TCP/IP routing is transparent.
     """
     last_exc = None
     for attempt, delay in enumerate(RETRY_DELAYS, start=1):
@@ -85,22 +95,18 @@ def download_xlsx(url: str) -> bytes:
             time.sleep(delay)
         try:
             print(f"[fetch_nzd_b2] attempt {attempt}/{len(RETRY_DELAYS)} GET {url}")
-            r = requests.get(url, timeout=TIMEOUT_SECONDS, impersonate=IMPERSONATE)
+            r = requests.get(url, timeout=TIMEOUT_SECONDS, headers=HEADERS)
             r.raise_for_status()
             print(f"[fetch_nzd_b2] downloaded {len(r.content):,} bytes")
             return r.content
-        except requests.exceptions.Timeout as e:
+        except (requests.Timeout, requests.ConnectionError) as e:
             last_exc = e
-            print(f"[fetch_nzd_b2] timeout: {e}")
+            print(f"[fetch_nzd_b2] transient error: {e}")
             continue
-        except requests.exceptions.ConnectionError as e:
-            last_exc = e
-            print(f"[fetch_nzd_b2] connection error: {e}")
-            continue
-        except requests.exceptions.HTTPError as e:
-            # Do not retry on HTTP errors (403, 404, 5xx server-side issues
-            # that won't be cured by waiting a few seconds). If we get 403
-            # here it means impersonation isn't enough — escalate to ops.
+        except requests.HTTPError as e:
+            # Do not retry on HTTP errors (403, 404, 5xx that won't be cured
+            # by waiting a few seconds). 403 here would indicate Tailscale
+            # tunnel is not active or the Mac exit node is offline — escalate.
             print(f"[fetch_nzd_b2] HTTP error, aborting: {e}", file=sys.stderr)
             raise
     raise RuntimeError(
@@ -138,7 +144,6 @@ def extract_series(ws, col_map: dict[str, int]) -> dict[str, list[tuple[str, flo
     Rows where the value is None/blank are skipped (NZ holidays, missing prints).
     """
     out: dict[str, list[tuple[str, float]]] = {sid: [] for sid in col_map}
-    # Pre-compute (sid, zero_based_index) pairs to avoid dict lookups inside hot loop
     targets = [(sid, col - 1) for sid, col in col_map.items()]
     date_idx = DATE_COL - 1
 
@@ -148,11 +153,10 @@ def extract_series(ws, col_map: dict[str, int]) -> dict[str, list[tuple[str, flo
         date_val = row[date_idx]
         if date_val is None:
             continue
-        # RBNZ stores dates as datetime; coerce to YYYY-MM-DD
         try:
             date_str = date_val.strftime("%Y-%m-%d")
         except AttributeError:
-            continue  # skip rows with unparseable date
+            continue
 
         for sid, idx in targets:
             if idx >= len(row):
@@ -163,7 +167,7 @@ def extract_series(ws, col_map: dict[str, int]) -> dict[str, list[tuple[str, flo
             try:
                 out[sid].append((date_str, float(v)))
             except (TypeError, ValueError):
-                continue  # skip non-numeric stray cells
+                continue
     return out
 
 # ---------------------------------------------------------------------------
@@ -204,7 +208,6 @@ def main() -> int:
         print(f"[fetch_nzd_b2] FATAL parse: {e}", file=sys.stderr)
         return 2
 
-    # Write outputs
     total_rows = 0
     for sid, rows in data.items():
         filename = SERIES_MAP[sid]
