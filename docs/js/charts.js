@@ -1,9 +1,12 @@
 /* =============================================================================
-   G8 MACRO PIPELINE — Charts v4 (NZD + CHF FIX)
-   v4 changes:
-   - XCCY computation applies forward-fill to align all series to common date
-   - CHF included with "proxy" visual indicator (CH_POLICY used as SARON proxy)
-   - Footer note updated to reflect CHF proxy methodology
+   G8 MACRO PIPELINE — Charts v5 (POLICY + ACM)
+   v5 changes:
+   - renderPolicyChart (Section 05): 4 policy rate lines, 90D lookback
+   - renderACMChart (Section 06): 1Y line of USD 10Y term premium + Z-score footer
+   - Quality Monitor extended: now includes the 5 new feeds (4 policy + 1 ACM)
+   - init() loads all 4 catalogs in parallel
+   v4 baseline preserved:
+   - XCCY forward-fill, CHF SARON proxy, 5-currency basis bar
    ============================================================================= */
 
 (function (global) {
@@ -14,7 +17,7 @@
         text: '#dce0e8', textDim: '#9ba3b4', textMuted: '#6b7388',
         gold: '#fdb813', green: '#00c853', red: '#ff4b4b', amber: '#ffaa00',
         teal: '#00b4a0', blue: '#4a9eff', purple: '#c77dff',
-        chfProxy: '#888888'  // grey-ish for CHF proxy bar
+        chfProxy: '#888888'
     };
 
     const CCY_COLOR = {
@@ -68,13 +71,11 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // RFR CHART (Section 1)
+    // RFR CHART (Section 01)
     // ─────────────────────────────────────────────────────────────────────────
 
     function renderRFRChart(rfrData) {
         const traces = [];
-        // Note: 'chpol' (CHF proxy) intentionally EXCLUDED from RFR chart
-        // to avoid confusion. It's only used in XCCY computation.
         const order = ['estr', 'sonia', 'saron', 'aonia', 'tona', 'corra', 'ocr', 'sofr'];
         for (const key of order) {
             const feed = rfrData[key];
@@ -98,7 +99,7 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CURVES GRID (Section 2)
+    // CURVES GRID (Section 02)
     // ─────────────────────────────────────────────────────────────────────────
 
     function renderCurvesGrid(billsData) {
@@ -169,7 +170,7 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // XCCY CHART (Section 3) — v4 with forward-fill + CHF proxy
+    // XCCY CHART (Section 03) — v4 with forward-fill + CHF proxy
     // ─────────────────────────────────────────────────────────────────────────
 
     function renderXCCYChart(rfrData, billsData) {
@@ -183,7 +184,6 @@
             setError('chart-xccy', 'USD anchor (Treasuries) unavailable'); return;
         }
 
-        // v4: CHF added using chpol (CH_POLICY as SARON proxy)
         const pairs = [
             { rfrKey: 'estr',  billsKey: 'eur', label: 'EUR',   isProxy: false },
             { rfrKey: 'sonia', billsKey: 'gbp', label: 'GBP',   isProxy: false },
@@ -211,9 +211,8 @@
         const labels = results.map((r) => r.label);
         const zValues = results.map((r) => r.zScore);
         
-        // v4: special color for CHF proxy bar
         const colors = results.map((r) => {
-            if (r.isProxy) return COLORS.chfProxy;  // grey for CHF proxy
+            if (r.isProxy) return COLORS.chfProxy;
             const z = r.zScore;
             return Math.abs(z) > 2.0 ? COLORS.red : Math.abs(z) > 1.0 ? COLORS.amber : COLORS.green;
         });
@@ -261,8 +260,6 @@
             return { zScore: null, basisBps: null }; 
         }
 
-        // v4: Apply forward-fill to align series with different lag
-        // Determine target end date (most recent observation across all 4 series)
         const dates_pool = [
             usdRFR.series.dates[usdRFR.series.dates.length - 1],
             ccyRFR.series.dates[ccyRFR.series.dates.length - 1],
@@ -271,13 +268,10 @@
         ].filter(Boolean);
         const targetEnd = new Date(Math.max(...dates_pool.map(d => d.getTime())));
 
-        // Forward-fill RFR series (max 30 days for policy, 7 for market overnight)
         const FFILL_POLICY = global.G8DataLoader?.FFILL_MAX_DAYS_POLICY ?? 30;
         const FFILL_MARKET = global.G8DataLoader?.FFILL_MAX_DAYS_MARKET ?? 7;
         const ffillFn = global.G8DataLoader?.forwardFillSeries;
 
-        // For RFR proxies (CHF chpol, NZD ocr): use policy ffill window
-        // For other RFRs: use market ffill window
         const ccyFfillDays = (label === 'CHF*' || label === 'NZD') ? FFILL_POLICY : FFILL_MARKET;
         const usdRFRFilled = ffillFn ? ffillFn(usdRFR.series, targetEnd, FFILL_MARKET) : usdRFR.series;
         const ccyRFRFilled = ffillFn ? ffillFn(ccyRFR.series, targetEnd, ccyFfillDays) : ccyRFR.series;
@@ -342,20 +336,118 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // QUALITY MONITOR (Section 4)
+    // POLICY CHART (Section 05) — v5 NEW
     // ─────────────────────────────────────────────────────────────────────────
 
-    function renderQualityGrid(rfrData, billsData) {
+    function renderPolicyChart(policyData) {
+        const traces = [];
+        const order = ['gb_policy', 'jp_policy', 'ch_policy', 'au_policy'];
+        for (const key of order) {
+            const feed = policyData[key];
+            if (!feed || !feed.series || feed.series.dates.length === 0) continue;
+            const f = filterLastNDays(feed.series, 90);
+            traces.push({
+                x: f.dates, y: f.values, type: 'scatter', mode: 'lines+markers',
+                name: `${feed.label} (${feed.ccy})`,
+                line: { color: CCY_COLOR[feed.ccy] || COLORS.text, width: 1.8, shape: 'hv' },
+                marker: { size: 4, color: CCY_COLOR[feed.ccy] || COLORS.text },
+                hovertemplate: `<b>${feed.label}</b><br>%{x|%Y-%m-%d}<br>%{y:.3f}%<extra></extra>`
+            });
+        }
+        if (traces.length === 0) { setError('chart-policy', 'No Policy Rate data available'); return; }
+        const layout = {
+            ...PLOTLY_BASE_LAYOUT,
+            yaxis: { ...PLOTLY_BASE_LAYOUT.yaxis, title: { text: 'Policy Rate (%)', font: { color: COLORS.textDim, size: 11 } }, tickformat: '.2f' },
+            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%b %d' },
+            showlegend: true
+        };
+        Plotly.newPlot('chart-policy', traces, layout, PLOTLY_CONFIG);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACM TERM PREMIUM CHART (Section 06) — v5 NEW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function renderACMChart(acmData) {
+        const feed = acmData.acm_tp_10y;
+        if (!feed || !feed.series || feed.series.dates.length === 0) {
+            setError('chart-acm', 'No ACM Term Premium data available');
+            return;
+        }
+
+        // 1Y lookback (vs RFR 90D) — term premium moves slowly, needs more context
+        const f = filterLastNDays(feed.series, 365);
+
+        if (f.dates.length === 0) { setError('chart-acm', 'No data in lookback window'); return; }
+
+        const traces = [{
+            x: f.dates, y: f.values, type: 'scatter', mode: 'lines',
+            name: 'ACM TP 10Y',
+            line: { color: COLORS.gold, width: 1.8 },
+            fill: 'tozeroy',
+            fillcolor: 'rgba(253, 184, 19, 0.08)',
+            hovertemplate: `<b>ACM 10Y</b><br>%{x|%Y-%m-%d}<br>%{y:+.4f}%<extra></extra>`
+        }];
+
+        const layout = {
+            ...PLOTLY_BASE_LAYOUT,
+            yaxis: { 
+                ...PLOTLY_BASE_LAYOUT.yaxis, 
+                title: { text: 'Term Premium (%)', font: { color: COLORS.textDim, size: 11 } }, 
+                tickformat: '+.2f',
+                zeroline: true,
+                zerolinecolor: COLORS.textMuted,
+                zerolinewidth: 1
+            },
+            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%b %Y' },
+            showlegend: false
+        };
+        Plotly.newPlot('chart-acm', traces, layout, PLOTLY_CONFIG);
+
+        // Update footer with latest value + Z-score (252D)
+        const footerEl = document.getElementById('acm-footer-note');
+        if (footerEl) {
+            const full = feed.series;
+            const latest = full.values[full.values.length - 1];
+            const window = Math.min(252, full.values.length);
+            const windowData = full.values.slice(-window);
+            const mean = windowData.reduce((a, b) => a + b, 0) / windowData.length;
+            const variance = windowData.reduce((a, b) => a + (b - mean) ** 2, 0) / windowData.length;
+            const stdev = Math.sqrt(variance);
+            const z = stdev > 0 ? (latest - mean) / stdev : 0;
+            const lastDate = formatDate(full.dates[full.dates.length - 1]);
+            footerEl.innerHTML = 
+                `Latest <b style="color:${COLORS.gold}">${latest >= 0 ? '+' : ''}${latest.toFixed(4)}%</b> · ` +
+                `Z-score 252D <b>${z >= 0 ? '+' : ''}${z.toFixed(2)}σ</b> · ` +
+                `Mean 252D ${mean >= 0 ? '+' : ''}${mean.toFixed(2)}% · ` +
+                `Last obs ${lastDate}`;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // QUALITY MONITOR (Section 04) — v5 extended with Policy + ACM
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function renderQualityGrid(rfrData, billsData, policyData, acmData) {
         const grid = document.getElementById('quality-grid');
         if (!grid) return;
         grid.innerHTML = '';
         const allFeeds = [];
         Object.entries(rfrData).forEach(([k, f]) => {
-            // Skip CHF proxy from main quality grid (it's tracked separately as proxy)
             if (k === 'chpol') return;
             allFeeds.push({ key: `rfr-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'RFR', series: f.series });
         });
         Object.entries(billsData).forEach(([k, f]) => allFeeds.push({ key: `bills-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'Bills', series: f.curve ? { dates: f.curve.dates } : null }));
+
+        // v5: add Policy feeds
+        if (policyData) {
+            Object.entries(policyData).forEach(([k, f]) => allFeeds.push({ key: `policy-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'Policy', series: f.series }));
+        }
+
+        // v5: add ACM feed
+        if (acmData) {
+            Object.entries(acmData).forEach(([k, f]) => allFeeds.push({ key: `acm-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'TermPrem', series: f.series }));
+        }
 
         for (const f of allFeeds) {
             const cell = document.createElement('div');
@@ -380,12 +472,13 @@
         }
     }
 
-    function updateHeaderStatus(rfrData, billsData) {
+    function updateHeaderStatus(rfrData, billsData, policyData, acmData) {
         let latestDate = null, freshCount = 0, staleCount = 0, failCount = 0, totalCount = 0;
         const allFeeds = [
-            // Skip chpol from header counting (it's a proxy, not direct feed)
             ...Object.entries(rfrData).filter(([k]) => k !== 'chpol').map(([_, f]) => ({ series: f.series })),
-            ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null }))
+            ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null })),
+            ...(policyData ? Object.values(policyData).map((f) => ({ series: f.series })) : []),
+            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series })) : [])
         ];
         for (const f of allFeeds) {
             totalCount++;
@@ -416,28 +509,34 @@
     // ─────────────────────────────────────────────────────────────────────────
 
     async function init() {
-        console.log('[G8 Dashboard v4] Initializing...');
+        console.log('[G8 Dashboard v5] Initializing...');
         setLoading('chart-rfr');
         setLoading('chart-xccy');
+        setLoading('chart-policy');
+        setLoading('chart-acm');
         document.getElementById('curves-grid').innerHTML = '<div class="chart-loading">Loading curves</div>';
         document.getElementById('quality-grid').innerHTML = '<div class="chart-loading">Loading quality data</div>';
         try {
-            const [rfrData, billsData] = await Promise.all([
+            const [rfrData, billsData, policyData, acmData] = await Promise.all([
                 global.G8DataLoader.loadAllRFR(),
-                global.G8DataLoader.loadAllBills()
+                global.G8DataLoader.loadAllBills(),
+                global.G8DataLoader.loadAllPolicy(),
+                global.G8DataLoader.loadACM()
             ]);
-            updateHeaderStatus(rfrData, billsData);
+            updateHeaderStatus(rfrData, billsData, policyData, acmData);
             renderRFRChart(rfrData);
             renderCurvesGrid(billsData);
             renderXCCYChart(rfrData, billsData);
-            renderQualityGrid(rfrData, billsData);
-            console.log('[G8 Dashboard v4] Render complete');
-            console.log('[G8 Dashboard v4] Load stats:', global.G8DataLoader.loadStats);
+            renderQualityGrid(rfrData, billsData, policyData, acmData);
+            renderPolicyChart(policyData);
+            renderACMChart(acmData);
+            console.log('[G8 Dashboard v5] Render complete');
+            console.log('[G8 Dashboard v5] Load stats:', global.G8DataLoader.loadStats);
         } catch (err) {
-            console.error('[G8 Dashboard v4] Init failed:', err);
+            console.error('[G8 Dashboard v5] Init failed:', err);
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, COLORS, CCY_COLOR, VERSION: 'v4' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5' };
 
 })(window);
