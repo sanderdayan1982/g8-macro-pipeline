@@ -1,10 +1,12 @@
 /* =============================================================================
-   G8 MACRO PIPELINE — Data Loader v4 (NZD + CHF FIX)
-   v4 changes:
-   - XCCY_MIN_OBS relaxed from 10 to 5 (NZD and others with lag now compute)
-   - Forward-fill for series with date gaps (institutional standard)
-   - CH_POLICY (BIS) loaded as proxy for SARON (SNB blocked automation)
-   - Forward-fill applied to RFR series during normalizeOHLCV
+   G8 MACRO PIPELINE — Data Loader v5 (POLICY + ACM)
+   v5 changes:
+   - POLICY_FEEDS catalog (GB/JP/CH/AU) loaded for new Section 05
+   - ACM_FEED for new Section 06 (USD 10Y term premium, NY Fed)
+   - loadAllPolicy() and loadACM() orchestration functions
+   - Public API exposes new catalogs for charts.js v5
+   v4 baseline preserved:
+   - XCCY_MIN_OBS=5, forward-fill, CH_POLICY as SARON proxy in XCCY
    ============================================================================= */
 
 (function (global) {
@@ -38,6 +40,21 @@
         cad: { ccy: 'CAD', source: 'BoC Valet',      label: 'GoC Bills',         tenors: ['3M', '6M', '1Y']                                },
         chf: { ccy: 'CHF', source: 'SNB manual',     label: 'CHF Confederation', tenors: ['3M', '6M', '1Y']                                },
         nzd: { ccy: 'NZD', source: 'RBNZ/NZDM',      label: 'NZ Govt Bonds',     tenors: ['3M', '6M', '1Y']                                }
+    };
+
+    // v5: NEW — Policy rates catalog
+    // Note: USD/EUR/CAD policy rates are NOT in pipeline — they live in TradingView native feeds.
+    // Only the 4 BIS-sourced policy rates are wired here.
+    const POLICY_FEEDS = {
+        gb_policy: { file: 'GB_POLICY.csv', ccy: 'GBP', source: 'BIS/BoE', label: 'BoE Bank Rate'           },
+        jp_policy: { file: 'JP_POLICY.csv', ccy: 'JPY', source: 'BIS/BoJ', label: 'BoJ Policy Balance Rate' },
+        ch_policy: { file: 'CH_POLICY.csv', ccy: 'CHF', source: 'BIS/SNB', label: 'SNB Policy Rate'         },
+        au_policy: { file: 'AU_POLICY.csv', ccy: 'AUD', source: 'BIS/RBA', label: 'RBA Cash Rate Target'    }
+    };
+
+    // v5: NEW — ACM Term Premium catalog (single feed, USD-only)
+    const ACM_FEED = {
+        acm_tp_10y: { file: 'ACM_TP_10Y.csv', ccy: 'USD', source: 'NY Fed', label: 'ACM 10Y Term Premium' }
     };
 
     function billFile(ccyKey, tenor) {
@@ -168,10 +185,8 @@
         const lastDate = lastObs.d;
         const lastValue = lastObs.v;
 
-        // If last observation is more recent than target, no fill needed
         if (lastDate >= targetEndDate) return series;
 
-        // If gap exceeds max, only fill up to max
         const gapDays = Math.floor((targetEndDate - lastDate) / 86400000);
         const fillDays = Math.min(gapDays, maxGapDays);
 
@@ -180,12 +195,11 @@
         const filledDates = [...sorted.map(o => o.d)];
         const filledValues = [...sorted.map(o => o.v)];
 
-        // Add business days only (skip weekends)
         let current = new Date(lastDate.getTime() + 86400000);
         let added = 0;
         while (added < fillDays && current <= targetEndDate) {
             const dow = current.getUTCDay();
-            if (dow !== 0 && dow !== 6) {  // not Sunday(0) or Saturday(6)
+            if (dow !== 0 && dow !== 6) {
                 filledDates.push(new Date(current.getTime()));
                 filledValues.push(lastValue);
                 added++;
@@ -313,19 +327,45 @@
         return out;
     }
 
+    // v5: NEW
+    async function loadAllPolicy() {
+        const out = {};
+        const promises = Object.entries(POLICY_FEEDS).map(async ([key, cfg]) => {
+            const rows = await loadCSV(cfg.file);
+            out[key] = { ...cfg, rows, series: rows ? normalizeOHLCV(rows) : null };
+        });
+        await Promise.all(promises);
+        const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
+        console.log(`[Policy Summary] ${okCount}/${Object.keys(POLICY_FEEDS).length} policy feeds loaded`);
+        return out;
+    }
+
+    // v5: NEW
+    async function loadACM() {
+        const out = {};
+        const promises = Object.entries(ACM_FEED).map(async ([key, cfg]) => {
+            const rows = await loadCSV(cfg.file);
+            out[key] = { ...cfg, rows, series: rows ? normalizeOHLCV(rows) : null };
+        });
+        await Promise.all(promises);
+        const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
+        console.log(`[ACM Summary] ${okCount}/${Object.keys(ACM_FEED).length} ACM feeds loaded`);
+        return out;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // PUBLIC API
     // ─────────────────────────────────────────────────────────────────────────
 
     global.G8DataLoader = {
-        FEEDS: { rfr: RFR_FEEDS, bills: BILLS_CATALOG },
-        loadCSV, loadAllRFR, loadAllBills,
+        FEEDS: { rfr: RFR_FEEDS, bills: BILLS_CATALOG, policy: POLICY_FEEDS, acm: ACM_FEED },
+        loadCSV, loadAllRFR, loadAllBills, loadAllPolicy, loadACM,
         normalizeSeries: normalizeOHLCV,
         forwardFillSeries,
         daysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
         FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
-        VERSION: 'v4'
+        VERSION: 'v5'
     };
 
 })(window);
