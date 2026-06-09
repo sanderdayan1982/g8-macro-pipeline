@@ -125,6 +125,11 @@ jobs:
         continue-on-error: true
         id: jpy_bills
 
+      - name: Fetch NZD BKBM + Gov Bonds (30D/60D/90D + 1Y/2Y/5Y/10Y) via RBNZ B2
+        run: python scripts/fetch_nzd_b2.py
+        continue-on-error: true
+        id: nzd_bills
+
       - name: Fetch ACM 10Y Term Premium (NY Fed)
         run: python scripts/fetch_acm.py
         continue-on-error: true
@@ -155,6 +160,7 @@ jobs:
           echo "| EUR Bills  | ${{ steps.eur_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| NZD Bills + Bonds | ${{ steps.nzd_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ACM TP 10Y | ${{ steps.acm.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
