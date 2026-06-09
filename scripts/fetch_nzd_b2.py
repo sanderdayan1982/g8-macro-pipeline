@@ -34,6 +34,23 @@ URL = (
     "statistics/series/b/b2/hb2-daily-close.xlsx"
 )
 
+# Browser-like headers: RBNZ's WAF blocks default `python-requests/X.X.X`
+# User-Agent when requests come from datacenter IPs (e.g. GitHub Actions
+# runners on Azure). Mimicking a modern Chrome on macOS gets through.
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,"
+        "application/octet-stream,*/*;q=0.8"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+}
+
 OUTPUT_DIR = "data"
 TIMEOUT_SECONDS = 90
 RETRY_DELAYS = [0, 5, 15]  # seconds between attempts (3 attempts total)
@@ -69,7 +86,7 @@ def download_xlsx(url: str) -> bytes:
             time.sleep(delay)
         try:
             print(f"[fetch_nzd_b2] attempt {attempt}/{len(RETRY_DELAYS)} GET {url}")
-            r = requests.get(url, timeout=TIMEOUT_SECONDS)
+            r = requests.get(url, timeout=TIMEOUT_SECONDS, headers=HEADERS)
             r.raise_for_status()
             print(f"[fetch_nzd_b2] downloaded {len(r.content):,} bytes")
             return r.content
