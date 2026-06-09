@@ -1,12 +1,12 @@
 """
 fetch_us_bills.py
 =================
-Scraper for US Treasury Constant Maturity yields (3M, 6M, 1Y) from FRED.
+Scraper for US Treasury Constant Maturity yields (3M, 6M, 1Y, 2Y) from FRED.
 
 Source:   FRED (Federal Reserve Economic Data, St. Louis Fed)
           Series sourced via H.15 Statistical Release (Federal Reserve Board)
 Endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
-Series:   DGS3MO, DGS6MO, DGS1 (constant maturity, investment basis)
+Series:   DGS3MO, DGS6MO, DGS1, DGS2 (constant maturity, investment basis)
 
 Format:   CSV with header "DATE,<SERIES_ID>" and rows "YYYY-MM-DD,value"
 Note:     Missing values (weekends, holidays) appear as "." and are filtered.
@@ -15,6 +15,7 @@ Output:
     data/US_BILL_3M.csv  — 3-month T-bill constant maturity yield
     data/US_BILL_6M.csv  — 6-month T-bill constant maturity yield
     data/US_BILL_1Y.csv  — 1-year T-bill constant maturity yield
+    data/US_BILL_2Y.csv  — 2-year T-note constant maturity yield
 
 Why constant maturity (DGS*) vs discount basis (DTB*):
     Constant maturity series are quoted on investment basis (BEY), making them
@@ -40,10 +41,18 @@ License: FRED data is publicly available without API key for fredgraph endpoint.
          Source citation: Board of Governors of the Federal Reserve System (US),
          retrieved from FRED, Federal Reserve Bank of St. Louis.
          Treasury constant maturity data is from the H.15 Statistical Release.
+
+Robustness (v2 — 2026-06-09):
+    FRED endpoint exhibits intermittent Read timeouts from GitHub Actions
+    runners (ubuntu-latest) during peak hours. Two production failures observed
+    2026-06-09 with TIMEOUT_SECONDS=30. Fix: raise timeout to 90s and retry
+    transient network errors up to 3 times with exponential backoff (0/5/15s).
+    HTTPError (4xx/5xx) is NOT retried — that indicates a query-level bug.
 """
 
 import csv
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -53,8 +62,10 @@ import requests
 # Constants
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 HISTORY_YEARS = 5
-TIMEOUT_SECONDS = 30
-USER_AGENT = "xccy-g8/1.0 (https://github.com/sanderdayan1982/xccy-g8)"
+TIMEOUT_SECONDS = 90
+RETRY_ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = (0, 5, 15)  # delay before attempts 1, 2, 3
+USER_AGENT = "g8-macro-pipeline/1.0 (https://github.com/sanderdayan1982/g8-macro-pipeline)"
 
 # Tenor -> FRED series ID mapping
 # All series: Treasury Constant Maturity Rate, Investment Basis (H.15)
@@ -73,6 +84,43 @@ OUTPUT_NAMES = {
     "1Y": "US_BILL_1Y.csv",
     "2Y": "US_BILL_2Y.csv",
 }
+
+
+def _request_with_retry(
+    url: str,
+    params: dict,
+    headers: dict,
+    timeout: int,
+) -> requests.Response:
+    """
+    GET with retry on transient network errors.
+
+    Retries up to RETRY_ATTEMPTS times on Timeout / ConnectionError, with
+    exponential backoff between attempts. Does NOT retry HTTPError — that
+    indicates a permanent issue (bad query, endpoint moved) which should
+    surface immediately.
+    """
+    last_exc: Exception | None = None
+    for attempt_idx in range(RETRY_ATTEMPTS):
+        delay = RETRY_BACKOFF_SECONDS[attempt_idx]
+        if delay > 0:
+            print(
+                f"    Retry attempt {attempt_idx + 1}/{RETRY_ATTEMPTS} "
+                f"after {delay}s backoff",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+        try:
+            return requests.get(url, params=params, headers=headers, timeout=timeout)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_exc = exc
+            print(
+                f"    Transient network error on attempt {attempt_idx + 1}: {exc}",
+                file=sys.stderr,
+            )
+            continue
+    assert last_exc is not None
+    raise last_exc
 
 
 def fetch_fred_series(
@@ -96,7 +144,7 @@ def fetch_fred_series(
         "Accept": "text/csv",
     }
 
-    response = requests.get(
+    response = _request_with_retry(
         FRED_URL,
         params=params,
         headers=headers,
@@ -176,7 +224,8 @@ def main() -> int:
             failures += 1
             continue
         except requests.RequestException as exc:
-            print(f"[{tenor}] ERROR: FRED network error: {exc}", file=sys.stderr)
+            print(f"[{tenor}] ERROR: FRED network error after {RETRY_ATTEMPTS} attempts: {exc}",
+                  file=sys.stderr)
             failures += 1
             continue
         except Exception as exc:
