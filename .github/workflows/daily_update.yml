@@ -125,27 +125,14 @@ jobs:
         continue-on-error: true
         id: jpy_bills
 
-      # ── 4.5. NZD via Tailscale exit node ───────────────────────────────────
-      # RBNZ's WAF blocks ASN datacenter IPs (Azure runners). We route ONLY
-      # the NZD step through a Tailscale exit node = Sander's Mac in Bata
-      # (residential ISP, accepted by RBNZ). Teardown immediately after so
-      # ACM and the commit step go via Azure direct again (fast, unaffected).
-      - name: Setup Tailscale (route NZD step via residential Mac in Bata)
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: "--exit-node=${{ secrets.TAILSCALE_EXIT_NODE_IP }}"
+      # ── NZD scraper deferred pending RBNZ response (2026-06-09) ───────────
+      # RBNZ blocks Azure datacenter IPs at the ASN level. Cloudflare Worker
+      # and Tailscale exit node bypass attempts were not viable. Email sent
+      # to stats-info@rbnz.govt.nz requesting API key / ISP-level whitelist
+      # / alternative machine-readable distribution channel. When RBNZ
+      # responds, reactivate `scripts/fetch_nzd_b2.py` here. Until then NZD
+      # is loaded manually via convert_manual.py (T-15D freshness).
 
-      - name: Fetch NZD BKBM + Gov Bonds (30D/60D/90D + 1Y/2Y/5Y/10Y) via RBNZ B2
-        run: python scripts/fetch_nzd_b2.py
-        continue-on-error: true
-        id: nzd_bills
-
-      - name: Teardown Tailscale (restore Azure runner network)
-        if: always()  # cleanup even if NZD step failed
-        run: sudo tailscale down || true
-
-      # ── 4.6. Remaining scrapers (Azure direct again) ───────────────────────
       - name: Fetch ACM 10Y Term Premium (NY Fed)
         run: python scripts/fetch_acm.py
         continue-on-error: true
@@ -176,11 +163,10 @@ jobs:
           echo "| EUR Bills  | ${{ steps.eur_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| NZD Bills + Bonds (via Tailscale) | ${{ steps.nzd_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ACM TP 10Y | ${{ steps.acm.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** NZD uses Tailscale exit node (Mac in Bata) due to RBNZ ASN filter" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** NZD bills + bonds deferred pending RBNZ response (manual quincenal in the meantime)" >> $GITHUB_STEP_SUMMARY
 
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
