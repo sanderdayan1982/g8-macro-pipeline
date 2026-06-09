@@ -1,32 +1,36 @@
 """
-convert_manual.py
-=================
+convert_manual.py v2
+====================
 Converts the manually-maintained input file into the OHLCV per-tenor CSVs that
-the XCCY engine consumes, for the two manual currencies: CHF and NZD.
+the XCCY engine consumes — CHF ONLY.
 
-Why manual:
-    CHF and NZD do not have a clean, free, daily, full-precision automated
-    source for their short-end sovereign curve:
-      - CHF: SARON Compound (the RFR) is only available daily at full precision
-        from SIX under a commercial licence; the free SNB cubes are either
-        stale (zirepo, ~bi-weekly) or rounded to 2 decimals (snbgwdzid,
-        illustrative-only). Swiss government bills are thinly traded.
-      - NZD: never had an automated bills feed in this project (only the
-        overnight OCR via BIS).
-    Decision (2026-05-31): treat BOTH as manual sovereign-yield inputs, copied
-    from TradingView's "Curvas de rendimiento" (world government bond yields)
-    table. This keeps methodology coherent — all 8 currencies use sovereign
-    yields — and gives the operator full control over precision and freshness.
+v2 changes (2026-06-09):
+    - NZD REMOVED from scope. NZD bills + bonds now come from RBNZ B2 XLSX
+      (see scripts/fetch_nzd_b2.py — currently fed manually until RBNZ replies
+      to programmatic-access request). NZD CSVs in data/ should NEVER be
+      overwritten by this script anymore.
+    - manual_input.csv header reduced to: DATE,CHF_3M,CHF_6M,CHF_1Y
+    - Old NZD columns (NZD_3M, NZD_6M, NZD_1Y) are ignored if still present
+      in manual_input.csv (backward compatibility during migration).
+
+Why manual (CHF only now):
+    SARON Compound (the CHF RFR) is only available daily at full precision
+    from SIX under a commercial licence. The free SNB cubes are either stale
+    (zirepo, ~bi-weekly) or rounded to 2 decimals (snbgwdzid, illustrative-
+    only). Swiss government bills are thinly traded. Until a free daily
+    full-precision automated source for CHF emerges, the operator copies
+    3M / 6M / 1Y sovereign yields from TradingView's "Curvas de rendimiento"
+    table into manual_input.csv.
 
 Source of values:
     TradingView -> "Curvas de rendimiento" (World government bond yields).
-    The operator copies the 3M / 6M / 1Y sovereign yields for Switzerland and
-    New Zealand into manual_input.csv, one row per observation date.
+    The operator copies the 3M / 6M / 1Y CHF sovereign yields into
+    manual_input.csv, one row per observation date.
 
 Input file (data/manual_input.csv):
-    DATE,CHF_3M,CHF_6M,CHF_1Y,NZD_3M,NZD_6M,NZD_1Y
-    20260531,-0.020,-0.060,0.240,2.470,2.890,2.975
-    20260601,-0.018,-0.055,0.245,2.475,2.895,2.980
+    DATE,CHF_3M,CHF_6M,CHF_1Y
+    20260531,-0.020,-0.060,0.240
+    20260601,-0.018,-0.055,0.245
     ...
     - DATE: YYYYMMDD integer (same convention as all other files).
     - Values in PERCENT (decimals allowed, negatives allowed for CHF).
@@ -38,9 +42,9 @@ Output (overwrites each run, rebuilt from full input history):
     data/CHF_BILL_3M.csv
     data/CHF_BILL_6M.csv
     data/CHF_BILL_1Y.csv
-    data/NZD_BILL_3M.csv
-    data/NZD_BILL_6M.csv
-    data/NZD_BILL_1Y.csv
+
+NZD CSVs (NZD_BILL_30D/60D/90D.csv, NZD_BOND_1Y/2Y/5Y/10Y.csv) are now
+managed by fetch_nzd_b2.py and are NEVER touched by this script.
 
 Format of outputs: DATE,OPEN,HIGH,LOW,CLOSE,VOLUME with O=H=L=C (it's a rate,
 not a price), VOLUME=0 — identical schema to every other file in data/.
@@ -62,17 +66,18 @@ from typing import Dict, List, Tuple
 # The input file lives in data/ alongside the outputs
 INPUT_FILENAME = "manual_input.csv"
 
-# Map each input column -> output filename
+# v2: CHF-only mapping. NZD removed.
 COLUMN_TO_FILE = {
     "CHF_3M": "CHF_BILL_3M.csv",
     "CHF_6M": "CHF_BILL_6M.csv",
     "CHF_1Y": "CHF_BILL_1Y.csv",
-    "NZD_3M": "NZD_BILL_3M.csv",
-    "NZD_6M": "NZD_BILL_6M.csv",
-    "NZD_1Y": "NZD_BILL_1Y.csv",
 }
 
-EXPECTED_HEADER = ["DATE", "CHF_3M", "CHF_6M", "CHF_1Y", "NZD_3M", "NZD_6M", "NZD_1Y"]
+# v2: new expected header (CHF only)
+EXPECTED_HEADER_V2 = ["DATE", "CHF_3M", "CHF_6M", "CHF_1Y"]
+
+# v2: tolerated legacy header (with NZD columns — they will be ignored)
+LEGACY_HEADER_V1 = ["DATE", "CHF_3M", "CHF_6M", "CHF_1Y", "NZD_3M", "NZD_6M", "NZD_1Y"]
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
@@ -93,7 +98,7 @@ def read_manual_input(input_path: Path) -> Dict[str, List[Tuple[str, float]]]:
     Read manual_input.csv and return {column_name: [(date_str, value), ...]}.
 
     Sanity checks:
-        - header matches EXPECTED_HEADER
+        - header matches EXPECTED_HEADER_V2 or LEGACY_HEADER_V1 (NZD ignored)
         - dates are valid YYYYMMDD
         - values parse as float (blank cells skipped for that tenor/day)
         - duplicate dates: last one wins (with a warning)
@@ -101,7 +106,7 @@ def read_manual_input(input_path: Path) -> Dict[str, List[Tuple[str, float]]]:
     if not input_path.exists():
         raise FileNotFoundError(
             f"Manual input not found: {input_path}\n"
-            f"Create it with header: {','.join(EXPECTED_HEADER)}"
+            f"Create it with header: {','.join(EXPECTED_HEADER_V2)}"
         )
 
     with input_path.open("r", newline="") as f:
@@ -112,19 +117,32 @@ def read_manual_input(input_path: Path) -> Dict[str, List[Tuple[str, float]]]:
         raise ValueError("manual_input.csv is empty")
 
     header = [h.strip() for h in rows[0]]
-    if header != EXPECTED_HEADER:
+
+    # v2: accept both v1 (legacy with NZD columns) and v2 (CHF only) headers
+    if header == EXPECTED_HEADER_V2:
+        print(f"  Header: v2 (CHF only)")
+    elif header == LEGACY_HEADER_V1:
+        print(f"  Header: v1 legacy (NZD columns will be IGNORED)")
+        print(f"  NOTE: NZD is now sourced from RBNZ B2 via fetch_nzd_b2.py.")
+        print(f"        Consider trimming manual_input.csv to v2 header: "
+              f"{','.join(EXPECTED_HEADER_V2)}")
+    else:
         raise ValueError(
-            f"Header mismatch.\n  Expected: {EXPECTED_HEADER}\n  Got:      {header}"
+            f"Header mismatch.\n"
+            f"  Expected v2: {EXPECTED_HEADER_V2}\n"
+            f"  Or legacy v1: {LEGACY_HEADER_V1}\n"
+            f"  Got:         {header}"
         )
 
-    # column index per tenor
+    # Build col_idx only for columns we actively process (CHF tenors).
+    # Any NZD_* columns in a legacy file are silently ignored.
     col_idx = {name: header.index(name) for name in COLUMN_TO_FILE}
 
     # Accumulate per column, dict keyed by date for dedup (last wins)
     acc: Dict[str, Dict[str, float]] = {name: {} for name in COLUMN_TO_FILE}
 
     for line_no, row in enumerate(rows[1:], start=2):
-        if len(row) < len(EXPECTED_HEADER):
+        if len(row) < len(EXPECTED_HEADER_V2):
             print(f"  WARNING line {line_no}: too few columns, skipping: {row}",
                   file=sys.stderr)
             continue
@@ -136,6 +154,8 @@ def read_manual_input(input_path: Path) -> Dict[str, List[Tuple[str, float]]]:
             continue
 
         for name, idx in col_idx.items():
+            if idx >= len(row):
+                continue
             raw = row[idx].strip()
             if raw == "":
                 continue  # tenor missing this day — fine, skip just this cell
@@ -202,6 +222,8 @@ def main() -> int:
 
     print()
     print(f"Summary: {successes} OK, {failures} skipped (of {len(COLUMN_TO_FILE)} total)")
+    print(f"Note: NZD CSVs (BILL_30D/60D/90D + BOND_1Y/2Y/5Y/10Y) are managed")
+    print(f"      separately by fetch_nzd_b2.py and are NOT touched by this script.")
     return 0 if successes > 0 else 1
 
 
