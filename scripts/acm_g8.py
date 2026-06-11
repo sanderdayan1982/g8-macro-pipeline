@@ -246,14 +246,36 @@ def fetch_rba_xls(urls, series_id):
                 print(f"    [RBA] {url} failed ({e}) — trying next candidate")
         if content is None:
             raise RuntimeError(f"all RBA candidates failed: {urls} :: {last}")
-        raw = pd.read_excel(io.BytesIO(content), header=None)
-        hdr = raw.index[raw.iloc[:, 0].astype(str).str.strip()
-                        .str.lower().eq("series id")][0]
-        df = raw.iloc[hdr + 1:].copy()
-        df.columns = raw.iloc[hdr].astype(str).str.strip()
-        df = df.rename(columns={df.columns[0]: "DATE"})
-        df["DATE"] = pd.to_datetime(df["DATE"], errors="coerce")
-        df = df.dropna(subset=["DATE"]).set_index("DATE")
+        # locate the ID row: modern files use "Series ID", legacy use "Mnemonic",
+        # in any column of any sheet
+        sheets = pd.read_excel(io.BytesIO(content), header=None, sheet_name=None)
+        df = None
+        for sname, raw in sheets.items():
+            cells = raw.iloc[:40].astype(str).apply(
+                lambda col: col.str.strip().str.lower())
+            hit = None
+            for r in range(min(40, len(raw))):
+                for c in range(raw.shape[1]):
+                    if cells.iloc[r, c] in ("series id", "mnemonic"):
+                        hit = (r, c)
+                        break
+                if hit:
+                    break
+            if hit is None:
+                continue
+            r, c = hit
+            sub = raw.iloc[r + 1:, c:].copy()
+            sub.columns = raw.iloc[r, c:].astype(str).str.strip()
+            sub = sub.rename(columns={sub.columns[0]: "DATE"})
+            sub["DATE"] = pd.to_datetime(sub["DATE"], errors="coerce")
+            sub = sub.dropna(subset=["DATE"]).set_index("DATE")
+            if len(sub) > 0:
+                df = sub
+                print(f"    [RBA] sheet '{sname}': ID row {r} "
+                      f"({cells.iloc[r, c]}), {len(sub)} rows")
+                break
+        if df is None:
+            raise RuntimeError("no 'Series ID'/'Mnemonic' row found in any sheet")
         _RBA_CACHE[key] = df
     df = _RBA_CACHE[key]
     if series_id not in df.columns:
