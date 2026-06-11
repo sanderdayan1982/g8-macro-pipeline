@@ -18,10 +18,11 @@ Stage 2  APPLY estimated affine loadings to the pipeline's DAILY curve CSVs
          (OHLCV Pine-Seeds format) -> daily Y10_FIT / RNY10 / TP10 series.
          (Same practice as NY Fed: monthly estimation, daily application.)
 
-Coverage v2: USD (FRED, 1985+), EUR (ECB SDW, 2004+ — borderline sample,
-flagged WARN). GBP/JPY/CAD/AUD = phase 1b (BoE/MoF/Valet/RBA historical
-archives). CHF/NZD = insufficient open long-history curve tenors -> proxy
-via beta to USD TP (phase 1c) or manual.
+Coverage v2.2: USD (FRED 1985+, VALIDATED vs NY Fed: corr 0.948 levels /
+0.889 monthly changes), EUR (ECB SDW 2004+, WARN borderline), JPY (MoF
+1974+), GBP (BoE IADB 1975+, thin mid-curve: 4 tenors), CAD (BoC Valet
+2001+, WARN borderline), AUD (RBA F1/F2 1969+). CHF/NZD = phase 1c proxy
+via beta to USD TP (insufficient open long-history curve tenors).
 
 Decomposition:  y10_fitted = RNY10 (expected path) + TP10 (term premium)
 
@@ -125,6 +126,128 @@ def fetch_ecb_yc(tenor_code, start="2004-09-06"):
     return s.sort_index()
 
 
+
+
+def fetch_mof_jgb(tenor_label):
+    """Japan MoF JGB constant-maturity yields, 1974+ (historical) + current year.
+    tenor_label: '1Y','2Y',...,'10Y'. Missing values are '-'."""
+    urls = [
+        "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv",
+        "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv",
+    ]
+    frames = []
+    for url in urls:
+        raw = _http_get(url)
+        lines = raw.splitlines()
+        # locate header row starting with 'Date'
+        h = next(i for i, ln in enumerate(lines) if ln.startswith("Date"))
+        df = pd.read_csv(io.StringIO("\n".join(lines[h:])))
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        df = df.dropna(subset=["Date"]).set_index("Date")
+        frames.append(pd.to_numeric(df[tenor_label].replace("-", np.nan),
+                                    errors="coerce"))
+    s = pd.concat(frames)
+    s = s[~s.index.duplicated(keep="last")].dropna().sort_index()
+    print(f"    [MoF JGB {tenor_label}] {len(s)} obs  "
+          f"{s.index[0].date()} → {s.index[-1].date()}")
+    return s
+
+
+_VALET_CACHE = {}
+
+def fetch_valet_group(group, series_id):
+    """Bank of Canada Valet group CSV -> one series. Caches the group download."""
+    if group not in _VALET_CACHE:
+        url = (f"https://www.bankofcanada.ca/valet/observations/group/{group}/csv"
+               f"?start_date=1990-01-01")
+        raw = _http_get(url)
+        pos = raw.find('"OBSERVATIONS"')
+        df = pd.read_csv(io.StringIO(raw[pos:].split("\n", 1)[1]))
+        df.columns = [c.strip().strip('"') for c in df.columns]
+        df["date"] = pd.to_datetime(df["date"])
+        _VALET_CACHE[group] = df.set_index("date")
+    df = _VALET_CACHE[group]
+    s = pd.to_numeric(df[series_id], errors="coerce").dropna().sort_index()
+    print(f"    [Valet {series_id}] {len(s)} obs  "
+          f"{s.index[0].date()} → {s.index[-1].date()}")
+    return s
+
+
+def fetch_valet_series(candidates):
+    """Try a cascade of Valet single-series endpoints, return first that works."""
+    for sid in candidates:
+        try:
+            url = (f"https://www.bankofcanada.ca/valet/observations/{sid}/csv"
+                   f"?start_date=1980-01-01")
+            raw = _http_get(url, retries=1)
+            pos = raw.find('"OBSERVATIONS"')
+            df = pd.read_csv(io.StringIO(raw[pos:].split("\n", 1)[1]))
+            df.columns = [c.strip().strip('"') for c in df.columns]
+            df["date"] = pd.to_datetime(df["date"])
+            s = pd.to_numeric(df.set_index("date")[sid], errors="coerce").dropna()
+            if len(s) > 100:
+                print(f"    [Valet {sid}] {len(s)} obs  "
+                      f"{s.index[0].date()} → {s.index[-1].date()}")
+                return s.sort_index()
+        except Exception as e:                                     # noqa: BLE001
+            print(f"    [Valet {sid}] failed ({e}) — trying next candidate")
+    raise RuntimeError(f"all Valet candidates failed: {candidates}")
+
+
+def fetch_boe_iadb(series_codes, datefrom="01/Jan/1975"):
+    """Bank of England IADB CSV (multi-series). Returns DataFrame col=code."""
+    today = pd.Timestamp.today().strftime("%d/%b/%Y")
+    url = ("https://www.bankofengland.co.uk/boeapps/database/"
+           "_iadb-fromshowcolumns.asp?csv.x=yes"
+           f"&Datefrom={datefrom}&Dateto={today}"
+           f"&SeriesCodes={','.join(series_codes)}"
+           "&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N")
+    raw = _http_get(url)
+    df = pd.read_csv(io.StringIO(raw))
+    df.columns = [c.strip() for c in df.columns]
+    df[df.columns[0]] = pd.to_datetime(df[df.columns[0]], format="%d %b %Y",
+                                       errors="coerce")
+    df = df.dropna(subset=[df.columns[0]]).set_index(df.columns[0])
+    for c in df.columns:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    print(f"    [BoE IADB] {list(df.columns)}  {len(df)} rows  "
+          f"{df.index[0].date()} → {df.index[-1].date()}")
+    return df.sort_index()
+
+
+_BOE_CACHE = {}
+
+def fetch_boe(code):
+    key = "GBP_ZC"
+    if key not in _BOE_CACHE:
+        _BOE_CACHE[key] = fetch_boe_iadb(
+            ["IUDBEDR", "IUDSNZC", "IUDMNZC", "IUDLNZC"])
+    return _BOE_CACHE[key][code].dropna()
+
+
+_RBA_CACHE = {}
+
+def fetch_rba_xls(url, series_id):
+    """RBA statistical table .xls -> one series by Series ID row."""
+    if url not in _RBA_CACHE:
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=90) as r:
+            content = r.read()
+        raw = pd.read_excel(io.BytesIO(content), header=None)
+        hdr = raw.index[raw.iloc[:, 0].astype(str).str.strip()
+                        .str.lower().eq("series id")][0]
+        df = raw.iloc[hdr + 1:].copy()
+        df.columns = raw.iloc[hdr].astype(str).str.strip()
+        df = df.rename(columns={df.columns[0]: "DATE"})
+        df["DATE"] = pd.to_datetime(df["DATE"], errors="coerce")
+        df = df.dropna(subset=["DATE"]).set_index("DATE")
+        _RBA_CACHE[url] = df
+    s = pd.to_numeric(_RBA_CACHE[url][series_id], errors="coerce").dropna()
+    print(f"    [RBA {series_id}] {len(s)} obs  "
+          f"{s.index[0].date()} → {s.index[-1].date()}")
+    return s.sort_index()
+
+
 # =================================================== per-currency configuration
 # Long-history sources for ESTIMATION (tenor years -> callable)
 HIST_SOURCES = {
@@ -147,8 +270,34 @@ HIST_SOURCES = {
         7:    lambda: fetch_ecb_yc("7Y"),
         10:   lambda: fetch_ecb_yc("10Y"),
     },
-    # Phase 1b: GBP (BoE zero-coupon archive 1979+), JPY (MoF 1974+),
-    #           CAD (BoC Valet benchmarks), AUD (RBA F2 1969+)
+    "JPY": {  # MoF constant-maturity JGB curve, 1974+ — best sample after USD
+        1: lambda: fetch_mof_jgb("1Y"),  2: lambda: fetch_mof_jgb("2Y"),
+        3: lambda: fetch_mof_jgb("3Y"),  4: lambda: fetch_mof_jgb("4Y"),
+        5: lambda: fetch_mof_jgb("5Y"),  6: lambda: fetch_mof_jgb("6Y"),
+        7: lambda: fetch_mof_jgb("7Y"),  8: lambda: fetch_mof_jgb("8Y"),
+        9: lambda: fetch_mof_jgb("9Y"),  10: lambda: fetch_mof_jgb("10Y"),
+    },
+    "GBP": {  # BoE IADB zero-coupon gilts + Bank Rate; thin mid-curve (4 tenors)
+        0.08: lambda: fetch_boe("IUDBEDR"),    # Bank Rate as short anchor
+        5:    lambda: fetch_boe("IUDSNZC"),
+        10:   lambda: fetch_boe("IUDMNZC"),
+        20:   lambda: fetch_boe("IUDLNZC"),
+    },
+    "CAD": {  # Valet benchmarks 2001+ (WARN: borderline) + 3M tbill cascade
+        0.25: lambda: fetch_valet_series(["V122531", "V80691344", "V39065"]),
+        2:    lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.2YR.DQ.YLD"),
+        3:    lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.3YR.DQ.YLD"),
+        5:    lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.5YR.DQ.YLD"),
+        7:    lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.7YR.DQ.YLD"),
+        10:   lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.10YR.DQ.YLD"),
+    },
+    "AUD": {  # RBA F2 monthly 1969+ (AGS yields) + F1 90d bank bills
+        0.25: lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls-hist/f01hist.xls", "FIRMMBAB90"),
+        2:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG2"),
+        3:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG3"),
+        5:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG5"),
+        10:   lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG10"),
+    },
     # Phase 1c: CHF/NZD via beta-to-USD-TP proxy (insufficient open tenors)
 }
 
@@ -158,11 +307,26 @@ DAILY_FILES = {
             1: "US_BILL_1Y.csv", 2: "US_BILL_2Y.csv"},
     "EUR": {0.25: "EUR_BILL_3M.csv", 0.5: "EUR_BILL_6M.csv", 1: "EUR_BILL_1Y.csv",
             2: "EUR_BILL_2Y.csv", 5: "EUR_BILL_5Y.csv", 10: "EUR_BILL_10Y.csv"},
+    "GBP": {0.5: "GBP_BILL_6M.csv", 1: "GBP_BILL_1Y.csv", 2: "GBP_BILL_2Y.csv",
+            5: "GBP_BILL_5Y.csv", 10: "GBP_BILL_10Y.csv"},
+    "JPY": {1: "JPY_BILL_1Y.csv", 2: "JPY_BILL_2Y.csv", 3: "JPY_BILL_3Y.csv",
+            5: "JPY_BILL_5Y.csv", 10: "JPY_BILL_10Y.csv"},
+    "CAD": {0.25: "CAD_BILL_3M.csv", 0.5: "CAD_BILL_6M.csv", 1: "CAD_BILL_1Y.csv"},
+    "AUD": {0.25: "AUD_BILL_3M.csv", 0.5: "AUD_BILL_6M.csv"},
 }
-# NOTE — USD daily: repo holds only <=2Y; the long end for daily application is
-# fetched from FRED (last 2 years of DGS5/DGS10) inside run_currency().
+# Long-end daily for currencies whose repo CSVs stop short: fetched from the
+# same primary source (last 5y slice) inside build_daily_panel().
 DAILY_FRED_EXTRA = {
     "USD": {5: "DGS5", 10: "DGS10"},
+}
+DAILY_SOURCE_EXTRA = {
+    "CAD": {2:  lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.2YR.DQ.YLD"),
+            5:  lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.5YR.DQ.YLD"),
+            10: lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.10YR.DQ.YLD")},
+    "AUD": {2:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG2D"),
+            3:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG3D"),
+            5:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG5D"),
+            10: lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG10D")},
 }
 
 
@@ -302,6 +466,10 @@ def build_daily_panel(ccy):
     for tenor, sid in DAILY_FRED_EXTRA.get(ccy, {}).items():
         start = (pd.Timestamp.today() - pd.DateOffset(years=5)).strftime("%Y-%m-%d")
         cols[tenor] = fetch_fred(sid, start)
+    cutoff = pd.Timestamp.today() - pd.DateOffset(years=5)
+    for tenor, fn in DAILY_SOURCE_EXTRA.get(ccy, {}).items():
+        s = fn()
+        cols[tenor] = s[s.index >= cutoff]
     panel = pd.DataFrame(cols).sort_index().ffill(limit=5).dropna()
     print(f"  daily panel  : tenors {list(panel.columns)}  "
           f"{panel.index[0].date()} → {panel.index[-1].date()}  ({len(panel)} obs)")
