@@ -6,7 +6,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
     steps:
@@ -17,7 +17,11 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        run: pip install numpy pandas
+        run: pip install numpy pandas xlrd openpyxl
 
-      - name: ACM validation vs NY Fed
+      - name: ACM validation vs NY Fed (regression guard)
         run: python scripts/acm_g8.py --validate-us
+
+      - name: ACM full run — all currencies
+        if: always()
+        run: python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
