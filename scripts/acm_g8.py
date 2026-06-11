@@ -227,12 +227,25 @@ def fetch_boe(code):
 
 _RBA_CACHE = {}
 
-def fetch_rba_xls(url, series_id):
-    """RBA statistical table .xls -> one series by Series ID row."""
-    if url not in _RBA_CACHE:
-        req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=90) as r:
-            content = r.read()
+def fetch_rba_xls(urls, series_id):
+    """RBA statistical table (.xlsx/.xls) -> one series by Series ID row.
+    urls: cascade of candidate URLs (RBA migrated monthly hist tables from
+    /xls-hist/*.xls to /xls/*.xlsx; try both)."""
+    key = tuple(urls)
+    if key not in _RBA_CACHE:
+        content, last = None, None
+        for url in urls:
+            try:
+                req = urllib.request.Request(url, headers=UA)
+                with urllib.request.urlopen(req, timeout=90) as r:
+                    content = r.read()
+                print(f"    [RBA] using {url}")
+                break
+            except Exception as e:                                 # noqa: BLE001
+                last = e
+                print(f"    [RBA] {url} failed ({e}) — trying next candidate")
+        if content is None:
+            raise RuntimeError(f"all RBA candidates failed: {urls} :: {last}")
         raw = pd.read_excel(io.BytesIO(content), header=None)
         hdr = raw.index[raw.iloc[:, 0].astype(str).str.strip()
                         .str.lower().eq("series id")][0]
@@ -241,14 +254,22 @@ def fetch_rba_xls(url, series_id):
         df = df.rename(columns={df.columns[0]: "DATE"})
         df["DATE"] = pd.to_datetime(df["DATE"], errors="coerce")
         df = df.dropna(subset=["DATE"]).set_index("DATE")
-        _RBA_CACHE[url] = df
-    s = pd.to_numeric(_RBA_CACHE[url][series_id], errors="coerce").dropna()
+        _RBA_CACHE[key] = df
+    s = pd.to_numeric(_RBA_CACHE[key][series_id], errors="coerce").dropna()
     print(f"    [RBA {series_id}] {len(s)} obs  "
           f"{s.index[0].date()} → {s.index[-1].date()}")
     return s.sort_index()
 
 
 # =================================================== per-currency configuration
+# RBA table URL candidates (RBA migrated hist tables to .xlsx under /xls/)
+RBA_F1_HIST = ["https://www.rba.gov.au/statistics/tables/xls/f01hist.xlsx",
+               "https://www.rba.gov.au/statistics/tables/xls-hist/f01hist.xls"]
+RBA_F2_HIST = ["https://www.rba.gov.au/statistics/tables/xls/f02hist.xlsx",
+               "https://www.rba.gov.au/statistics/tables/xls-hist/f02hist.xls"]
+RBA_F2_DAILY = ["https://www.rba.gov.au/statistics/tables/xls/f02d.xlsx",
+                "https://www.rba.gov.au/statistics/tables/xls/f02d.xls"]
+
 # Long-history sources for ESTIMATION (tenor years -> callable)
 HIST_SOURCES = {
     "USD": {  # FRED constant-maturity Treasuries; common sample from 1985+
@@ -292,11 +313,11 @@ HIST_SOURCES = {
         10:   lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.10YR.DQ.YLD"),
     },
     "AUD": {  # RBA F2 monthly 1969+ (AGS yields) + F1 90d bank bills
-        0.25: lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls-hist/f01hist.xls", "FIRMMBAB90"),
-        2:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG2"),
-        3:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG3"),
-        5:    lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG5"),
-        10:   lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02hist.xls", "FCMYGBAG10"),
+        0.25: lambda: fetch_rba_xls(RBA_F1_HIST, "FIRMMBAB90"),
+        2:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG2"),
+        3:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG3"),
+        5:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG5"),
+        10:   lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG10"),
     },
     # Phase 1c: CHF/NZD via beta-to-USD-TP proxy (insufficient open tenors)
 }
@@ -323,10 +344,10 @@ DAILY_SOURCE_EXTRA = {
     "CAD": {2:  lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.2YR.DQ.YLD"),
             5:  lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.5YR.DQ.YLD"),
             10: lambda: fetch_valet_group("bond_yields_benchmark", "BD.CDN.10YR.DQ.YLD")},
-    "AUD": {2:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG2D"),
-            3:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG3D"),
-            5:  lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG5D"),
-            10: lambda: fetch_rba_xls("https://www.rba.gov.au/statistics/tables/xls/f02d.xls", "FCMYGBAG10D")},
+    "AUD": {2:  lambda: fetch_rba_xls(RBA_F2_DAILY, "FCMYGBAG2D"),
+            3:  lambda: fetch_rba_xls(RBA_F2_DAILY, "FCMYGBAG3D"),
+            5:  lambda: fetch_rba_xls(RBA_F2_DAILY, "FCMYGBAG5D"),
+            10: lambda: fetch_rba_xls(RBA_F2_DAILY, "FCMYGBAG10D")},
 }
 
 
