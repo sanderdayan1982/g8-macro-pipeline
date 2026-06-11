@@ -255,10 +255,32 @@ def fetch_rba_xls(urls, series_id):
         df["DATE"] = pd.to_datetime(df["DATE"], errors="coerce")
         df = df.dropna(subset=["DATE"]).set_index("DATE")
         _RBA_CACHE[key] = df
-    s = pd.to_numeric(_RBA_CACHE[key][series_id], errors="coerce").dropna()
+    df = _RBA_CACHE[key]
+    if series_id not in df.columns:
+        cand = [c for c in df.columns if "FCMY" in str(c) or "FIRMM" in str(c)]
+        raise RuntimeError(f"series {series_id} not in table; available: {cand}")
+    s = pd.to_numeric(df[series_id], errors="coerce").dropna()
     print(f"    [RBA {series_id}] {len(s)} obs  "
           f"{s.index[0].date()} → {s.index[-1].date()}")
     return s.sort_index()
+
+
+def fetch_rba_concat(tables, series_id):
+    """Concatenate one series across multiple RBA tables (RBA splits F2 history:
+    f02histhist.xls covers 1969-2013, f02hist.xlsx covers 2013+)."""
+    parts = []
+    for urls in tables:
+        try:
+            parts.append(fetch_rba_xls(urls, series_id))
+        except Exception as e:                                     # noqa: BLE001
+            print(f"    [RBA concat] {series_id} missing in one table ({e})")
+    if not parts:
+        raise RuntimeError(f"{series_id}: no RBA table provided data")
+    s = pd.concat(parts)
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    print(f"    [RBA {series_id} TOTAL] {len(s)} obs  "
+          f"{s.index[0].date()} → {s.index[-1].date()}")
+    return s
 
 
 # =================================================== per-currency configuration
@@ -269,6 +291,8 @@ RBA_F2_HIST = ["https://www.rba.gov.au/statistics/tables/xls/f02hist.xlsx",
                "https://www.rba.gov.au/statistics/tables/xls-hist/f02hist.xls"]
 RBA_F2_DAILY = ["https://www.rba.gov.au/statistics/tables/xls/f02d.xlsx",
                 "https://www.rba.gov.au/statistics/tables/xls/f02d.xls"]
+RBA_F2_HIST_OLD = ["https://www.rba.gov.au/statistics/tables/xls-hist/f02histhist.xls"]
+RBA_F2_ALL = [RBA_F2_HIST_OLD, RBA_F2_HIST]   # 1969-2013 + 2013-present
 
 # Long-history sources for ESTIMATION (tenor years -> callable)
 HIST_SOURCES = {
@@ -314,10 +338,10 @@ HIST_SOURCES = {
     },
     "AUD": {  # RBA F2 monthly 1969+ (AGS yields) + F1 90d bank bills
         0.25: lambda: fetch_rba_xls(RBA_F1_HIST, "FIRMMBAB90"),
-        2:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG2"),
-        3:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG3"),
-        5:    lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG5"),
-        10:   lambda: fetch_rba_xls(RBA_F2_HIST, "FCMYGBAG10"),
+        2:    lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG2"),
+        3:    lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG3"),
+        5:    lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG5"),
+        10:   lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG10"),
     },
     # Phase 1c: CHF/NZD via beta-to-USD-TP proxy (insufficient open tenors)
 }
