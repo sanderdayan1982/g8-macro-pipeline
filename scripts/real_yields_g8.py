@@ -64,11 +64,11 @@ START = "2003-01-01"          # TIPS 10Y constant-maturity starts 2003 on FRED
 
 
 # ============================================================== HTTP / fetchers
-def _http_get(url, timeout=90, retries=3):
+def _http_get(url, timeout=90, retries=3, headers=None):
     last = None
     for attempt in range(1, retries + 1):
         try:
-            req = urllib.request.Request(url, headers=UA)
+            req = urllib.request.Request(url, headers={**UA, **(headers or {})})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read().decode("utf-8", errors="replace")
         except Exception as e:                                     # noqa: BLE001
@@ -204,49 +204,74 @@ def fetch_rba_xls(urls, series_candidates):
     raise RuntimeError(f"none of {series_candidates} in table; available: {avail}")
 
 
+def _parse_bbk_download_csv(raw):
+    """Bundesbank /rest/download CSV: metadata header lines, then date,value rows.
+    Handles comma or semicolon separators; values with '.' decimals (lang=en)."""
+    import re
+    rows = []
+    for ln in raw.splitlines():
+        m = re.match(r"^(\d{4}-\d{2}-\d{2})[,;]([^,;]*)", ln)
+        if m:
+            rows.append((m.group(1), m.group(2).strip().strip('"')))
+    if not rows:
+        raise RuntimeError("no date rows found in download CSV")
+    df = pd.DataFrame(rows, columns=["DATE", "VAL"])
+    df["DATE"] = pd.to_datetime(df["DATE"])
+    s = pd.to_numeric(df.set_index("DATE")["VAL"].replace(".", np.nan),
+                      errors="coerce").dropna()
+    return s.sort_index()
+
+
 def fetch_bbk(key_candidates, label):
-    """Bundesbank SDMX REST (BBSIS). Tries exact keys; on total miss, runs a
-    wildcard discovery on the uncertain dimension and logs available keys."""
-    base = "https://api.statistiken.bundesbank.de/rest/data/BBSIS/"
+    """Bundesbank BBSIS. Primary: /rest/download/ route (same endpoint as the
+    website download button). Fallback: /rest/data/ with SDMX-CSV Accept
+    header. On total miss, logs per-key errors for one-cycle diagnosis."""
     for k in key_candidates:
+        # route 1: download
         try:
-            raw = _http_get(base + k + f"?format=csv&startPeriod={START}",
-                            retries=1)
+            url = (f"https://api.statistiken.bundesbank.de/rest/download/BBSIS/"
+                   f"{k}?format=csv&lang=en")
+            s = _parse_bbk_download_csv(_http_get(url, retries=1))
+            s = s[s.index >= START]
+            if len(s) > 100:
+                print(f"    [BBk {label}] key OK (download): {k}")
+                print(f"    [BBk {label}] {len(s)} obs  "
+                      f"{s.index[0].date()} → {s.index[-1].date()}")
+                return s
+            print(f"    [BBk {label}] {k} (download): only {len(s)} obs — next route")
+        except Exception as e:                                     # noqa: BLE001
+            print(f"    [BBk {label}] {k} (download) failed: {e}")
+        # route 2: SDMX-CSV
+        try:
+            url = (f"https://api.statistiken.bundesbank.de/rest/data/BBSIS/"
+                   f"{k}?startPeriod={START}&detail=dataonly")
+            raw = _http_get(url, retries=1, headers={
+                "Accept": "application/vnd.sdmx.data+csv;version=1.0.0"})
             df = pd.read_csv(io.StringIO(raw))
             cols = {c.upper(): c for c in df.columns}
             tcol, vcol = cols.get("TIME_PERIOD"), cols.get("OBS_VALUE")
-            if tcol is None or vcol is None:
-                raise RuntimeError(f"unexpected columns: {list(df.columns)[:8]}")
-            df[tcol] = pd.to_datetime(df[tcol], errors="coerce")
-            s = pd.to_numeric(df.set_index(tcol)[vcol], errors="coerce").dropna()
-            if len(s) > 100:
-                print(f"    [BBk {label}] key OK: {k}")
-                print(f"    [BBk {label}] {len(s)} obs  "
-                      f"{s.index[0].date()} → {s.index[-1].date()}")
-                return s.sort_index()
-            print(f"    [BBk {label}] key {k}: only {len(s)} obs — next")
+            if tcol and vcol:
+                df[tcol] = pd.to_datetime(df[tcol], errors="coerce")
+                s = pd.to_numeric(df.set_index(tcol)[vcol],
+                                  errors="coerce").dropna().sort_index()
+                if len(s) > 100:
+                    print(f"    [BBk {label}] key OK (sdmx-csv): {k}")
+                    print(f"    [BBk {label}] {len(s)} obs  "
+                          f"{s.index[0].date()} → {s.index[-1].date()}")
+                    return s
+            print(f"    [BBk {label}] {k} (sdmx-csv): unusable response — next key")
         except Exception as e:                                     # noqa: BLE001
-            print(f"    [BBk {label}] key {k} failed ({e}) — next candidate")
-    # discovery: wildcard the rate-type dimension, log what exists
-    try:
-        wild = key_candidates[0].split(".")
-        wild[2] = ""                                  # wildcard dim 3
-        raw = _http_get(base + ".".join(wild) +
-                        "?format=csv&startPeriod=2024-01-01&detail=serieskeysonly",
-                        retries=1)
-        keys = sorted({ln.split(";")[0].split(",")[0] for ln in
-                       raw.splitlines()[1:60] if ln.strip()})
-        print(f"    [BBk {label}] DISCOVERY — candidate keys on server: {keys[:20]}")
-    except Exception as e:                                         # noqa: BLE001
-        print(f"    [BBk {label}] discovery also failed: {e}")
-    raise RuntimeError(f"{label}: no Bundesbank key candidate worked "
-                       f"(see DISCOVERY log above)")
+            print(f"    [BBk {label}] {k} (sdmx-csv) failed: {e}")
+    raise RuntimeError(f"{label}: no Bundesbank key/route combination worked "
+                       f"(per-key errors logged above)")
 
 
 # ======================================================= per-currency builders
 BBK_NOM_10Y = ["D.I.ZAR.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A"]   # verified
-BBK_REAL_10Y = [   # candidates: rate-type dim varies for indexed-Bund real curve
+BBK_REAL_10Y = [   # candidates: rate-type / instrument dim for indexed-Bund real curve
+    "D.I.ZAR.IR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
     "D.I.ZAR.ZR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
+    "D.I.ZAR.RR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
     "D.I.ZARR.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
     "D.I.ZAR.ZI.EUR.S1311.B.A604R.R10XX.R.A.A._Z._Z.A",
 ]
@@ -289,6 +314,7 @@ def build_aud():
 
 BUILDERS = {"USD": build_usd, "GBP": build_gbp, "EUR": build_eur,
             "CAD": build_cad, "AUD": build_aud}
+STALE_DAYS = {"AUD": 12}   # RBA F2 daily file published with weekly cadence
 NOT_AVAILABLE = {"JPY": "no open daily JGBi BEI feed (MoF publishes PDFs only)",
                  "CHF": "no CHF linker market",
                  "NZD": "RBNZ WAF-blocked; NZ IIB feed not open"}
@@ -309,9 +335,10 @@ def run_currency(ccy):
     if not df["BE10"].between(-2, 6).all():
         issues.append(f"BE10 out of [-2,6]: "
                       f"[{df['BE10'].min():.2f},{df['BE10'].max():.2f}]")
+    stale_limit = STALE_DAYS.get(ccy, 7)
     age = (pd.Timestamp.today() - df.index[-1]).days
-    if age > 7:
-        issues.append(f"stale: last obs {age}d old")
+    if age > stale_limit:
+        issues.append(f"stale: last obs {age}d old (limit {stale_limit}d)")
 
     # --- independent cross-check (where a second published series exists)
     if xchk is not None:
