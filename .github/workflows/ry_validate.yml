@@ -1,0 +1,23 @@
+name: RY Validate G8
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install numpy pandas xlrd openpyxl
+
+      - name: Real yields G8 — full run with gates
+        run: python scripts/real_yields_g8.py USD GBP EUR CAD AUD
