@@ -289,57 +289,18 @@ def build_gbp():
     return nom, real, xchk, "CLEAN", "Index-linked gilts ZC (BoE; RPI basis)"
 
 
-def discover_bbk_real(nom):
-    """Wildcard the rate-type dimension of the verified nominal key, enumerate
-    the codes the server actually has at R10XX, fetch each via the download
-    route, and auto-select the one whose implied breakeven (nom - candidate)
-    is plausible. Logs everything for one-cycle manual diagnosis if needed."""
-    import re
-    base_parts = BBK_NOM_10Y[0].split(".")
-    wild_key = ".".join(base_parts[:3] + [""] + base_parts[4:])
-    codes = []
-    for accept in ("application/vnd.sdmx.data+csv;version=1.0.0", None):
-        try:
-            url = (f"https://api.statistiken.bundesbank.de/rest/data/BBSIS/"
-                   f"{wild_key}?startPeriod=2025-01-01&detail=serieskeysonly")
-            raw = _http_get(url, retries=1,
-                            headers={"Accept": accept} if accept else None)
-            codes = sorted(set(re.findall(
-                r"D\.I\.ZAR\.([A-Z0-9]{1,8})\.EUR", raw)))
-            if codes:
-                print(f"    [BBk discovery] rate-type codes at R10XX: {codes}")
-                break
-            print(f"    [BBk discovery] response had no keys "
-                  f"(accept={accept}); raw head: {raw[:300]!r}")
-        except Exception as e:                                     # noqa: BLE001
-            print(f"    [BBk discovery] wildcard failed (accept={accept}): {e}")
-    if not codes:
-        raise RuntimeError("EUR real: discovery found no candidate codes "
-                           "(raw response logged above)")
-    for code in [c for c in codes if c != base_parts[3]]:
-        key = ".".join(base_parts[:3] + [code] + base_parts[4:])
-        try:
-            cand = fetch_bbk([key], f"EUR candidate {code}")
-        except Exception:                                          # noqa: BLE001
-            continue
-        both = pd.concat([nom, cand], axis=1, keys=["n", "r"]).dropna()
-        if len(both) < 100:
-            continue
-        be_med = float((both["n"] - both["r"]).median())
-        print(f"    [BBk discovery] {code}: median implied BE {be_med:+.2f}pp")
-        if -1.0 <= be_med <= 4.5:
-            print(f"    [BBk discovery] SELECTED {code} -> hardcode key: {key}")
-            return cand
-    raise RuntimeError("EUR real: no discovered code passed the BE "
-                       "plausibility gate (candidates logged above)")
-
-
 def build_eur():
+    if not BBK_REAL_10Y_KNOWN:
+        raise RuntimeError(
+            "EUR real key PENDING — one-time manual lookup required:\n"
+            "      1. Open bundesbank.de statistics portal (Statistik-Portal)\n"
+            "      2. Search: 'inflationsindexierte Bundeswertpapiere Realrenditen'\n"
+            "      3. Open the 10-year real yield daily series\n"
+            "      4. Copy the displayed BBSIS series key into BBK_REAL_10Y_KNOWN\n"
+            "      (key not present in any public Bundesbank API documentation;\n"
+            "       SDMX wildcards unsupported — verified 2026-06-11)")
     nom = fetch_bbk(BBK_NOM_10Y, "EUR nominal 10Y")
-    if BBK_REAL_10Y_KNOWN:
-        real = fetch_bbk([BBK_REAL_10Y_KNOWN], "EUR real 10Y")
-    else:
-        real = discover_bbk_real(nom)
+    real = fetch_bbk([BBK_REAL_10Y_KNOWN], "EUR real 10Y")
     return nom, real, None, "PROXY_DE_CORE", "Indexed Bunds (Bundesbank; DE core, not EA)"
 
 
@@ -414,7 +375,8 @@ def run_currency(ccy):
 
 def main():
     args = [a.upper() for a in sys.argv[1:] if not a.startswith("-")]
-    ccys = args or list(BUILDERS)
+    default = [c for c in BUILDERS if c != "EUR" or BBK_REAL_10Y_KNOWN]
+    ccys = args or default
     failed, warned = [], []
     for ccy in ccys:
         if ccy in NOT_AVAILABLE:
