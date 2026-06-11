@@ -1,0 +1,21 @@
+name: ACM Validate US
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install numpy pandas
+
+      - name: ACM validation vs NY Fed
+        run: python scripts/acm_g8.py --validate-us
