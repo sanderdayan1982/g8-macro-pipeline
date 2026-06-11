@@ -268,13 +268,9 @@ def fetch_bbk(key_candidates, label):
 
 # ======================================================= per-currency builders
 BBK_NOM_10Y = ["D.I.ZAR.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A"]   # verified
-BBK_REAL_10Y = [   # candidates: rate-type / instrument dim for indexed-Bund real curve
-    "D.I.ZAR.IR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
-    "D.I.ZAR.ZR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
-    "D.I.ZAR.RR.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
-    "D.I.ZARR.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A",
-    "D.I.ZAR.ZI.EUR.S1311.B.A604R.R10XX.R.A.A._Z._Z.A",
-]
+# EUR real key: auto-discovered at run time (see discover_bbk_real). Once the
+# log prints "SELECTED", hardcode that key here to skip discovery:
+BBK_REAL_10Y_KNOWN = None   # e.g. "D.I.ZAR.XX.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A"
 RBA_F2_DAILY = ["https://www.rba.gov.au/statistics/tables/xls/f02d.xlsx",
                 "https://www.rba.gov.au/statistics/tables/xls/f02d.xls"]
 
@@ -293,9 +289,57 @@ def build_gbp():
     return nom, real, xchk, "CLEAN", "Index-linked gilts ZC (BoE; RPI basis)"
 
 
+def discover_bbk_real(nom):
+    """Wildcard the rate-type dimension of the verified nominal key, enumerate
+    the codes the server actually has at R10XX, fetch each via the download
+    route, and auto-select the one whose implied breakeven (nom - candidate)
+    is plausible. Logs everything for one-cycle manual diagnosis if needed."""
+    import re
+    base_parts = BBK_NOM_10Y[0].split(".")
+    wild_key = ".".join(base_parts[:3] + [""] + base_parts[4:])
+    codes = []
+    for accept in ("application/vnd.sdmx.data+csv;version=1.0.0", None):
+        try:
+            url = (f"https://api.statistiken.bundesbank.de/rest/data/BBSIS/"
+                   f"{wild_key}?startPeriod=2025-01-01&detail=serieskeysonly")
+            raw = _http_get(url, retries=1,
+                            headers={"Accept": accept} if accept else None)
+            codes = sorted(set(re.findall(
+                r"D\.I\.ZAR\.([A-Z0-9]{1,8})\.EUR", raw)))
+            if codes:
+                print(f"    [BBk discovery] rate-type codes at R10XX: {codes}")
+                break
+            print(f"    [BBk discovery] response had no keys "
+                  f"(accept={accept}); raw head: {raw[:300]!r}")
+        except Exception as e:                                     # noqa: BLE001
+            print(f"    [BBk discovery] wildcard failed (accept={accept}): {e}")
+    if not codes:
+        raise RuntimeError("EUR real: discovery found no candidate codes "
+                           "(raw response logged above)")
+    for code in [c for c in codes if c != base_parts[3]]:
+        key = ".".join(base_parts[:3] + [code] + base_parts[4:])
+        try:
+            cand = fetch_bbk([key], f"EUR candidate {code}")
+        except Exception:                                          # noqa: BLE001
+            continue
+        both = pd.concat([nom, cand], axis=1, keys=["n", "r"]).dropna()
+        if len(both) < 100:
+            continue
+        be_med = float((both["n"] - both["r"]).median())
+        print(f"    [BBk discovery] {code}: median implied BE {be_med:+.2f}pp")
+        if -1.0 <= be_med <= 4.5:
+            print(f"    [BBk discovery] SELECTED {code} -> hardcode key: {key}")
+            return cand
+    raise RuntimeError("EUR real: no discovered code passed the BE "
+                       "plausibility gate (candidates logged above)")
+
+
 def build_eur():
     nom = fetch_bbk(BBK_NOM_10Y, "EUR nominal 10Y")
-    real = fetch_bbk(BBK_REAL_10Y, "EUR real 10Y")
+    if BBK_REAL_10Y_KNOWN:
+        real = fetch_bbk([BBK_REAL_10Y_KNOWN], "EUR real 10Y")
+    else:
+        real = discover_bbk_real(nom)
     return nom, real, None, "PROXY_DE_CORE", "Indexed Bunds (Bundesbank; DE core, not EA)"
 
 
