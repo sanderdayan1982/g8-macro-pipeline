@@ -84,13 +84,30 @@ def _http_get(url, timeout=90, retries=3):
 
 
 def fetch_fred(series_id, start="1962-01-01"):
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}&cosd={start}"
-    raw = _http_get(url)
-    df = pd.read_csv(io.StringIO(raw))
-    df.columns = ["DATE", "VAL"]
-    df["DATE"] = pd.to_datetime(df["DATE"])
-    s = pd.to_numeric(df.set_index("DATE")["VAL"], errors="coerce").dropna()
-    print(f"    [FRED {series_id}] {len(s)} obs  {s.index[0].date()} → {s.index[-1].date()}")
+    """FRED fetch. Primary: official API (needs FRED_API_KEY env var — fast,
+    reliable for long histories). Fallback: fredgraph.csv (no key, but times
+    out on multi-decade requests from GitHub Actions runners)."""
+    api_key = os.environ.get("FRED_API_KEY", "").strip()
+    if api_key:
+        url = ("https://api.stlouisfed.org/fred/series/observations"
+               f"?series_id={series_id}&api_key={api_key}"
+               f"&file_type=json&observation_start={start}")
+        raw = _http_get(url)
+        import json
+        obs = json.loads(raw)["observations"]
+        df = pd.DataFrame(obs)[["date", "value"]]
+        df["date"] = pd.to_datetime(df["date"])
+        s = pd.to_numeric(df.set_index("date")["value"], errors="coerce").dropna()
+    else:
+        url = (f"https://fred.stlouisfed.org/graph/fredgraph.csv"
+               f"?id={series_id}&cosd={start}")
+        raw = _http_get(url)
+        df = pd.read_csv(io.StringIO(raw))
+        df.columns = ["DATE", "VAL"]
+        df["DATE"] = pd.to_datetime(df["DATE"])
+        s = pd.to_numeric(df.set_index("DATE")["VAL"], errors="coerce").dropna()
+    print(f"    [FRED {series_id}] {len(s)} obs  "
+          f"{s.index[0].date()} → {s.index[-1].date()}")
     return s.sort_index()
 
 
