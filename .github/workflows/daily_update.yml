@@ -75,6 +75,7 @@ jobs:
         run: python scripts/fetch_bis_ocr.py
         continue-on-error: true
         id: ocr
+
       - name: Fetch BoE Bank Rate via BIS (GBP policy)
         run: python scripts/fetch_bis_policy.py GB
         continue-on-error: true
@@ -167,11 +168,20 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** NZD bills + bonds deferred pending RBNZ response (manual quincenal in the meantime)" >> $GITHUB_STEP_SUMMARY
+
+      # ── 5b. Long-end attribution layer (ACM decomposition + real yields) ──
       - name: ACM G8 decomposition (USD EUR JPY GBP CAD AUD)
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
+
+      - name: Real yields G8 (USD GBP CAD AUD)
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python scripts/real_yields_g8.py
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
