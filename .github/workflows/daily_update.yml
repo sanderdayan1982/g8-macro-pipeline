@@ -134,6 +134,13 @@ jobs:
       # responds, reactivate `scripts/fetch_nzd_b2.py` here. Until then NZD
       # is loaded manually via convert_manual.py (T-15D freshness).
 
+      - name: Fetch Floor References (IORB/DFR/BoC Target)
+        run: python scripts/fetch_floor_spreads.py
+        continue-on-error: true
+        id: floors
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
       - name: Fetch ACM 10Y Term Premium (NY Fed)
         run: python scripts/fetch_acm.py
         continue-on-error: true
@@ -165,6 +172,7 @@ jobs:
           echo "| GBP Bills  | ${{ steps.gbp_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JPY Bills  | ${{ steps.jpy_bills.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ACM TP 10Y | ${{ steps.acm.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Floor refs (IORB/DFR/BoC) | ${{ steps.floors.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** CHF bills updated manually via convert_chf_bills.py" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** NZD bills + bonds deferred pending RBNZ response (manual quincenal in the meantime)" >> $GITHUB_STEP_SUMMARY
