@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <style>
     /* ── Attribution Matrix (self-contained, scope: .attr-) ─────────────── */
@@ -52,6 +53,45 @@
     .fls-tight{background:#3a2c10;color:#fdb813}
     .fls-press{background:#3d1420;color:#ff5c72}
     .legacy-hidden{display:none}
+    /* ── Synthetic / proxy badges (attribution v2) ─────────────────────── */
+    .attr-q-synth{background:#13202e;color:#5d8aa8}
+    .attr-formula{display:block;font-size:9px;color:#465063;margin-top:2px;font-family:'JetBrains Mono',monospace}
+    /* ── Data Quality Monitor (scope: .dqm-) ───────────────────────────── */
+    .dqm-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+    .dqm-chip{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;font-weight:700;
+        letter-spacing:.08em;border-radius:2px;padding:3px 9px}
+    .dqm-chip-live{background:#0f2a1d;color:#2fbf71}
+    .dqm-chip-degraded{background:#3a2c10;color:#fdb813}
+    .dqm-chip-stale{background:#3a1d10;color:#ff8c42}
+    .dqm-chip-dead{background:#3d1420;color:#ff5c72}
+    .dqm-chip-synth{background:#13202e;color:#5d8aa8}
+    .dqm-chip-unknown{background:#1a1f2b;color:#5d6678}
+    .dqm-run{margin-left:auto;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;
+        font-weight:700;letter-spacing:.1em;color:#fdb813;background:#1a1408;border:1px solid #3a2c10;
+        border-radius:2px;padding:6px 16px;cursor:pointer;text-transform:uppercase}
+    .dqm-run:hover{background:#3a2c10}
+    .dqm-run:disabled{opacity:.4;cursor:wait}
+    .dqm-ts{font-family:'JetBrains Mono',monospace;font-size:10px;color:#5d6678}
+    .dqm-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11.5px}
+    .dqm-table th{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:600;font-size:10px;
+        letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;text-align:left;
+        padding:7px 12px;border-bottom:1px solid #1c2433;white-space:nowrap}
+    .dqm-table td{padding:7px 12px;border-bottom:1px solid #131a26;color:#d7dce6;white-space:nowrap}
+    .dqm-table tr:hover td{background:#0d1320}
+    .dqm-src{color:#8b93a7;font-size:10.5px}
+    .dqm-status{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;
+        font-size:9px;font-weight:700;letter-spacing:.08em;border-radius:2px;padding:2px 7px}
+    .dqm-LIVE{background:#0f2a1d;color:#2fbf71}
+    .dqm-DEGRADED{background:#3a2c10;color:#fdb813}
+    .dqm-STALE{background:#3a1d10;color:#ff8c42}
+    .dqm-DEAD{background:#3d1420;color:#ff5c72}
+    .dqm-SYNTHETIC{background:#13202e;color:#5d8aa8}
+    .dqm-MANUAL{background:#1f1830;color:#9d7bd8}
+    .dqm-UNKNOWN{background:#1a1f2b;color:#5d6678}
+    .dqm-lat{color:#5d6678;font-size:10.5px}
+    .dqm-legacy-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;margin:22px 0 10px;
+        border-bottom:1px solid #1c2433;padding-bottom:6px}
     </style>
 </head>
 <body>
@@ -59,7 +99,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.0 — Long-End Attribution</span>
+            <span class="brand-sub">Institutional Dashboard v2.1 — Long-End Attribution 8/8 + DQM</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -86,10 +126,10 @@
         </div>
         <div class="section-body">
             <div class="attr-wrap" id="attr-matrix">
-                <div class="attr-err" style="color:#5d6678">Loading attribution data…</div>
+                <div class="attr-err" style="color:#5d6678">Fetching attribution feeds — repo ACM/RY CSVs + ECB / SNB / RBNZ external (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">ACM K=3 two-stage (Adrian-Crump-Moench) validated vs NY Fed corr 0.948 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) · Δ in bps · Z on TP 252D</span>
+                <span class="footer-note">ACM K=3 two-stage (Adrian-Crump-Moench) validated vs NY Fed corr 0.948 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD/CHF nominals fetched in-browser (RBNZ B2 / SNB rendoblid) · NZD/CHF TP = anchor-proxy formula, BE = manual constant (sources linked) · Δ in bps · Z on TP 252D (12M windows for monthly series)</span>
             </div>
         </div>
     </section>
@@ -103,7 +143,7 @@
         </div>
         <div class="section-body">
             <div class="attr-wrap" id="fls-table">
-                <div class="attr-err" style="color:#5d6678">Loading floor spreads…</div>
+                <div class="attr-err" style="color:#5d6678">Fetching RFR + floor CSVs from pipeline repo (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
                 <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF N/A (SARON behind SNB Cloudflare) · NZD N/A (OCR is the policy rate itself)</span>
@@ -146,7 +186,14 @@
             <span class="section-meta">Feed freshness · Staleness alerts · Source reliability</span>
         </div>
         <div class="section-body">
+            <div id="dqm-panel">
+                <div class="attr-err" style="color:#5d6678">Initialising feed registry…</div>
+            </div>
+            <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5 — RFR · Bills · Policy · ACM)</div>
             <div class="quality-grid" id="quality-grid"></div>
+            <div class="section-footer">
+                <span class="footer-note">Registry-based monitor: LIVE = data ≤ expected lag · DEGRADED = within tolerance · STALE = 2× tolerance · DEAD = source unreachable / beyond 2× · SYNTHETIC = computed proxy · MANUAL = hand-set constant with exact source link in tooltip. Staleness counted in business days. RUN ALL re-checks every registered source live (repo CSVs direct · ECB/BoC direct CORS · FRED/SNB/RBNZ/eco3min via CORS proxy cascade). Cache 60 min (localStorage) · auto re-check every 4 h.</span>
+            </div>
         </div>
     </section>
 
@@ -179,20 +226,412 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   ATTRIBUTION MATRIX — self-contained module (no data-loader dependency)
-   Reads ACM_G8_<CCY>.csv (DATE,Y10_FIT,RNY10,TP10)
-   and   RY_G8_<CCY>.csv  (# QUALITY=... · DATE,NOM10,REAL10,BE10)
+   G8NET — shared network layer
+   CORS proxy cascade · timeout per attempt · localStorage cache (60 min)
+   Every fetch outcome is reported to G8DQM (if present).
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var PROXIES = [
+    '',                                            /* direct (CORS-enabled sources) */
+    'https://corsproxy.io/?url=',                  /* cascade tier 1 */
+    'https://api.allorigins.win/raw?url=',         /* cascade tier 2 */
+    'https://api.codetabs.com/v1/proxy?quest='     /* cascade tier 3 */
+];
+
+var CACHE_MS = 60 * 60 * 1000;   /* 60 min */
+var TIMEOUT_MS = 8000;
+
+function cacheKey(url) { return 'g8net_' + url; }
+
+function cacheGet(url, maxAgeMs) {
+    try {
+        var raw = localStorage.getItem(cacheKey(url));
+        if (!raw) return null;
+        var o = JSON.parse(raw);
+        if (Date.now() - o.ts > (maxAgeMs || CACHE_MS)) return null;
+        return o;
+    } catch (e) { return null; }
+}
+
+function cachePut(url, payload) {
+    try {
+        localStorage.setItem(cacheKey(url), JSON.stringify({ ts: Date.now(), text: payload.text || null, b64: payload.b64 || null, via: payload.via }));
+    } catch (e) { /* quota — non-fatal */ }
+}
+
+function wrap(proxy, url) {
+    if (!proxy) return url;
+    return proxy + encodeURIComponent(url);
+}
+
+function timeoutSignal(ms) {
+    if (AbortSignal && AbortSignal.timeout) return AbortSignal.timeout(ms);
+    var c = new AbortController();
+    setTimeout(function () { c.abort(); }, ms);
+    return c.signal;
+}
+
+/* opts: { corsOk: bool (skip proxies — direct only first, then proxies anyway as safety),
+           binary: bool, noCache: bool, maxAge: ms } */
+async function fetchAny(url, opts) {
+    opts = opts || {};
+    if (!opts.noCache) {
+        var c = cacheGet(url, opts.maxAge);
+        if (c && (opts.binary ? c.b64 : c.text)) {
+            return { ok: true, text: c.text, b64: c.b64, via: c.via + ' (cache)', ms: 0, cached: true };
+        }
+    }
+    var chain = opts.corsOk ? [''] .concat(PROXIES.slice(1)) : PROXIES;
+    var lastErr = null;
+    for (var i = 0; i < chain.length; i++) {
+        var attempt = wrap(chain[i], url);
+        var t0 = performance.now();
+        try {
+            var resp = await fetch(attempt, { cache: 'no-store', signal: timeoutSignal(TIMEOUT_MS) });
+            if (!resp.ok) { lastErr = 'HTTP ' + resp.status; continue; }
+            var ms = Math.round(performance.now() - t0);
+            var via = chain[i] ? chain[i].replace(/^https:\/\//, '').split('/')[0] : 'direct';
+            if (opts.binary) {
+                var buf = await resp.arrayBuffer();
+                var b64 = arrayBufferToB64(buf);
+                cachePut(url, { b64: b64, via: via });
+                return { ok: true, buf: buf, b64: b64, via: via, ms: ms };
+            }
+            var text = await resp.text();
+            /* Proxy HTML error pages masquerading as 200 */
+            if (text.length < 30 || /^\s*<!doctype html/i.test(text.slice(0, 60)) && url.indexOf('.html') === -1) {
+                lastErr = 'proxy returned HTML/empty'; continue;
+            }
+            cachePut(url, { text: text, via: via });
+            return { ok: true, text: text, via: via, ms: ms };
+        } catch (e) {
+            lastErr = e.name === 'AbortError' ? 'timeout ' + TIMEOUT_MS + 'ms' : e.message;
+        }
+    }
+    return { ok: false, error: lastErr || 'all proxies exhausted', via: null, ms: null };
+}
+
+/* Try a chain of distinct URLs (each itself going through the proxy cascade) */
+async function fetchChain(urls, opts) {
+    for (var i = 0; i < urls.length; i++) {
+        var u = urls[i];
+        var r = await fetchAny(u.url || u, Object.assign({}, opts, u.opts || {}));
+        if (r.ok) { r.sourceUrl = (u.url || u); r.tier = i; return r; }
+    }
+    return { ok: false, error: 'all sources exhausted (' + urls.length + ' urls × proxy cascade)' };
+}
+
+function arrayBufferToB64(buf) {
+    var bytes = new Uint8Array(buf), bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+}
+
+function b64ToArrayBuffer(b64) {
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+}
+
+/* ── shared math ─────────────────────────────────────────────────────── */
+function zScore(series, win) {
+    var w = series.slice(-(win || 252)).filter(isFinite);
+    if (w.length < 10) return null;
+    var mu = w.reduce(function (a, b) { return a + b; }, 0) / w.length;
+    var sd = Math.sqrt(w.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / w.length);
+    if (sd < 1e-9) return null;
+    return (series[series.length - 1] - mu) / sd;
+}
+
+function deltaBps(series, lb) {
+    var n = series.length;
+    if (n < lb + 1) return null;
+    return (series[n - 1] - series[n - 1 - lb]) * 100;
+}
+
+window.G8NET = { fetchAny: fetchAny, fetchChain: fetchChain, b64ToArrayBuffer: b64ToArrayBuffer,
+                 zScore: zScore, deltaBps: deltaBps, PROXIES: PROXIES };
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   G8DQM — DATA QUALITY MONITOR (Section 05)
+   Feed registry · business-day staleness engine · fallback chains
+   LIVE / DEGRADED / STALE / DEAD / SYNTHETIC / MANUAL · RUN ALL · 4h timer
    ════════════════════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
 
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
-var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD'];
+
+/* maxStaleness in business days */
+function repo(file, name, freq, maxStale, section) {
+    return { name: name, urls: [RAW + file], source: 'Pipeline repo (GH Actions)', corsOk: true,
+             frequency: freq, maxStaleness: maxStale, section: section };
+}
+
+var FEED_REGISTRY = {
+    /* ── 01 attribution — repo ACM (own K=3 model output) ─────────────── */
+    USD_ACM: repo('ACM_G8_USD.csv', 'USD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+
+    /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
+    USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
+    GBP_RY: repo('RY_G8_GBP.csv', 'GBP Real/BE 10Y (ILG, BoE)', 'daily', 4, '01'),
+    CAD_RY: repo('RY_G8_CAD.csv', 'CAD Real/BE 10Y (RRB, BoC)', 'daily', 4, '01'),
+    AUD_RY: repo('RY_G8_AUD.csv', 'AUD Real/BE 10Y (iAGS, RBA)', 'daily', 4, '01'),
+
+    /* ── 01 attribution — in-browser external feeds ────────────────────── */
+    EUR_NOM_ECB: {
+        name: 'EUR Nominal 10Y (ECB Svensson AAA)',
+        urls: ['https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=420&format=csvdata'],
+        source: 'ECB Data Portal API', corsOk: true, frequency: 'daily', maxStaleness: 4, section: '01'
+    },
+    EUR_REAL_ECB: {
+        name: 'EUR Real 10Y (ECB real benchmark)',
+        urls: ['https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.4F.BB.R_U2_10Y.YLDA?lastNObservations=30&format=csvdata'],
+        source: 'ECB Data Portal API (FR/DE linker basket)', corsOk: true, frequency: 'monthly', maxStaleness: 35, section: '01'
+    },
+    CHF_NOM_SNB: {
+        name: 'CHF Nominal 10Y (Confederation spot)',
+        urls: ['https://data.snb.ch/api/cube/rendoblid/data/csv/en?dimSel=D0(10J0)&fromDate=' + isoDaysAgo(620)],
+        source: 'SNB Data Portal (rendoblid)', corsOk: false, frequency: 'daily', maxStaleness: 6, section: '01',
+        manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid'
+    },
+    NZD_NOM_RBNZ: {
+        name: 'NZD Nominal 10Y (NZGB, B2)',
+        urls: ['https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-monthly.csv'],
+        source: 'RBNZ B2 wholesale rates (XLSX)', corsOk: false, binary: true, frequency: 'monthly', maxStaleness: 45, section: '01',
+        manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
+    },
+
+    /* ── 01 — USD TP external fallback chain (NY Fed reference) ────────── */
+    USD_TP_MIRROR: {
+        name: 'USD ACM TP10 (NY Fed mirror — fallback)',
+        urls: ['https://eco3min.fr/dataset/us-term-premium.csv'],
+        source: 'eco3min.fr (NY Fed ACMTP10 mirror, weekly)', corsOk: false, frequency: 'weekly', maxStaleness: 45, section: '01',
+        manualLink: 'https://www.newyorkfed.org/research/data_indicators/term-premia-tabs'
+    },
+
+    /* ── 01 — FRED fallbacks for USD RY (only checked on RUN ALL) ──────── */
+    USD_NOM_FRED:  { name: 'USD Nominal 10Y (DGS10 — fallback)',  urls: ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10'],  source: 'FRED', corsOk: false, frequency: 'daily', maxStaleness: 4, section: '01', onDemand: true },
+    USD_REAL_FRED: { name: 'USD Real 10Y (DFII10 — fallback)',    urls: ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10'], source: 'FRED', corsOk: false, frequency: 'daily', maxStaleness: 4, section: '01', onDemand: true },
+    USD_BE_FRED:   { name: 'USD Breakeven 10Y (T10YIE — fallback)', urls: ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10YIE'], source: 'FRED', corsOk: false, frequency: 'daily', maxStaleness: 4, section: '01', onDemand: true },
+
+    /* ── manual constants (SYNTHETIC by construction) ──────────────────── */
+    JPY_BE_MANUAL: manualConst('JPY Breakeven (BoJ Outlook median)', 1.9, '2026-04-30', 'https://www.boj.or.jp/en/mopo/outlook/index.htm'),
+    CHF_BE_MANUAL: manualConst('CHF Breakeven (SNB conditional CPI fcst)', 1.0, '2026-03-19', 'https://www.snb.ch/en/the-snb/mandates-goals/monetary-policy/decisions'),
+    NZD_BE_MANUAL: manualConst('NZD Breakeven (RBNZ Survey of Expectations 2Y)', 2.1, '2026-05-15', 'https://www.rbnz.govt.nz/statistics/series/economic-indicators/survey-of-expectations'),
+
+    /* ── 02 floor spreads — repo ───────────────────────────────────────── */
+    SOFR:  repo('SOFR.csv',  'SOFR fixing',  'daily', 4, '02'),
+    ESTR:  repo('ESTR.csv',  'ESTR fixing',  'daily', 4, '02'),
+    SONIA: repo('SONIA.csv', 'SONIA fixing', 'daily', 4, '02'),
+    TONA:  repo('TONA.csv',  'TONA fixing',  'daily', 4, '02'),
+    CORRA: repo('CORRA.csv', 'CORRA fixing', 'daily', 4, '02'),
+    AONIA: repo('AONIA.csv', 'AONIA fixing', 'daily', 4, '02'),
+    FLOOR_USD: repo('FLOOR_USD.csv', 'USD floor (IORB)', 'daily', 5, '02'),
+    FLOOR_EUR: repo('FLOOR_EUR.csv', 'EUR floor (DFR)', 'daily', 5, '02'),
+    FLOOR_CAD: repo('FLOOR_CAD.csv', 'CAD floor (BoC target)', 'daily', 5, '02'),
+
+    /* ── 03 policy rates — repo (BIS WS_CBPOL) ─────────────────────────── */
+    GB_POLICY: repo('GB_POLICY.csv', 'BoE Bank Rate', 'daily', 7, '03'),
+    JP_POLICY: repo('JP_POLICY.csv', 'BoJ Policy Balance Rate', 'daily', 7, '03'),
+    CH_POLICY: repo('CH_POLICY.csv', 'SNB Policy Rate', 'daily', 7, '03'),
+    AU_POLICY: repo('AU_POLICY.csv', 'RBA Cash Rate Target', 'daily', 7, '03'),
+    NZD_OCR:   repo('NZD_OCR.csv',   'RBNZ OCR', 'daily', 8, '03'),
+
+    /* ── 04 ACM USD time series — repo ─────────────────────────────────── */
+    ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '04'),
+
+    /* ── manual SNB bills (convert_manual.py) ──────────────────────────── */
+    CHF_BILL_3M: Object.assign(repo('CHF_BILL_3M.csv', 'CHF Bill 3M (SNB manual input)', 'monthly', 35, '02'),
+        { manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendeidglfzmd' })
+};
+
+function isoDaysAgo(d) {
+    var t = new Date(Date.now() - d * 86400000);
+    return t.toISOString().slice(0, 10);
+}
+
+function manualConst(name, value, asOf, link) {
+    return { name: name, urls: [], source: 'Manual constant — ' + link, frequency: 'quarterly',
+             maxStaleness: 70, section: '01', manual: true, value: value, lastDate: asOf, manualLink: link };
+}
+
+/* ── 5.2 staleness engine (business days) ───────────────────────────── */
+function computeStaleness(lastDateStr, maxStale) {
+    if (!lastDateStr) return 'DEAD';
+    var lastDate = new Date(String(lastDateStr).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'));
+    if (isNaN(lastDate.getTime())) return 'DEAD';
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var bd = 0, cur = new Date(lastDate);
+    while (cur < today) {
+        cur.setDate(cur.getDate() + 1);
+        var day = cur.getDay();
+        if (day !== 0 && day !== 6) bd++;
+        if (bd > maxStale * 2 + 5) break;
+    }
+    if (bd <= 1) return 'LIVE';          /* T+1 fixings: 1 business day lag is normal */
+    if (bd <= maxStale) return 'DEGRADED';
+    if (bd <= maxStale * 2) return 'STALE';
+    return 'DEAD';
+}
+
+/* Generic last-date extractor: handles compact yyyymmdd, ISO, ECB csvdata,
+   SNB semicolon format and FRED observation_date. */
+function extractLastDate(text) {
+    var lines = text.trim().split('\n');
+    for (var i = lines.length - 1; i >= Math.max(0, lines.length - 12); i--) {
+        var L = lines[i];
+        var m = L.match(/(\d{4}-\d{2}-\d{2})/) || L.match(/(\d{4}-\d{2})(?!\d)/) || L.match(/(^|,)(\d{8})(,|$)/);
+        if (m) return m[2] || m[1];
+    }
+    return null;
+}
+
+var state = {};       /* feedId -> { status, lastDate, latency, via, checkedAt } */
+var running = false;
+
+/* External modules push real outcomes here (attribution v2 does) */
+function report(feedId, info) {
+    state[feedId] = Object.assign(state[feedId] || {}, info, { checkedAt: Date.now() });
+    if (info.lastDate && !info.status) {
+        state[feedId].status = computeStaleness(info.lastDate, (FEED_REGISTRY[feedId] || {}).maxStaleness || 5);
+    }
+    render();
+}
+
+async function checkFeed(id, force) {
+    var f = FEED_REGISTRY[id];
+    if (f.manual) {
+        state[id] = { status: 'MANUAL', lastDate: f.lastDate, latency: null, via: 'code constant', value: f.value, checkedAt: Date.now() };
+        return;
+    }
+    var r = await G8NET.fetchChain(f.urls, { corsOk: f.corsOk, binary: f.binary, noCache: !!force });
+    if (!r.ok) {
+        state[id] = { status: 'DEAD', lastDate: (state[id] || {}).lastDate || null, latency: null, via: null, error: r.error, checkedAt: Date.now() };
+        return;
+    }
+    var lastDate = f.binary ? ((state[id] || {}).lastDate || 'binary (parsed in §01)') : extractLastDate(r.text || '');
+    var status = f.binary && !(state[id] || {}).lastDate ? 'DEGRADED' : computeStaleness(lastDate, f.maxStaleness);
+    state[id] = { status: status, lastDate: lastDate, latency: r.ms, via: r.via, checkedAt: Date.now() };
+}
+
+async function runAll(force) {
+    if (running) return;
+    running = true;
+    var btn = document.getElementById('dqm-run');
+    if (btn) { btn.disabled = true; btn.textContent = 'CHECKING…'; }
+    var ids = Object.keys(FEED_REGISTRY).filter(function (id) {
+        return force || !FEED_REGISTRY[id].onDemand;
+    });
+    /* batches of 5 to be polite with proxies */
+    for (var i = 0; i < ids.length; i += 5) {
+        await Promise.all(ids.slice(i, i + 5).map(function (id) {
+            return checkFeed(id, force).catch(function (e) {
+                state[id] = { status: 'DEAD', error: e.message, checkedAt: Date.now() };
+            });
+        }));
+        render();
+    }
+    running = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'RUN ALL'; }
+    render();
+}
+
+function fmtDate(d) {
+    if (!d) return '—';
+    return String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+}
+
+function render() {
+    var el = document.getElementById('dqm-panel');
+    if (!el) return;
+    var counts = { LIVE: 0, DEGRADED: 0, STALE: 0, DEAD: 0, SYNTHETIC: 0, MANUAL: 0, UNKNOWN: 0 };
+    var rows = '';
+    Object.keys(FEED_REGISTRY).forEach(function (id) {
+        var f = FEED_REGISTRY[id];
+        var s = state[id] || { status: f.onDemand ? 'UNKNOWN' : 'UNKNOWN' };
+        counts[s.status] = (counts[s.status] || 0) + 1;
+        var title = (f.urls && f.urls.length ? f.urls.join('\n') : '') +
+                    (f.manualLink ? '\nManual source: ' + f.manualLink : '') +
+                    (s.error ? '\nLast error: ' + s.error : '');
+        rows += '<tr title="' + title.replace(/"/g, '&quot;') + '">' +
+            '<td>' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') + '</td>' +
+            '<td class="dqm-src">' + f.source + '</td>' +
+            '<td class="dqm-src">' + f.frequency + '</td>' +
+            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + '</td>' +
+            '<td class="dqm-lat">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
+            '<td><span class="dqm-status dqm-' + s.status + '">' + s.status + '</span></td>' +
+            '<td class="dqm-src">' + f.section + '</td></tr>';
+    });
+    var chips = ['LIVE', 'DEGRADED', 'STALE', 'DEAD', 'SYNTHETIC', 'MANUAL', 'UNKNOWN'].map(function (k) {
+        if (!counts[k]) return '';
+        var cls = { LIVE: 'live', DEGRADED: 'degraded', STALE: 'stale', DEAD: 'dead', SYNTHETIC: 'synth', MANUAL: 'synth', UNKNOWN: 'unknown' }[k];
+        return '<span class="dqm-chip dqm-chip-' + cls + '">' + k + ' ' + counts[k] + '</span>';
+    }).join('');
+    el.innerHTML =
+        '<div class="dqm-bar">' + chips +
+            '<button class="dqm-run" id="dqm-run">RUN ALL</button>' +
+            '<span class="dqm-ts">last check ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC</span>' +
+        '</div>' +
+        '<div class="attr-wrap"><table class="dqm-table"><thead><tr>' +
+        '<th>Feed</th><th>Source</th><th>Freq</th><th>Last date</th><th>Latency · via</th><th>Status</th><th>§</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    var btn = document.getElementById('dqm-run');
+    if (btn) btn.onclick = function () { runAll(true); };
+}
+
+function init() {
+    render();
+    runAll(false);
+    setInterval(function () { runAll(false); }, 4 * 60 * 60 * 1000);   /* 4 h auto re-check */
+}
+
+window.G8DQM = { report: report, runAll: runAll, computeStaleness: computeStaleness,
+                 FEED_REGISTRY: FEED_REGISTRY, state: state };
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else { init(); }
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   ATTRIBUTION MATRIX v2 — 8 currencies
+   Primary: pipeline repo CSVs (own ACM K=3 + linker real yields)
+   In-browser external: EUR real (ECB benchmark) · CHF nom (SNB rendoblid)
+                        NZD nom (RBNZ B2 XLSX) — all via G8NET cascade
+   Proxy TP:  TP_CHF = TP_EUR + 0.4·(NOM_CHF − NOM_EUR)
+              TP_NZD = TP_AUD + 0.4·(NOM_NZD − NOM_AUD)
+   Manual BE constants: JPY (BoJ Outlook) · CHF (SNB fcst) · NZD (RBNZ SoE)
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF'];
+var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
 var RY_CCYS = { USD: 1, GBP: 1, CAD: 1, AUD: 1 };
+
+var BE_CONST = {   /* keep in sync with DQM manual feeds */
+    JPY: { v: 1.9, src: 'BoJ Outlook Report median CPI fcst', asOf: '2026-04' },
+    CHF: { v: 1.0, src: 'SNB conditional CPI forecast', asOf: '2026-03' },
+    NZD: { v: 2.1, src: 'RBNZ Survey of Expectations 2Y', asOf: '2026-05' }
+};
 
 function fetchCsv(url) {
     return fetch(url, { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error(url.split('/').pop() + ' HTTP ' + r.status);
+        if (!r.ok) throw new Error(url.split('/').pop().split('?')[0] + ' HTTP ' + r.status);
         return r.text();
     });
 }
@@ -214,38 +653,132 @@ function parseRy(text) {
     return { rows: p.data.filter(function (r) { return r.DATE && isFinite(r.NOM10); }), quality: quality };
 }
 
-function col(rows, key) {
-    return rows.map(function (r) { return r[key]; }).filter(isFinite);
+/* ── external parsers ───────────────────────────────────────────────── */
+
+/* ECB csvdata: header row, TIME_PERIOD + OBS_VALUE columns */
+function parseEcbCsv(text) {
+    var p = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
+    return p.data.map(function (r) {
+        return { d: r.TIME_PERIOD, v: parseFloat(r.OBS_VALUE) };
+    }).filter(function (r) { return r.d && isFinite(r.v); })
+      .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
 }
 
-function stats(rows, key) {
-    var v = col(rows, key);
-    if (!v.length) return null;
-    var n = v.length;
-    var last = v[n - 1];
-    var d1w = n > 5  ? (last - v[n - 6])  * 100 : null;   // bps
-    var d1m = n > 21 ? (last - v[n - 22]) * 100 : null;   // bps
-    var win = v.slice(-252);
-    var z = null;
-    if (win.length >= 60) {
-        var mu = win.reduce(function (a, b) { return a + b; }, 0) / win.length;
-        var sd = Math.sqrt(win.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / win.length);
-        if (sd > 1e-9) z = (last - mu) / sd;
+/* SNB cube csv: "Date";"D0";"Value" semicolon rows */
+function parseSnbCsv(text) {
+    var out = [];
+    text.split('\n').forEach(function (L) {
+        var m = L.match(/^"(\d{4}-\d{2}(?:-\d{2})?)";"10J0?";"(-?[\d.]+)"/);
+        if (m) out.push({ d: m[1], v: parseFloat(m[2]) });
+    });
+    return out.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+}
+
+/* RBNZ B2 monthly workbook (served as XLSX behind a .csv URL).
+   Scans for the 10-year govt bond column by header text or series id INM.MG10. */
+function parseRbnzB2(buf) {
+    var wb = XLSX.read(buf, { type: 'array', cellDates: false });
+    for (var s = 0; s < wb.SheetNames.length; s++) {
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[s]], { header: 1, raw: true });
+        var col = -1, startRow = -1;
+        for (var i = 0; i < Math.min(rows.length, 15) && col < 0; i++) {
+            for (var j = 0; j < (rows[i] || []).length; j++) {
+                var cell = String(rows[i][j] || '');
+                if (/INM\.MG10/i.test(cell) || (/10[\s-]*year/i.test(cell) && /(govt|government|bond)/i.test(cell))) {
+                    col = j; startRow = i + 1; break;
+                }
+            }
+        }
+        /* fallback: header containing just "10 year" on a sheet that mentions govt bonds */
+        if (col < 0) {
+            for (var i2 = 0; i2 < Math.min(rows.length, 15) && col < 0; i2++) {
+                for (var j2 = 0; j2 < (rows[i2] || []).length; j2++) {
+                    if (/^10\s*(year|yr)s?$/i.test(String(rows[i2][j2] || '').trim())) { col = j2; startRow = i2 + 1; break; }
+                }
+            }
+        }
+        if (col < 0) continue;
+        var out = [];
+        for (var r = startRow; r < rows.length; r++) {
+            var row = rows[r] || [];
+            var dRaw = row[0], v = parseFloat(row[col]);
+            if (!isFinite(v)) continue;
+            var d = null;
+            if (typeof dRaw === 'number' && dRaw > 20000) {           /* Excel serial */
+                var dt = new Date(Math.round((dRaw - 25569) * 86400000));
+                d = dt.toISOString().slice(0, 7);
+            } else if (typeof dRaw === 'string') {
+                var dm = dRaw.match(/(\d{4})-(\d{2})/) ||
+                         dRaw.match(/^([A-Za-z]{3,9})\s+(\d{4})/);
+                if (dm && dm[2] && dm[2].length === 4) {
+                    var mo = ('JanFebMarAprMayJunJulAugSepOctNovDec'.indexOf(dm[1].slice(0, 3)) / 3) + 1;
+                    if (mo >= 1) d = dm[2] + '-' + (mo < 10 ? '0' : '') + mo;
+                } else if (dm) d = dm[1] + '-' + dm[2];
+            }
+            if (d) out.push({ d: d, v: v });
+        }
+        if (out.length > 12) return out.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     }
-    return { last: last, d1w: d1w, d1m: d1m, z: z };
+    throw new Error('RBNZ B2: 10-year govt bond column not found in workbook');
 }
 
+/* ── series helpers ─────────────────────────────────────────────────── */
+function values(series) { return series.map(function (x) { return x.v; }); }
+
+function valueAt(series, dateStr) {       /* last value with d <= dateStr (ffill) */
+    var v = null;
+    for (var i = 0; i < series.length; i++) {
+        if (isoNorm(series[i].d) <= dateStr) v = series[i].v; else break;
+    }
+    return v;
+}
+
+function isMonthly(series) {
+    return series.length >= 3 && String(series[0].d).length <= 7 ||
+           (series.length > 5 && (toMs(series[series.length - 1].d) - toMs(series[series.length - 6].d)) / 5 > 20 * 86400000);
+}
+
+function toMs(d) {
+    d = String(d);
+    if (/^\d{8}$/.test(d)) d = d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8);
+    if (/^\d{4}-\d{2}$/.test(d)) d += '-28';
+    return new Date(d).getTime();
+}
+
+/* stats on a {d,v} series — windows adapt to frequency */
+function statsS(series) {
+    if (!series || !series.length) return null;
+    var v = values(series).filter(isFinite);
+    if (!v.length) return null;
+    var monthly = isMonthly(series);
+    var w1 = monthly ? 1 : 5, w2 = monthly ? 3 : 21, wz = monthly ? 12 : 252;
+    return {
+        last: v[v.length - 1],
+        d1w: G8NET.deltaBps(v, w1), d1m: G8NET.deltaBps(v, w2),
+        z: G8NET.zScore(v, wz),
+        monthly: monthly,
+        lastDate: series[series.length - 1].d
+    };
+}
+
+function statsCol(rows, key) {
+    var s = rows.map(function (r) { return { d: r.DATE, v: r[key] }; })
+                .filter(function (x) { return isFinite(x.v); });
+    return statsS(s);
+}
+
+/* ── formatting (unchanged visual language) ─────────────────────────── */
 function fmtVal(s) { return s === null ? '<span class="attr-na">—</span>' : s.last.toFixed(2); }
 
 function fmtDelta(s) {
     if (s === null) return '';
+    var tags = s.monthly ? ['1M', '3M'] : ['1W', '1M'];
     function one(d, tag) {
         if (d === null) return '';
         var cls = d > 0.5 ? 'attr-up' : d < -0.5 ? 'attr-dn' : 'attr-fl';
-        var sign = d > 0 ? '+' : '';
-        return '<span class="' + cls + '">' + tag + ' ' + sign + d.toFixed(0) + '</span>';
+        return '<span class="' + cls + '">' + tag + ' ' + (d > 0 ? '+' : '') + d.toFixed(0) + '</span>';
     }
-    var a = one(s.d1w, '1W'), b = one(s.d1m, '1M');
+    var a = one(s.d1w, tags[0]), b = one(s.d1m, tags[1]);
     if (!a && !b) return '';
     return '<span class="attr-sub">' + a + (a && b ? ' · ' : '') + b + '</span>';
 }
@@ -254,53 +787,89 @@ function fmtZ(s) {
     if (s === null || s.z === null) return '';
     var az = Math.abs(s.z);
     var cls = az > 2 ? 'attr-z-hi' : az > 1 ? 'attr-z-md' : 'attr-z-lo';
-    return '<span class="attr-z ' + cls + '">Z ' + (s.z > 0 ? '+' : '') + s.z.toFixed(1) + '</span>';
+    var tag = s.monthly ? 'Z₁₂' : 'Z';
+    return '<span class="attr-z ' + cls + '">' + tag + ' ' + (s.z > 0 ? '+' : '') + s.z.toFixed(1) + '</span>';
 }
 
-function qBadge(q) {
+function qBadge(q, kind) {
     if (!q) return '<span class="attr-q attr-q-na">N/A</span>';
-    var cls = q.indexOf('CLEAN') === 0 ? 'attr-q-clean' : 'attr-q-proxy';
-    return '<span class="attr-q ' + cls + '">' + q.replace(/_/g, ' ') + '</span>';
+    var cls = kind === 'synth' ? 'attr-q-synth' : (String(q).indexOf('CLEAN') === 0 ? 'attr-q-clean' : 'attr-q-proxy');
+    return '<span class="attr-q ' + cls + '">' + String(q).replace(/_/g, ' ') + '</span>';
 }
 
 function cell(valHtml, deltaHtml, zHtml) {
     return '<td><span class="attr-val">' + valHtml + '</span>' + (zHtml || '') + (deltaHtml || '') + '</td>';
 }
 
+/* ── proxy TP construction: TP_x = TP_anchor + 0.4·(NOM_x − NOM_anchor) ─ */
+function proxyTP(nomSeries, anchorAcmRows, anchorRyNom) {
+    var out = [];
+    for (var i = 0; i < nomSeries.length; i++) {
+        var d10 = isoNorm(nomSeries[i].d);
+        var key = d10.replace(/-/g, '');
+        var tpA = null, nomA = null;
+        for (var j = anchorAcmRows.length - 1; j >= 0; j--) {
+            if (String(anchorAcmRows[j].DATE) <= key) { tpA = anchorAcmRows[j].TP10; nomA = anchorAcmRows[j].Y10_FIT; break; }
+        }
+        if (anchorRyNom) {
+            var n2 = valueAt(anchorRyNom, d10);
+            if (n2 !== null) nomA = n2;
+        }
+        if (tpA === null || nomA === null) continue;
+        out.push({ d: nomSeries[i].d, v: tpA + 0.4 * (nomSeries[i].v - nomA) });
+    }
+    return out;
+}
+
+function constBE(nomSeries, c) {
+    return nomSeries.map(function (x) { return { d: x.d, v: c }; });
+}
+
+function isoNorm(d) {
+    d = String(d);
+    if (/^\d{8}$/.test(d)) return d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8);
+    if (/^\d{4}-\d{2}$/.test(d)) return d + '-28';
+    return d.slice(0, 10);
+}
+
+function minusSeries(a, b) {   /* a − b aligned on a's dates (b ffilled) */
+    var out = [];
+    for (var i = 0; i < a.length; i++) {
+        var bv = valueAt(b, isoNorm(a[i].d));
+        if (bv !== null) out.push({ d: a[i].d, v: a[i].v - bv });
+    }
+    return out;
+}
+
+/* ── row rendering ──────────────────────────────────────────────────── */
 function build(data) {
     var html = '<table class="attr-table"><thead><tr>' +
         '<th>CCY</th><th>Nominal 10Y</th><th>TP (ACM)</th><th>RNY (path)</th>' +
         '<th>Real 10Y</th><th>Breakeven</th><th>RY Source</th></tr></thead><tbody>';
 
-    var usd = data.USD || {};
-
     CCYS.forEach(function (c) {
         var d = data[c];
-        if (!d || !d.acm) return;
-        var nomS  = d.ry ? stats(d.ry.rows, 'NOM10') : stats(d.acm, 'Y10_FIT');
-        var tpS   = stats(d.acm, 'TP10');
-        var rnyS  = stats(d.acm, 'RNY10');
-        var realS = d.ry ? stats(d.ry.rows, 'REAL10') : null;
-        var beS   = d.ry ? stats(d.ry.rows, 'BE10')   : null;
-
+        if (!d) {
+            html += '<tr><td><span class="attr-ccy">' + c + '</span></td><td colspan="6" class="attr-err">' +
+                'source unreachable — see Data Quality Monitor (§05) for fallback chain and manual link</td></tr>';
+            return;
+        }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
-            '<span class="attr-sub">' + d.acm[d.acm.length - 1].DATE + '</span></td>' +
-            cell(fmtVal(nomS), fmtDelta(nomS)) +
-            cell(fmtVal(tpS),  fmtDelta(tpS), fmtZ(tpS)) +
-            cell(fmtVal(rnyS), fmtDelta(rnyS)) +
-            cell(fmtVal(realS), fmtDelta(realS)) +
-            cell(fmtVal(beS),  fmtDelta(beS)) +
-            '<td>' + qBadge(d.ry ? d.ry.quality : null) + '</td></tr>';
-
-        d._s = { nom: nomS, tp: tpS, rny: rnyS, real: realS };
+            '<span class="attr-sub">' + (d.asOf || '') + '</span>' +
+            (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
+            cell(fmtVal(d.nom), fmtDelta(d.nom)) +
+            cell(fmtVal(d.tp), fmtDelta(d.tp), fmtZ(d.tp)) +
+            cell(fmtVal(d.rny), fmtDelta(d.rny)) +
+            cell(fmtVal(d.real), fmtDelta(d.real)) +
+            cell(fmtVal(d.be), fmtDelta(d.be)) +
+            '<td>' + qBadge(d.quality, d.qkind) + '</td></tr>';
     });
 
-    // Spreads vs USD
+    var usd = data.USD;
     html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD</td></tr>';
     CCYS.forEach(function (c) {
-        if (c === 'USD') return;
+        if (c === 'USD' || !data[c] || !usd) return;
         var d = data[c];
-        if (!d || !d._s || !usd._s) return;
         function sp(a, b) {
             if (!a || !b) return '<span class="attr-na">—</span>';
             var v = a.last - b.last;
@@ -308,51 +877,172 @@ function build(data) {
             return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>';
         }
         html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span></td>' +
-            '<td>' + sp(d._s.nom,  usd._s.nom)  + '</td>' +
-            '<td>' + sp(d._s.tp,   usd._s.tp)   + '</td>' +
-            '<td>' + sp(d._s.rny,  usd._s.rny)  + '</td>' +
-            '<td>' + sp(d._s.real, usd._s.real) + '</td>' +
+            '<td>' + sp(d.nom, usd.nom) + '</td>' +
+            '<td>' + sp(d.tp, usd.tp) + '</td>' +
+            '<td>' + sp(d.rny, usd.rny) + '</td>' +
+            '<td>' + sp(d.real, usd.real) + '</td>' +
             '<td><span class="attr-na">—</span></td><td></td></tr>';
     });
 
     html += '</tbody></table>' +
-        '<div class="attr-note">EUR real PENDING (BdF Webstat registration blocked by ASN — Bund€i issuance discontinued Nov-2023) · ' +
-        'JPY/CHF/NZD real N/A (no open linker market data) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens)</div>';
+        '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
+        'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE — sources in §05 tooltips) · ' +
+        'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
+        'Z₁₂ = z-score on 12 monthly obs where the source is monthly (NZD nominal, EUR real)</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
 }
 
+/* ── orchestration ──────────────────────────────────────────────────── */
 function init() {
-    var data = {};
+    var raw = {};
     var jobs = [];
 
-    CCYS.forEach(function (c) {
-        jobs.push(
-            fetchCsv(RAW + 'ACM_G8_' + c + '.csv')
-                .then(function (t) { data[c] = data[c] || {}; data[c].acm = parseAcm(t); })
-                .catch(function (e) { console.warn('[attr] ACM', c, e.message); })
-        );
+    /* repo ACM + RY (6 ccys) — primary, generated by the pipeline's own ACM K=3 */
+    Object.keys(REPO_ACM).forEach(function (c) {
+        jobs.push(fetchCsv(RAW + 'ACM_G8_' + c + '.csv')
+            .then(function (t) { raw[c] = raw[c] || {}; raw[c].acm = parseAcm(t); })
+            .catch(function (e) { console.warn('[attr] ACM', c, e.message); }));
         if (RY_CCYS[c]) {
-            jobs.push(
-                fetchCsv(RAW + 'RY_G8_' + c + '.csv')
-                    .then(function (t) { data[c] = data[c] || {}; data[c].ry = parseRy(t); })
-                    .catch(function (e) { console.warn('[attr] RY', c, e.message); })
-            );
+            jobs.push(fetchCsv(RAW + 'RY_G8_' + c + '.csv')
+                .then(function (t) { raw[c] = raw[c] || {}; raw[c].ry = parseRy(t); })
+                .catch(function (e) { console.warn('[attr] RY', c, e.message); }));
         }
     });
 
-    Promise.all(jobs).then(function () {
-        var ok = CCYS.some(function (c) { return data[c] && data[c].acm && data[c].acm.length; });
-        if (!ok) {
-            document.getElementById('attr-matrix').innerHTML =
-                '<div class="attr-err">No attribution data reachable — check repo data/ACM_G8_*.csv</div>';
-            return;
-        }
-        try { build(data); } catch (e) {
-            document.getElementById('attr-matrix').innerHTML =
-                '<div class="attr-err">Render error: ' + e.message + '</div>';
-        }
+    /* EUR real — ECB benchmark (direct, CORS-enabled) */
+    jobs.push(G8NET.fetchChain([
+        { url: 'https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.4F.BB.R_U2_10Y.YLDA?lastNObservations=30&format=csvdata', opts: { corsOk: true } }
+    ]).then(function (r) {
+        if (!r.ok) throw new Error(r.error);
+        raw.EUR_REAL = parseEcbCsv(r.text);
+        G8DQM.report('EUR_REAL_ECB', { lastDate: raw.EUR_REAL.length ? raw.EUR_REAL[raw.EUR_REAL.length - 1].d : null, latency: r.ms, via: r.via });
+    }).catch(function (e) {
+        console.warn('[attr] EUR real ECB:', e.message);
+        G8DQM.report('EUR_REAL_ECB', { status: 'DEAD', error: e.message });
+    }));
+
+    /* CHF nominal — SNB rendoblid via cascade */
+    jobs.push(G8NET.fetchChain([
+        'https://data.snb.ch/api/cube/rendoblid/data/csv/en?dimSel=D0(10J0)&fromDate=' + isoDaysAgo(620)
+    ]).then(function (r) {
+        if (!r.ok) throw new Error(r.error);
+        raw.CHF_NOM = parseSnbCsv(r.text);
+        if (!raw.CHF_NOM.length) throw new Error('SNB csv parsed empty');
+        G8DQM.report('CHF_NOM_SNB', { lastDate: raw.CHF_NOM[raw.CHF_NOM.length - 1].d, latency: r.ms, via: r.via });
+    }).catch(function (e) {
+        console.warn('[attr] CHF SNB:', e.message);
+        G8DQM.report('CHF_NOM_SNB', { status: 'DEAD', error: e.message });
+    }));
+
+    /* NZD nominal — RBNZ B2 monthly workbook via cascade + SheetJS */
+    jobs.push(G8NET.fetchChain([
+        { url: 'https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-monthly.csv', opts: { binary: true } }
+    ], { binary: true }).then(function (r) {
+        if (!r.ok) throw new Error(r.error);
+        var buf = r.buf || G8NET.b64ToArrayBuffer(r.b64);
+        raw.NZD_NOM = parseRbnzB2(buf);
+        G8DQM.report('NZD_NOM_RBNZ', { lastDate: raw.NZD_NOM[raw.NZD_NOM.length - 1].d, latency: r.ms, via: r.via });
+    }).catch(function (e) {
+        console.warn('[attr] NZD RBNZ:', e.message);
+        G8DQM.report('NZD_NOM_RBNZ', { status: 'DEAD', error: e.message });
+    }));
+
+    Promise.all(jobs).then(function () { assemble(raw); });
+}
+
+function isoDaysAgo(d) {
+    return new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+}
+
+function assemble(raw) {
+    var data = {};
+
+    /* 6 repo currencies */
+    Object.keys(REPO_ACM).forEach(function (c) {
+        var d = raw[c];
+        if (!d || !d.acm || !d.acm.length) return;
+        var ry = d.ry ? d.ry.rows : null;
+        data[c] = {
+            nom: ry ? statsCol(ry, 'NOM10') : statsCol(d.acm, 'Y10_FIT'),
+            tp: statsCol(d.acm, 'TP10'),
+            rny: statsCol(d.acm, 'RNY10'),
+            real: ry ? statsCol(ry, 'REAL10') : null,
+            be: ry ? statsCol(ry, 'BE10') : null,
+            quality: d.ry ? d.ry.quality : null,
+            asOf: d.acm[d.acm.length - 1].DATE
+        };
     });
+
+    /* EUR real/BE from ECB benchmark (fills the former PENDING gap) */
+    if (data.EUR && raw.EUR_REAL && raw.EUR_REAL.length) {
+        var nomSeries = raw.EUR.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
+        var beSeries = minusSeries(
+            nomSeries.filter(function (x) { return toMs(x.d) >= toMs(raw.EUR_REAL[0].d); }),
+            raw.EUR_REAL);
+        data.EUR.real = statsS(raw.EUR_REAL);
+        data.EUR.be = statsS(beSeries);
+        data.EUR.quality = 'PROXY_ECB_BENCHMARK';
+    } else if (data.EUR) {
+        data.EUR.quality = data.EUR.quality || null;
+    }
+
+    /* JPY real/BE — manual constant */
+    if (data.JPY && raw.JPY && raw.JPY.acm) {
+        var jn = raw.JPY.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
+        data.JPY.be = statsS(constBE(jn.slice(-300), BE_CONST.JPY.v));
+        data.JPY.real = statsS(minusSeries(jn.slice(-300), constBE(jn, BE_CONST.JPY.v)));
+        data.JPY.quality = 'SYNTH_BE_CONST';
+        data.JPY.qkind = 'synth';
+        data.JPY.formula = 'BE=' + BE_CONST.JPY.v + '% (' + BE_CONST.JPY.src + ' ' + BE_CONST.JPY.asOf + ')';
+    }
+
+    /* CHF — SNB nominal + EUR-anchored TP + manual BE */
+    if (raw.CHF_NOM && raw.CHF_NOM.length && raw.EUR && raw.EUR.acm) {
+        var tpCHF = proxyTP(raw.CHF_NOM, raw.EUR.acm, null);
+        var rnyCHF = minusSeries(raw.CHF_NOM, tpCHF);
+        data.CHF = {
+            nom: statsS(raw.CHF_NOM),
+            tp: statsS(tpCHF),
+            rny: statsS(rnyCHF),
+            be: statsS(constBE(raw.CHF_NOM, BE_CONST.CHF.v)),
+            real: statsS(minusSeries(raw.CHF_NOM, constBE(raw.CHF_NOM, BE_CONST.CHF.v))),
+            quality: 'SYNTH_TP+BE',
+            qkind: 'synth',
+            asOf: raw.CHF_NOM[raw.CHF_NOM.length - 1].d,
+            formula: 'TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
+        };
+    }
+
+    /* NZD — RBNZ nominal + AUD-anchored TP + manual BE */
+    if (raw.NZD_NOM && raw.NZD_NOM.length && raw.AUD && raw.AUD.acm) {
+        var audNomRy = raw.AUD.ry ? raw.AUD.ry.rows.map(function (r) {
+            var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
+        }) : null;
+        var tpNZD = proxyTP(raw.NZD_NOM, raw.AUD.acm, audNomRy);
+        data.NZD = {
+            nom: statsS(raw.NZD_NOM),
+            tp: statsS(tpNZD),
+            rny: statsS(minusSeries(raw.NZD_NOM, tpNZD)),
+            be: statsS(constBE(raw.NZD_NOM, BE_CONST.NZD.v)),
+            real: statsS(minusSeries(raw.NZD_NOM, constBE(raw.NZD_NOM, BE_CONST.NZD.v))),
+            quality: 'SYNTH_TP+BE',
+            qkind: 'synth',
+            asOf: raw.NZD_NOM[raw.NZD_NOM.length - 1].d + ' (M)',
+            formula: 'TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
+        };
+    }
+
+    var ok = CCYS.some(function (c) { return data[c]; });
+    if (!ok) {
+        document.getElementById('attr-matrix').innerHTML =
+            '<div class="attr-err">No attribution data reachable — repo data/ACM_G8_*.csv unreachable AND all external fallbacks exhausted. Check network / GitHub raw availability.</div>';
+        return;
+    }
+    try { build(data); } catch (e) {
+        document.getElementById('attr-matrix').innerHTML =
+            '<div class="attr-err">Render error: ' + e.message + '</div>';
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -360,7 +1050,6 @@ if (document.readyState === 'loading') {
 } else { init(); }
 })();
 </script>
-
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
