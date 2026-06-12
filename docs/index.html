@@ -45,6 +45,12 @@
         padding-top:18px;border-bottom:1px solid #1c2433}
     .attr-note{font-size:10px;color:#5d6678;margin-top:10px;font-family:'IBM Plex Sans Condensed',sans-serif}
     .attr-err{color:#e0485a;font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px 0}
+    .fls-spark{display:inline-block;vertical-align:middle}
+    .fls-badge{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;
+        font-size:10px;font-weight:700;letter-spacing:.08em;border-radius:2px;padding:2px 7px}
+    .fls-amp{background:#0f2a1d;color:#2fbf71}
+    .fls-tight{background:#3a2c10;color:#fdb813}
+    .fls-press{background:#3d1420;color:#ff5c72}
     .legacy-hidden{display:none}
     </style>
 </head>
@@ -88,10 +94,27 @@
         </div>
     </section>
 
+
+    <!-- ══ 02 — MONEY MARKET FLOOR SPREADS ════════════════════════════════ -->
+    <section class="dashboard-section" id="section-floors">
+        <div class="section-header">
+            <h2 class="section-title">02 — Money Market Floor Spreads G8</h2>
+            <span class="section-meta">RFR − deposit floor / policy ref · bps · domestic reserve pressure · T+1 fixings</span>
+        </div>
+        <div class="section-body">
+            <div class="attr-wrap" id="fls-table">
+                <div class="attr-err" style="color:#5d6678">Loading floor spreads…</div>
+            </div>
+            <div class="section-footer">
+                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF N/A (SARON behind SNB Cloudflare) · NZD N/A (OCR is the policy rate itself)</span>
+            </div>
+        </div>
+    </section>
+
     <!-- ══ 02 — POLICY RATES ══════════════════════════════════════════════ -->
     <section class="dashboard-section" id="section-policy">
         <div class="section-header">
-            <h2 class="section-title">02 — Policy Rates G8 (MFLUX MFS)</h2>
+            <h2 class="section-title">03 — Policy Rates G8 (MFLUX MFS)</h2>
             <span class="section-meta">4 policy rates · 90D lookback · BIS WS_CBPOL</span>
         </div>
         <div class="section-body">
@@ -105,7 +128,7 @@
     <!-- ══ 03 — ACM USD TIME SERIES ═══════════════════════════════════════ -->
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
-            <h2 class="section-title">03 — Term Premium ACM 10Y USD (time series)</h2>
+            <h2 class="section-title">04 — Term Premium ACM 10Y USD (time series)</h2>
             <span class="section-meta">USD 10Y zero-coupon · Adrian-Crump-Moench · NY Fed</span>
         </div>
         <div class="section-body">
@@ -119,7 +142,7 @@
     <!-- ══ 04 — DATA QUALITY MONITOR ══════════════════════════════════════ -->
     <section class="dashboard-section" id="section-quality">
         <div class="section-header">
-            <h2 class="section-title">04 — Data Quality Monitor</h2>
+            <h2 class="section-title">05 — Data Quality Monitor</h2>
             <span class="section-meta">Feed freshness · Staleness alerts · Source reliability</span>
         </div>
         <div class="section-body">
@@ -329,6 +352,125 @@ function init() {
             document.getElementById('attr-matrix').innerHTML =
                 '<div class="attr-err">Render error: ' + e.message + '</div>';
         }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else { init(); }
+})();
+</script>
+
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   FLOOR SPREADS — self-contained module
+   RFR (OHLCV csv) − floor/ref (OHLCV csv), forward-filled, in bps
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var PAIRS = [
+    { ccy: 'USD', rfr: 'SOFR.csv',  flr: 'FLOOR_USD.csv', ref: 'IORB' },
+    { ccy: 'EUR', rfr: 'ESTR.csv',  flr: 'FLOOR_EUR.csv', ref: 'DFR' },
+    { ccy: 'GBP', rfr: 'SONIA.csv', flr: 'GB_POLICY.csv', ref: 'Bank Rate' },
+    { ccy: 'JPY', rfr: 'TONA.csv',  flr: 'JP_POLICY.csv', ref: 'Policy Rate' },
+    { ccy: 'CAD', rfr: 'CORRA.csv', flr: 'FLOOR_CAD.csv', ref: 'BoC Target' },
+    { ccy: 'AUD', rfr: 'AONIA.csv', flr: 'AU_POLICY.csv', ref: 'Cash Rate' }
+];
+
+function getCsv(name) {
+    return fetch(RAW + name, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error(name + ' HTTP ' + r.status);
+        return r.text();
+    }).then(function (t) {
+        var p = Papa.parse(t.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+        return p.data.filter(function (r) { return r.DATE && isFinite(r.CLOSE); })
+            .map(function (r) { return { d: String(r.DATE), v: r.CLOSE }; })
+            .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    });
+}
+
+function spreadSeries(rfr, flr) {
+    var fi = 0, lastF = null, out = [];
+    for (var i = 0; i < rfr.length; i++) {
+        while (fi < flr.length && flr[fi].d <= rfr[i].d) { lastF = flr[fi].v; fi++; }
+        if (lastF !== null) out.push({ d: rfr[i].d, v: (rfr[i].v - lastF) * 100 });
+    }
+    return out;
+}
+
+function spark(vals) {
+    if (vals.length < 5) return '';
+    var w = 120, h = 26;
+    var mn = Math.min.apply(null, vals.concat([0]));
+    var mx = Math.max.apply(null, vals.concat([0]));
+    if (mx - mn < 1e-9) mx = mn + 1;
+    function y(v) { return h - 2 - (v - mn) / (mx - mn) * (h - 4); }
+    var pts = vals.map(function (v, i) {
+        return (i / (vals.length - 1) * w).toFixed(1) + ',' + y(v).toFixed(1);
+    }).join(' ');
+    var zy = y(0).toFixed(1);
+    return '<svg class="fls-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+        '<line x1="0" y1="' + zy + '" x2="' + w + '" y2="' + zy + '" stroke="#2a3344" stroke-width="1"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="#fdb813" stroke-width="1.4"/></svg>';
+}
+
+function fmtD(d) {
+    if (d === null) return '';
+    var cls = d > 0.5 ? 'attr-dn' : d < -0.5 ? 'attr-up' : 'attr-fl';
+    return '<span class="' + cls + '">' + (d > 0 ? '+' : '') + d.toFixed(1) + '</span>';
+}
+
+function row(p, s) {
+    var v = s.map(function (x) { return x.v; });
+    var n = v.length, last = v[n - 1];
+    var d1w = n > 5 ? last - v[n - 6] : null;
+    var d1m = n > 21 ? last - v[n - 22] : null;
+    var win = v.slice(-252), z = null;
+    if (win.length >= 60) {
+        var mu = win.reduce(function (a, b) { return a + b; }, 0) / win.length;
+        var sd = Math.sqrt(win.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / win.length);
+        if (sd > 1e-9) z = (last - mu) / sd;
+    }
+    var badge = last > 10 ? '<span class="fls-badge fls-press">PRESSURE</span>'
+              : last > 2  ? '<span class="fls-badge fls-tight">TIGHT</span>'
+              :             '<span class="fls-badge fls-amp">AMPLE</span>';
+    var zh = z === null ? '' :
+        '<span class="attr-z ' + (Math.abs(z) > 2 ? 'attr-z-hi' : Math.abs(z) > 1 ? 'attr-z-md' : 'attr-z-lo') + '">Z ' +
+        (z > 0 ? '+' : '') + z.toFixed(1) + '</span>';
+    return '<tr>' +
+        '<td><span class="attr-ccy">' + p.ccy + '</span><span class="attr-sub">vs ' + p.ref +
+            ' · ' + s[n - 1].d + '</span></td>' +
+        '<td><span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh + '</td>' +
+        '<td>' + fmtD(d1w) + '</td>' +
+        '<td>' + fmtD(d1m) + '</td>' +
+        '<td>' + spark(v.slice(-90)) + '</td>' +
+        '<td>' + badge + '</td></tr>';
+}
+
+function init() {
+    var data = {};
+    var jobs = PAIRS.map(function (p) {
+        return Promise.all([getCsv(p.rfr), getCsv(p.flr)])
+            .then(function (rs) { data[p.ccy] = spreadSeries(rs[0], rs[1]); })
+            .catch(function (e) { console.warn('[fls]', p.ccy, e.message); });
+    });
+    Promise.all(jobs).then(function () {
+        var rows = '';
+        PAIRS.forEach(function (p) {
+            var s = data[p.ccy];
+            if (s && s.length > 30) rows += row(p, s);
+        });
+        var el = document.getElementById('fls-table');
+        if (!rows) {
+            el.innerHTML = '<div class="attr-err">No floor data reachable — run Daily Data Update to generate FLOOR_*.csv</div>';
+            return;
+        }
+        el.innerHTML = '<table class="attr-table"><thead><tr>' +
+            '<th>CCY</th><th>Spread (bps)</th><th>Δ1W</th><th>Δ1M</th><th>90D</th><th>Regime</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table>';
     });
 }
 
