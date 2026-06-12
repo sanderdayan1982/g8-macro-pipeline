@@ -12,13 +12,48 @@
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+    /* ── Attribution Matrix (self-contained, scope: .attr-) ─────────────── */
+    .attr-wrap{overflow-x:auto}
+    .attr-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:13px}
+    .attr-table th{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:600;font-size:11px;
+        letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;text-align:right;
+        padding:8px 14px;border-bottom:1px solid #1c2433;white-space:nowrap}
+    .attr-table th:first-child{text-align:left}
+    .attr-table td{padding:9px 14px;text-align:right;border-bottom:1px solid #131a26;
+        color:#d7dce6;vertical-align:top;white-space:nowrap}
+    .attr-table td:first-child{text-align:left}
+    .attr-table tr:hover td{background:#0d1320}
+    .attr-ccy{font-weight:700;color:#fdb813;font-size:14px;letter-spacing:.05em}
+    .attr-val{font-weight:600;font-size:14px}
+    .attr-sub{display:block;font-size:10px;color:#5d6678;margin-top:3px}
+    .attr-up{color:#2fbf71}.attr-dn{color:#e0485a}.attr-fl{color:#5d6678}
+    .attr-na{color:#3a4254}
+    .attr-z{display:inline-block;font-size:10px;font-weight:700;border-radius:2px;
+        padding:1px 5px;margin-left:6px;vertical-align:middle}
+    .attr-z-hi{background:#3d1420;color:#ff5c72}
+    .attr-z-md{background:#3a2c10;color:#fdb813}
+    .attr-z-lo{background:#13202e;color:#5d8aa8}
+    .attr-q{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;
+        font-size:9px;font-weight:700;letter-spacing:.06em;border-radius:2px;
+        padding:2px 6px;margin-top:4px}
+    .attr-q-clean{background:#0f2a1d;color:#2fbf71}
+    .attr-q-proxy{background:#3a2c10;color:#fdb813}
+    .attr-q-na{background:#1a1f2b;color:#5d6678}
+    .attr-spread-head td{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;
+        font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;
+        padding-top:18px;border-bottom:1px solid #1c2433}
+    .attr-note{font-size:10px;color:#5d6678;margin-top:10px;font-family:'IBM Plex Sans Condensed',sans-serif}
+    .attr-err{color:#e0485a;font-family:'JetBrains Mono',monospace;font-size:12px;padding:12px 0}
+    .legacy-hidden{display:none}
+    </style>
 </head>
 <body>
     <header class="dashboard-header">
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v1.0</span>
+            <span class="brand-sub">Institutional Dashboard v2.0 — Long-End Attribution</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -36,54 +71,27 @@
     </div>
 </header>
 <main class="dashboard-main">
-    <section class="dashboard-section" id="section-rfr">
+
+    <!-- ══ 01 — LONG-END ATTRIBUTION MATRIX ══════════════════════════════ -->
+    <section class="dashboard-section" id="section-attribution">
         <div class="section-header">
-            <h2 class="section-title">01 — Overnight Risk-Free Rates G7</h2>
-            <span class="section-meta">7 RFRs · 90D lookback · Daily series</span>
+            <h2 class="section-title">01 — Long-End Attribution Matrix G8</h2>
+            <span class="section-meta">y10 = RNY (expected path) + TP (duration premium) · NOM = REAL + BE · Z 252D</span>
         </div>
         <div class="section-body">
-            <div class="chart-container" id="chart-rfr"></div>
+            <div class="attr-wrap" id="attr-matrix">
+                <div class="attr-err" style="color:#5d6678">Loading attribution data…</div>
+            </div>
             <div class="section-footer">
-                <span class="footer-note">ESTR (ECB) · SONIA (BoE) · SARON (SNB) · AONIA (RBA) · TONA (BoJ) · CORRA (BoC) · NZD OCR (BIS)</span>
+                <span class="footer-note">ACM K=3 two-stage (Adrian-Crump-Moench) validated vs NY Fed corr 0.948 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) · Δ in bps · Z on TP 252D</span>
             </div>
         </div>
     </section>
-    <section class="dashboard-section" id="section-curves">
-        <div class="section-header">
-            <h2 class="section-title">02 — Sovereign Yield Curves G8</h2>
-            <span class="section-meta">Short-end (3M–10Y) · Latest observation</span>
-        </div>
-        <div class="section-body">
-            <div class="curves-grid" id="curves-grid"></div>
-            <div class="section-footer">
-                <span class="footer-note">Solid line: latest curve · Dashed line: 30D ago · Bps annualized</span>
-            </div>
-        </div>
-    </section>
-    <section class="dashboard-section" id="section-xccy">
-        <div class="section-header">
-            <h2 class="section-title">03 — XCCY Basis Proxy G7 vs USD</h2>
-            <span class="section-meta">(RFR_X − Bill_X) − (SOFR − Bill_US) · Z-score 252D</span>
-        </div>
-        <div class="section-body">
-            <div class="chart-container" id="chart-xccy"></div>
-            <div class="section-footer">
-                <span class="footer-note">Stress threshold: |Z| > 2.0σ · Negative basis = USD funding scarcity offshore</span>
-            </div>
-        </div>
-    </section>
-    <section class="dashboard-section" id="section-quality">
-        <div class="section-header">
-            <h2 class="section-title">04 — Data Quality Monitor</h2>
-            <span class="section-meta">Feed freshness · Staleness alerts · Source reliability</span>
-        </div>
-        <div class="section-body">
-            <div class="quality-grid" id="quality-grid"></div>
-        </div>
-    </section>
+
+    <!-- ══ 02 — POLICY RATES ══════════════════════════════════════════════ -->
     <section class="dashboard-section" id="section-policy">
         <div class="section-header">
-            <h2 class="section-title">05 — Policy Rates G8 (MFLUX MFS)</h2>
+            <h2 class="section-title">02 — Policy Rates G8 (MFLUX MFS)</h2>
             <span class="section-meta">4 policy rates · 90D lookback · BIS WS_CBPOL</span>
         </div>
         <div class="section-body">
@@ -93,9 +101,11 @@
             </div>
         </div>
     </section>
+
+    <!-- ══ 03 — ACM USD TIME SERIES ═══════════════════════════════════════ -->
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
-            <h2 class="section-title">06 — Term Premium ACM 10Y (RYDT preview)</h2>
+            <h2 class="section-title">03 — Term Premium ACM 10Y USD (time series)</h2>
             <span class="section-meta">USD 10Y zero-coupon · Adrian-Crump-Moench · NY Fed</span>
         </div>
         <div class="section-body">
@@ -105,6 +115,31 @@
             </div>
         </div>
     </section>
+
+    <!-- ══ 04 — DATA QUALITY MONITOR ══════════════════════════════════════ -->
+    <section class="dashboard-section" id="section-quality">
+        <div class="section-header">
+            <h2 class="section-title">04 — Data Quality Monitor</h2>
+            <span class="section-meta">Feed freshness · Staleness alerts · Source reliability</span>
+        </div>
+        <div class="section-body">
+            <div class="quality-grid" id="quality-grid"></div>
+        </div>
+    </section>
+
+    <!-- ══ LEGACY (hidden — containers kept so charts.js init stays intact) -->
+    <div class="legacy-hidden" aria-hidden="true">
+        <section class="dashboard-section" id="section-rfr">
+            <div class="section-body"><div class="chart-container" id="chart-rfr"></div></div>
+        </section>
+        <section class="dashboard-section" id="section-curves">
+            <div class="section-body"><div class="curves-grid" id="curves-grid"></div></div>
+        </section>
+        <section class="dashboard-section" id="section-xccy">
+            <div class="section-body"><div class="chart-container" id="chart-xccy"></div></div>
+        </section>
+    </div>
+
 </main>
 <footer class="dashboard-footer">
     <div class="footer-inner">
@@ -118,6 +153,191 @@
         </div>
     </div>
 </footer>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   ATTRIBUTION MATRIX — self-contained module (no data-loader dependency)
+   Reads ACM_G8_<CCY>.csv (DATE,Y10_FIT,RNY10,TP10)
+   and   RY_G8_<CCY>.csv  (# QUALITY=... · DATE,NOM10,REAL10,BE10)
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD'];
+var RY_CCYS = { USD: 1, GBP: 1, CAD: 1, AUD: 1 };
+
+function fetchCsv(url) {
+    return fetch(url, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error(url.split('/').pop() + ' HTTP ' + r.status);
+        return r.text();
+    });
+}
+
+function parseAcm(text) {
+    var p = Papa.parse(text.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+    return p.data.filter(function (r) { return r.DATE && isFinite(r.TP10); });
+}
+
+function parseRy(text) {
+    var quality = null;
+    var lines = text.split('\n');
+    if (lines[0] && lines[0].charAt(0) === '#') {
+        var m = lines[0].match(/QUALITY=([^\s]+)/);
+        if (m) quality = m[1];
+        lines = lines.slice(1);
+    }
+    var p = Papa.parse(lines.join('\n').trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+    return { rows: p.data.filter(function (r) { return r.DATE && isFinite(r.NOM10); }), quality: quality };
+}
+
+function col(rows, key) {
+    return rows.map(function (r) { return r[key]; }).filter(isFinite);
+}
+
+function stats(rows, key) {
+    var v = col(rows, key);
+    if (!v.length) return null;
+    var n = v.length;
+    var last = v[n - 1];
+    var d1w = n > 5  ? (last - v[n - 6])  * 100 : null;   // bps
+    var d1m = n > 21 ? (last - v[n - 22]) * 100 : null;   // bps
+    var win = v.slice(-252);
+    var z = null;
+    if (win.length >= 60) {
+        var mu = win.reduce(function (a, b) { return a + b; }, 0) / win.length;
+        var sd = Math.sqrt(win.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / win.length);
+        if (sd > 1e-9) z = (last - mu) / sd;
+    }
+    return { last: last, d1w: d1w, d1m: d1m, z: z };
+}
+
+function fmtVal(s) { return s === null ? '<span class="attr-na">—</span>' : s.last.toFixed(2); }
+
+function fmtDelta(s) {
+    if (s === null) return '';
+    function one(d, tag) {
+        if (d === null) return '';
+        var cls = d > 0.5 ? 'attr-up' : d < -0.5 ? 'attr-dn' : 'attr-fl';
+        var sign = d > 0 ? '+' : '';
+        return '<span class="' + cls + '">' + tag + ' ' + sign + d.toFixed(0) + '</span>';
+    }
+    var a = one(s.d1w, '1W'), b = one(s.d1m, '1M');
+    if (!a && !b) return '';
+    return '<span class="attr-sub">' + a + (a && b ? ' · ' : '') + b + '</span>';
+}
+
+function fmtZ(s) {
+    if (s === null || s.z === null) return '';
+    var az = Math.abs(s.z);
+    var cls = az > 2 ? 'attr-z-hi' : az > 1 ? 'attr-z-md' : 'attr-z-lo';
+    return '<span class="attr-z ' + cls + '">Z ' + (s.z > 0 ? '+' : '') + s.z.toFixed(1) + '</span>';
+}
+
+function qBadge(q) {
+    if (!q) return '<span class="attr-q attr-q-na">N/A</span>';
+    var cls = q.indexOf('CLEAN') === 0 ? 'attr-q-clean' : 'attr-q-proxy';
+    return '<span class="attr-q ' + cls + '">' + q.replace(/_/g, ' ') + '</span>';
+}
+
+function cell(valHtml, deltaHtml, zHtml) {
+    return '<td><span class="attr-val">' + valHtml + '</span>' + (zHtml || '') + (deltaHtml || '') + '</td>';
+}
+
+function build(data) {
+    var html = '<table class="attr-table"><thead><tr>' +
+        '<th>CCY</th><th>Nominal 10Y</th><th>TP (ACM)</th><th>RNY (path)</th>' +
+        '<th>Real 10Y</th><th>Breakeven</th><th>RY Source</th></tr></thead><tbody>';
+
+    var usd = data.USD || {};
+
+    CCYS.forEach(function (c) {
+        var d = data[c];
+        if (!d || !d.acm) return;
+        var nomS  = d.ry ? stats(d.ry.rows, 'NOM10') : stats(d.acm, 'Y10_FIT');
+        var tpS   = stats(d.acm, 'TP10');
+        var rnyS  = stats(d.acm, 'RNY10');
+        var realS = d.ry ? stats(d.ry.rows, 'REAL10') : null;
+        var beS   = d.ry ? stats(d.ry.rows, 'BE10')   : null;
+
+        html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
+            '<span class="attr-sub">' + d.acm[d.acm.length - 1].DATE + '</span></td>' +
+            cell(fmtVal(nomS), fmtDelta(nomS)) +
+            cell(fmtVal(tpS),  fmtDelta(tpS), fmtZ(tpS)) +
+            cell(fmtVal(rnyS), fmtDelta(rnyS)) +
+            cell(fmtVal(realS), fmtDelta(realS)) +
+            cell(fmtVal(beS),  fmtDelta(beS)) +
+            '<td>' + qBadge(d.ry ? d.ry.quality : null) + '</td></tr>';
+
+        d._s = { nom: nomS, tp: tpS, rny: rnyS, real: realS };
+    });
+
+    // Spreads vs USD
+    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD</td></tr>';
+    CCYS.forEach(function (c) {
+        if (c === 'USD') return;
+        var d = data[c];
+        if (!d || !d._s || !usd._s) return;
+        function sp(a, b) {
+            if (!a || !b) return '<span class="attr-na">—</span>';
+            var v = a.last - b.last;
+            var cls = v > 0 ? 'attr-up' : v < 0 ? 'attr-dn' : 'attr-fl';
+            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>';
+        }
+        html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span></td>' +
+            '<td>' + sp(d._s.nom,  usd._s.nom)  + '</td>' +
+            '<td>' + sp(d._s.tp,   usd._s.tp)   + '</td>' +
+            '<td>' + sp(d._s.rny,  usd._s.rny)  + '</td>' +
+            '<td>' + sp(d._s.real, usd._s.real) + '</td>' +
+            '<td><span class="attr-na">—</span></td><td></td></tr>';
+    });
+
+    html += '</tbody></table>' +
+        '<div class="attr-note">EUR real PENDING (BdF Webstat registration blocked by ASN — Bund€i issuance discontinued Nov-2023) · ' +
+        'JPY/CHF/NZD real N/A (no open linker market data) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens)</div>';
+
+    document.getElementById('attr-matrix').innerHTML = html;
+}
+
+function init() {
+    var data = {};
+    var jobs = [];
+
+    CCYS.forEach(function (c) {
+        jobs.push(
+            fetchCsv(RAW + 'ACM_G8_' + c + '.csv')
+                .then(function (t) { data[c] = data[c] || {}; data[c].acm = parseAcm(t); })
+                .catch(function (e) { console.warn('[attr] ACM', c, e.message); })
+        );
+        if (RY_CCYS[c]) {
+            jobs.push(
+                fetchCsv(RAW + 'RY_G8_' + c + '.csv')
+                    .then(function (t) { data[c] = data[c] || {}; data[c].ry = parseRy(t); })
+                    .catch(function (e) { console.warn('[attr] RY', c, e.message); })
+            );
+        }
+    });
+
+    Promise.all(jobs).then(function () {
+        var ok = CCYS.some(function (c) { return data[c] && data[c].acm && data[c].acm.length; });
+        if (!ok) {
+            document.getElementById('attr-matrix').innerHTML =
+                '<div class="attr-err">No attribution data reachable — check repo data/ACM_G8_*.csv</div>';
+            return;
+        }
+        try { build(data); } catch (e) {
+            document.getElementById('attr-matrix').innerHTML =
+                '<div class="attr-err">Render error: ' + e.message + '</div>';
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else { init(); }
+})();
+</script>
+
 <script src="js/data-loader.js"></script>
 <script src="js/charts.js"></script>
 <script>
