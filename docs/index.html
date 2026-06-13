@@ -99,7 +99,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.1 — Long-End Attribution 8/8 + DQM</span>
+            <span class="brand-sub">Institutional Dashboard v2.2 — Long-End Attribution 8/8 + DQM + Netlify proxy</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -192,7 +192,7 @@
             <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5 — RFR · Bills · Policy · ACM)</div>
             <div class="quality-grid" id="quality-grid"></div>
             <div class="section-footer">
-                <span class="footer-note">Registry-based monitor: LIVE = data ≤ expected lag · DEGRADED = within tolerance · STALE = 2× tolerance · DEAD = source unreachable / beyond 2× · SYNTHETIC = computed proxy · MANUAL = hand-set constant with exact source link in tooltip. Staleness counted in business days. RUN ALL re-checks every registered source live (repo CSVs direct · ECB/BoC direct CORS · FRED/SNB/RBNZ/eco3min via CORS proxy cascade). Cache 60 min (localStorage) · auto re-check every 4 h.</span>
+                <span class="footer-note">Registry-based monitor: LIVE = data ≤ expected lag · DEGRADED = within tolerance · STALE = 2× tolerance · DEAD = source unreachable / beyond 2× · SYNTHETIC = computed proxy · MANUAL = hand-set constant with exact source link in tooltip. Staleness counted in business days. RUN ALL re-checks every registered source live. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy (/proxy/* — requires docs/_redirects) with public CORS proxies only as last resort. Cache 60 min (localStorage) · auto re-check every 4 h.</span>
             </div>
         </div>
     </section>
@@ -235,10 +235,30 @@
 
 var PROXIES = [
     '',                                            /* direct (CORS-enabled sources) */
-    'https://corsproxy.io/?url=',                  /* cascade tier 1 */
+    'https://corsproxy.io/?url=',                  /* cascade tier 1 (403 on prod origins — last resort) */
     'https://api.allorigins.win/raw?url=',         /* cascade tier 2 */
     'https://api.codetabs.com/v1/proxy?quest='     /* cascade tier 3 */
 ];
+
+/* Same-origin Netlify proxy (docs/_redirects). Server-side fetch — no CORS.
+   Tried FIRST for mapped hosts; public proxies remain only as last resort. */
+var LOCAL_PROXY_MAP = [
+    { origin: 'https://data.snb.ch/',          path: '/proxy/snb/'   },
+    { origin: 'https://www.rbnz.govt.nz/',     path: '/proxy/rbnz/'  },
+    { origin: 'https://eco3min.fr/',           path: '/proxy/eco/'   },
+    { origin: 'https://fred.stlouisfed.org/',  path: '/proxy/fred/'  },
+    { origin: 'https://www.newyorkfed.org/',   path: '/proxy/nyfed/' },
+    { origin: 'https://www.mof.go.jp/',        path: '/proxy/mof/'   }
+];
+
+function localProxy(url) {
+    if (window.location.protocol === 'file:') return null;   /* only when served by Netlify */
+    for (var i = 0; i < LOCAL_PROXY_MAP.length; i++) {
+        var m = LOCAL_PROXY_MAP[i];
+        if (url.indexOf(m.origin) === 0) return m.path + url.slice(m.origin.length);
+    }
+    return null;
+}
 
 var CACHE_MS = 60 * 60 * 1000;   /* 60 min */
 var TIMEOUT_MS = 8000;
@@ -283,16 +303,25 @@ async function fetchAny(url, opts) {
             return { ok: true, text: c.text, b64: c.b64, via: c.via + ' (cache)', ms: 0, cached: true };
         }
     }
-    var chain = opts.corsOk ? [''] .concat(PROXIES.slice(1)) : PROXIES;
+    var chain = opts.corsOk ? [''].concat(PROXIES.slice(1)) : PROXIES;
+    var attempts = [];
+    var lp = localProxy(url);
+    if (lp) attempts.push({ u: lp, via: 'netlify-proxy' });
+    for (var ci = 0; ci < chain.length; ci++) {
+        /* if a netlify mapping exists, skip the doomed direct attempt (saves a CORS error) */
+        if (lp && chain[ci] === '' && !opts.corsOk) continue;
+        attempts.push({ u: wrap(chain[ci], url),
+                        via: chain[ci] ? chain[ci].replace(/^https:\/\//, '').split('/')[0] : 'direct' });
+    }
     var lastErr = null;
-    for (var i = 0; i < chain.length; i++) {
-        var attempt = wrap(chain[i], url);
+    for (var i = 0; i < attempts.length; i++) {
+        var attempt = attempts[i].u;
         var t0 = performance.now();
         try {
             var resp = await fetch(attempt, { cache: 'no-store', signal: timeoutSignal(TIMEOUT_MS) });
-            if (!resp.ok) { lastErr = 'HTTP ' + resp.status; continue; }
+            if (!resp.ok) { lastErr = 'HTTP ' + resp.status + ' via ' + attempts[i].via; continue; }
             var ms = Math.round(performance.now() - t0);
-            var via = chain[i] ? chain[i].replace(/^https:\/\//, '').split('/')[0] : 'direct';
+            var via = attempts[i].via;
             if (opts.binary) {
                 var buf = await resp.arrayBuffer();
                 var b64 = arrayBufferToB64(buf);

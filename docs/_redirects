@@ -1,0 +1,9 @@
+# G8 Macro Pipeline — Netlify server-side proxy (CORS bypass institucional)
+# El navegador llama a /proxy/<src>/<path>; Netlify hace el fetch server-side
+# y devuelve la respuesta como same-origin. Query strings se reenvian solas.
+/proxy/snb/*    https://data.snb.ch/:splat            200
+/proxy/rbnz/*   https://www.rbnz.govt.nz/:splat       200
+/proxy/eco/*    https://eco3min.fr/:splat             200
+/proxy/fred/*   https://fred.stlouisfed.org/:splat    200
+/proxy/nyfed/*  https://www.newyorkfed.org/:splat     200
+/proxy/mof/*    https://www.mof.go.jp/:splat          200
