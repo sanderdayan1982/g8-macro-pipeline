@@ -56,6 +56,17 @@
     /* ── Synthetic / proxy badges (attribution v2) ─────────────────────── */
     .attr-q-synth{background:#13202e;color:#5d8aa8}
     .attr-formula{display:block;font-size:9px;color:#465063;margin-top:2px;font-family:'JetBrains Mono',monospace}
+    /* ── Manual editable nominal input (CHF/NZD) ───────────────────────── */
+    .attr-edit{display:flex;align-items:center;gap:6px;margin-top:5px}
+    .attr-input{width:62px;background:#11101c;border:1px solid #3a2c52;color:#c9b8e8;
+        font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+        border-radius:2px;padding:2px 5px;text-align:right}
+    .attr-input:focus{outline:none;border-color:#9d7bd8;background:#161226}
+    .attr-input::-webkit-inner-spin-button{opacity:.4}
+    .attr-edit-src{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9px;
+        font-weight:700;color:#9d7bd8;text-decoration:none;letter-spacing:.04em}
+    .attr-edit-src:hover{text-decoration:underline}
+    .attr-q-synth{background:#1f1830;color:#9d7bd8}
     /* ── Data Quality Monitor (scope: .dqm-) ───────────────────────────── */
     .dqm-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
     .dqm-chip{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;font-weight:700;
@@ -99,7 +110,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.2 — Long-End Attribution 8/8 + DQM + Netlify proxy</span>
+            <span class="brand-sub">Institutional Dashboard v2.3 — 8/8 · DQM · CHF/NZD manual-editable</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -429,15 +440,15 @@ var FEED_REGISTRY = {
         source: 'ECB Data Portal API (FR/DE linker basket)', corsOk: true, frequency: 'monthly', maxStaleness: 35, section: '01'
     },
     CHF_NOM_SNB: {
-        name: 'CHF Nominal 10Y (Confederation spot)',
-        urls: ['https://data.snb.ch/api/cube/rendoblid/data/csv/en?dimSel=D0(10J0)&fromDate=' + isoDaysAgo(620)],
-        source: 'SNB Data Portal (rendoblid)', corsOk: false, frequency: 'daily', maxStaleness: 6, section: '01',
+        name: 'CHF Nominal 10Y (manual — TVC:CH10Y)',
+        urls: [], source: 'Manual input — TradingView TVC:CH10Y (SNB cube frozen 2025-07)',
+        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, value: 0.399, lastDate: '2026-06-13',
         manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid'
     },
     NZD_NOM_RBNZ: {
-        name: 'NZD Nominal 10Y (NZGB, B2)',
-        urls: ['https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-monthly.csv'],
-        source: 'RBNZ B2 wholesale rates (XLSX)', corsOk: false, binary: true, frequency: 'monthly', maxStaleness: 45, section: '01',
+        name: 'NZD Nominal 10Y (manual — RBNZ B2 10Y)',
+        urls: [], source: 'Manual input — RBNZ B2 “10 year” col (datacenter ASN blocked)',
+        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, value: 4.55, lastDate: '2026-06-11',
         manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
     },
 
@@ -658,6 +669,33 @@ var BE_CONST = {   /* keep in sync with DQM manual feeds */
     NZD: { v: 2.1, src: 'RBNZ Survey of Expectations 2Y', asOf: '2026-05' }
 };
 
+/* ── Manual nominal overrides (CHF / NZD) — editable in-page, persisted ──
+   CHF: SNB cube rendoblid frozen since 2025-07 → read from TradingView TVC:CH10Y
+   NZD: RBNZ B2 blocks datacenter ASNs → read from B2 table "10 year" column
+   Stored in localStorage so the value survives reloads (per-browser).         */
+var MANUAL_DEFAULTS = {
+    CHF: { v: 0.399, date: '2026-06-13', tv: 'TVC:CH10Y',
+           link: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid' },
+    NZD: { v: 4.55,  date: '2026-06-11', tv: 'TVC:NZ10Y',
+           link: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates' }
+};
+
+function manualGet(ccy) {
+    try {
+        var raw = localStorage.getItem('g8_manual_' + ccy);
+        if (raw) { var o = JSON.parse(raw); if (isFinite(o.v)) return o; }
+    } catch (e) { /* ignore */ }
+    return MANUAL_DEFAULTS[ccy];
+}
+
+function manualSet(ccy, v, date) {
+    try { localStorage.setItem('g8_manual_' + ccy, JSON.stringify({ v: v, date: date })); }
+    catch (e) { /* quota — non-fatal */ }
+}
+
+/* Expose so the inline onchange handler (rendered in build()) can reach it */
+window.G8Manual = { get: manualGet, set: manualSet, DEFAULTS: MANUAL_DEFAULTS };
+
 function fetchCsv(url) {
     return fetch(url, { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error(url.split('/').pop().split('?')[0] + ' HTTP ' + r.status);
@@ -854,6 +892,18 @@ function constBE(nomSeries, c) {
     return nomSeries.map(function (x) { return { d: x.d, v: c }; });
 }
 
+/* Shift an anchor nominal series so its level today equals the manual value,
+   preserving the anchor's daily shape (→ realistic Δ1W/Δ1M/Z context).
+   Keeps only the last ~300 obs and stamps the final point with manualDate.   */
+function anchorToManual(anchorSeries, manualV, manualDate) {
+    var s = anchorSeries.slice(-300).map(function (x) { return { d: String(x.d), v: x.v }; });
+    if (!s.length) return [{ d: manualDate, v: manualV }];
+    var shift = manualV - s[s.length - 1].v;
+    var out = s.map(function (x) { return { d: x.d, v: x.v + shift }; });
+    out[out.length - 1] = { d: manualDate.replace(/-/g, ''), v: manualV };
+    return out;
+}
+
 function isoNorm(d) {
     d = String(d);
     if (/^\d{8}$/.test(d)) return d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8);
@@ -883,10 +933,21 @@ function build(data) {
                 'source unreachable — see Data Quality Monitor (§05) for fallback chain and manual link</td></tr>';
             return;
         }
+        var nomCell;
+        if (d.manual) {
+            nomCell = '<td><span class="attr-val">' + fmtVal(d.nom) + '</span>' + fmtDelta(d.nom) +
+                '<span class="attr-edit" title="' + d.manual.tv + ' · click to edit, Enter to save">' +
+                '<input class="attr-input" type="number" step="0.001" value="' + d.manual.v +
+                '" data-ccy="' + d.manual.ccy + '" inputmode="decimal">' +
+                '<a class="attr-edit-src" href="' + d.manual.link + '" target="_blank" rel="noopener">↗ src</a>' +
+                '</span></td>';
+        } else {
+            nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom));
+        }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
             '<span class="attr-sub">' + (d.asOf || '') + '</span>' +
             (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
-            cell(fmtVal(d.nom), fmtDelta(d.nom)) +
+            nomCell +
             cell(fmtVal(d.tp), fmtDelta(d.tp), fmtZ(d.tp)) +
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
             cell(fmtVal(d.real), fmtDelta(d.real)) +
@@ -915,11 +976,26 @@ function build(data) {
 
     html += '</tbody></table>' +
         '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
-        'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE — sources in §05 tooltips) · ' +
+        'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE) · ' +
         'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
-        'Z₁₂ = z-score on 12 monthly obs where the source is monthly (NZD nominal, EUR real)</div>';
+        '<b style="color:#9d7bd8">CHF &amp; NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. CHF source TVC:CH10Y (SNB cube frozen 2025-07) · NZD source RBNZ B2 “10 year” column (datacenter ASN blocked).</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
+
+    /* wire the manual inputs */
+    var inputs = document.querySelectorAll('.attr-input');
+    Array.prototype.forEach.call(inputs, function (inp) {
+        function commit() {
+            var v = parseFloat(inp.value);
+            if (!isFinite(v)) { inp.value = window.G8Manual.get(inp.dataset.ccy).v; return; }
+            var today = new Date().toISOString().slice(0, 10);
+            window.G8Manual.set(inp.dataset.ccy, v, today);
+            assemble(window.__G8raw);          /* full recompute with new manual level */
+        }
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+        inp.addEventListener('change', commit);
+        inp.addEventListener('click', function (e) { e.stopPropagation(); });
+    });
 }
 
 /* ── orchestration ──────────────────────────────────────────────────── */
@@ -951,33 +1027,11 @@ function init() {
         G8DQM.report('EUR_REAL_ECB', { status: 'DEAD', error: e.message });
     }));
 
-    /* CHF nominal — SNB rendoblid via cascade */
-    jobs.push(G8NET.fetchChain([
-        'https://data.snb.ch/api/cube/rendoblid/data/csv/en?dimSel=D0(10J0)&fromDate=' + isoDaysAgo(620)
-    ]).then(function (r) {
-        if (!r.ok) throw new Error(r.error);
-        raw.CHF_NOM = parseSnbCsv(r.text);
-        if (!raw.CHF_NOM.length) throw new Error('SNB csv parsed empty');
-        G8DQM.report('CHF_NOM_SNB', { lastDate: raw.CHF_NOM[raw.CHF_NOM.length - 1].d, latency: r.ms, via: r.via });
-    }).catch(function (e) {
-        console.warn('[attr] CHF SNB:', e.message);
-        G8DQM.report('CHF_NOM_SNB', { status: 'DEAD', error: e.message });
-    }));
+    /* CHF & NZD nominals are now MANUAL inputs (SNB cube frozen 2025-07,
+       RBNZ B2 blocks datacenter ASNs). No network attempt — avoids dead 403s
+       in the console. Values come from localStorage via manualGet() in assemble(). */
 
-    /* NZD nominal — RBNZ B2 monthly workbook via cascade + SheetJS */
-    jobs.push(G8NET.fetchChain([
-        { url: 'https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-monthly.csv', opts: { binary: true } }
-    ], { binary: true }).then(function (r) {
-        if (!r.ok) throw new Error(r.error);
-        var buf = r.buf || G8NET.b64ToArrayBuffer(r.b64);
-        raw.NZD_NOM = parseRbnzB2(buf);
-        G8DQM.report('NZD_NOM_RBNZ', { lastDate: raw.NZD_NOM[raw.NZD_NOM.length - 1].d, latency: r.ms, via: r.via });
-    }).catch(function (e) {
-        console.warn('[attr] NZD RBNZ:', e.message);
-        G8DQM.report('NZD_NOM_RBNZ', { status: 'DEAD', error: e.message });
-    }));
-
-    Promise.all(jobs).then(function () { assemble(raw); });
+    Promise.all(jobs).then(function () { window.__G8raw = raw; assemble(raw); });
 }
 
 function isoDaysAgo(d) {
@@ -1026,40 +1080,51 @@ function assemble(raw) {
         data.JPY.formula = 'BE=' + BE_CONST.JPY.v + '% (' + BE_CONST.JPY.src + ' ' + BE_CONST.JPY.asOf + ')';
     }
 
-    /* CHF — SNB nominal + EUR-anchored TP + manual BE */
-    if (raw.CHF_NOM && raw.CHF_NOM.length && raw.EUR && raw.EUR.acm) {
-        var tpCHF = proxyTP(raw.CHF_NOM, raw.EUR.acm, null);
-        var rnyCHF = minusSeries(raw.CHF_NOM, tpCHF);
+    /* CHF — manual nominal (TradingView TVC:CH10Y) + EUR-anchored TP + manual BE.
+       History reconstructed by shifting the EUR nominal series to the manual level,
+       so Δ/Z context exists; today's printed value is exactly the manual input.    */
+    if (data.EUR && raw.EUR && raw.EUR.acm) {
+        var chfM = manualGet('CHF');
+        var eurNomHist = raw.EUR.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
+        var chfNom = anchorToManual(eurNomHist, chfM.v, chfM.date);   /* CHF≈EUR shape, level pinned */
+        var tpCHF = proxyTP(chfNom, raw.EUR.acm, null);
         data.CHF = {
-            nom: statsS(raw.CHF_NOM),
+            nom: statsS(chfNom),
             tp: statsS(tpCHF),
-            rny: statsS(rnyCHF),
-            be: statsS(constBE(raw.CHF_NOM, BE_CONST.CHF.v)),
-            real: statsS(minusSeries(raw.CHF_NOM, constBE(raw.CHF_NOM, BE_CONST.CHF.v))),
-            quality: 'SYNTH_TP+BE',
+            rny: statsS(minusSeries(chfNom, tpCHF)),
+            be: statsS(constBE(chfNom, BE_CONST.CHF.v)),
+            real: statsS(minusSeries(chfNom, constBE(chfNom, BE_CONST.CHF.v))),
+            quality: 'MANUAL+SYNTH',
             qkind: 'synth',
-            asOf: raw.CHF_NOM[raw.CHF_NOM.length - 1].d,
-            formula: 'TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
+            asOf: chfM.date + ' · manual',
+            manual: { ccy: 'CHF', v: chfM.v, tv: MANUAL_DEFAULTS.CHF.tv, link: MANUAL_DEFAULTS.CHF.link },
+            formula: 'NOM=manual (TVC:CH10Y) · TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
         };
+        G8DQM.report('CHF_NOM_SNB', { status: 'MANUAL', lastDate: chfM.date, value: chfM.v, via: 'manual input' });
     }
 
-    /* NZD — RBNZ nominal + AUD-anchored TP + manual BE */
-    if (raw.NZD_NOM && raw.NZD_NOM.length && raw.AUD && raw.AUD.acm) {
+    /* NZD — manual nominal (RBNZ B2 "10 year") + AUD-anchored TP + manual BE */
+    if (data.AUD && raw.AUD && raw.AUD.acm) {
+        var nzdM = manualGet('NZD');
         var audNomRy = raw.AUD.ry ? raw.AUD.ry.rows.map(function (r) {
             var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
         }) : null;
-        var tpNZD = proxyTP(raw.NZD_NOM, raw.AUD.acm, audNomRy);
+        var audNomHist = audNomRy || raw.AUD.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
+        var nzdNom = anchorToManual(audNomHist, nzdM.v, nzdM.date);
+        var tpNZD = proxyTP(nzdNom, raw.AUD.acm, audNomRy);
         data.NZD = {
-            nom: statsS(raw.NZD_NOM),
+            nom: statsS(nzdNom),
             tp: statsS(tpNZD),
-            rny: statsS(minusSeries(raw.NZD_NOM, tpNZD)),
-            be: statsS(constBE(raw.NZD_NOM, BE_CONST.NZD.v)),
-            real: statsS(minusSeries(raw.NZD_NOM, constBE(raw.NZD_NOM, BE_CONST.NZD.v))),
-            quality: 'SYNTH_TP+BE',
+            rny: statsS(minusSeries(nzdNom, tpNZD)),
+            be: statsS(constBE(nzdNom, BE_CONST.NZD.v)),
+            real: statsS(minusSeries(nzdNom, constBE(nzdNom, BE_CONST.NZD.v))),
+            quality: 'MANUAL+SYNTH',
             qkind: 'synth',
-            asOf: raw.NZD_NOM[raw.NZD_NOM.length - 1].d + ' (M)',
-            formula: 'TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
+            asOf: nzdM.date + ' · manual',
+            manual: { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
+            formula: 'NOM=manual (RBNZ B2 / TVC:NZ10Y) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
         };
+        G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' });
     }
 
     var ok = CCYS.some(function (c) { return data[c]; });
