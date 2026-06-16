@@ -30,6 +30,9 @@
     .attr-sub{display:block;font-size:10px;color:#5d6678;margin-top:3px}
     .attr-up{color:#2fbf71}.attr-dn{color:#e0485a}.attr-fl{color:#5d6678}
     .attr-na{color:#3a4254}
+    .attr-mix{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9px;
+        font-weight:700;letter-spacing:.04em;color:#ff8c42;background:#3a1d10;border-radius:2px;
+        padding:1px 6px;margin-left:8px;vertical-align:middle}
     .attr-z{display:inline-block;font-size:10px;font-weight:700;border-radius:2px;
         padding:1px 5px;margin-left:6px;vertical-align:middle}
     .attr-z-hi{background:#3d1420;color:#ff5c72}
@@ -100,6 +103,9 @@
     .dqm-MANUAL{background:#1f1830;color:#9d7bd8}
     .dqm-UNKNOWN{background:#1a1f2b;color:#5d6678}
     .dqm-lat{color:#5d6678;font-size:10.5px}
+    .dqm-age{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
+        font-weight:600;color:#5d8aa8;background:#13202e;border-radius:2px;padding:1px 5px;margin-left:6px}
+    .dqm-age-warn{color:#ff8c42;background:#3a1d10}
     .dqm-legacy-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;margin:22px 0 10px;
         border-bottom:1px solid #1c2433;padding-bottom:6px}
@@ -110,7 +116,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.3 — 8/8 · DQM · CHF/NZD manual-editable</span>
+            <span class="brand-sub">Institutional Dashboard v2.4 — 8/8 · DQM · canonical health score · CHF/NZD manual-editable</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -120,8 +126,8 @@
             <div class="status-block">
                 <span class="status-label">PIPELINE STATUS</span>
                 <span class="status-value" id="pipeline-status">
-                    <span class="status-dots" id="status-dots">●●●●●●●●●●●●●●●</span>
-                    <span id="status-count">—</span>
+                    <span class="status-dots" id="status-dots" style="color:#3a4254">●●●●●●●●●●●●●●●</span>
+                    <span id="status-count">…</span>
                 </span>
             </div>
         </div>
@@ -203,7 +209,7 @@
             <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5 — RFR · Bills · Policy · ACM)</div>
             <div class="quality-grid" id="quality-grid"></div>
             <div class="section-footer">
-                <span class="footer-note">Registry-based monitor: LIVE = data ≤ expected lag · DEGRADED = within tolerance · STALE = 2× tolerance · DEAD = source unreachable / beyond 2× · SYNTHETIC = computed proxy · MANUAL = hand-set constant with exact source link in tooltip. Staleness counted in business days. RUN ALL re-checks every registered source live. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy (/proxy/* — requires docs/_redirects) with public CORS proxies only as last resort. Cache 60 min (localStorage) · auto re-check every 4 h.</span>
+                <span class="footer-note">Registry-based monitor · single canonical health score drives the header. LIVE = within the feed's own expected publication lag (daily feeds stay LIVE across weekends/G8 holidays; policy rates are event-driven so a flat inter-meeting series is LIVE) · DEGRADED = late, inside grace band (1.0–1.5× lag) · STALE = 1.5–2.5× lag · DEAD = beyond 2.5× lag or unreachable · SYNTHETIC = computed proxy · MANUAL = hand-set constant; a ⚠ age badge appears once a manual input exceeds its lag. Business-day counting skips weekends + a G8 holiday union (extend yearly). RUN ALL re-checks every registered source live and appends to a 90-entry localStorage audit log. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy. Cache 60 min · auto re-check every 4 h.</span>
             </div>
         </div>
     </section>
@@ -481,12 +487,17 @@ var FEED_REGISTRY = {
     FLOOR_EUR: repo('FLOOR_EUR.csv', 'EUR floor (DFR)', 'daily', 5, '02'),
     FLOOR_CAD: repo('FLOOR_CAD.csv', 'CAD floor (BoC target)', 'daily', 5, '02'),
 
-    /* ── 03 policy rates — repo (BIS WS_CBPOL) ─────────────────────────── */
-    GB_POLICY: repo('GB_POLICY.csv', 'BoE Bank Rate', 'daily', 7, '03'),
-    JP_POLICY: repo('JP_POLICY.csv', 'BoJ Policy Balance Rate', 'daily', 7, '03'),
-    CH_POLICY: repo('CH_POLICY.csv', 'SNB Policy Rate', 'daily', 7, '03'),
-    AU_POLICY: repo('AU_POLICY.csv', 'RBA Cash Rate Target', 'daily', 7, '03'),
-    NZD_OCR:   repo('NZD_OCR.csv',   'RBNZ OCR', 'daily', 8, '03'),
+    /* ── 03 policy rates — repo (BIS WS_CBPOL) ─────────────────────────────
+       EVENT-DRIVEN, NOT DAILY. BIS WS_CBPOL only emits a new observation on a
+       rate-change event, so a flat series between meetings is the CORRECT state,
+       not staleness. maxStaleness must span a realistic inter-meeting gap
+       (~35 business days ≈ 7 weeks) or these alarm permanently. freq label
+       reflects the true cadence so the table reads honestly. */
+    GB_POLICY: Object.assign(repo('GB_POLICY.csv', 'BoE Bank Rate', 'event-driven', 35, '03'), { eventDriven: true }),
+    JP_POLICY: Object.assign(repo('JP_POLICY.csv', 'BoJ Policy Balance Rate', 'event-driven', 40, '03'), { eventDriven: true }),
+    CH_POLICY: Object.assign(repo('CH_POLICY.csv', 'SNB Policy Rate', 'event-driven', 65, '03'), { eventDriven: true }),
+    AU_POLICY: Object.assign(repo('AU_POLICY.csv', 'RBA Cash Rate Target', 'event-driven', 35, '03'), { eventDriven: true }),
+    NZD_OCR:   Object.assign(repo('NZD_OCR.csv',   'RBNZ OCR', 'event-driven', 45, '03'), { eventDriven: true }),
 
     /* ── 04 ACM USD time series — repo ─────────────────────────────────── */
     ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '04'),
@@ -506,22 +517,77 @@ function manualConst(name, value, asOf, link) {
              maxStaleness: 70, section: '01', manual: true, value: value, lastDate: asOf, manualLink: link };
 }
 
-/* ── 5.2 staleness engine (business days) ───────────────────────────── */
+/* ── 5.1b G8 market-holiday calendar ────────────────────────────────────
+   Business-day counting must skip G8 settlement holidays, otherwise a long
+   weekend (e.g. a Monday bank holiday) inflates the lag by a full day and
+   flips healthy feeds to STALE every few weeks. This is the #1 source of
+   recurring false alarms. The union of major G8 closures is a safe
+   superset: skipping a day that was actually open only ever makes a feed
+   look *fresher*, never staler — so we never raise a false STALE/DEAD.
+   Maintained as a flat ISO set; extend yearly (≈15 min once a year). */
+var G8_HOLIDAYS = {
+    /* New Year, key US/UK/EU/JP/CA/AU closures + movable feasts for 2025-2027.
+       Union across jurisdictions — intentionally generous. */
+    '2025-01-01':1,'2025-01-20':1,'2025-02-17':1,'2025-04-18':1,'2025-04-21':1,
+    '2025-05-05':1,'2025-05-26':1,'2025-06-19':1,'2025-07-04':1,'2025-08-04':1,
+    '2025-08-25':1,'2025-09-01':1,'2025-10-13':1,'2025-11-11':1,'2025-11-27':1,
+    '2025-12-25':1,'2025-12-26':1,
+    '2026-01-01':1,'2026-01-19':1,'2026-02-16':1,'2026-04-03':1,'2026-04-06':1,
+    '2026-05-04':1,'2026-05-25':1,'2026-06-19':1,'2026-07-03':1,'2026-08-03':1,
+    '2026-08-31':1,'2026-09-07':1,'2026-10-12':1,'2026-11-11':1,'2026-11-26':1,
+    '2026-12-25':1,'2026-12-28':1,
+    '2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1,'2027-03-29':1,
+    '2027-05-03':1,'2027-05-31':1,'2027-06-18':1,'2027-07-05':1,'2027-08-02':1,
+    '2027-08-30':1,'2027-09-06':1,'2027-10-11':1,'2027-11-11':1,'2027-11-25':1,
+    '2027-12-27':1,'2027-12-28':1
+};
+function isG8Holiday(dt) {
+    return !!G8_HOLIDAYS[dt.toISOString().slice(0, 10)];
+}
+
+/* G8 business days between a date and today (null if unparseable) */
+function calBusinessDays(lastDateStr) {
+    if (!lastDateStr) return null;
+    var ld = new Date(String(lastDateStr).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'));
+    if (isNaN(ld.getTime())) return null;
+    ld.setHours(0, 0, 0, 0);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var bd = 0, cur = new Date(ld), guard = 0;
+    while (cur < today && guard++ < 400) {
+        cur.setDate(cur.getDate() + 1);
+        var day = cur.getDay();
+        if (day !== 0 && day !== 6 && !isG8Holiday(cur)) bd++;
+    }
+    return bd;
+}
+
+/* ── 5.2 staleness engine (G8 business days) ─────────────────────────────
+   Banding rationale (institutional convention):
+     LIVE      — within the feed's own expected publication lag. A daily feed
+                 read on the next G8 business day is LIVE, not "degraded".
+     DEGRADED  — past expected lag but inside a grace band (1.0× → 1.5×):
+                 the source is late but not yet broken. Worth a glance.
+     STALE     — 1.5× → 2.5× expected lag: meaningfully behind, treat the
+                 number as possibly off-as-of.
+     DEAD      — beyond 2.5× expected lag (or unparseable): do not trust.
+   The previous engine mislabelled the entire 2…maxStale band as DEGRADED,
+   so every feed went amber after one weekend. This is the core durability fix. */
 function computeStaleness(lastDateStr, maxStale) {
     if (!lastDateStr) return 'DEAD';
     var lastDate = new Date(String(lastDateStr).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'));
     if (isNaN(lastDate.getTime())) return 'DEAD';
+    lastDate.setHours(0, 0, 0, 0);
     var today = new Date(); today.setHours(0, 0, 0, 0);
-    var bd = 0, cur = new Date(lastDate);
-    while (cur < today) {
+    var bd = 0, cur = new Date(lastDate), guard = 0;
+    while (cur < today && guard++ < 400) {
         cur.setDate(cur.getDate() + 1);
         var day = cur.getDay();
-        if (day !== 0 && day !== 6) bd++;
-        if (bd > maxStale * 2 + 5) break;
+        if (day !== 0 && day !== 6 && !isG8Holiday(cur)) bd++;
+        if (bd > maxStale * 3 + 5) break;
     }
-    if (bd <= 1) return 'LIVE';          /* T+1 fixings: 1 business day lag is normal */
-    if (bd <= maxStale) return 'DEGRADED';
-    if (bd <= maxStale * 2) return 'STALE';
+    if (bd <= maxStale)         return 'LIVE';
+    if (bd <= maxStale * 1.5)   return 'DEGRADED';
+    if (bd <= maxStale * 2.5)   return 'STALE';
     return 'DEAD';
 }
 
@@ -561,7 +627,8 @@ async function checkFeed(id, force) {
         return;
     }
     var lastDate = f.binary ? ((state[id] || {}).lastDate || 'binary (parsed in §01)') : extractLastDate(r.text || '');
-    var status = f.binary && !(state[id] || {}).lastDate ? 'DEGRADED' : computeStaleness(lastDate, f.maxStaleness);
+    /* a freshly-fetched binary feed whose date is parsed downstream is healthy, not degraded */
+    var status = f.binary && !(state[id] || {}).lastDate ? 'LIVE' : computeStaleness(lastDate, f.maxStaleness);
     state[id] = { status: status, lastDate: lastDate, latency: r.ms, via: r.via, checkedAt: Date.now() };
 }
 
@@ -592,6 +659,77 @@ function fmtDate(d) {
     return String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
 }
 
+/* ── 5.4 canonical health score + header sync ────────────────────────────
+   ONE source of truth. The header used to show a hardcoded "12/20" that never
+   reconciled with this panel. Now the header is *derived* from live feed state:
+     healthy   = LIVE + MANUAL + SYNTHETIC  (a hand-set constant with a known
+                 source and a fresh manual date is operationally trustworthy)
+     watch     = DEGRADED
+     broken    = STALE + DEAD
+   Denominator excludes UNKNOWN (on-demand feeds not yet checked) so the score
+   reflects what we actually monitor, not what we *could* poll. */
+function healthScore() {
+    var healthy = 0, watch = 0, broken = 0, total = 0;
+    Object.keys(FEED_REGISTRY).forEach(function (id) {
+        var f = FEED_REGISTRY[id];
+        var s = (state[id] || {}).status || (f.onDemand ? 'UNKNOWN' : 'UNKNOWN');
+        if (s === 'UNKNOWN') return;           /* not part of the monitored denominator */
+        total++;
+        if (s === 'LIVE' || s === 'MANUAL' || s === 'SYNTHETIC') healthy++;
+        else if (s === 'DEGRADED') watch++;
+        else broken++;                          /* STALE | DEAD */
+    });
+    return { healthy: healthy, watch: watch, broken: broken, total: total };
+}
+
+function syncHeader() {
+    var h = healthScore();
+    var countEl = document.getElementById('status-count');
+    var dotsEl  = document.getElementById('status-dots');
+    var upEl    = document.getElementById('last-update');
+    if (countEl) countEl.textContent = h.healthy + '/' + h.total;
+    if (dotsEl && h.total) {
+        /* 15-dot bar mapped to healthy/watch/broken proportions */
+        var N = 15, g = Math.round(N * h.healthy / h.total), a = Math.round(N * h.watch / h.total);
+        if (g + a > N) a = N - g;
+        var r = N - g - a;
+        dotsEl.innerHTML =
+            '<span style="color:#2fbf71">' + '●'.repeat(g) + '</span>' +
+            '<span style="color:#fdb813">' + '●'.repeat(a) + '</span>' +
+            '<span style="color:#ff5c72">' + '●'.repeat(r) + '</span>';
+        dotsEl.title = h.healthy + ' healthy · ' + h.watch + ' watch · ' + h.broken + ' broken';
+    }
+    /* freshest monitored last-date drives "LAST UPDATE" */
+    if (upEl) {
+        var best = null;
+        Object.keys(state).forEach(function (id) {
+            var ld = state[id] && state[id].lastDate;
+            if (ld && /^\d{4}-?\d{2}-?\d{2}/.test(String(ld))) {
+                var iso = String(ld).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3').slice(0, 10);
+                if (!best || iso > best) best = iso;
+            }
+        });
+        if (best) upEl.textContent = best;
+    }
+    persistAudit(h);
+}
+
+/* ── 5.5 audit trail (last 90 checks, localStorage) ──────────────────────
+   Compliance-grade availability log: when did we last see a green board?
+   Survives reloads; trimmed to 90 entries. */
+function persistAudit(h) {
+    try {
+        var KEY = 'g8dqm_audit_v1';
+        var log = JSON.parse(localStorage.getItem(KEY) || '[]');
+        var stamp = new Date().toISOString().slice(0, 16);
+        if (!log.length || log[log.length - 1].t.slice(0, 10) !== stamp.slice(0, 10)) {
+            log.push({ t: stamp, h: h.healthy, w: h.watch, b: h.broken, n: h.total });
+            if (log.length > 90) log = log.slice(-90);
+            localStorage.setItem(KEY, JSON.stringify(log));
+        }
+    } catch (e) { /* private mode / quota — non-fatal */ }
+}
+
 function render() {
     var el = document.getElementById('dqm-panel');
     if (!el) return;
@@ -604,11 +742,23 @@ function render() {
         var title = (f.urls && f.urls.length ? f.urls.join('\n') : '') +
                     (f.manualLink ? '\nManual source: ' + f.manualLink : '') +
                     (s.error ? '\nLast error: ' + s.error : '');
+        /* manual-input age flag: a hand-typed value that's gone stale must SHOW it,
+           or you trade on a number you keyed in weeks ago believing it's live */
+        var ageFlag = '';
+        if (f.manual && s.lastDate) {
+            var ad = calBusinessDays(s.lastDate);
+            if (ad !== null) {
+                var warn = ad > (f.maxStaleness || 5);
+                ageFlag = ' <span class="dqm-age' + (warn ? ' dqm-age-warn' : '') + '">' +
+                          (warn ? '⚠ ' : '') + ad + 'bd old</span>';
+            }
+        }
         rows += '<tr title="' + title.replace(/"/g, '&quot;') + '">' +
-            '<td>' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') + '</td>' +
+            '<td>' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') +
+                (f.eventDriven ? ' <span class="dqm-lat" title="publishes only on rate-change events; a flat series is correct">(event-driven)</span>' : '') + '</td>' +
             '<td class="dqm-src">' + f.source + '</td>' +
             '<td class="dqm-src">' + f.frequency + '</td>' +
-            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + '</td>' +
+            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + ageFlag + '</td>' +
             '<td class="dqm-lat">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
             '<td><span class="dqm-status dqm-' + s.status + '">' + s.status + '</span></td>' +
             '<td class="dqm-src">' + f.section + '</td></tr>';
@@ -628,6 +778,7 @@ function render() {
         '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     var btn = document.getElementById('dqm-run');
     if (btn) btn.onclick = function () { runAll(true); };
+    syncHeader();
 }
 
 function init() {
@@ -956,17 +1107,36 @@ function build(data) {
     });
 
     var usd = data.USD;
-    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD</td></tr>';
+    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · Z = own 252D z-score</td></tr>';
     CCYS.forEach(function (c) {
         if (c === 'USD' || !data[c] || !usd) return;
         var d = data[c];
-        function sp(a, b) {
+        function sp(a, b, zlabel) {
             if (!a || !b) return '<span class="attr-na">—</span>';
             var v = a.last - b.last;
             var cls = v > 0 ? 'attr-up' : v < 0 ? 'attr-dn' : 'attr-fl';
-            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>';
+            /* significance context: |Δz| between the two legs' own 252D z-scores.
+               A wide spread that's *normal for both legs historically* is not a
+               signal; a wide spread where this leg sits at a z-extreme is. */
+            var ztag = '';
+            if (a.z != null && b.z != null) {
+                var dz = a.z - b.z, adz = Math.abs(dz);
+                var zc = adz > 2 ? 'attr-z-hi' : adz > 1 ? 'attr-z-md' : 'attr-z-lo';
+                ztag = '<span class="attr-z ' + zc + '">Δz ' + (dz > 0 ? '+' : '') + dz.toFixed(1) + '</span>';
+            }
+            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>' + ztag;
         }
-        html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span></td>' +
+        /* mixed as-of detection: if this row's legs were sampled on different
+           dates, Nominal−Real=BE arithmetic mixes vintages → flag it */
+        var dates = [d.nom, d.tp, d.rny, d.real, d.be]
+            .map(function (x) { return x && x.lastDate ? String(x.lastDate).slice(0, 10) : null; })
+            .filter(Boolean);
+        var uniq = dates.filter(function (v, i, s) { return s.indexOf(v) === i; });
+        var mixFlag = uniq.length > 1
+            ? ' <span class="attr-mix" title="legs sampled on different dates: ' + uniq.join(', ') +
+              ' — cross-leg arithmetic (NOM−REAL=BE) mixes vintages">⚠ mixed as-of</span>'
+            : '';
+        html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + '</td>' +
             '<td>' + sp(d.nom, usd.nom) + '</td>' +
             '<td>' + sp(d.tp, usd.tp) + '</td>' +
             '<td>' + sp(d.rny, usd.rny) + '</td>' +
