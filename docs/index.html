@@ -683,6 +683,18 @@ function healthScore() {
 }
 
 function syncHeader() {
+    /* Header ownership note: the top-right PIPELINE STATUS counter and dots are
+       owned by charts.js → updateHeaderStatus(), which loads the actual chart
+       feeds and (as of v5.1) uses the same business-day + per-class budget
+       logic as this DQM. To keep ONE source of truth and avoid a render race
+       (double-write flicker), this DQM no longer writes the header counter/dots.
+       It still records the audit log. If charts.js is ever removed, restore the
+       counter writes below. */
+    var h = healthScore();
+    persistAudit(h);
+}
+
+function syncHeader_DQM_OWNED_disabled() {
     var h = healthScore();
     var countEl = document.getElementById('status-count');
     var dotsEl  = document.getElementById('status-dots');
