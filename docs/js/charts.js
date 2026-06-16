@@ -435,7 +435,7 @@
         const allFeeds = [];
         Object.entries(rfrData).forEach(([k, f]) => {
             if (k === 'chpol') return;
-            allFeeds.push({ key: `rfr-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'RFR', series: f.series });
+            allFeeds.push({ key: `rfr-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'RFR', series: f.series, eventDriven: !!f.eventDriven });
         });
         Object.entries(billsData).forEach(([k, f]) => allFeeds.push({ key: `bills-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'Bills', series: f.curve ? { dates: f.curve.dates } : null }));
 
@@ -454,8 +454,9 @@
             cell.className = 'quality-cell';
             const hasData = f.series && f.series.dates.length > 0;
             const lastDate = hasData ? f.series.dates[f.series.dates.length - 1] : null;
-            const status = hasData ? global.G8DataLoader.staleStatus(lastDate) : 'fail';
-            const days = hasData ? global.G8DataLoader.daysSince(lastDate) : null;
+            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : f.type === 'TermPrem' ? 'weekly' : 'daily';
+            const status = hasData ? global.G8DataLoader.staleStatus(lastDate, cls) : 'fail';
+            const days = hasData ? global.G8DataLoader.businessDaysSince(lastDate) : null;
             const obs = hasData ? f.series.dates.length : 0;
             cell.innerHTML = `
                 <div class="quality-cell-header">
@@ -466,7 +467,7 @@
                     <div class="quality-meta-row"><span class="quality-meta-label">CCY · Type</span><span class="quality-meta-value">${f.ccy} · ${f.type}</span></div>
                     <div class="quality-meta-row"><span class="quality-meta-label">Source</span><span class="quality-meta-value">${f.source}</span></div>
                     <div class="quality-meta-row"><span class="quality-meta-label">Last obs</span><span class="quality-meta-value">${hasData ? formatDate(lastDate) : '—'}</span></div>
-                    <div class="quality-meta-row"><span class="quality-meta-label">Lag · Records</span><span class="quality-meta-value">${days != null ? days + 'D' : '—'} · ${obs}</span></div>
+                    <div class="quality-meta-row"><span class="quality-meta-label">Lag · Records</span><span class="quality-meta-value">${days != null ? days + 'bd' : '—'} · ${obs}</span></div>
                 </div>`;
             grid.appendChild(cell);
         }
@@ -475,17 +476,17 @@
     function updateHeaderStatus(rfrData, billsData, policyData, acmData) {
         let latestDate = null, freshCount = 0, staleCount = 0, failCount = 0, totalCount = 0;
         const allFeeds = [
-            ...Object.entries(rfrData).filter(([k]) => k !== 'chpol').map(([_, f]) => ({ series: f.series })),
-            ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null })),
-            ...(policyData ? Object.values(policyData).map((f) => ({ series: f.series })) : []),
-            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series })) : [])
+            ...Object.entries(rfrData).filter(([k]) => k !== 'chpol').map(([_, f]) => ({ series: f.series, cls: f.eventDriven ? 'event' : 'daily' })),
+            ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null, cls: 'daily' })),
+            ...(policyData ? Object.values(policyData).map((f) => ({ series: f.series, cls: 'event' })) : []),
+            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series, cls: 'weekly' })) : [])
         ];
         for (const f of allFeeds) {
             totalCount++;
             if (!f.series || f.series.dates.length === 0) { failCount++; continue; }
             const ld = f.series.dates[f.series.dates.length - 1];
             if (!latestDate || ld > latestDate) latestDate = ld;
-            const status = global.G8DataLoader.staleStatus(ld);
+            const status = global.G8DataLoader.staleStatus(ld, f.cls);
             if (status === 'fresh') freshCount++;
             else if (status === 'stale') staleCount++;
             else failCount++;

@@ -24,7 +24,7 @@
         aonia: { file: 'AONIA.csv',        ccy: 'AUD', source: 'RBA',         label: 'AONIA'        },
         tona:  { file: 'TONA.csv',         ccy: 'JPY', source: 'BoJ',         label: 'TONA'         },
         corra: { file: 'CORRA.csv',        ccy: 'CAD', source: 'BoC',         label: 'CORRA'        },
-        ocr:   { file: 'NZD_OCR.csv',      ccy: 'NZD', source: 'BIS/RBNZ',    label: 'NZD OCR'      },
+        ocr:   { file: 'NZD_OCR.csv',      ccy: 'NZD', source: 'BIS/RBNZ',    label: 'NZD OCR', eventDriven: true },
         sofr:  { file: 'SOFR.csv',         ccy: 'USD', source: 'FRED/NY Fed', label: 'SOFR'         },
         // v4: CHF proxy — BIS publishes SNB Policy Rate (SARON ≈ Policy ± 5-10bps)
         // Documented caveat: NOT real SARON, used only for XCCY proxy basis
@@ -65,6 +65,39 @@
 
     const STALE_DAYS_FRESH = 5;
     const STALE_DAYS_STALE = 10;
+
+    // ── G8 market-holiday calendar (mirror of index.html DQM) ──────────────
+    // Business-day counting must skip weekends AND G8 settlement holidays,
+    // otherwise a long weekend inflates the lag and flips healthy feeds to
+    // stale. Union across jurisdictions = safe superset (only ever makes a
+    // feed look fresher, never staler → no false alarms). Extend yearly.
+    const G8_HOLIDAYS = {
+        '2025-01-01':1,'2025-01-20':1,'2025-02-17':1,'2025-04-18':1,'2025-04-21':1,
+        '2025-05-05':1,'2025-05-26':1,'2025-06-19':1,'2025-07-04':1,'2025-08-04':1,
+        '2025-08-25':1,'2025-09-01':1,'2025-10-13':1,'2025-11-11':1,'2025-11-27':1,
+        '2025-12-25':1,'2025-12-26':1,
+        '2026-01-01':1,'2026-01-19':1,'2026-02-16':1,'2026-04-03':1,'2026-04-06':1,
+        '2026-05-04':1,'2026-05-25':1,'2026-06-19':1,'2026-07-03':1,'2026-08-03':1,
+        '2026-08-31':1,'2026-09-07':1,'2026-10-12':1,'2026-11-11':1,'2026-11-26':1,
+        '2026-12-25':1,'2026-12-28':1,
+        '2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1,'2027-03-29':1,
+        '2027-05-03':1,'2027-05-31':1,'2027-06-18':1,'2027-07-05':1,'2027-08-02':1,
+        '2027-08-30':1,'2027-09-06':1,'2027-10-11':1,'2027-11-11':1,'2027-11-25':1,
+        '2027-12-27':1,'2027-12-28':1
+    };
+    function isG8Holiday(dt) { return !!G8_HOLIDAYS[dt.toISOString().slice(0, 10)]; }
+
+    // Per-feed business-day budgets. Daily market feeds settle T+1 and cross
+    // weekends; policy rates are EVENT-DRIVEN (a flat inter-meeting series is
+    // correct, not stale) so they get a wide inter-meeting budget.
+    const FRESH_BD_DAILY = 5;     // LIVE while ≤ this many business days old
+    const STALE_BD_DAILY = 12;    // beyond → fail
+    const FRESH_BD_EVENT = 45;    // policy rates: ~inter-meeting gap
+    const STALE_BD_EVENT = 110;
+    const FRESH_BD_WEEKLY = 12;   // ACM term premium (weekly)
+    const STALE_BD_WEEKLY = 30;
+    const FRESH_BD_MONTHLY = 30;  // SNB bills etc.
+    const STALE_BD_MONTHLY = 75;
 
     // v4: relaxed from 10 to 5 to allow NZD/CHF with higher lag
     const XCCY_MIN_OBS = 5;
@@ -292,10 +325,34 @@
         return Math.floor(ms / 86400000);
     }
 
-    function staleStatus(lastDate) {
-        const days = daysSince(lastDate);
-        if (days <= STALE_DAYS_FRESH) return 'fresh';
-        if (days <= STALE_DAYS_STALE) return 'stale';
+    // G8 business days between a date and today (skips weekends + G8 holidays)
+    function businessDaysSince(date) {
+        if (!date) return Infinity;
+        const ld = new Date(date); ld.setHours(0, 0, 0, 0);
+        if (isNaN(ld.getTime())) return Infinity;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        let bd = 0, cur = new Date(ld), guard = 0;
+        while (cur < today && guard++ < 600) {
+            cur.setDate(cur.getDate() + 1);
+            const day = cur.getDay();
+            if (day !== 0 && day !== 6 && !isG8Holiday(cur)) bd++;
+        }
+        return bd;
+    }
+
+    // Budget by feed class. `cls` ∈ {'daily','event','weekly','monthly'}.
+    // Defaults to 'daily' so existing callers keep working.
+    function staleStatus(lastDate, cls) {
+        const bd = businessDaysSince(lastDate);
+        let fresh, stale;
+        switch (cls) {
+            case 'event':   fresh = FRESH_BD_EVENT;   stale = STALE_BD_EVENT;   break;
+            case 'weekly':  fresh = FRESH_BD_WEEKLY;  stale = STALE_BD_WEEKLY;  break;
+            case 'monthly': fresh = FRESH_BD_MONTHLY; stale = STALE_BD_MONTHLY; break;
+            default:        fresh = FRESH_BD_DAILY;   stale = STALE_BD_DAILY;
+        }
+        if (bd <= fresh) return 'fresh';
+        if (bd <= stale) return 'stale';
         return 'fail';
     }
 
@@ -362,10 +419,10 @@
         loadCSV, loadAllRFR, loadAllBills, loadAllPolicy, loadACM,
         normalizeSeries: normalizeOHLCV,
         forwardFillSeries,
-        daysSince, staleStatus, parseDate, tenorToMonths,
+        daysSince, businessDaysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
         FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
-        VERSION: 'v5'
+        VERSION: 'v5.1'
     };
 
 })(window);
