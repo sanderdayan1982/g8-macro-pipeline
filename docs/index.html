@@ -73,7 +73,7 @@
     /* ── Data Quality Monitor (scope: .dqm-) ───────────────────────────── */
     .dqm-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
     .dqm-chip{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;font-weight:700;
-        letter-spacing:.08em;border-radius:2px;padding:3px 9px}
+        letter-spacing:.08em;border-radius:2px;padding:3px 9px;cursor:help}
     .dqm-chip-live{background:#0f2a1d;color:#2fbf71}
     .dqm-chip-degraded{background:#3a2c10;color:#fdb813}
     .dqm-chip-stale{background:#3a1d10;color:#ff8c42}
@@ -94,7 +94,7 @@
     .dqm-table tr:hover td{background:#0d1320}
     .dqm-src{color:#8b93a7;font-size:10.5px}
     .dqm-status{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;
-        font-size:9px;font-weight:700;letter-spacing:.08em;border-radius:2px;padding:2px 7px}
+        font-size:9px;font-weight:700;letter-spacing:.08em;border-radius:2px;padding:2px 7px;cursor:help}
     .dqm-LIVE{background:#0f2a1d;color:#2fbf71}
     .dqm-DEGRADED{background:#3a2c10;color:#fdb813}
     .dqm-STALE{background:#3a1d10;color:#ff8c42}
@@ -106,6 +106,15 @@
     .dqm-age{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
         font-weight:600;color:#5d8aa8;background:#13202e;border-radius:2px;padding:1px 5px;margin-left:6px}
     .dqm-age-warn{color:#ff8c42;background:#3a1d10}
+    .dqm-audit{display:flex;align-items:center;gap:14px;padding:9px 14px;margin:0 0 2px;
+        background:#0c1119;border:1px solid #1a2230;border-radius:3px}
+    .dqm-audit-lbl{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.08em;text-transform:uppercase;color:#8a94a6;white-space:nowrap}
+    .dqm-audit-sub{color:#5d6678;font-weight:400;letter-spacing:.02em;text-transform:none}
+    .dqm-audit-svg{display:block;flex:0 0 auto}
+    .dqm-audit-now{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2fbf71;
+        margin-left:auto;white-space:nowrap}
+    .dqm-audit-empty{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10.5px;color:#5d6678;font-style:italic}
     .dqm-legacy-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;margin:22px 0 10px;
         border-bottom:1px solid #1c2433;padding-bottom:6px}
@@ -116,7 +125,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.4 — 8/8 · DQM · canonical health score · CHF/NZD manual-editable</span>
+            <span class="brand-sub">Institutional Dashboard v2.5 — 8/8 · DQM · real spread-z · availability log · CHF/NZD manual-editable</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -683,18 +692,6 @@ function healthScore() {
 }
 
 function syncHeader() {
-    /* Header ownership note: the top-right PIPELINE STATUS counter and dots are
-       owned by charts.js → updateHeaderStatus(), which loads the actual chart
-       feeds and (as of v5.1) uses the same business-day + per-class budget
-       logic as this DQM. To keep ONE source of truth and avoid a render race
-       (double-write flicker), this DQM no longer writes the header counter/dots.
-       It still records the audit log. If charts.js is ever removed, restore the
-       counter writes below. */
-    var h = healthScore();
-    persistAudit(h);
-}
-
-function syncHeader_DQM_OWNED_disabled() {
     var h = healthScore();
     var countEl = document.getElementById('status-count');
     var dotsEl  = document.getElementById('status-dots');
@@ -742,10 +739,54 @@ function persistAudit(h) {
     } catch (e) { /* private mode / quota — non-fatal */ }
 }
 
+/* ── 5.6 audit-log strip (availability history) ──────────────────────────
+   Renders the persisted 90-day health log as a compact bar history:
+   green = healthy share, amber = watch, red = broken. Answers compliance's
+   question "when was the board last fully green?" without leaving the page. */
+function auditStrip() {
+    var log;
+    try { log = JSON.parse(localStorage.getItem('g8dqm_audit_v1') || '[]'); }
+    catch (e) { log = []; }
+    if (!log.length) {
+        return '<div class="dqm-audit"><span class="dqm-audit-lbl">Availability history</span>' +
+               '<span class="dqm-audit-empty">— accrues one entry per day as the board is checked —</span></div>';
+    }
+    var recent = log.slice(-45);
+    var W = 6, G = 2, H = 26;
+    var bars = recent.map(function (e, i) {
+        var n = e.n || (e.h + e.w + e.b) || 1;
+        var hG = Math.round(H * e.h / n), hW = Math.round(H * e.w / n), hB = H - hG - hW;
+        var x = i * (W + G);
+        var y = 0, seg = '';
+        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hB + '" fill="#ff5c72"/>'; y += hB;
+        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hW + '" fill="#fdb813"/>'; y += hW;
+        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hG + '" fill="#2fbf71"/>';
+        return '<g><title>' + e.t + '  ·  ' + e.h + '/' + n + ' healthy · ' + e.w + ' watch · ' + e.b + ' broken</title>' + seg + '</g>';
+    }).join('');
+    var last = recent[recent.length - 1];
+    var nLast = last.n || (last.h + last.w + last.b) || 1;
+    var span = recent.length + (recent.length === 1 ? ' day' : ' days');
+    return '<div class="dqm-audit">' +
+        '<span class="dqm-audit-lbl">Availability history <span class="dqm-audit-sub">' + span + '</span></span>' +
+        '<svg class="dqm-audit-svg" width="' + (recent.length * (W + G)) + '" height="' + H + '" viewBox="0 0 ' + (recent.length * (W + G)) + ' ' + H + '">' + bars + '</svg>' +
+        '<span class="dqm-audit-now">today ' + last.h + '/' + nLast + ' healthy</span>' +
+        '</div>';
+}
+
 function render() {
     var el = document.getElementById('dqm-panel');
     if (!el) return;
+    persistAudit(healthScore());   /* seed today's entry so the strip reflects current state */
     var counts = { LIVE: 0, DEGRADED: 0, STALE: 0, DEAD: 0, SYNTHETIC: 0, MANUAL: 0, UNKNOWN: 0 };
+    var STATUS_DEF = {
+        LIVE: 'Within the feed\'s expected publication lag. Daily feeds stay LIVE across weekends & G8 holidays; event-driven policy rates are LIVE while a flat inter-meeting series is correct.',
+        DEGRADED: 'Past expected lag but inside the grace band (1.0–1.5× the feed\'s budget). Source is late, not broken — worth a glance.',
+        STALE: '1.5–2.5× the expected lag. Meaningfully behind; treat the value as possibly off-as-of.',
+        DEAD: 'Beyond 2.5× the expected lag, or unreachable/unparseable. Do not trust the value.',
+        SYNTHETIC: 'Computed proxy (e.g. anchor-shifted nominal, formula TP). Not a directly observed market print.',
+        MANUAL: 'Hand-set constant with a linked source. A ⚠ age badge appears once the manual input exceeds its lag budget.',
+        UNKNOWN: 'On-demand feed not yet polled this session (checked only on RUN ALL).'
+    };
     var rows = '';
     Object.keys(FEED_REGISTRY).forEach(function (id) {
         var f = FEED_REGISTRY[id];
@@ -772,19 +813,20 @@ function render() {
             '<td class="dqm-src">' + f.frequency + '</td>' +
             '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + ageFlag + '</td>' +
             '<td class="dqm-lat">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
-            '<td><span class="dqm-status dqm-' + s.status + '">' + s.status + '</span></td>' +
+            '<td><span class="dqm-status dqm-' + s.status + '" title="' + (STATUS_DEF[s.status] || '').replace(/"/g, '&quot;') + '">' + s.status + '</span></td>' +
             '<td class="dqm-src">' + f.section + '</td></tr>';
     });
     var chips = ['LIVE', 'DEGRADED', 'STALE', 'DEAD', 'SYNTHETIC', 'MANUAL', 'UNKNOWN'].map(function (k) {
         if (!counts[k]) return '';
         var cls = { LIVE: 'live', DEGRADED: 'degraded', STALE: 'stale', DEAD: 'dead', SYNTHETIC: 'synth', MANUAL: 'synth', UNKNOWN: 'unknown' }[k];
-        return '<span class="dqm-chip dqm-chip-' + cls + '">' + k + ' ' + counts[k] + '</span>';
+        return '<span class="dqm-chip dqm-chip-' + cls + '" title="' + STATUS_DEF[k].replace(/"/g, '&quot;') + '">' + k + ' ' + counts[k] + '</span>';
     }).join('');
     el.innerHTML =
         '<div class="dqm-bar">' + chips +
             '<button class="dqm-run" id="dqm-run">RUN ALL</button>' +
             '<span class="dqm-ts">last check ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC</span>' +
         '</div>' +
+        auditStrip() +
         '<div class="attr-wrap"><table class="dqm-table"><thead><tr>' +
         '<th>Feed</th><th>Source</th><th>Freq</th><th>Last date</th><th>Latency · via</th><th>Status</th><th>§</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -987,7 +1029,8 @@ function statsS(series) {
         d1w: G8NET.deltaBps(v, w1), d1m: G8NET.deltaBps(v, w2),
         z: G8NET.zScore(v, wz),
         monthly: monthly,
-        lastDate: series[series.length - 1].d
+        lastDate: series[series.length - 1].d,
+        series: series   /* retained for real spread z-score (difference-series 252D) */
     };
 }
 
@@ -995,6 +1038,36 @@ function statsCol(rows, key) {
     var s = rows.map(function (r) { return { d: r.DATE, v: r[key] }; })
                 .filter(function (x) { return isFinite(x.v); });
     return statsS(s);
+}
+
+/* ── real spread z-score ─────────────────────────────────────────────────
+   Builds the DATE-ALIGNED difference series (legA − legB), forward-filled,
+   over the trailing window, then z-scores TODAY's spread against that
+   series' own history. This answers "is THIS spread wide vs its own past?"
+   — which Δz (difference of the two legs' separate z-scores) only approximates.
+   Returns { last, z, n } or null if insufficient overlap. */
+function spreadStats(legA, legB, win) {
+    if (!legA || !legB || !legA.series || !legB.series) return null;
+    win = win || 252;
+    /* index legB by normalized date for ffill lookup */
+    var b = legB.series.map(function (x) { return { d: isoNorm(x.d), v: x.v }; })
+                        .filter(function (x) { return isFinite(x.v); })
+                        .sort(function (p, q) { return p.d < q.d ? -1 : 1; });
+    if (!b.length) return null;
+    var bi = 0, bv = null, diff = [];
+    var a = legA.series.map(function (x) { return { d: isoNorm(x.d), v: x.v }; })
+                        .filter(function (x) { return isFinite(x.v); })
+                        .sort(function (p, q) { return p.d < q.d ? -1 : 1; });
+    a.forEach(function (pt) {
+        while (bi < b.length && b[bi].d <= pt.d) { bv = b[bi].v; bi++; }
+        if (bv !== null) diff.push(pt.v - bv);   /* ffill legB onto legA's grid */
+    });
+    var w = diff.slice(-win).filter(isFinite);
+    if (w.length < 20) return diff.length ? { last: diff[diff.length - 1], z: null, n: w.length } : null;
+    var mu = w.reduce(function (s, x) { return s + x; }, 0) / w.length;
+    var sd = Math.sqrt(w.reduce(function (s, x) { return s + (x - mu) * (x - mu); }, 0) / w.length);
+    var lastV = diff[diff.length - 1];
+    return { last: lastV, z: sd > 1e-9 ? (lastV - mu) / sd : null, n: w.length };
 }
 
 /* ── formatting (unchanged visual language) ─────────────────────────── */
@@ -1119,22 +1192,29 @@ function build(data) {
     });
 
     var usd = data.USD;
-    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · Z = own 252D z-score</td></tr>';
+    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · z = spread vs its own 252D history (Δz = leg-z fallback when overlap thin)</td></tr>';
     CCYS.forEach(function (c) {
         if (c === 'USD' || !data[c] || !usd) return;
         var d = data[c];
-        function sp(a, b, zlabel) {
+        function sp(a, b) {
             if (!a || !b) return '<span class="attr-na">—</span>';
             var v = a.last - b.last;
             var cls = v > 0 ? 'attr-up' : v < 0 ? 'attr-dn' : 'attr-fl';
-            /* significance context: |Δz| between the two legs' own 252D z-scores.
-               A wide spread that's *normal for both legs historically* is not a
-               signal; a wide spread where this leg sits at a z-extreme is. */
             var ztag = '';
-            if (a.z != null && b.z != null) {
+            /* PRIMARY: z-score of the date-aligned difference series (legA−legB)
+               against its own 252D history — true spread significance. */
+            var ss = spreadStats(a, b, 252);
+            if (ss && ss.z != null) {
+                var az = Math.abs(ss.z);
+                var zc = az > 2 ? 'attr-z-hi' : az > 1 ? 'attr-z-md' : 'attr-z-lo';
+                ztag = '<span class="attr-z ' + zc + '" title="spread z vs own 252D history · n=' + ss.n + ' obs">z ' +
+                       (ss.z > 0 ? '+' : '') + ss.z.toFixed(1) + '</span>';
+            } else if (a.z != null && b.z != null) {
+                /* FALLBACK: synthetic/manual legs with no usable series overlap */
                 var dz = a.z - b.z, adz = Math.abs(dz);
-                var zc = adz > 2 ? 'attr-z-hi' : adz > 1 ? 'attr-z-md' : 'attr-z-lo';
-                ztag = '<span class="attr-z ' + zc + '">Δz ' + (dz > 0 ? '+' : '') + dz.toFixed(1) + '</span>';
+                var zc2 = adz > 2 ? 'attr-z-hi' : adz > 1 ? 'attr-z-md' : 'attr-z-lo';
+                ztag = '<span class="attr-z ' + zc2 + '" title="leg-z difference (series overlap too thin for true spread z)">Δz ' +
+                       (dz > 0 ? '+' : '') + dz.toFixed(1) + '</span>';
             }
             return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>' + ztag;
         }
