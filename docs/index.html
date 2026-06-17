@@ -472,9 +472,9 @@ var FEED_REGISTRY = {
         manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid'
     },
     NZD_NOM_RBNZ: {
-        name: 'NZD Nominal 10Y (manual — RBNZ B2 10Y)',
-        urls: [], source: 'Manual input — RBNZ B2 “10 year” col (datacenter ASN blocked)',
-        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, liveCcy: 'NZD', value: 4.55, lastDate: '2026-06-11',
+        name: 'NZD Nominal 10Y (RBNZ B2 via GH Actions)',
+        urls: [RAW + 'NZD_NOM.csv'], source: 'Pipeline repo (GH Actions → RBNZ B2 hgz)', corsOk: true,
+        frequency: 'daily', maxStaleness: 6, section: '01',
         manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
     },
 
@@ -640,9 +640,9 @@ function report(feedId, info) {
 async function checkFeed(id, force) {
     var f = FEED_REGISTRY[id];
     if (f.manual) {
-        /* For editable manual feeds (CHF/NZD nominals), the single source of
-           truth is localStorage via G8Manual — the registry value/lastDate are
-           only boot defaults. Reading live here keeps DQM and §01 in lockstep
+        /* For editable manual feeds (CHF nominal), the single source of truth
+           is localStorage via G8Manual — the registry value/lastDate are only
+           boot defaults. Reading live here keeps DQM and §01 in lockstep
            (no stale 0.399 vs edited 0.35 divergence). (audit v2.4 — B1) */
         var mv = f.value, md = f.lastDate;
         if (f.liveCcy && window.G8Manual && window.G8Manual.get) {
@@ -933,6 +933,21 @@ function fetchCsv(url) {
 function parseAcm(text) {
     var p = Papa.parse(text.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
     return p.data.filter(function (r) { return r.DATE && isFinite(r.TP10); });
+}
+
+/* Simple DATE,NOM10 repo CSV (GH Actions writes this for NZD from RBNZ B2).
+   Tolerates an optional leading "# QUALITY=..." comment line. Returns
+   [{d, v}] sorted ascending — same shape anchorToManual()/statsS() expect. */
+function parseNomCsv(text) {
+    var lines = String(text).split('\n');
+    if (lines[0] && lines[0].charAt(0) === '#') lines = lines.slice(1);
+    var p = Papa.parse(lines.join('\n').trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+    return p.data.map(function (r) {
+        var d = r.DATE != null ? String(r.DATE) : null;
+        var v = r.NOM10 != null ? r.NOM10 : r.VALUE;
+        return { d: d, v: v };
+    }).filter(function (r) { return r.d && isFinite(r.v); })
+      .sort(function (a, b) { return String(a.d) < String(b.d) ? -1 : 1; });
 }
 
 function parseRy(text) {
@@ -1315,9 +1330,21 @@ function init() {
         G8DQM.report('EUR_REAL_ECB', { status: 'DEAD', error: e.message });
     }));
 
-    /* CHF & NZD nominals are now MANUAL inputs (SNB cube frozen 2025-07,
-       RBNZ B2 blocks datacenter ASNs). No network attempt — avoids dead 403s
-       in the console. Values come from localStorage via manualGet() in assemble(). */
+    /* NZD nominal — RBNZ B2 "10 year", fetched by GH Actions (Azure runner
+       reaches RBNZ; Netlify/datacenter ASN does not) and written to the repo
+       as NZD_NOM.csv. Read here like any other repo feed. If the file isn't
+       there yet (first pipeline run pending) or unreachable, assemble() falls
+       back to the manual input — graceful degradation, no hard failure.
+       (audit v2.4 — NZD automation) */
+    jobs.push(fetchCsv(RAW + 'NZD_NOM.csv')
+        .then(function (t) {
+            var rows = parseNomCsv(t);
+            if (rows && rows.length) { raw.NZD_NOM = rows; }
+        })
+        .catch(function (e) { console.warn('[attr] NZD_NOM repo (fallback to manual):', e.message); }));
+
+    /* CHF nominal is a MANUAL input (SNB cube frozen 2025-07). No network
+       attempt — value comes from localStorage via manualGet() in assemble(). */
 
     Promise.all(jobs).then(function () { window.__G8raw = raw; assemble(raw); });
 }
@@ -1391,14 +1418,36 @@ function assemble(raw) {
         G8DQM.report('CHF_NOM_SNB', { status: 'MANUAL', lastDate: chfM.date, value: chfM.v, via: 'manual input' });
     }
 
-    /* NZD — manual nominal (RBNZ B2 "10 year") + AUD-anchored TP + manual BE */
+    /* NZD — nominal from RBNZ B2 "10 year" (GH Actions repo feed) when present,
+       else manual input. TP is AUD-anchored and BE is a manual constant in
+       BOTH paths — only the nominal source changes. */
     if (data.AUD && raw.AUD && raw.AUD.acm) {
-        var nzdM = manualGet('NZD');
         var audNomRy = raw.AUD.ry ? raw.AUD.ry.rows.map(function (r) {
             var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
         }) : null;
         var audNomHist = audNomRy || raw.AUD.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        var nzdNom = anchorToManual(audNomHist, nzdM.v, nzdM.date);
+
+        var nzdNom, nzdAsOf, nzdQuality, nzdFormula, nzdManual, nzdReport;
+        if (raw.NZD_NOM && raw.NZD_NOM.length) {
+            /* AUTO: real RBNZ B2 series — full daily history, no anchoring */
+            nzdNom = raw.NZD_NOM.map(function (x) { return { d: isoNorm(x.d), v: x.v }; });
+            var nzdLast = nzdNom[nzdNom.length - 1];
+            nzdAsOf = isoNorm(nzdLast.d) + ' · RBNZ B2 (auto)';
+            nzdQuality = 'CLEAN';
+            nzdFormula = 'NOM=RBNZ B2 “10 year” (GH Actions) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')';
+            nzdManual = null;
+            nzdReport = { lastDate: isoNorm(nzdLast.d), value: nzdLast.v, via: 'repo NZD_NOM.csv' };
+        } else {
+            /* FALLBACK: manual input (pipeline not yet producing the file) */
+            var nzdM = manualGet('NZD');
+            nzdNom = anchorToManual(audNomHist, nzdM.v, nzdM.date);
+            nzdAsOf = nzdM.date + ' · manual (RBNZ feed pending)';
+            nzdQuality = 'MANUAL+SYNTH';
+            nzdFormula = 'NOM=manual (RBNZ B2 / TVC:NZ10Y) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')';
+            nzdManual = { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link };
+            nzdReport = { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' };
+        }
+
         var tpNZD = proxyTP(nzdNom, raw.AUD.acm, audNomRy);
         data.NZD = {
             nom: statsS(nzdNom),
@@ -1406,13 +1455,13 @@ function assemble(raw) {
             rny: statsS(minusSeries(nzdNom, tpNZD)),
             be: statsS(constBE(nzdNom, BE_CONST.NZD.v)),
             real: statsS(minusSeries(nzdNom, constBE(nzdNom, BE_CONST.NZD.v))),
-            quality: 'MANUAL+SYNTH',
-            qkind: 'synth',
-            asOf: nzdM.date + ' · manual',
-            manual: { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
-            formula: 'NOM=manual (RBNZ B2 / TVC:NZ10Y) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
+            quality: nzdQuality,
+            qkind: nzdManual ? 'synth' : 'proxy',
+            asOf: nzdAsOf,
+            formula: nzdFormula
         };
-        G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' });
+        if (nzdManual) data.NZD.manual = nzdManual;
+        G8DQM.report('NZD_NOM_RBNZ', nzdReport);
     }
 
     var ok = CCYS.some(function (c) { return data[c]; });
