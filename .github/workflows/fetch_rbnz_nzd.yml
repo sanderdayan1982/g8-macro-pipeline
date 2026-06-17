@@ -1,0 +1,64 @@
+name: fetch-rbnz-nzd
+
+# Fetches the RBNZ B2 "10 year" government bond closing yield from the
+# hb2-daily-close.xlsx workbook (the live file since the 2025 move to
+# closing rates) and writes data/NZD_NOM.csv. GitHub's Azure runners reach
+# the RBNZ where Netlify / datacenter ASNs are blocked.
+#
+# The dashboard reads data/NZD_NOM.csv as a normal repo feed and falls back
+# to the in-browser manual input if the file is absent — so a failed run
+# never breaks §01, it just leaves NZD on the manual value.
+
+on:
+  schedule:
+    - cron: '0 5 * * 1-5'   # 05:00 UTC Mon–Fri (~17:00 NZST, after the 1-day-lag close publishes)
+  workflow_dispatch: {}      # manual trigger for the first probe
+
+concurrency:
+  group: fetch-rbnz-nzd
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install openpyxl requests
+
+      - name: Probe RBNZ reachability (diagnostic, non-fatal)
+        continue-on-error: true
+        run: |
+          echo "Probing RBNZ B2 close workbook from this runner's egress IP..."
+          curl -sS -o /tmp/probe.xlsx -w "HTTP %{http_code} · %{size_download} bytes\n" \
+            -A "Mozilla/5.0 (g8-macro-pipeline; +https://github.com/sanderdayan1982/g8-macro-pipeline)" \
+            "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx" || true
+          ls -la /tmp/probe.xlsx || echo "no file"
+
+      - name: Fetch + parse + write CSV
+        run: python fetch_rbnz_nzd.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "g8-pipeline-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/NZD_NOM.csv)" ]; then
+            git add data/NZD_NOM.csv
+            git commit -m "data: refresh NZD_NOM.csv (RBNZ B2 close) [skip ci]"
+            # pull-rebase retry loop to survive concurrent pipeline pushes
+            for i in 1 2 3 4 5; do
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && break
+              echo "push attempt $i failed, retrying..."; sleep $((i*3))
+            done
+          else
+            echo "NZD_NOM.csv unchanged — nothing to commit."
+          fi
