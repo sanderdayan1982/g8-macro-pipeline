@@ -287,7 +287,8 @@ function localProxy(url) {
 }
 
 var CACHE_MS = 60 * 60 * 1000;   /* 60 min */
-var TIMEOUT_MS = 8000;
+var TIMEOUT_MS = 5000;   /* per-attempt; trimmed from 8000 so a fully-dead
+                            3-tier cascade resolves in ~15s, not ~24s (audit v2.4 — B2) */
 
 function cacheKey(url) { return 'g8net_' + url; }
 
@@ -355,8 +356,10 @@ async function fetchAny(url, opts) {
                 return { ok: true, buf: buf, b64: b64, via: via, ms: ms };
             }
             var text = await resp.text();
-            /* Proxy HTML error pages masquerading as 200 */
-            if (text.length < 30 || /^\s*<!doctype html/i.test(text.slice(0, 60)) && url.indexOf('.html') === -1) {
+            /* Proxy HTML error pages masquerading as 200. Parens make the
+               precedence explicit: empty OR (doctype-html AND not a .html url).
+               (audit v2.4 — B3) */
+            if (text.length < 30 || (/^\s*<!doctype html/i.test(text.slice(0, 60)) && url.indexOf('.html') === -1)) {
                 lastErr = 'proxy returned HTML/empty'; continue;
             }
             cachePut(url, { text: text, via: via });
@@ -390,7 +393,11 @@ function b64ToArrayBuffer(b64) {
     return bytes.buffer;
 }
 
-/* ── shared math ─────────────────────────────────────────────────────── */
+/* ── shared math ─────────────────────────────────────────────────────────
+   Z-scores use POPULATION standard deviation (÷N, not ÷N−1), matching Pine
+   ta.stdev. Kept consistent across zScore() and spreadStats() so triangulated
+   cross-checks (Perplexity/DeepSeek) don't flag a ~N/(N−1) drift near the
+   1.0σ/2.0σ thresholds. (audit v2.4 — A2) */
 function zScore(series, win) {
     var w = series.slice(-(win || 252)).filter(isFinite);
     if (w.length < 10) return null;
@@ -441,7 +448,11 @@ var FEED_REGISTRY = {
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
     GBP_RY: repo('RY_G8_GBP.csv', 'GBP Real/BE 10Y (ILG, BoE)', 'daily', 4, '01'),
     CAD_RY: repo('RY_G8_CAD.csv', 'CAD Real/BE 10Y (RRB, BoC)', 'daily', 4, '01'),
-    AUD_RY: repo('RY_G8_AUD.csv', 'AUD Real/BE 10Y (iAGS, RBA)', 'daily', 4, '01'),
+    /* iAGS (indexed Australian Government Securities) publish on a less
+       regular cadence than TIPS/ILG/RRB, so a 4-day budget flips this lone
+       feed to false DEGRADED/STALE recurrently. 8 bd is a realistic linker
+       budget — the others stay at 4. (audit v2.4 — RBA) */
+    AUD_RY: repo('RY_G8_AUD.csv', 'AUD Real/BE 10Y (iAGS, RBA)', 'daily', 8, '01'),
 
     /* ── 01 attribution — in-browser external feeds ────────────────────── */
     EUR_NOM_ECB: {
@@ -457,13 +468,13 @@ var FEED_REGISTRY = {
     CHF_NOM_SNB: {
         name: 'CHF Nominal 10Y (manual — TVC:CH10Y)',
         urls: [], source: 'Manual input — TradingView TVC:CH10Y (SNB cube frozen 2025-07)',
-        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, value: 0.399, lastDate: '2026-06-13',
+        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, liveCcy: 'CHF', value: 0.399, lastDate: '2026-06-13',
         manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid'
     },
     NZD_NOM_RBNZ: {
         name: 'NZD Nominal 10Y (manual — RBNZ B2 10Y)',
         urls: [], source: 'Manual input — RBNZ B2 “10 year” col (datacenter ASN blocked)',
-        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, value: 4.55, lastDate: '2026-06-11',
+        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, liveCcy: 'NZD', value: 4.55, lastDate: '2026-06-11',
         manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
     },
 
@@ -601,12 +612,14 @@ function computeStaleness(lastDateStr, maxStale) {
 }
 
 /* Generic last-date extractor: handles compact yyyymmdd, ISO, ECB csvdata,
-   SNB semicolon format and FRED observation_date. */
+   SNB semicolon format and FRED observation_date. The compact pattern is
+   anchored to 19xx/20xx so an 8-digit non-date column (e.g. a raw volume
+   like 12345678) can't be mis-read as a date in short CSVs. (audit v2.4 — A3) */
 function extractLastDate(text) {
     var lines = text.trim().split('\n');
     for (var i = lines.length - 1; i >= Math.max(0, lines.length - 12); i--) {
         var L = lines[i];
-        var m = L.match(/(\d{4}-\d{2}-\d{2})/) || L.match(/(\d{4}-\d{2})(?!\d)/) || L.match(/(^|,)(\d{8})(,|$)/);
+        var m = L.match(/(\d{4}-\d{2}-\d{2})/) || L.match(/(\d{4}-\d{2})(?!\d)/) || L.match(/(^|,)((?:19|20)\d{6})(,|$)/);
         if (m) return m[2] || m[1];
     }
     return null;
@@ -627,7 +640,16 @@ function report(feedId, info) {
 async function checkFeed(id, force) {
     var f = FEED_REGISTRY[id];
     if (f.manual) {
-        state[id] = { status: 'MANUAL', lastDate: f.lastDate, latency: null, via: 'code constant', value: f.value, checkedAt: Date.now() };
+        /* For editable manual feeds (CHF/NZD nominals), the single source of
+           truth is localStorage via G8Manual — the registry value/lastDate are
+           only boot defaults. Reading live here keeps DQM and §01 in lockstep
+           (no stale 0.399 vs edited 0.35 divergence). (audit v2.4 — B1) */
+        var mv = f.value, md = f.lastDate;
+        if (f.liveCcy && window.G8Manual && window.G8Manual.get) {
+            var lm = window.G8Manual.get(f.liveCcy);
+            if (lm && isFinite(lm.v)) { mv = lm.v; md = lm.date || md; }
+        }
+        state[id] = { status: 'MANUAL', lastDate: md, latency: null, via: 'manual input', value: mv, checkedAt: Date.now() };
         return;
     }
     var r = await G8NET.fetchChain(f.urls, { corsOk: f.corsOk, binary: f.binary, noCache: !!force });
@@ -1136,7 +1158,11 @@ function anchorToManual(anchorSeries, manualV, manualDate) {
     if (!s.length) return [{ d: manualDate, v: manualV }];
     var shift = manualV - s[s.length - 1].v;
     var out = s.map(function (x) { return { d: x.d, v: x.v + shift }; });
-    out[out.length - 1] = { d: manualDate.replace(/-/g, ''), v: manualV };
+    /* Keep the stamped date in the SAME ISO form as the rest of the anchor
+       series. Stamping a compact yyyymmdd here made statsS().lastDate diverge
+       from the other legs' ISO dates, firing a permanent false "⚠ mixed as-of"
+       on CHF/NZD. (audit v2.4 — A1) */
+    out[out.length - 1] = { d: isoNorm(manualDate), v: manualV };
     return out;
 }
 
