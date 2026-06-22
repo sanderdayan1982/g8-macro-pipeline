@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <style>
-/* ===== METALS MODULE CSS ===== */
+/* ===== METALS MODULE CSS (EN) ===== */
 /* ════════════════════════════════════════════════════════════════════════════
    metals.css — estilos para Sections 06/07 (Gold/Silver MDP)
    Hereda la paleta y tipografía del dashboard (#fdb813, JetBrains Mono, fondos
@@ -94,6 +94,27 @@
 /* ── tono distintivo por metal en el borde de sección ─────────────────────── */
 #section-gold .section-title{color:#fdb813}
 #section-silver .section-title{color:#c5ccd6}
+
+/* ── ALERT BANNERS (regime-aware, institutional) ──────────────────────────── */
+.mfv-alert {
+    margin: 10px 0 4px; padding: 10px 14px; border-radius: 4px;
+    font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 12.5px;
+    line-height: 1.45; letter-spacing: .01em; border-left: 3px solid var(--mute, #5d6678);
+    background: #0e1420; color: #b8c0cf;
+}
+.mfv-alert-warn {
+    border-left-color: #ff8c42; background: linear-gradient(90deg, #221608 0%, #0e1420 60%);
+    color: #ffcfa0;
+}
+.mfv-alert-hot {
+    border-left-color: #ff5c72; background: linear-gradient(90deg, #2a0e14 0%, #0e1420 60%);
+    color: #ffb3bd;
+    animation: mfvPulse 2.6s ease-in-out infinite;
+}
+@keyframes mfvPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 92, 114, 0); }
+    50%      { box-shadow: 0 0 0 2px rgba(255, 92, 114, .14); }
+}
 
 /* ===== END METALS CSS ===== */
 
@@ -310,14 +331,14 @@
 <section class="dashboard-section" id="section-gold">
     <div class="section-header">
         <h2 class="section-title">06 — Gold Fair Value · MDP (Kalman TVP / MMT)</h2>
-        <span class="section-meta">log(XAU) = α + β·[BE + slope + log NFA] + γ·DXY · MDP = residuo z · forward-filter</span>
+        <span class="section-meta">log(XAU) = α + β·[BE + slope + log NFA] + γ·DXY · MDP = residual z · forward-filter</span>
     </div>
     <div class="section-body">
         <div id="mfv-xau">
-            <div class="attr-err" style="color:#5d6678">Cargando fair value del oro — MFV_G8_state.json + MFV_G8_XAU.csv (repo)…</div>
+            <div class="attr-err" style="color:#5d6678">Loading gold fair value — MFV_G8_state.json + MFV_G8_XAU.csv (repo)…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">MDP (Monetary Disorder Premium) = desalineamiento precio↔fair-value bajo lente MMT/Mosler: el oro como termómetro del desorden del pasivo soberano, no como coste de oportunidad. Drivers: breakeven (poder de compra del pasivo) · slope 10Y−EFFR (prima de plazo observable, libre de modelo ACM) · log NFA_total = FDHBFIN+WRESBAL−WTREGEN (activos financieros netos del sector no gubernamental, métrica Mosler). DXY con beta fija fuera del TVP. Equilibrio MÓVIL: las betas evolucionan con la postura fiscal (β_t = β_{t-1} + η_t, forgetting factor δ restringe la deriva). Señal sin look-ahead (estado predicho β_{t|t-1}, z-score expansivo). Validación walk-forward OOS: IC Spearman, hit-rate, var-ratio≥0.20, Ljung-Box≠ruido. Overlay COT Managed Money del POS-G8.</span>
+            <span class="footer-note">MDP (Monetary Disorder Premium) = price↔fair-value misalignment under the MMT/Mosler lens: gold as a thermometer of sovereign-liability disorder, not as an opportunity cost. Drivers: breakeven (purchasing power of the liability) · slope 10Y−EFFR (observable term premium, free of any ACM model) · log NFA_total = FDHBFIN+WRESBAL−WTREGEN (net financial assets of the non-government sector, Mosler metric). DXY enters with a fixed beta outside the TVP. The equilibrium MOVES: betas evolve with the fiscal stance (β_t = β_{t-1} + η_t, the forgetting factor δ constrains the drift). Look-ahead-free signal (predicted state β_{t|t-1}, expanding z-score). Walk-forward OOS validation: Spearman IC, hit-rate, var-ratio≥0.20, Ljung-Box ≠ noise. COT Managed-Money overlay from POS-G8.</span>
         </div>
     </div>
 </section>
@@ -326,14 +347,14 @@
 <section class="dashboard-section" id="section-silver">
     <div class="section-header">
         <h2 class="section-title">07 — Silver Fair Value · MDP (Kalman TVP / dual)</h2>
-        <span class="section-meta">log(XAG) = α + βm·log(XAU) + βi·cobre⊥oro · canal monetario + industrial · MDP z</span>
+        <span class="section-meta">log(XAG) = α + βm·log(XAU) + βi·copper⊥gold · monetary + industrial channel · MDP z</span>
     </div>
     <div class="section-body">
         <div id="mfv-xag">
-            <div class="attr-err" style="color:#5d6678">Cargando fair value de la plata — MFV_G8_state.json + MFV_G8_XAG.csv (repo)…</div>
+            <div class="attr-err" style="color:#5d6678">Loading silver fair value — MFV_G8_state.json + MFV_G8_XAG.csv (repo)…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">Plata DUAL: canal monetario (beta time-varying sobre el oro, comparte el termómetro del desorden soberano) + canal industrial (cobre ortogonalizado vs oro = HG⊥, demanda industrial pura aislada del factor refugio). Si falta el cobre (HG1!) el modelo degrada a canal monetario (QUALITY=PARTIAL_NO_COPPER). Gold/silver ratio informativo, no regresor (sería circular). Mismo motor Kalman TVP forward-filter, δ calibrado por walk-forward IC. El MDP de la plata tiende a half-life más corta y mayor amplitud que el oro por su componente industrial cíclico.</span>
+            <span class="footer-note">DUAL silver: monetary channel (time-varying beta on gold, shares the sovereign-disorder thermometer) + industrial channel (copper orthogonalized vs gold = HG⊥, pure industrial demand isolated from the safe-haven factor). The engine compares both models and lets the data decide: copper enters only if it improves the out-of-sample IC while respecting var-ratio≥0.20; otherwise silver reverts to the pure monetary model. Gold/silver ratio is informative, not a regressor (would be circular). Same Kalman TVP forward-filter, δ calibrated by walk-forward IC. Silver's MDP tends to a shorter half-life and larger amplitude than gold's, driven by its cyclical industrial component.</span>
         </div>
     </div>
 </section>
@@ -1668,23 +1689,23 @@ if (document.readyState === 'loading') {
 
 <script src="js/data-loader.js"></script>
 <script src="js/charts.js"></script>
-<!-- ===== METALS MODULE JS ===== -->
+<!-- ===== METALS MODULE JS (EN) ===== -->
 <script>
 /* ════════════════════════════════════════════════════════════════════════════
    metals.js — Sections 06 (Gold MDP) + 07 (Silver MDP)  ·  G8 Macro Pipeline
    ----------------------------------------------------------------------------
-   Fair value Kalman TVP / MDP (Monetary Disorder Premium) bajo marco MMT.
-   Lee del repo:
-     data/MFV_G8_state.json   → semáforos, métricas (IC/hit/δ/half-life), betas
-     data/MFV_G8_XAU.csv      → serie histórica oro (PX, FAIR, MDP_Z, betas TVP…)
-     data/MFV_G8_XAG.csv      → serie histórica plata
-   Replica el patrón de charts.js: Plotly dark, paleta #fdb813, G8NET.fetchChain,
-   reporta salud a G8DQM si está presente. Sin dependencias nuevas.
+   Kalman TVP fair value / MDP (Monetary Disorder Premium) under the MMT lens.
+   Reads from repo:
+     data/MFV_G8_state.json   → traffic-light, validation metrics (IC/hit/δ/HL), betas
+     data/MFV_G8_XAU.csv      → gold time series (PX, FAIR, MDP_Z, TVP betas…)
+     data/MFV_G8_XAG.csv      → silver time series
+   Mirrors charts.js: Plotly dark, #fdb813 palette, G8NET.fetchChain, reports to
+   G8DQM when present. No new dependencies.
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
 
-/* ── paleta (idéntica al dashboard) ─────────────────────────────────────── */
+/* ── palette (matches the dashboard) ────────────────────────────────────── */
 var C = {
     gold:  '#fdb813', green: '#2fbf71', red: '#e0485a', redhi: '#ff5c72',
     blue:  '#5d8aa8', amber: '#ff8c42', mute: '#5d6678', text: '#d7dce6',
@@ -1694,13 +1715,13 @@ var C = {
 var RAW = (window.G8_RAW ||
     'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/');
 
-/* ── umbrales de semáforo MDP (z-score del residuo) ─────────────────────────
-   El MDP es el desalineamiento precio↔fair-value MMT en desviaciones estándar.
-   Bandas institucionales (simétricas; |z| alto = desorden monetario extremo):  */
+/* ── MDP traffic-light bands (residual z-score) ─────────────────────────────
+   MDP is the price↔MMT-fair-value misalignment in standard deviations.
+   Symmetric institutional bands (|z| high = extreme monetary disorder):       */
 var BANDS = [
-    { lim: 2.0, cls: 'press', lbl: 'EXTREMO',  col: C.redhi, bg: '#3d1420' },
-    { lim: 1.0, cls: 'tight', lbl: 'ELEVADO',  col: C.gold,  bg: '#3a2c10' },
-    { lim: 0.0, cls: 'amp',   lbl: 'NEUTRAL',  col: C.green, bg: '#0f2a1d' }
+    { lim: 2.0, lbl: 'EXTREME',  col: C.redhi, bg: '#3d1420' },
+    { lim: 1.0, lbl: 'ELEVATED', col: C.gold,  bg: '#3a2c10' },
+    { lim: 0.0, lbl: 'NEUTRAL',  col: C.green, bg: '#0f2a1d' }
 ];
 function band(z) {
     if (z === null || z === undefined || isNaN(z)) return { lbl: 'N/A', col: C.mute, bg: '#1a1f2b' };
@@ -1708,7 +1729,7 @@ function band(z) {
     for (var i = 0; i < BANDS.length; i++) if (a >= BANDS[i].lim) return BANDS[i];
     return BANDS[BANDS.length - 1];
 }
-function dir(z) { return (z > 0) ? 'CARO vs fair' : (z < 0) ? 'BARATO vs fair' : 'EN fair'; }
+function dir(z) { return (z > 0) ? 'RICH vs fair' : (z < 0) ? 'CHEAP vs fair' : 'AT fair'; }
 
 /* ── helpers ────────────────────────────────────────────────────────────── */
 function fmt(v, d) { return (v === null || v === undefined || isNaN(v)) ? '—' : (+v).toFixed(d === undefined ? 2 : d); }
@@ -1727,7 +1748,7 @@ function plotlyBase(extra) {
 }
 var PCFG = { displayModeBar: false, responsive: true };
 
-/* ── fetch CSV/JSON con la red del dashboard ────────────────────────────── */
+/* ── fetch CSV/JSON through the dashboard's network layer ───────────────── */
 async function getText(url) {
     if (window.G8NET && window.G8NET.fetchChain) {
         var r = await window.G8NET.fetchChain([url]);
@@ -1739,8 +1760,7 @@ async function getText(url) {
     return await resp.text();
 }
 function parseCSV(txt) {
-    // salta la cabecera comentario '# QUALITY=...'
-    var body = txt.replace(/^#[^\n]*\n/, '');
+    var body = txt.replace(/^#[^\n]*\n/, '');     // skip '# QUALITY=...' header
     var out = Papa.parse(body, { header: true, dynamicTyping: true, skipEmptyLines: true });
     return out.data;
 }
@@ -1751,7 +1771,7 @@ function reportDQM(feed, ok, note) {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   RENDER de una sección de metal
+   RENDER a metal section
    ════════════════════════════════════════════════════════════════════════ */
 async function renderMetal(metal, ids) {
     var host = document.getElementById(ids.root);
@@ -1763,8 +1783,8 @@ async function renderMetal(metal, ids) {
         st = st.metals ? st.metals[metal] : null;
         reportDQM('MFV_' + metal + '_state', !!st, st ? st.quality : 'missing');
     } catch (e) {
-        host.innerHTML = '<div class="attr-err">MFV state.json no disponible — ' + e.message +
-            ' · corre metals_fairvalue_g8.py y empuja data/ al repo</div>';
+        host.innerHTML = '<div class="attr-err">MFV state.json unavailable — ' + e.message +
+            ' · run metals_fairvalue_g8.py and push data/ to the repo</div>';
         reportDQM('MFV_' + metal + '_state', false, e.message);
         return;
     }
@@ -1782,14 +1802,14 @@ async function renderMetal(metal, ids) {
 function paint(metal, ids, st, rows) {
     var host = document.getElementById(ids.root);
     var b = band(st ? st.mdp_z : null);
-    var name = (metal === 'XAU') ? 'GOLD' : 'SILVER';
     var sym  = (metal === 'XAU') ? 'XAU/USD' : 'XAG/USD';
 
-    // ── HERO: semáforo + lectura MDP ──────────────────────────────────────
     var last = rows.length ? rows[rows.length - 1] : {};
     var px = last.PX, fair = last.FAIR;
     var devpct = (px && fair) ? (px / fair - 1) : null;
+    var reg = st ? st.regime : null;
 
+    // ── HERO: traffic-light + MDP read ────────────────────────────────────
     var hero =
       '<div class="mfv-hero">' +
         '<div class="mfv-sem" style="--sem:' + b.col + ';--semfill:' + b.bg + '">' +
@@ -1801,40 +1821,51 @@ function paint(metal, ids, st, rows) {
         '</div>' +
         '<div class="mfv-hero-grid">' +
           mkStat('MDP-Z', fmt(st ? st.mdp_z : null, 2), b.col) +
-          mkStat('PRECIO', fmt(px, 2), C.text) +
+          mkStat('PRICE', fmt(px, 2), C.text) +
           mkStat('FAIR VALUE', fmt(fair, 2), C.blue) +
-          mkStat('DESV.', devpct === null ? '—' : (devpct > 0 ? '+' : '') + pct(devpct, 1),
+          mkStat('DEV.', devpct === null ? '—' : (devpct > 0 ? '+' : '') + pct(devpct, 1),
                  devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.green)) +
-          mkStat('SEÑAL', fmt(st ? st.signal : null, 2), (st && st.signal > 0) ? C.green : C.red) +
+          mkStat('REGIME', reg || '—', reg === 'REVERSION' ? C.green : reg === 'MOMENTUM' ? C.amber : C.mute) +
         '</div>' +
       '</div>';
 
-    // ── PANEL DE CONTROL: métricas de validación con sus límites ──────────
+    // ── ALERT BANNER (regime-aware) ───────────────────────────────────────
+    var alert = '';
+    if (reg === 'MOMENTUM') {
+        alert = '<div class="mfv-alert mfv-alert-warn">⚠ MOMENTUM regime — high MDP precedes ' +
+                'further upside, not reversal. Signal interpretation is inverted: treat elevated ' +
+                'MDP as trend confirmation, not a fade.</div>';
+    } else if (b.lbl === 'EXTREME') {
+        alert = '<div class="mfv-alert mfv-alert-hot">● EXTREME disorder — MDP beyond ±2σ. ' +
+                'Mean-reversion pressure is maximal; confirm against COT positioning before acting.</div>';
+    }
+
+    // ── CONTROL PANEL: validation metrics with limits ─────────────────────
     var ctrl =
       '<div class="mfv-ctrl">' +
-        '<div class="mfv-ctrl-head">PANEL DE VALIDACIÓN · límites institucionales</div>' +
+        '<div class="mfv-ctrl-head">VALIDATION PANEL · institutional limits (walk-forward OOS)</div>' +
         '<div class="mfv-ctrl-grid">' +
-          gauge('IC 8w', st ? st.ic_8w : null, 0.05, 0.30, 'corr. rango MDP↔ret fwd · >0.05 OK') +
-          gauge('HIT 8w', st ? st.hit_8w : null, 0.52, 0.60, 'aciertos direccionales · >54% OK', true) +
-          gauge('VAR-RATIO', st ? st.var_ratio : null, 0.20, 0.80, 'Var(MDP)/Var(px) · >0.20 señal viva') +
-          gauge('HALF-LIFE', st ? st.halflife : null, 1, 200, 'reversión OU · semanas', false, 'w') +
-          kv('δ FORGETTING', fmt(st ? st.delta : null, 3), 'agilidad betas TVP') +
-          kv('LJUNG-BOX p', fmt(st ? st.ljung_p : null, 3), st && st.ljung_p < 0.10 ? 'MDP estructurado ✓' : 'revisar') +
-          kv('IC 4w / 12w', fmt(st ? st.ic_4w : null, 2) + ' / ' + fmt(st ? st.ic_12w : null, 2), 'horizontes corto/largo') +
-          kv('QUALITY', st ? st.quality : '—', 'gate global') +
+          gauge('IC 8w', st ? st.ic_8w : null, 0.05, 0.30, 'rank corr MDP↔fwd ret · >0.05 OK') +
+          gauge('HIT 8w', st ? st.hit_8w : null, 0.52, 0.60, 'directional accuracy · >54% OK', true) +
+          gauge('VAR-RATIO', st ? st.var_ratio : null, 0.20, 1.00, 'Var(MDP)/Var(px) · >0.20 live') +
+          gauge('HALF-LIFE', st ? st.halflife : null, 1, 200, 'OU reversion · weeks', false, 'w') +
+          kv('δ FORGETTING', fmt(st ? st.delta : null, 3), 'TVP beta agility') +
+          kv('LJUNG-BOX p', fmt(st ? st.ljung_p : null, 3), st && st.ljung_p < 0.10 ? 'MDP structured ✓' : 'review') +
+          kv('IC 4w / 12w', fmt(st ? st.ic_4w : null, 2) + ' / ' + fmt(st ? st.ic_12w : null, 2), 'short / long horizon') +
+          kv('QUALITY', st ? st.quality : '—', 'global gate') +
         '</div>' +
       '</div>';
 
-    // ── contenedores de gráficos ──────────────────────────────────────────
+    // ── chart containers ──────────────────────────────────────────────────
     var charts =
       '<div class="mfv-charts">' +
-        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">PRECIO vs FAIR VALUE — ' + sym + '</div><div id="' + ids.cFair + '" class="mfv-plot"></div></div>' +
-        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MDP-Z · DESORDEN MONETARIO (bandas σ)</div><div id="' + ids.cMdp + '" class="mfv-plot"></div></div>' +
-        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">BETAS TVP · el equilibrio MMT se desplaza</div><div id="' + ids.cBeta + '" class="mfv-plot"></div></div>' +
-        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MATRIZ MDP × COT · convicción táctica</div><div id="' + ids.cCot + '" class="mfv-matrix"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">PRICE vs FAIR VALUE — ' + sym + '</div><div id="' + ids.cFair + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MDP-Z · MONETARY DISORDER (σ bands)</div><div id="' + ids.cMdp + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">TVP BETAS · the MMT equilibrium drifts</div><div id="' + ids.cBeta + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MDP × COT MATRIX · tactical conviction</div><div id="' + ids.cCot + '" class="mfv-matrix"></div></div>' +
       '</div>';
 
-    host.innerHTML = hero + ctrl + charts;
+    host.innerHTML = hero + alert + ctrl + charts;
 
     if (rows.length) {
         drawFair(ids.cFair, rows);
@@ -1844,7 +1875,7 @@ function paint(metal, ids, st, rows) {
     drawMatrix(ids.cCot, st);
 }
 
-/* ── componentes de UI ──────────────────────────────────────────────────── */
+/* ── UI components ──────────────────────────────────────────────────────── */
 function mkStat(lbl, val, col) {
     return '<div class="mfv-stat"><span class="mfv-stat-lbl">' + lbl + '</span>' +
            '<span class="mfv-stat-val" style="color:' + col + '">' + val + '</span></div>';
@@ -1854,7 +1885,6 @@ function kv(lbl, val, sub) {
            '<span class="mfv-kv-val">' + val + '</span>' +
            '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
 }
-/* gauge: barra horizontal con zona OK marcada. v frente a [lo, hi]. */
 function gauge(lbl, v, lo, hi, sub, isPct, unit) {
     var ok = (v !== null && v !== undefined && !isNaN(v) && v >= lo);
     var disp = (v === null || v === undefined || isNaN(v)) ? '—'
@@ -1872,15 +1902,15 @@ function gauge(lbl, v, lo, hi, sub, isPct, unit) {
         '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
 }
 
-/* ── gráficos Plotly ────────────────────────────────────────────────────── */
+/* ── Plotly charts ──────────────────────────────────────────────────────── */
 function col(rows, k) { return rows.map(function (r) { return r[k]; }); }
 function dates(rows) { return rows.map(function (r) { return ymd(r.DATE); }); }
 
 function drawFair(id, rows) {
     var x = dates(rows);
     Plotly.newPlot(id, [
-        { x: x, y: col(rows, 'PX'),   name: 'Precio', mode: 'lines', line: { color: C.gold, width: 1.5 } },
-        { x: x, y: col(rows, 'FAIR'), name: 'Fair',   mode: 'lines', line: { color: C.blue, width: 1.3, dash: 'dot' } }
+        { x: x, y: col(rows, 'PX'),   name: 'Price', mode: 'lines', line: { color: C.gold, width: 1.5 } },
+        { x: x, y: col(rows, 'FAIR'), name: 'Fair',  mode: 'lines', line: { color: C.blue, width: 1.3, dash: 'dot' } }
     ], plotlyBase({ yaxis: { gridcolor: C.grid, tickfont: { size: 9 }, color: C.mute, type: 'log' } }), PCFG);
 }
 
@@ -1894,8 +1924,8 @@ function drawMdp(id, rows) {
             line: { color: p[1], width: 1, dash: 'dot' } });
     });
     Plotly.newPlot(id, [
-        { x: x, y: pos, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(224,72,90,.35)', name: 'caro' },
-        { x: x, y: neg, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(47,191,113,.30)', name: 'barato' },
+        { x: x, y: pos, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(224,72,90,.35)', name: 'rich' },
+        { x: x, y: neg, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(47,191,113,.30)', name: 'cheap' },
         { x: x, y: z, mode: 'lines', line: { color: C.text, width: 1 } }
     ], plotlyBase({ shapes: shapes, yaxis: { gridcolor: C.grid, zeroline: true, zerolinecolor: C.axis,
         tickfont: { size: 9 }, color: C.mute, range: [-3.2, 3.2] } }), PCFG);
@@ -1915,7 +1945,7 @@ function drawBetas(id, rows, metal) {
             { x: x, y: col(rows, 'B_LOG_XAU'), name: 'β log XAU', mode: 'lines', line: { color: C.gold, width: 1.2 } }
         ];
         if (rows[0] && 'B_HG_ORTH' in rows[0])
-            traces.push({ x: x, y: col(rows, 'B_HG_ORTH'), name: 'β cobre⊥', mode: 'lines', line: { color: C.green, width: 1.2 } });
+            traces.push({ x: x, y: col(rows, 'B_HG_ORTH'), name: 'β copper⊥', mode: 'lines', line: { color: C.green, width: 1.2 } });
     }
     var lay = plotlyBase({ showlegend: true,
         legend: { orientation: 'h', y: 1.12, x: 0, font: { size: 8, color: C.mute } } });
@@ -1924,22 +1954,18 @@ function drawBetas(id, rows, metal) {
     Plotly.newPlot(id, traces, lay, PCFG);
 }
 
-/* matriz MDP × COT 3×3 (SVG ligero, sin Plotly) — celda activa resaltada */
+/* 3×3 MDP × COT matrix (lightweight HTML) — active cell highlighted */
 function drawMatrix(id, st) {
     var el = document.getElementById(id);
     if (!el) return;
     var z = st ? st.mdp_z : null;
-    var sig = st ? st.signal : null;
-    // fila por MDP (caro/neutro/barato), col por COT inferido del signo señal vs mdp
     var rowI = (z === null || isNaN(z)) ? 1 : (z >= 1 ? 0 : (z <= -1 ? 2 : 1));
-    // sin COT real en el JSON resumido → marcamos la fila MDP; col central
-    var colI = 1;
-    var rl = ['MDP ALTO · caro', 'MDP NEUTRO', 'MDP BAJO · barato'];
-    var cl = ['COT largo extremo', 'COT neutral', 'COT corto extremo'];
+    var rl = ['MDP HIGH · rich', 'MDP NEUTRAL', 'MDP LOW · cheap'];
+    var cl = ['COT long extreme', 'COT neutral', 'COT short extreme'];
     var cell = [
-        ['DEGRADADA', 'moderada', 'LIMPIA ★'],
-        ['ruido', 'neutral', 'ruido'],
-        ['mixta', 'moderada', 'FUERTE ★']
+        ['DEGRADED', 'moderate', 'CLEAN ★'],
+        ['noise', 'neutral', 'noise'],
+        ['mixed', 'moderate', 'STRONG ★']
     ];
     var ccol = [
         [C.red, C.mute, C.green],
@@ -1958,13 +1984,13 @@ function drawMatrix(id, st) {
         h += '</tr>';
     }
     h += '</tbody></table>' +
-        '<div class="mfv-mtx-note">Fila activa por MDP actual. La columna COT se ilumina con el ' +
-        'overlay Managed Money del POS-G8 cuando el feed está presente. Señal ★ = fundamental y ' +
-        'posicionamiento alineados a favor de la reversión.</div>';
+        '<div class="mfv-mtx-note">Active row set by current MDP. The COT column lights up from the ' +
+        'POS-G8 Managed-Money overlay once that feed is present. ★ signal = fundamental and ' +
+        'positioning aligned in favor of the reversion.</div>';
     el.innerHTML = h;
 }
 
-/* ── init: expone refresco e invoca al cargar ───────────────────────────── */
+/* ── init: expose refresh and run on load ───────────────────────────────── */
 var IDS = {
     XAU: { root: 'mfv-xau', cFair: 'mfv-xau-fair', cMdp: 'mfv-xau-mdp', cBeta: 'mfv-xau-beta', cCot: 'mfv-xau-cot' },
     XAG: { root: 'mfv-xag', cFair: 'mfv-xag-fair', cMdp: 'mfv-xag-mdp', cBeta: 'mfv-xag-beta', cCot: 'mfv-xag-cot' }
