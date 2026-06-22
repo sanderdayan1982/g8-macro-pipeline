@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <style>
-/* ===== METALS MODULE CSS (EN) ===== */
+/* ===== METALS MODULE CSS (EN · audited v2) ===== */
 /* ════════════════════════════════════════════════════════════════════════════
    metals.css — estilos para Sections 06/07 (Gold/Silver MDP)
    Hereda la paleta y tipografía del dashboard (#fdb813, JetBrains Mono, fondos
@@ -115,6 +115,29 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(255, 92, 114, 0); }
     50%      { box-shadow: 0 0 0 2px rgba(255, 92, 114, .14); }
 }
+
+/* ── PROVENANCE BADGES (D1 debt source · D2 silver model mode) ─────────────── */
+.mfv-badges {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid #131a26;
+}
+.mfv-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .03em;
+    padding: 3px 9px; border-radius: 3px; border: 1px solid #1c2433;
+    background: #0c1119; color: #8a93a6; white-space: nowrap;
+}
+.mfv-badge-ok      { border-color: #1d5e3a; color: #2fbf71; }
+.mfv-badge-warn    { border-color: #6b4a12; color: #ff8c42; }
+.mfv-badge-neutral { border-color: #2a3344; color: #9aa3b5; }
+
+/* ── DISCLAIMER (D3 valuation ≠ timing) ────────────────────────────────────── */
+.mfv-disclaimer {
+    margin-top: 14px; padding: 9px 13px; border-radius: 4px;
+    background: #0b0f17; border: 1px solid #151c28; border-left: 2px solid #5d8aa8;
+    font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 11.5px;
+    line-height: 1.45; color: #7e879a; letter-spacing: .01em;
+}
+.mfv-disclaimer b { color: #b8c0cf; font-weight: 600; }
 
 /* ===== END METALS CSS ===== */
 
@@ -589,6 +612,11 @@ var FEED_REGISTRY = {
        feed to false DEGRADED/STALE recurrently. 8 bd is a realistic linker
        budget — the others stay at 4. (audit v2.4 — RBA) */
     AUD_RY: repo('RY_G8_AUD.csv', 'AUD Real/BE 10Y (iAGS, RBA)', 'daily', 8, '01'),
+
+    /* ── 06/07 metals MDP — Kalman TVP fair value (metals_fairvalue_g8.py) ── */
+    MFV_STATE: repo('MFV_G8_state.json', 'Metals MDP bridge state',   'daily', 5, '06'),
+    XAU_MFV:   repo('MFV_G8_XAU.csv',    'Gold MDP (Kalman TVP/MMT)',  'daily', 5, '06'),
+    XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'daily', 5, '07'),
 
     /* ── 01 attribution — in-browser external feeds ────────────────────── */
     EUR_NOM_ECB: {
@@ -1689,7 +1717,7 @@ if (document.readyState === 'loading') {
 
 <script src="js/data-loader.js"></script>
 <script src="js/charts.js"></script>
-<!-- ===== METALS MODULE JS (EN) ===== -->
+<!-- ===== METALS MODULE JS (EN · audited v2: corsOk + DQM registry + boot + provenance) ===== -->
 <script>
 /* ════════════════════════════════════════════════════════════════════════════
    metals.js — Sections 06 (Gold MDP) + 07 (Silver MDP)  ·  G8 Macro Pipeline
@@ -1751,7 +1779,10 @@ var PCFG = { displayModeBar: false, responsive: true };
 /* ── fetch CSV/JSON through the dashboard's network layer ───────────────── */
 async function getText(url) {
     if (window.G8NET && window.G8NET.fetchChain) {
-        var r = await window.G8NET.fetchChain([url]);
+        // FIX-1: corsOk:true → intenta directo y CAE a la cascada de proxies si CORS
+        // falla, idéntico a como repo() registra el resto de feeds del pipeline.
+        // Sin esto el módulo de metales tendría robustez asimétrica vs el dashboard.
+        var r = await window.G8NET.fetchChain([url], { corsOk: true });
         if (r && r.ok) return r.text || r.data || r.body;
         throw new Error(r && r.error ? r.error : 'fetch failed');
     }
@@ -1764,9 +1795,17 @@ function parseCSV(txt) {
     var out = Papa.parse(body, { header: true, dynamicTyping: true, skipEmptyLines: true });
     return out.data;
 }
-function reportDQM(feed, ok, note) {
+function reportDQM(feed, ok, note, lastDate) {
+    // FIX-2: la firma real del DQM es report(feedId, info) con DOS argumentos
+    // posicionales — info es un objeto. Pasar lastDate alimenta el conteo de
+    // staleness (business-day) igual que el resto de feeds del repo. Los feedId
+    // ('XAU_MFV','XAG_MFV','MFV_STATE') coinciden con las entradas del FEED_REGISTRY.
     if (window.G8DQM && window.G8DQM.report) {
-        try { window.G8DQM.report({ id: feed, ok: ok, note: note, ts: Date.now() }); } catch (e) {}
+        try {
+            window.G8DQM.report(feed, ok
+                ? { lastDate: lastDate || null, via: 'repo (metals.js)' }
+                : { status: 'DEAD', error: note });
+        } catch (e) {}
     }
 }
 
@@ -1777,24 +1816,28 @@ async function renderMetal(metal, ids) {
     var host = document.getElementById(ids.root);
     if (!host) return;
     var st, rows;
+    // feedId que coinciden con FEED_REGISTRY (state compartido + por-metal)
+    var FID_STATE = 'MFV_STATE';
+    var FID_SERIES = (metal === 'XAU') ? 'XAU_MFV' : 'XAG_MFV';
     try {
         var sjson = await getText(RAW + 'MFV_G8_state.json');
         st = (typeof sjson === 'string') ? JSON.parse(sjson) : sjson;
         st = st.metals ? st.metals[metal] : null;
-        reportDQM('MFV_' + metal + '_state', !!st, st ? st.quality : 'missing');
+        reportDQM(FID_STATE, !!st, st ? st.quality : 'missing', st && st.debt_asof);
     } catch (e) {
         host.innerHTML = '<div class="attr-err">MFV state.json unavailable — ' + e.message +
             ' · run metals_fairvalue_g8.py and push data/ to the repo</div>';
-        reportDQM('MFV_' + metal + '_state', false, e.message);
+        reportDQM(FID_STATE, false, e.message);
         return;
     }
     try {
         var csv = await getText(RAW + 'MFV_G8_' + metal + '.csv');
         rows = parseCSV(csv).filter(function (r) { return r.DATE; });
-        reportDQM('MFV_' + metal + '_series', rows.length > 0, rows.length + ' rows');
+        var lastD = rows.length ? rows[rows.length - 1].DATE : null;
+        reportDQM(FID_SERIES, rows.length > 0, rows.length + ' rows', lastD);
     } catch (e) {
         rows = [];
-        reportDQM('MFV_' + metal + '_series', false, e.message);
+        reportDQM(FID_SERIES, false, e.message);
     }
     paint(metal, ids, st, rows);
 }
@@ -1808,6 +1851,23 @@ function paint(metal, ids, st, rows) {
     var px = last.PX, fair = last.FAIR;
     var devpct = (px && fair) ? (px / fair - 1) : null;
     var reg = st ? st.regime : null;
+
+    // D1/D2: provenance badges. The operator must know which cascade tier feeds
+    // the model and which silver channel is live — silent degradation is the enemy.
+    var badges = '';
+    if (metal === 'XAU' && st && st.debt_src) {
+        var fresh = (/diaria|daily/i.test(st.debt_src));
+        badges += '<span class="mfv-badge ' + (fresh ? 'mfv-badge-ok' : 'mfv-badge-warn') + '">' +
+                  'DEBT: ' + st.debt_src + (st.debt_asof ? ' · ' + st.debt_asof : '') + '</span>';
+    }
+    if (metal === 'XAG' && st && st.copper_mode) {
+        var dual = (st.copper_mode === 'DUAL');
+        var lbl = dual ? 'DUAL · monetary + industrial'
+                       : (st.copper_mode === 'MONETARY' ? 'MONETARY · copper dropped by data'
+                                                        : 'MONETARY · copper absent');
+        badges += '<span class="mfv-badge ' + (dual ? 'mfv-badge-ok' : 'mfv-badge-neutral') + '">' +
+                  'MODEL: ' + lbl + '</span>';
+    }
 
     // ── HERO: traffic-light + MDP read ────────────────────────────────────
     var hero =
@@ -1827,6 +1887,7 @@ function paint(metal, ids, st, rows) {
                  devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.green)) +
           mkStat('REGIME', reg || '—', reg === 'REVERSION' ? C.green : reg === 'MOMENTUM' ? C.amber : C.mute) +
         '</div>' +
+        (badges ? '<div class="mfv-badges">' + badges + '</div>' : '') +
       '</div>';
 
     // ── ALERT BANNER (regime-aware) ───────────────────────────────────────
@@ -1865,7 +1926,13 @@ function paint(metal, ids, st, rows) {
         '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MDP × COT MATRIX · tactical conviction</div><div id="' + ids.cCot + '" class="mfv-matrix"></div></div>' +
       '</div>';
 
-    host.innerHTML = hero + alert + ctrl + charts;
+    // D3: valuation ≠ timing. The MDP is a disorder thermometer, not an entry
+    // trigger. The framework has known CB-event lag — cross-check before acting.
+    var disc = '<div class="mfv-disclaimer">MDP is <b>valuation, not timing</b>. ' +
+        'Cross-check against PSI-G8 / RTF10-G8 and the central-bank calendar before ' +
+        'closing a thesis — the model carries lag on CB events. Daily TF · MMT/Mosler lens.</div>';
+
+    host.innerHTML = hero + alert + ctrl + charts + disc;
 
     if (rows.length) {
         drawFair(ids.cFair, rows);
@@ -2000,8 +2067,21 @@ function refreshMetals() {
     renderMetal('XAG', IDS.XAG);
 }
 window.G8METALS = { refresh: refreshMetals };
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshMetals);
-else refreshMetals();
+
+// FIX-3: boot defensivo. El módulo se inyecta tras charts.js, pero el orden de
+// resolución de scripts externos puede dejar una ventana en la que el DOM está
+// listo y G8NET aún no. Esperar a la capa de red evita una carga directa (sin
+// proxy) que en redes con proxy/SSL propio (p.ej. Bata) fallaría por CORS/SSL.
+function bootMetals(tries) {
+    tries = tries || 0;
+    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) {
+        return setTimeout(function () { bootMetals(tries + 1); }, 120);
+    }
+    refreshMetals();
+}
+if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', function () { bootMetals(0); });
+else bootMetals(0);
 
 })();
 
