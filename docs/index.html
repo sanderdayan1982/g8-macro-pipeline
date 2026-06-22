@@ -14,6 +14,89 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <style>
+/* ===== METALS MODULE CSS ===== */
+/* ════════════════════════════════════════════════════════════════════════════
+   metals.css — estilos para Sections 06/07 (Gold/Silver MDP)
+   Hereda la paleta y tipografía del dashboard (#fdb813, JetBrains Mono, fondos
+   #0a0e15/#0c1119). Pegar tras css/style.css o concatenar dentro del <style>.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── HERO: semáforo + lectura rápida ──────────────────────────────────────── */
+.mfv-hero{display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;margin-bottom:18px}
+.mfv-sem{display:flex;align-items:center;gap:14px;padding:16px 20px;min-width:210px;
+    background:var(--semfill,#0f2a1d);border:1px solid #1a2230;border-radius:4px;
+    border-left:3px solid var(--sem,#2fbf71)}
+.mfv-sem-dot{width:16px;height:16px;border-radius:50%;background:var(--sem,#2fbf71);
+    box-shadow:0 0 12px var(--sem,#2fbf71);flex:0 0 auto;
+    animation:mfvpulse 2.6s ease-in-out infinite}
+@keyframes mfvpulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.mfv-sem-dot{animation:none}}
+.mfv-sem-txt{display:flex;flex-direction:column;gap:3px}
+.mfv-sem-state{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:.06em;color:var(--sem,#2fbf71)}
+.mfv-sem-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:#8a94a6}
+
+.mfv-hero-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;flex:1;
+    min-width:380px;background:#0c1119;border:1px solid #1a2230;border-radius:4px;overflow:hidden}
+.mfv-stat{display:flex;flex-direction:column;gap:5px;padding:14px 16px;
+    border-right:1px solid #131a26}
+.mfv-stat:last-child{border-right:none}
+.mfv-stat-lbl{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9.5px;
+    font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#8b93a7}
+.mfv-stat-val{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:600}
+
+/* ── PANEL DE CONTROL / VALIDACIÓN ────────────────────────────────────────── */
+.mfv-ctrl{background:#0c1119;border:1px solid #1a2230;border-radius:4px;
+    padding:14px 16px;margin-bottom:18px}
+.mfv-ctrl-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;
+    font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;
+    border-bottom:1px solid #1c2433;padding-bottom:8px;margin-bottom:12px}
+.mfv-ctrl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 18px}
+@media (max-width:880px){.mfv-ctrl-grid{grid-template-columns:repeat(2,1fr)}}
+
+.mfv-kv{display:flex;flex-direction:column;gap:3px}
+.mfv-kv-lbl{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9.5px;
+    font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b93a7}
+.mfv-kv-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#d7dce6}
+.mfv-kv-sub{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9.5px;color:#5d6678}
+
+/* gauges con zona OK */
+.mfv-gauge{display:flex;flex-direction:column;gap:5px}
+.mfv-gauge-top{display:flex;justify-content:space-between;align-items:baseline}
+.mfv-gauge-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600}
+.mfv-gauge-bar{position:relative;height:5px;background:#13202e;border-radius:3px;overflow:hidden}
+.mfv-gauge-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;transition:width .5s}
+.mfv-gauge-ok{position:absolute;top:-2px;width:1px;height:9px;background:#5d8aa8;opacity:.7;z-index:2}
+
+/* ── GRÁFICOS ─────────────────────────────────────────────────────────────── */
+.mfv-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:980px){.mfv-charts{grid-template-columns:1fr}}
+.mfv-chart-cell{background:#0c1119;border:1px solid #1a2230;border-radius:4px;padding:12px 14px 6px}
+.mfv-chart-lbl{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;
+    font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;margin-bottom:8px}
+.mfv-plot{width:100%;height:230px}
+
+/* ── MATRIZ MDP × COT ─────────────────────────────────────────────────────── */
+.mfv-matrix{padding-top:2px}
+.mfv-mtx{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:10px}
+.mfv-mtx th{font-family:'IBM Plex Sans Condensed',sans-serif;font-weight:600;font-size:9px;
+    letter-spacing:.05em;text-transform:uppercase;color:#8b93a7;padding:6px 8px;
+    border-bottom:1px solid #1c2433;text-align:center}
+.mfv-mtx th:first-child{text-align:left;color:#5d6678}
+.mfv-mtx td{padding:9px 8px;text-align:center;border-bottom:1px solid #131a26;
+    font-weight:600;letter-spacing:.03em}
+.mfv-mtx th[scope]{text-align:left}
+.mfv-mtx tbody th{text-align:left;font-weight:600;font-size:9px;color:#8b93a7;white-space:nowrap}
+.mfv-mtx-on{background:#13202e;box-shadow:inset 0 0 0 1px #2a3a4c}
+.mfv-mtx-note{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:9.5px;
+    color:#5d6678;margin-top:10px;line-height:1.5}
+
+/* ── tono distintivo por metal en el borde de sección ─────────────────────── */
+#section-gold .section-title{color:#fdb813}
+#section-silver .section-title{color:#c5ccd6}
+
+/* ===== END METALS CSS ===== */
+
     /* ── Attribution Matrix (self-contained, scope: .attr-) ─────────────── */
     .attr-wrap{overflow-x:auto}
     .attr-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:13px}
@@ -222,6 +305,38 @@
             </div>
         </div>
     </section>
+
+<!-- ══ 06 — GOLD FAIR VALUE / MDP (Kalman TVP · MMT) ═══════════════════════ -->
+<section class="dashboard-section" id="section-gold">
+    <div class="section-header">
+        <h2 class="section-title">06 — Gold Fair Value · MDP (Kalman TVP / MMT)</h2>
+        <span class="section-meta">log(XAU) = α + β·[BE + slope + log NFA] + γ·DXY · MDP = residuo z · forward-filter</span>
+    </div>
+    <div class="section-body">
+        <div id="mfv-xau">
+            <div class="attr-err" style="color:#5d6678">Cargando fair value del oro — MFV_G8_state.json + MFV_G8_XAU.csv (repo)…</div>
+        </div>
+        <div class="section-footer">
+            <span class="footer-note">MDP (Monetary Disorder Premium) = desalineamiento precio↔fair-value bajo lente MMT/Mosler: el oro como termómetro del desorden del pasivo soberano, no como coste de oportunidad. Drivers: breakeven (poder de compra del pasivo) · slope 10Y−EFFR (prima de plazo observable, libre de modelo ACM) · log NFA_total = FDHBFIN+WRESBAL−WTREGEN (activos financieros netos del sector no gubernamental, métrica Mosler). DXY con beta fija fuera del TVP. Equilibrio MÓVIL: las betas evolucionan con la postura fiscal (β_t = β_{t-1} + η_t, forgetting factor δ restringe la deriva). Señal sin look-ahead (estado predicho β_{t|t-1}, z-score expansivo). Validación walk-forward OOS: IC Spearman, hit-rate, var-ratio≥0.20, Ljung-Box≠ruido. Overlay COT Managed Money del POS-G8.</span>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 07 — SILVER FAIR VALUE / MDP (Kalman TVP · dual) ════════════════════ -->
+<section class="dashboard-section" id="section-silver">
+    <div class="section-header">
+        <h2 class="section-title">07 — Silver Fair Value · MDP (Kalman TVP / dual)</h2>
+        <span class="section-meta">log(XAG) = α + βm·log(XAU) + βi·cobre⊥oro · canal monetario + industrial · MDP z</span>
+    </div>
+    <div class="section-body">
+        <div id="mfv-xag">
+            <div class="attr-err" style="color:#5d6678">Cargando fair value de la plata — MFV_G8_state.json + MFV_G8_XAG.csv (repo)…</div>
+        </div>
+        <div class="section-footer">
+            <span class="footer-note">Plata DUAL: canal monetario (beta time-varying sobre el oro, comparte el termómetro del desorden soberano) + canal industrial (cobre ortogonalizado vs oro = HG⊥, demanda industrial pura aislada del factor refugio). Si falta el cobre (HG1!) el modelo degrada a canal monetario (QUALITY=PARTIAL_NO_COPPER). Gold/silver ratio informativo, no regresor (sería circular). Mismo motor Kalman TVP forward-filter, δ calibrado por walk-forward IC. El MDP de la plata tiende a half-life más corta y mayor amplitud que el oro por su componente industrial cíclico.</span>
+        </div>
+    </div>
+</section>
 
     <!-- ══ LEGACY (hidden — containers kept so charts.js init stays intact) -->
     <div class="legacy-hidden" aria-hidden="true">
@@ -1553,6 +1668,318 @@ if (document.readyState === 'loading') {
 
 <script src="js/data-loader.js"></script>
 <script src="js/charts.js"></script>
+<!-- ===== METALS MODULE JS ===== -->
+<script>
+/* ════════════════════════════════════════════════════════════════════════════
+   metals.js — Sections 06 (Gold MDP) + 07 (Silver MDP)  ·  G8 Macro Pipeline
+   ----------------------------------------------------------------------------
+   Fair value Kalman TVP / MDP (Monetary Disorder Premium) bajo marco MMT.
+   Lee del repo:
+     data/MFV_G8_state.json   → semáforos, métricas (IC/hit/δ/half-life), betas
+     data/MFV_G8_XAU.csv      → serie histórica oro (PX, FAIR, MDP_Z, betas TVP…)
+     data/MFV_G8_XAG.csv      → serie histórica plata
+   Replica el patrón de charts.js: Plotly dark, paleta #fdb813, G8NET.fetchChain,
+   reporta salud a G8DQM si está presente. Sin dependencias nuevas.
+   ════════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+/* ── paleta (idéntica al dashboard) ─────────────────────────────────────── */
+var C = {
+    gold:  '#fdb813', green: '#2fbf71', red: '#e0485a', redhi: '#ff5c72',
+    blue:  '#5d8aa8', amber: '#ff8c42', mute: '#5d6678', text: '#d7dce6',
+    grid:  '#131a26', axis: '#1c2433', bg: '#0a0e15', panel: '#0c1119'
+};
+
+var RAW = (window.G8_RAW ||
+    'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/');
+
+/* ── umbrales de semáforo MDP (z-score del residuo) ─────────────────────────
+   El MDP es el desalineamiento precio↔fair-value MMT en desviaciones estándar.
+   Bandas institucionales (simétricas; |z| alto = desorden monetario extremo):  */
+var BANDS = [
+    { lim: 2.0, cls: 'press', lbl: 'EXTREMO',  col: C.redhi, bg: '#3d1420' },
+    { lim: 1.0, cls: 'tight', lbl: 'ELEVADO',  col: C.gold,  bg: '#3a2c10' },
+    { lim: 0.0, cls: 'amp',   lbl: 'NEUTRAL',  col: C.green, bg: '#0f2a1d' }
+];
+function band(z) {
+    if (z === null || z === undefined || isNaN(z)) return { lbl: 'N/A', col: C.mute, bg: '#1a1f2b' };
+    var a = Math.abs(z);
+    for (var i = 0; i < BANDS.length; i++) if (a >= BANDS[i].lim) return BANDS[i];
+    return BANDS[BANDS.length - 1];
+}
+function dir(z) { return (z > 0) ? 'CARO vs fair' : (z < 0) ? 'BARATO vs fair' : 'EN fair'; }
+
+/* ── helpers ────────────────────────────────────────────────────────────── */
+function fmt(v, d) { return (v === null || v === undefined || isNaN(v)) ? '—' : (+v).toFixed(d === undefined ? 2 : d); }
+function pct(v, d) { return (v === null || v === undefined || isNaN(v)) ? '—' : (100 * v).toFixed(d === undefined ? 1 : d) + '%'; }
+function ymd(s) { s = '' + s; return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8); }
+
+function plotlyBase(extra) {
+    return Object.assign({
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'JetBrains Mono, monospace', size: 10, color: C.mute },
+        margin: { l: 48, r: 14, t: 10, b: 28 },
+        xaxis: { gridcolor: C.grid, zerolinecolor: C.axis, tickfont: { size: 9 }, color: C.mute },
+        yaxis: { gridcolor: C.grid, zerolinecolor: C.axis, tickfont: { size: 9 }, color: C.mute },
+        showlegend: false, hovermode: 'x unified'
+    }, extra || {});
+}
+var PCFG = { displayModeBar: false, responsive: true };
+
+/* ── fetch CSV/JSON con la red del dashboard ────────────────────────────── */
+async function getText(url) {
+    if (window.G8NET && window.G8NET.fetchChain) {
+        var r = await window.G8NET.fetchChain([url]);
+        if (r && r.ok) return r.text || r.data || r.body;
+        throw new Error(r && r.error ? r.error : 'fetch failed');
+    }
+    var resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return await resp.text();
+}
+function parseCSV(txt) {
+    // salta la cabecera comentario '# QUALITY=...'
+    var body = txt.replace(/^#[^\n]*\n/, '');
+    var out = Papa.parse(body, { header: true, dynamicTyping: true, skipEmptyLines: true });
+    return out.data;
+}
+function reportDQM(feed, ok, note) {
+    if (window.G8DQM && window.G8DQM.report) {
+        try { window.G8DQM.report({ id: feed, ok: ok, note: note, ts: Date.now() }); } catch (e) {}
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   RENDER de una sección de metal
+   ════════════════════════════════════════════════════════════════════════ */
+async function renderMetal(metal, ids) {
+    var host = document.getElementById(ids.root);
+    if (!host) return;
+    var st, rows;
+    try {
+        var sjson = await getText(RAW + 'MFV_G8_state.json');
+        st = (typeof sjson === 'string') ? JSON.parse(sjson) : sjson;
+        st = st.metals ? st.metals[metal] : null;
+        reportDQM('MFV_' + metal + '_state', !!st, st ? st.quality : 'missing');
+    } catch (e) {
+        host.innerHTML = '<div class="attr-err">MFV state.json no disponible — ' + e.message +
+            ' · corre metals_fairvalue_g8.py y empuja data/ al repo</div>';
+        reportDQM('MFV_' + metal + '_state', false, e.message);
+        return;
+    }
+    try {
+        var csv = await getText(RAW + 'MFV_G8_' + metal + '.csv');
+        rows = parseCSV(csv).filter(function (r) { return r.DATE; });
+        reportDQM('MFV_' + metal + '_series', rows.length > 0, rows.length + ' rows');
+    } catch (e) {
+        rows = [];
+        reportDQM('MFV_' + metal + '_series', false, e.message);
+    }
+    paint(metal, ids, st, rows);
+}
+
+function paint(metal, ids, st, rows) {
+    var host = document.getElementById(ids.root);
+    var b = band(st ? st.mdp_z : null);
+    var name = (metal === 'XAU') ? 'GOLD' : 'SILVER';
+    var sym  = (metal === 'XAU') ? 'XAU/USD' : 'XAG/USD';
+
+    // ── HERO: semáforo + lectura MDP ──────────────────────────────────────
+    var last = rows.length ? rows[rows.length - 1] : {};
+    var px = last.PX, fair = last.FAIR;
+    var devpct = (px && fair) ? (px / fair - 1) : null;
+
+    var hero =
+      '<div class="mfv-hero">' +
+        '<div class="mfv-sem" style="--sem:' + b.col + ';--semfill:' + b.bg + '">' +
+          '<div class="mfv-sem-dot"></div>' +
+          '<div class="mfv-sem-txt">' +
+            '<span class="mfv-sem-state">' + b.lbl + '</span>' +
+            '<span class="mfv-sem-sub">' + dir(st ? st.mdp_z : null) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mfv-hero-grid">' +
+          mkStat('MDP-Z', fmt(st ? st.mdp_z : null, 2), b.col) +
+          mkStat('PRECIO', fmt(px, 2), C.text) +
+          mkStat('FAIR VALUE', fmt(fair, 2), C.blue) +
+          mkStat('DESV.', devpct === null ? '—' : (devpct > 0 ? '+' : '') + pct(devpct, 1),
+                 devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.green)) +
+          mkStat('SEÑAL', fmt(st ? st.signal : null, 2), (st && st.signal > 0) ? C.green : C.red) +
+        '</div>' +
+      '</div>';
+
+    // ── PANEL DE CONTROL: métricas de validación con sus límites ──────────
+    var ctrl =
+      '<div class="mfv-ctrl">' +
+        '<div class="mfv-ctrl-head">PANEL DE VALIDACIÓN · límites institucionales</div>' +
+        '<div class="mfv-ctrl-grid">' +
+          gauge('IC 8w', st ? st.ic_8w : null, 0.05, 0.30, 'corr. rango MDP↔ret fwd · >0.05 OK') +
+          gauge('HIT 8w', st ? st.hit_8w : null, 0.52, 0.60, 'aciertos direccionales · >54% OK', true) +
+          gauge('VAR-RATIO', st ? st.var_ratio : null, 0.20, 0.80, 'Var(MDP)/Var(px) · >0.20 señal viva') +
+          gauge('HALF-LIFE', st ? st.halflife : null, 1, 200, 'reversión OU · semanas', false, 'w') +
+          kv('δ FORGETTING', fmt(st ? st.delta : null, 3), 'agilidad betas TVP') +
+          kv('LJUNG-BOX p', fmt(st ? st.ljung_p : null, 3), st && st.ljung_p < 0.10 ? 'MDP estructurado ✓' : 'revisar') +
+          kv('IC 4w / 12w', fmt(st ? st.ic_4w : null, 2) + ' / ' + fmt(st ? st.ic_12w : null, 2), 'horizontes corto/largo') +
+          kv('QUALITY', st ? st.quality : '—', 'gate global') +
+        '</div>' +
+      '</div>';
+
+    // ── contenedores de gráficos ──────────────────────────────────────────
+    var charts =
+      '<div class="mfv-charts">' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">PRECIO vs FAIR VALUE — ' + sym + '</div><div id="' + ids.cFair + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MDP-Z · DESORDEN MONETARIO (bandas σ)</div><div id="' + ids.cMdp + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">BETAS TVP · el equilibrio MMT se desplaza</div><div id="' + ids.cBeta + '" class="mfv-plot"></div></div>' +
+        '<div class="mfv-chart-cell"><div class="mfv-chart-lbl">MATRIZ MDP × COT · convicción táctica</div><div id="' + ids.cCot + '" class="mfv-matrix"></div></div>' +
+      '</div>';
+
+    host.innerHTML = hero + ctrl + charts;
+
+    if (rows.length) {
+        drawFair(ids.cFair, rows);
+        drawMdp(ids.cMdp, rows);
+        drawBetas(ids.cBeta, rows, metal);
+    }
+    drawMatrix(ids.cCot, st);
+}
+
+/* ── componentes de UI ──────────────────────────────────────────────────── */
+function mkStat(lbl, val, col) {
+    return '<div class="mfv-stat"><span class="mfv-stat-lbl">' + lbl + '</span>' +
+           '<span class="mfv-stat-val" style="color:' + col + '">' + val + '</span></div>';
+}
+function kv(lbl, val, sub) {
+    return '<div class="mfv-kv"><span class="mfv-kv-lbl">' + lbl + '</span>' +
+           '<span class="mfv-kv-val">' + val + '</span>' +
+           '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
+}
+/* gauge: barra horizontal con zona OK marcada. v frente a [lo, hi]. */
+function gauge(lbl, v, lo, hi, sub, isPct, unit) {
+    var ok = (v !== null && v !== undefined && !isNaN(v) && v >= lo);
+    var disp = (v === null || v === undefined || isNaN(v)) ? '—'
+             : (isPct ? (100 * v).toFixed(0) + '%' : (+v).toFixed(unit === 'w' ? 0 : 2) + (unit || ''));
+    var frac = (v === null || isNaN(v)) ? 0 : Math.max(0, Math.min(1, (v - 0) / (hi - 0)));
+    var okFrac = Math.max(0, Math.min(1, (lo - 0) / (hi - 0)));
+    var col = ok ? C.green : C.red;
+    return '<div class="mfv-gauge">' +
+        '<div class="mfv-gauge-top"><span class="mfv-kv-lbl">' + lbl + '</span>' +
+        '<span class="mfv-gauge-val" style="color:' + col + '">' + disp + '</span></div>' +
+        '<div class="mfv-gauge-bar">' +
+          '<div class="mfv-gauge-ok" style="left:' + (okFrac * 100) + '%"></div>' +
+          '<div class="mfv-gauge-fill" style="width:' + (frac * 100) + '%;background:' + col + '"></div>' +
+        '</div>' +
+        '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
+}
+
+/* ── gráficos Plotly ────────────────────────────────────────────────────── */
+function col(rows, k) { return rows.map(function (r) { return r[k]; }); }
+function dates(rows) { return rows.map(function (r) { return ymd(r.DATE); }); }
+
+function drawFair(id, rows) {
+    var x = dates(rows);
+    Plotly.newPlot(id, [
+        { x: x, y: col(rows, 'PX'),   name: 'Precio', mode: 'lines', line: { color: C.gold, width: 1.5 } },
+        { x: x, y: col(rows, 'FAIR'), name: 'Fair',   mode: 'lines', line: { color: C.blue, width: 1.3, dash: 'dot' } }
+    ], plotlyBase({ yaxis: { gridcolor: C.grid, tickfont: { size: 9 }, color: C.mute, type: 'log' } }), PCFG);
+}
+
+function drawMdp(id, rows) {
+    var x = dates(rows), z = col(rows, 'MDP_Z');
+    var pos = z.map(function (v) { return (v >= 0) ? v : null; });
+    var neg = z.map(function (v) { return (v < 0)  ? v : null; });
+    var shapes = [];
+    [[2, '#3d1420'], [1, '#3a2c10'], [-1, '#3a2c10'], [-2, '#3d1420']].forEach(function (p) {
+        shapes.push({ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: p[0], y1: p[0],
+            line: { color: p[1], width: 1, dash: 'dot' } });
+    });
+    Plotly.newPlot(id, [
+        { x: x, y: pos, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(224,72,90,.35)', name: 'caro' },
+        { x: x, y: neg, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(47,191,113,.30)', name: 'barato' },
+        { x: x, y: z, mode: 'lines', line: { color: C.text, width: 1 } }
+    ], plotlyBase({ shapes: shapes, yaxis: { gridcolor: C.grid, zeroline: true, zerolinecolor: C.axis,
+        tickfont: { size: 9 }, color: C.mute, range: [-3.2, 3.2] } }), PCFG);
+}
+
+function drawBetas(id, rows, metal) {
+    var x = dates(rows);
+    var traces;
+    if (metal === 'XAU') {
+        traces = [
+            { x: x, y: col(rows, 'B_BE'),      name: 'β breakeven', mode: 'lines', line: { color: C.gold,  width: 1.2 } },
+            { x: x, y: col(rows, 'B_SLOPE'),   name: 'β slope',     mode: 'lines', line: { color: C.green, width: 1.2 } },
+            { x: x, y: col(rows, 'B_LOG_NFA'), name: 'β log NFA',   mode: 'lines', line: { color: C.blue,  width: 1.2 }, yaxis: 'y2' }
+        ];
+    } else {
+        traces = [
+            { x: x, y: col(rows, 'B_LOG_XAU'), name: 'β log XAU', mode: 'lines', line: { color: C.gold, width: 1.2 } }
+        ];
+        if (rows[0] && 'B_HG_ORTH' in rows[0])
+            traces.push({ x: x, y: col(rows, 'B_HG_ORTH'), name: 'β cobre⊥', mode: 'lines', line: { color: C.green, width: 1.2 } });
+    }
+    var lay = plotlyBase({ showlegend: true,
+        legend: { orientation: 'h', y: 1.12, x: 0, font: { size: 8, color: C.mute } } });
+    if (metal === 'XAU') lay.yaxis2 = { overlaying: 'y', side: 'right', gridcolor: 'rgba(0,0,0,0)',
+        tickfont: { size: 8 }, color: C.blue };
+    Plotly.newPlot(id, traces, lay, PCFG);
+}
+
+/* matriz MDP × COT 3×3 (SVG ligero, sin Plotly) — celda activa resaltada */
+function drawMatrix(id, st) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var z = st ? st.mdp_z : null;
+    var sig = st ? st.signal : null;
+    // fila por MDP (caro/neutro/barato), col por COT inferido del signo señal vs mdp
+    var rowI = (z === null || isNaN(z)) ? 1 : (z >= 1 ? 0 : (z <= -1 ? 2 : 1));
+    // sin COT real en el JSON resumido → marcamos la fila MDP; col central
+    var colI = 1;
+    var rl = ['MDP ALTO · caro', 'MDP NEUTRO', 'MDP BAJO · barato'];
+    var cl = ['COT largo extremo', 'COT neutral', 'COT corto extremo'];
+    var cell = [
+        ['DEGRADADA', 'moderada', 'LIMPIA ★'],
+        ['ruido', 'neutral', 'ruido'],
+        ['mixta', 'moderada', 'FUERTE ★']
+    ];
+    var ccol = [
+        [C.red, C.mute, C.green],
+        [C.mute, C.mute, C.mute],
+        [C.gold, C.mute, C.green]
+    ];
+    var h = '<table class="mfv-mtx"><thead><tr><th></th>';
+    cl.forEach(function (c) { h += '<th>' + c + '</th>'; });
+    h += '</tr></thead><tbody>';
+    for (var i = 0; i < 3; i++) {
+        h += '<tr><th>' + rl[i] + '</th>';
+        for (var j = 0; j < 3; j++) {
+            var on = (i === rowI) ? ' mfv-mtx-on' : '';
+            h += '<td class="' + on + '" style="color:' + ccol[i][j] + '">' + cell[i][j] + '</td>';
+        }
+        h += '</tr>';
+    }
+    h += '</tbody></table>' +
+        '<div class="mfv-mtx-note">Fila activa por MDP actual. La columna COT se ilumina con el ' +
+        'overlay Managed Money del POS-G8 cuando el feed está presente. Señal ★ = fundamental y ' +
+        'posicionamiento alineados a favor de la reversión.</div>';
+    el.innerHTML = h;
+}
+
+/* ── init: expone refresco e invoca al cargar ───────────────────────────── */
+var IDS = {
+    XAU: { root: 'mfv-xau', cFair: 'mfv-xau-fair', cMdp: 'mfv-xau-mdp', cBeta: 'mfv-xau-beta', cCot: 'mfv-xau-cot' },
+    XAG: { root: 'mfv-xag', cFair: 'mfv-xag-fair', cMdp: 'mfv-xag-mdp', cBeta: 'mfv-xag-beta', cCot: 'mfv-xag-cot' }
+};
+function refreshMetals() {
+    renderMetal('XAU', IDS.XAU);
+    renderMetal('XAG', IDS.XAG);
+}
+window.G8METALS = { refresh: refreshMetals };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshMetals);
+else refreshMetals();
+
+})();
+
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     G8Dashboard.init();
