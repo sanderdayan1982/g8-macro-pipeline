@@ -245,6 +245,20 @@
     .dqm-legacy-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;margin:22px 0 10px;
         border-bottom:1px solid #1c2433;padding-bottom:6px}
+    /* ── ATTENTION strip (DEGRADED/STALE/DEAD triage) ───────────────────── */
+    .dqm-attn{border-radius:3px;margin:0 0 8px;padding:10px 14px;border:1px solid #1a2230;background:#0c1119}
+    .dqm-attn-ok{display:flex;align-items:center;gap:8px;border-left:3px solid #2fbf71;
+        font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;letter-spacing:.02em;color:#7fae8f}
+    .dqm-attn-alert{border-left:3px solid #ff8c42;background:linear-gradient(90deg,#1c1206 0%,#0c1119 55%)}
+    .dqm-attn-dead{border-left-color:#ff5c72;background:linear-gradient(90deg,#220c11 0%,#0c1119 55%)}
+    .dqm-attn-head{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;font-weight:700;
+        letter-spacing:.05em;text-transform:uppercase;color:#ffc28a;margin-bottom:9px}
+    .dqm-attn-dead .dqm-attn-head{color:#ffb3bd}
+    .dqm-attn-row{display:flex;align-items:center;gap:12px;padding:5px 0;border-top:1px solid #131a26}
+    .dqm-attn-row:first-of-type{border-top:none}
+    .dqm-attn-row .dqm-status{flex:0 0 auto;min-width:62px;text-align:center}
+    .dqm-attn-name{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#d7dce6}
+    .dqm-attn-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#7e879a;margin-left:auto;white-space:nowrap}
     </style>
 </head>
 <body>
@@ -959,6 +973,47 @@ function auditStrip() {
         '</div>';
 }
 
+/* ── 5.6b ATTENTION strip ────────────────────────────────────────────────
+   Institutional triage: a long green table buries the one DEAD feed that
+   actually matters. This strip lifts every DEGRADED/STALE/DEAD source to the
+   top — name, status, business-days late vs its own budget, and section — so
+   the operator sees what needs action (and which downstream sections may be
+   consuming stale inputs) without scanning 40 rows. */
+function attentionStrip() {
+    var items = [];
+    Object.keys(FEED_REGISTRY).forEach(function (id) {
+        var f = FEED_REGISTRY[id];
+        var s = state[id] || {};
+        if (s.status === 'DEGRADED' || s.status === 'STALE' || s.status === 'DEAD') {
+            items.push({ name: f.name, status: s.status, section: f.section,
+                bd: s.lastDate ? calBusinessDays(s.lastDate) : null,
+                max: f.maxStaleness, lastDate: s.lastDate, err: s.error });
+        }
+    });
+    var rank = { DEAD: 0, STALE: 1, DEGRADED: 2 };
+    items.sort(function (a, b) { return (rank[a.status] - rank[b.status]) || ((b.bd || 0) - (a.bd || 0)); });
+
+    if (!items.length)
+        return '<div class="dqm-attn dqm-attn-ok">● All monitored feeds within budget — no DEGRADED / STALE / DEAD sources.</div>';
+
+    var rows = items.map(function (it) {
+        var late = (it.bd != null) ? it.bd + ' bd late · budget ' + it.max + 'bd'
+                 : (it.err ? 'unreachable' : 'no date');
+        return '<div class="dqm-attn-row">' +
+            '<span class="dqm-status dqm-' + it.status + '">' + it.status + '</span>' +
+            '<span class="dqm-attn-name">' + it.name + '</span>' +
+            '<span class="dqm-attn-meta">§' + it.section + ' · ' + late +
+                (it.lastDate ? ' · last ' + fmtDate(it.lastDate) : '') + '</span>' +
+            '</div>';
+    }).join('');
+    var nDead = items.filter(function (i) { return i.status === 'DEAD'; }).length;
+    return '<div class="dqm-attn dqm-attn-alert' + (nDead ? ' dqm-attn-dead' : '') + '">' +
+        '<div class="dqm-attn-head">⚠ ATTENTION · ' + items.length + ' feed' + (items.length > 1 ? 's' : '') +
+            ' need review' + (nDead ? ' · ' + nDead + ' DEAD' : '') +
+            ' — downstream sections may be consuming stale inputs</div>' +
+        rows + '</div>';
+}
+
 function render() {
     var el = document.getElementById('dqm-panel');
     if (!el) return;
@@ -1012,6 +1067,7 @@ function render() {
             '<button class="dqm-run" id="dqm-run">RUN ALL</button>' +
             '<span class="dqm-ts">last check ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC</span>' +
         '</div>' +
+        attentionStrip() +
         auditStrip() +
         '<div class="attr-wrap"><table class="dqm-table"><thead><tr>' +
         '<th>Feed</th><th>Source</th><th>Freq</th><th>Last date</th><th>Latency · via</th><th>Status</th><th>§</th>' +
@@ -1833,22 +1889,30 @@ async function renderMetal(metal, ids) {
         var sjson = await getText(RAW + 'MFV_G8_state.json');
         st = (typeof sjson === 'string') ? JSON.parse(sjson) : sjson;
         st = st.metals ? st.metals[metal] : null;
-        reportDQM(FID_STATE, !!st, st ? st.quality : 'missing', st && st.debt_asof);
     } catch (e) {
         host.innerHTML = '<div class="attr-err">MFV state.json unavailable — ' + e.message +
             ' · run metals_fairvalue_g8.py and push data/ to the repo</div>';
         reportDQM(FID_STATE, false, e.message);
         return;
     }
+    var lastD = null;
     try {
         var csv = await getText(RAW + 'MFV_G8_' + metal + '.csv');
         rows = parseCSV(csv).filter(function (r) { return r.DATE; });
-        var lastD = rows.length ? rows[rows.length - 1].DATE : null;
+        lastD = rows.length ? rows[rows.length - 1].DATE : null;
         reportDQM(FID_SERIES, rows.length > 0, rows.length + ' rows', lastD);
     } catch (e) {
         rows = [];
         reportDQM(FID_SERIES, false, e.message);
     }
+    // Bridge-state freshness: state.json is regenerated in the SAME pipeline run
+    // as the CSVs, so its freshness is the freshest model output we hold — NOT
+    // gold's debt_asof (which is undefined for silver and used to overwrite the
+    // shared MFV_STATE feed with a null date → false DEAD on the second render).
+    // Prefer an explicit asof, else fall back to the series date.
+    var bridgeDate = (st && (st.debt_asof || st.asof || st.run_date || st.last)) || lastD || null;
+    reportDQM(FID_STATE, !!st, st ? st.quality : 'missing', bridgeDate);
+
     paint(metal, ids, st, rows);
 }
 
@@ -1910,16 +1974,25 @@ function paint(metal, ids, st, rows) {
         alert = '<div class="mfv-alert mfv-alert-hot">● EXTREME disorder — MDP beyond ±2σ. ' +
                 'Mean-reversion pressure is maximal; confirm against COT positioning before acting.</div>';
     }
+    // Half-life ⇄ regime coherence guard: a REVERSION label with a multi-year
+    // half-life is not tradeable reversion — flag it so the operator doesn't
+    // read "REVERSION" as a tactical mean-reversion signal.
+    if (reg === 'REVERSION' && st && isFinite(st.halflife) && st.halflife > 156) {
+        var hlYrs = (st.halflife / 52).toFixed(1);
+        alert += '<div class="mfv-alert mfv-alert-warn">⚠ REVERSION label vs long half-life — ' +
+                 Math.round(st.halflife) + 'w (≈' + hlYrs + ' yr) is not reversion on a tactical ' +
+                 'horizon. Treat the misalignment as slow structural drift and size accordingly.</div>';
+    }
 
     // ── CONTROL PANEL: validation metrics with limits ─────────────────────
     var ctrl =
       '<div class="mfv-ctrl">' +
         '<div class="mfv-ctrl-head">VALIDATION PANEL · institutional limits (walk-forward OOS)</div>' +
         '<div class="mfv-ctrl-grid">' +
-          gauge('IC 8w', st ? st.ic_8w : null, 0.05, 0.30, 'rank corr MDP↔fwd ret · >0.05 OK') +
-          gauge('HIT 8w', st ? st.hit_8w : null, 0.52, 0.60, 'directional accuracy · >54% OK', true) +
-          gauge('VAR-RATIO', st ? st.var_ratio : null, 0.20, 1.00, 'Var(MDP)/Var(px) · >0.20 live') +
-          gauge('HALF-LIFE', st ? st.halflife : null, 1, 200, 'OU reversion · weeks', false, 'w') +
+          gauge('IC 8w', st ? st.ic_8w : null, 0.05, 0.30, 'rank corr MDP↔fwd ret · ≥0.10 strong · 0.05–0.10 marginal', false, '', { warnLo: 0.10 }) +
+          gauge('HIT 8w', st ? st.hit_8w : null, 0.52, 0.60, 'directional accuracy · ≥54% strong · 52–54% marginal', true, '', { warnLo: 0.54 }) +
+          gauge('VAR-RATIO', st ? st.var_ratio : null, 0.20, 1.00, 'Var(MDP)/Var(px) · 0.2–1.0 healthy · >1 review', false, '', { overflowWarn: true }) +
+          gauge('HALF-LIFE', st ? st.halflife : null, 78, 200, 'OU reversion · ≤78w fast · >156w too slow', false, 'w', { invert: true, warnHi: 156 }) +
           kv('δ FORGETTING', fmt(st ? st.delta : null, 3), 'TVP beta agility') +
           kv('LJUNG-BOX p', fmt(st ? st.ljung_p : null, 3), st && st.ljung_p < 0.10 ? 'MDP structured ✓' : 'review') +
           kv('IC 4w / 12w', fmt(st ? st.ic_4w : null, 2) + ' / ' + fmt(st ? st.ic_12w : null, 2), 'short / long horizon') +
@@ -1962,18 +2035,44 @@ function kv(lbl, val, sub) {
            '<span class="mfv-kv-val">' + val + '</span>' +
            '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
 }
-function gauge(lbl, v, lo, hi, sub, isPct, unit) {
-    var ok = (v !== null && v !== undefined && !isNaN(v) && v >= lo);
-    var disp = (v === null || v === undefined || isNaN(v)) ? '—'
+function gauge(lbl, v, lo, hi, sub, isPct, unit, opts) {
+    opts = opts || {};
+    var has = (v !== null && v !== undefined && !isNaN(v));
+    var inv = !!opts.invert;            /* lower is better (e.g. half-life) */
+    var ofWarn = !!opts.overflowWarn;   /* a value above hi is NOT automatically good */
+
+    /* classify → 'na' | 'bad' | 'marg' | 'ok', and flag off-scale overflow */
+    var stt = 'na', overflow = false;
+    if (has) {
+        if (!inv) {
+            if (v > hi) { overflow = true; stt = ofWarn ? 'marg' : 'ok'; }
+            else if (v < lo) stt = 'bad';
+            else if (opts.warnLo != null && v < opts.warnLo) stt = 'marg';
+            else stt = 'ok';
+        } else {                         /* inverted: lo = good ceiling, warnHi = marginal ceiling */
+            if (v > hi) overflow = true;
+            if (v <= lo) stt = 'ok';
+            else if (opts.warnHi != null && v <= opts.warnHi) stt = 'marg';
+            else stt = 'bad';
+        }
+    }
+    var col = stt === 'ok' ? C.green : stt === 'marg' ? C.amber : stt === 'bad' ? C.red : C.mute;
+
+    /* bar fill on the displayed [0,hi] scale; inverted shows remaining-good headroom */
+    var frac = !has ? 0
+             : inv ? Math.max(0, Math.min(1, 1 - (v / hi)))
+                   : Math.max(0, Math.min(1, v / hi));
+    var okFrac = Math.max(0, Math.min(1, lo / hi));
+
+    var disp = !has ? '—'
              : (isPct ? (100 * v).toFixed(0) + '%' : (+v).toFixed(unit === 'w' ? 0 : 2) + (unit || ''));
-    var frac = (v === null || isNaN(v)) ? 0 : Math.max(0, Math.min(1, (v - 0) / (hi - 0)));
-    var okFrac = Math.max(0, Math.min(1, (lo - 0) / (hi - 0)));
-    var col = ok ? C.green : C.red;
+    if (overflow) disp += ' ▸';        /* caret marks an off-scale reading */
+
     return '<div class="mfv-gauge">' +
         '<div class="mfv-gauge-top"><span class="mfv-kv-lbl">' + lbl + '</span>' +
         '<span class="mfv-gauge-val" style="color:' + col + '">' + disp + '</span></div>' +
         '<div class="mfv-gauge-bar">' +
-          '<div class="mfv-gauge-ok" style="left:' + (okFrac * 100) + '%"></div>' +
+          (inv ? '' : '<div class="mfv-gauge-ok" style="left:' + (okFrac * 100) + '%"></div>') +
           '<div class="mfv-gauge-fill" style="width:' + (frac * 100) + '%;background:' + col + '"></div>' +
         '</div>' +
         '<span class="mfv-kv-sub">' + (sub || '') + '</span></div>';
