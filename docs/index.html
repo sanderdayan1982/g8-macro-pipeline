@@ -1735,9 +1735,11 @@ if (document.readyState === 'loading') {
 
 /* ── palette (matches the dashboard) ────────────────────────────────────── */
 var C = {
-    gold:  '#fdb813', green: '#2fbf71', red: '#e0485a', redhi: '#ff5c72',
-    blue:  '#5d8aa8', amber: '#ff8c42', mute: '#5d6678', text: '#d7dce6',
-    grid:  '#131a26', axis: '#1c2433', bg: '#0a0e15', panel: '#0c1119'
+    gold:  '#ffc01e', green: '#34d17e', red: '#ef4a5e', redhi: '#ff5c72',
+    blue:  '#5d8aa8', steel: '#84b4d6', amber: '#ff8c42', mute: '#5d6678',
+    text:  '#d7dce6', line: '#eef1f6',
+    grid:  '#131a26', gridln: 'rgba(255,255,255,0.05)', axisln: '#2a3344',
+    axis:  '#1c2433', tick: '#7e879a', bg: '#0a0e15', panel: '#0c1119'
 };
 
 var RAW = (window.G8_RAW ||
@@ -1765,13 +1767,21 @@ function pct(v, d) { return (v === null || v === undefined || isNaN(v)) ? '—' 
 function ymd(s) { s = '' + s; return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8); }
 
 function plotlyBase(extra) {
+    var ax = {
+        gridcolor: C.gridln, zerolinecolor: C.axis,
+        linecolor: C.axisln, linewidth: 1, showline: true,
+        ticks: 'outside', ticklen: 3, tickcolor: C.axisln,
+        tickfont: { size: 9, color: C.tick }, color: C.tick
+    };
     return Object.assign({
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { family: 'JetBrains Mono, monospace', size: 10, color: C.mute },
-        margin: { l: 48, r: 14, t: 10, b: 28 },
-        xaxis: { gridcolor: C.grid, zerolinecolor: C.axis, tickfont: { size: 9 }, color: C.mute },
-        yaxis: { gridcolor: C.grid, zerolinecolor: C.axis, tickfont: { size: 9 }, color: C.mute },
-        showlegend: false, hovermode: 'x unified'
+        font: { family: 'JetBrains Mono, monospace', size: 10, color: C.text },
+        margin: { l: 50, r: 18, t: 14, b: 30 },
+        xaxis: Object.assign({}, ax),
+        yaxis: Object.assign({}, ax),
+        showlegend: false, hovermode: 'x unified',
+        hoverlabel: { bgcolor: '#0c1119', bordercolor: C.axisln, align: 'left',
+            font: { family: 'JetBrains Mono, monospace', size: 10, color: C.text } }
     }, extra || {});
 }
 var PCFG = { displayModeBar: false, responsive: true };
@@ -1973,29 +1983,96 @@ function gauge(lbl, v, lo, hi, sub, isPct, unit) {
 function col(rows, k) { return rows.map(function (r) { return r[k]; }); }
 function dates(rows) { return rows.map(function (r) { return ymd(r.DATE); }); }
 
+/* ── institutional chart helpers ─────────────────────────────────────────── */
+function lastIdx(y) {
+    var i = y.length - 1;
+    while (i >= 0 && (y[i] === null || y[i] === undefined || isNaN(y[i]))) i--;
+    return i;
+}
+/* "you are here" marker on the latest print (terminal convention) */
+function lastDot(x, y, color, axis) {
+    var i = lastIdx(y);
+    if (i < 0) return null;
+    var t = { x: [x[i]], y: [y[i]], mode: 'markers', hoverinfo: 'skip', showlegend: false,
+        marker: { color: color, size: 5.5, line: { color: C.bg, width: 1.4 } } };
+    if (axis) t.yaxis = axis;
+    return t;
+}
+/* shaded regime zone behind the data (paper-x, data-y) */
+function bandRect(y0, y1, fill) {
+    return { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: y0, y1: y1,
+        fillcolor: fill, line: { width: 0 }, layer: 'below' };
+}
+/* right-margin σ label */
+function sigmaTag(yv, txt, color) {
+    return { xref: 'paper', x: 1.005, xanchor: 'left', yref: 'y', y: yv, yanchor: 'middle',
+        text: txt, showarrow: false,
+        font: { family: 'IBM Plex Sans Condensed, sans-serif', size: 8.5, color: color } };
+}
+
 function drawFair(id, rows) {
     var x = dates(rows);
-    Plotly.newPlot(id, [
-        { x: x, y: col(rows, 'PX'),   name: 'Price', mode: 'lines', line: { color: C.gold, width: 1.5 } },
-        { x: x, y: col(rows, 'FAIR'), name: 'Fair',  mode: 'lines', line: { color: C.blue, width: 1.3, dash: 'dot' } }
-    ], plotlyBase({ yaxis: { gridcolor: C.grid, tickfont: { size: 9 }, color: C.mute, type: 'log' } }), PCFG);
+    var px = col(rows, 'PX'), fair = col(rows, 'FAIR');
+    /* fair first (no fill) → price with fill:'tonexty' shades the price↔fair
+       gap = the MDP made visible. Price is the protagonist (thick gold). */
+    var data = [
+        { x: x, y: fair, name: 'Fair value', mode: 'lines',
+          line: { color: C.steel, width: 1.7, dash: 'dot' } },
+        { x: x, y: px, name: 'Price', mode: 'lines',
+          line: { color: C.gold, width: 2.4 },
+          fill: 'tonexty', fillcolor: 'rgba(255,192,30,0.07)' }
+    ];
+    var dp = lastDot(x, px, C.gold);   if (dp) data.push(dp);
+    var df = lastDot(x, fair, C.steel); if (df) data.push(df);
+    Plotly.newPlot(id, data, plotlyBase({
+        margin: { l: 50, r: 18, t: 14, b: 30 },
+        yaxis: { type: 'log', gridcolor: C.gridln, linecolor: C.axisln, showline: true,
+            ticks: 'outside', ticklen: 3, tickcolor: C.axisln,
+            tickfont: { size: 9, color: C.tick }, color: C.tick }
+    }), PCFG);
 }
 
 function drawMdp(id, rows) {
     var x = dates(rows), z = col(rows, 'MDP_Z');
     var pos = z.map(function (v) { return (v >= 0) ? v : null; });
     var neg = z.map(function (v) { return (v < 0)  ? v : null; });
-    var shapes = [];
-    [[2, '#3d1420'], [1, '#3a2c10'], [-1, '#3a2c10'], [-2, '#3d1420']].forEach(function (p) {
-        shapes.push({ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: p[0], y1: p[0],
-            line: { color: p[1], width: 1, dash: 'dot' } });
+
+    /* regime zones drawn BEHIND the data — the disorder thermometer reads at a glance */
+    var shapes = [
+        bandRect( 2.0,  3.2, 'rgba(239,74,94,0.11)'),    /* +EXTREME  */
+        bandRect( 1.0,  2.0, 'rgba(255,192,30,0.08)'),   /* +ELEVATED */
+        bandRect(-1.0,  1.0, 'rgba(52,209,126,0.055)'),  /*  NEUTRAL  */
+        bandRect(-2.0, -1.0, 'rgba(255,192,30,0.08)'),   /* -ELEVATED */
+        bandRect(-3.2, -2.0, 'rgba(239,74,94,0.11)')     /* -EXTREME  */
+    ];
+    [[2, C.red], [1, C.gold], [-1, C.gold], [-2, C.red]].forEach(function (p) {
+        shapes.push({ type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: p[0], y1: p[0],
+            line: { color: p[1], width: 1, dash: 'dot' }, opacity: 0.55, layer: 'below' });
     });
-    Plotly.newPlot(id, [
-        { x: x, y: pos, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(224,72,90,.35)', name: 'rich' },
-        { x: x, y: neg, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(47,191,113,.30)', name: 'cheap' },
-        { x: x, y: z, mode: 'lines', line: { color: C.text, width: 1 } }
-    ], plotlyBase({ shapes: shapes, yaxis: { gridcolor: C.grid, zeroline: true, zerolinecolor: C.axis,
-        tickfont: { size: 9 }, color: C.mute, range: [-3.2, 3.2] } }), PCFG);
+    shapes.push({ type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 0,
+        line: { color: '#3a4456', width: 1 }, layer: 'below' });
+
+    var annotations = [
+        sigmaTag( 2, '+2σ · EXTREME',  C.red),
+        sigmaTag( 1, '+1σ · ELEVATED', C.gold),
+        sigmaTag(-1, '−1σ · ELEVATED', C.gold),
+        sigmaTag(-2, '−2σ · EXTREME',  C.red)
+    ];
+
+    var data = [
+        { x: x, y: pos, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(239,74,94,0.42)', name: 'rich',  hoverinfo: 'skip' },
+        { x: x, y: neg, fill: 'tozeroy', mode: 'none', fillcolor: 'rgba(52,209,126,0.38)', name: 'cheap', hoverinfo: 'skip' },
+        { x: x, y: z,   mode: 'lines', line: { color: C.line, width: 1.6 }, name: 'MDP-z' }
+    ];
+    var dz = lastDot(x, z, C.line); if (dz) data.push(dz);
+
+    Plotly.newPlot(id, data, plotlyBase({
+        shapes: shapes, annotations: annotations,
+        margin: { l: 42, r: 104, t: 14, b: 30 },
+        yaxis: { range: [-3.2, 3.2], dtick: 1, zeroline: false, gridcolor: C.gridln,
+            linecolor: C.axisln, showline: true, ticks: 'outside', ticklen: 3, tickcolor: C.axisln,
+            tickfont: { size: 9, color: C.tick }, color: C.tick }
+    }), PCFG);
 }
 
 function drawBetas(id, rows, metal) {
@@ -2003,21 +2080,34 @@ function drawBetas(id, rows, metal) {
     var traces;
     if (metal === 'XAU') {
         traces = [
-            { x: x, y: col(rows, 'B_BE'),      name: 'β breakeven', mode: 'lines', line: { color: C.gold,  width: 1.2 } },
-            { x: x, y: col(rows, 'B_SLOPE'),   name: 'β slope',     mode: 'lines', line: { color: C.green, width: 1.2 } },
-            { x: x, y: col(rows, 'B_LOG_NFA'), name: 'β log NFA',   mode: 'lines', line: { color: C.blue,  width: 1.2 }, yaxis: 'y2' }
+            { x: x, y: col(rows, 'B_BE'),      name: 'β breakeven', mode: 'lines', line: { color: C.gold,  width: 1.9 } },
+            { x: x, y: col(rows, 'B_SLOPE'),   name: 'β slope',     mode: 'lines', line: { color: C.green, width: 1.9 } },
+            { x: x, y: col(rows, 'B_LOG_NFA'), name: 'β log NFA',   mode: 'lines', line: { color: C.steel, width: 1.9 }, yaxis: 'y2' }
         ];
     } else {
         traces = [
-            { x: x, y: col(rows, 'B_LOG_XAU'), name: 'β log XAU', mode: 'lines', line: { color: C.gold, width: 1.2 } }
+            { x: x, y: col(rows, 'B_LOG_XAU'), name: 'β log XAU', mode: 'lines', line: { color: C.gold, width: 1.9 } }
         ];
         if (rows[0] && 'B_HG_ORTH' in rows[0])
-            traces.push({ x: x, y: col(rows, 'B_HG_ORTH'), name: 'β copper⊥', mode: 'lines', line: { color: C.green, width: 1.2 } });
+            traces.push({ x: x, y: col(rows, 'B_HG_ORTH'), name: 'β copper⊥', mode: 'lines', line: { color: C.green, width: 1.9 } });
     }
-    var lay = plotlyBase({ showlegend: true,
-        legend: { orientation: 'h', y: 1.12, x: 0, font: { size: 8, color: C.mute } } });
-    if (metal === 'XAU') lay.yaxis2 = { overlaying: 'y', side: 'right', gridcolor: 'rgba(0,0,0,0)',
-        tickfont: { size: 8 }, color: C.blue };
+    var lay = plotlyBase({
+        showlegend: true,
+        legend: { orientation: 'h', y: 1.16, x: 0, bgcolor: 'rgba(0,0,0,0)',
+            font: { family: 'IBM Plex Sans Condensed, sans-serif', size: 9.5, color: '#9aa3b5' } },
+        shapes: [{ type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 0,
+            line: { color: '#3a4456', width: 1, dash: 'dot' }, layer: 'below' }]
+    });
+    lay.margin = { l: 48, r: (metal === 'XAU' ? 46 : 18), t: 26, b: 30 };
+    if (metal === 'XAU')
+        lay.yaxis2 = { overlaying: 'y', side: 'right', gridcolor: 'rgba(0,0,0,0)',
+            linecolor: C.axisln, showline: true, ticks: 'outside', ticklen: 3, tickcolor: C.axisln,
+            tickfont: { size: 8.5, color: C.steel }, color: C.steel };
+    /* last-print markers per series */
+    traces.slice().forEach(function (t) {
+        var d = lastDot(x, t.y, t.line.color, t.yaxis);
+        if (d) traces.push(d);
+    });
     Plotly.newPlot(id, traces, lay, PCFG);
 }
 
