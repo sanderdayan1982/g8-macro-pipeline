@@ -1,0 +1,58 @@
+name: Backfill JPY Real (one-shot)
+
+# Reconstrucción histórica de data/RY_G8_JPY.csv (NOM10/REAL10/BE10) desde el archivo
+# diario del JSDA (JGBi on-the-run). Lanzar a mano (workflow_dispatch). Idempotente y
+# resumible: re-lanzar continúa donde quedó (salta fechas ya presentes). Cuando termine y
+# el CSV esté en el repo, se puede BORRAR este workflow — el nocturno fetch_jpy_real.py
+# mantiene la serie al día.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Fecha inicio YYYY-MM-DD (vacío = 2018-01-02; no anterior a oct-2017)"
+        required: false
+        default: ""
+      end:
+        description: "Fecha fin YYYY-MM-DD (vacío = hoy)"
+        required: false
+        default: ""
+      sample_every:
+        description: "1 = cada día hábil (recomendado); N = 1 de cada N (más rápido)"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write   # para comitear el CSV reconstruido
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run JPY backfill
+        env:
+          START: ${{ github.event.inputs.start }}
+          END: ${{ github.event.inputs.end }}
+          SAMPLE_EVERY: ${{ github.event.inputs.sample_every }}
+        run: python scripts/backfill_jpy_real.py
+
+      - name: Commit reconstructed CSV
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/RY_G8_JPY.csv
+          if git diff --staged --quiet; then
+            echo "Sin cambios que comitear."
+          else
+            git commit -m "data: backfill RY_G8_JPY.csv (JGBi on-the-run, JSDA) $(date -u '+%Y-%m-%d')"
+            git push
+          fi
