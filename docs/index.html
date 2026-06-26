@@ -643,16 +643,12 @@ var FEED_REGISTRY = {
         urls: ['https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=420&format=csvdata'],
         source: 'ECB Data Portal API', corsOk: true, frequency: 'daily', maxStaleness: 4, section: '01'
     },
-    EUR_REAL_ECB: {
-        name: 'EUR Real 10Y (ECB real benchmark)',
-        urls: ['https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.4F.BB.R_U2_10Y.YLDA?lastNObservations=30&format=csvdata'],
-        source: 'ECB Data Portal API (FR/DE linker basket)', corsOk: true, frequency: 'monthly', maxStaleness: 45, section: '01'
-        /* 45 bd ≈ 9 weeks. The ECB FM real benchmark is monthly and published
-           with a lag, so mid-month the freshest available value is the PRIOR
-           month (~6-8 weeks old) — entirely normal. A 35 bd budget flipped it
-           to a permanent false DEGRADED; 45 bd flags only when TWO months are
-           missing, which would be a genuine outage. (audit 2026-06-26) */
-    },
+    EUR_RY: repo('RY_G8_EUR.csv', 'EUR Real/BE 10Y (DE linkers, Bundesbank)', 'daily', 4, '01'),
+    /* Migrated 2026-06-26 from the ECB monthly real benchmark to a DAILY true-market
+       real: Bundesbank "Prices and yields of listed Federal securities" exposes the 3
+       German inflation-linked Bunds; fetch_eur_real.py interpolates their real yields
+       to 10Y (and the nominal Bunds to NOM10), so RY_G8_EUR.csv carries NOM10/REAL10/BE10
+       just like USD/GBP/CAD/AUD. QUALITY=PROXY_DE_INTERP (DE-only, 10Y interpolated). */
     CHF_NOM_SNB: {
         name: 'CHF Nominal 10Y (manual — TVC:CH10Y)',
         urls: [], source: 'Manual input — TradingView TVC:CH10Y (SNB cube frozen 2025-07)',
@@ -1124,7 +1120,7 @@ if (document.readyState === 'loading') {
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF'];
 var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
-var RY_CCYS = { USD: 1, GBP: 1, CAD: 1, AUD: 1 };
+var RY_CCYS = { USD: 1, EUR: 1, GBP: 1, CAD: 1, AUD: 1 };
 
 var BE_CONST = {   /* keep in sync with DQM manual feeds */
     JPY: { v: 1.9, src: 'BoJ Outlook Report median CPI fcst', asOf: '2026-04' },
@@ -1539,17 +1535,9 @@ function init() {
         }
     });
 
-    /* EUR real — ECB benchmark (direct, CORS-enabled) */
-    jobs.push(G8NET.fetchChain([
-        { url: 'https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.4F.BB.R_U2_10Y.YLDA?lastNObservations=30&format=csvdata', opts: { corsOk: true } }
-    ]).then(function (r) {
-        if (!r.ok) throw new Error(r.error);
-        raw.EUR_REAL = parseEcbCsv(r.text);
-        G8DQM.report('EUR_REAL_ECB', { lastDate: raw.EUR_REAL.length ? raw.EUR_REAL[raw.EUR_REAL.length - 1].d : null, latency: r.ms, via: r.via });
-    }).catch(function (e) {
-        console.warn('[attr] EUR real ECB:', e.message);
-        G8DQM.report('EUR_REAL_ECB', { status: 'DEAD', error: e.message });
-    }));
+    /* EUR real/BE now flow through the generic RY loop above (EUR ∈ RY_CCYS):
+       it fetches RY_G8_EUR.csv and parseRy()s it exactly like USD/GBP/CAD/AUD.
+       The former in-browser ECB monthly-benchmark fetch was removed 2026-06-26. */
 
     /* CHF & NZD nominals are MANUAL inputs (SNB cube frozen 2025-07, RBNZ B2
        blocks datacenter ASNs incl. Netlify and Azure/GH runners). No network
@@ -1581,18 +1569,9 @@ function assemble(raw) {
         };
     });
 
-    /* EUR real/BE from ECB benchmark (fills the former PENDING gap) */
-    if (data.EUR && raw.EUR_REAL && raw.EUR_REAL.length) {
-        var nomSeries = raw.EUR.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        var beSeries = minusSeries(
-            nomSeries.filter(function (x) { return toMs(x.d) >= toMs(raw.EUR_REAL[0].d); }),
-            raw.EUR_REAL);
-        data.EUR.real = statsS(raw.EUR_REAL);
-        data.EUR.be = statsS(beSeries);
-        data.EUR.quality = 'PROXY_ECB_BENCHMARK';
-    } else if (data.EUR) {
-        data.EUR.quality = data.EUR.quality || null;
-    }
+    /* EUR real/BE/quality are set by the generic repo block above (EUR ∈ RY_CCYS):
+       real=statsCol(ry,'REAL10'), be=statsCol(ry,'BE10'), quality=ry.quality
+       (PROXY_DE_INTERP). Former ECB-benchmark special-case removed 2026-06-26. */
 
     /* JPY real/BE — manual constant */
     if (data.JPY && raw.JPY && raw.JPY.acm) {
