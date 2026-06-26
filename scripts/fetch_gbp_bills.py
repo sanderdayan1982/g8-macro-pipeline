@@ -7,9 +7,17 @@ Source:   Bank of England — UK Government Liability Curve, nominal (two ZIPs, 
 Endpoints:
     1. LATEST (fresh, daily):
        https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/latest-yield-curve-data.zip
-       Small ZIP (~400 KB). Contains "GLC Nominal daily data current month.xlsx"
-       (plus Inflation, Real, OIS current-month files). Published by noon on
-       the following business day. THIS is the source of fresh data.
+       Small ZIP (~400 KB). THIS is the source of fresh data. Published by noon
+       on the following business day.
+
+       PACKAGING NOTE (changed ~2026-06): the BoE repackaged this endpoint. The
+       outer ZIP no longer holds the workbooks directly — it now holds preview
+       GIFs (uknom/ukinf/ukois/ukreal.gif) plus a NESTED ZIP
+       'Latest Yield Curve data (current month).zip' that contains the four
+       current-month workbooks (Nominal/Inflation/Real/OIS). We descend one
+       level of nesting to reach the nominal workbook. The flat layout is still
+       attempted first, so a future revert keeps working.
+
     2. HISTORICAL (stable base):
        https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/glcnominalddata.zip
        Large ZIP (~38 MB). Contains GLC_Nominal_daily_data_<years>.xlsx files
@@ -19,30 +27,37 @@ Endpoints:
        freshness.
 
 Why both:
-    Using the 38 MB archive alone (the previous design) froze the data at the
-    archive's last server-side refresh (data died Apr 30). The latest ZIP
-    carries the live current-month tail. Merging the two yields full 5-year
-    history AND fresh data, deduplicating on date with the latest file winning
-    on any overlap.
+    Using the 38 MB archive alone freezes the data at the archive's last
+    server-side refresh. The latest ZIP carries the live current-month tail.
+    Merging the two yields full 5-year history AND fresh data, deduplicating on
+    date with the latest file winning on any overlap.
+
+Freshness gate (added 2026-06):
+    The merge can SILENTLY fall back to the stale archive if the LATEST source
+    breaks (as happened when BoE nested the ZIP: the parser failed, was caught,
+    and the run still reported "5 OK"). A "5 OK" with month-old data must not
+    pass as success. main() now checks the age of the newest 10Y point and
+    returns a non-zero exit (failing the CI step) if it exceeds
+    STALENESS_LIMIT_DAYS — so a broken upstream surfaces the same day, not weeks
+    later.
 
 Anti-cache:
-    BoE FAQ warns: "If the downloaded spreadsheet does not contain up-to-date
-    data, it is possible this is due to an old version of the page being saved
-    in your cache memory." We send Cache-Control/Pragma no-cache headers plus a
-    cache-busting query param to force fresh copies.
+    BoE FAQ warns that a cached page can serve stale spreadsheets. We send
+    Cache-Control/Pragma no-cache headers plus a cache-busting query param to
+    force fresh copies.
 
 Sheets in each XLSX:
     info                — documentation/disclaimer
     1. fwds, short end  — forward rates short end (months)
     2. fwd curve        — forward rates full curve
     3. spot, short end  — spot rates short end (months 1-60)
-    4. spot curve       — SPOT RATES FULL CURVE (0.5Y, 1Y, 1.5Y, ...)  ← we use this
+    4. spot curve       — SPOT RATES FULL CURVE (0.5Y, 1Y, 1.5Y, ...)  <- we use this
 
 Structure of sheet "4. spot curve" (verified identical in both latest & archive):
     Row 0: title ("UK nominal spot curve")
     Row 1: blank
     Row 2: "Maturity"
-    Row 3: "years:", 0.5, 1, 1.5, 2, 2.5, 3, ...   ← maturity in years
+    Row 3: "years:", 0.5, 1, 1.5, 2, 2.5, 3, ...   <- maturity in years
     Row 4: "#VALUE!" placeholder — skip
     Row 5+: datetime in col 0, yields in subsequent columns
     (trailing all-None rows at end — skipped defensively)
@@ -92,6 +107,11 @@ HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 120  # archive ZIP is ~38 MB
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+# Max age (calendar days) of the newest 10Y point before the run is treated as
+# a failure. ~7 days ≈ 4-5 business days, matching the dashboard DQM budget and
+# covering a long bank-holiday weekend without false alarms.
+STALENESS_LIMIT_DAYS = 7
+
 # Which sheet inside each XLSX holds the spot curve we want
 SPOT_CURVE_SHEET = "4. spot curve"
 
@@ -109,7 +129,7 @@ ARCHIVE_XLSX_PATTERN = re.compile(
     r"GLC[ _]Nominal[ _]daily[ _]data[ _](\d{4})[ _]to[ _](\d{4}|present)\.xlsx$",
     re.IGNORECASE,
 )
-# In the LATEST zip, the nominal file is named exactly:
+# In the LATEST zip (flat layout), the nominal file is named exactly:
 LATEST_NOMINAL_NAME = "GLC Nominal daily data current month.xlsx"
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -132,6 +152,61 @@ def _select_relevant_archive_names(
         if end >= earliest_year_needed and start <= current_year:
             selected.append(name)
     return selected
+
+
+def _find_nominal_xlsx(names: List[str]) -> Optional[str]:
+    """
+    Pick the nominal current-month workbook from a ZIP namelist.
+
+    Exact name first (old flat layout), then a defensive fuzzy match: any .xlsx
+    whose name contains 'nominal'. This deliberately ignores the .gif previews
+    (uknom.gif etc.) and the Inflation/Real/OIS siblings, which do not contain
+    the substring 'nominal'.
+    """
+    if LATEST_NOMINAL_NAME in names:
+        return LATEST_NOMINAL_NAME
+    candidates = [
+        n for n in names
+        if n.lower().endswith(".xlsx") and "nominal" in n.lower()
+    ]
+    return candidates[0] if candidates else None
+
+
+def _extract_latest_nominal_bytes(latest_zip_bytes: bytes) -> bytes:
+    """
+    Return the bytes of the nominal current-month XLSX from the LATEST zip,
+    descending one level of nesting if BoE has wrapped the workbooks in an inner
+    ZIP (observed 2026-06). Raises ValueError with the discovered contents if it
+    cannot be found, so the next repackaging is a one-shot debug.
+    """
+    with zipfile.ZipFile(io.BytesIO(latest_zip_bytes)) as zf:
+        names = zf.namelist()
+
+        # (a) flat layout: the workbook sits directly in the outer ZIP
+        target = _find_nominal_xlsx(names)
+        if target:
+            print(f"    Latest layout: flat -> {target}")
+            return zf.read(target)
+
+        # (b) nested layout: open any inner .zip and look inside it
+        nested = [n for n in names if n.lower().endswith(".zip")]
+        seen_inner: List[str] = []
+        for inner_name in nested:
+            try:
+                with zipfile.ZipFile(io.BytesIO(zf.read(inner_name))) as izf:
+                    inner_names = izf.namelist()
+                    seen_inner.extend(inner_names)
+                    inner_target = _find_nominal_xlsx(inner_names)
+                    if inner_target:
+                        print(f"    Latest layout: nested -> {inner_name} -> {inner_target}")
+                        return izf.read(inner_target)
+            except zipfile.BadZipFile:
+                continue
+
+        raise ValueError(
+            "Nominal current-month XLSX not found in latest ZIP. "
+            f"Outer: {names}. Nested contents: {seen_inner or 'none'}"
+        )
 
 
 def _find_year_column_indices(
@@ -256,13 +331,15 @@ def fetch_gbp_bills(
 
     Strategy:
         1. Parse archive ZIP (stable multi-year base).
-        2. Parse latest ZIP current-month file (fresh tail).
+        2. Parse latest ZIP current-month file (fresh tail), descending into a
+           nested ZIP if the workbook is wrapped.
         3. Merge per tenor per date; latest wins on overlap.
         4. Return sorted lists.
 
     Resilience:
         If one source fails, return the other (degraded but not broken). Only
-        raise if BOTH fail.
+        raise if BOTH fail. NOTE: a successful merge from the archive alone is
+        still STALE — main()'s freshness gate is what catches that.
     """
     archive_data: Dict[float, Dict[str, float]] = {t: {} for t in TENORS}
     latest_data: Dict[float, Dict[str, float]] = {t: {} for t in TENORS}
@@ -288,26 +365,13 @@ def fetch_gbp_bills(
     except (requests.RequestException, ValueError, zipfile.BadZipFile) as e:
         print(f"  WARNING: archive fetch/parse failed: {e}", file=sys.stderr)
 
-    # 2. Latest (fresh tail) — cache-bust ON
+    # 2. Latest (fresh tail) — cache-bust ON, descends into nested ZIP if needed
     try:
         latest_bytes = _fetch_zip(BOE_LATEST_URL, "latest (current month, ~400KB)", cache_bust=True)
-        with zipfile.ZipFile(io.BytesIO(latest_bytes)) as zf:
-            names = zf.namelist()
-            if LATEST_NOMINAL_NAME not in names:
-                # Fall back to fuzzy match on "nominal" + "current"
-                candidates = [
-                    n for n in names
-                    if "nominal" in n.lower() and "current" in n.lower()
-                ]
-                if not candidates:
-                    raise ValueError(f"Nominal current-month file not in latest ZIP: {names}")
-                target = candidates[0]
-            else:
-                target = LATEST_NOMINAL_NAME
-            print(f"    Reading: {target}")
-            partial = _parse_xlsx_bytes(zf.open(target).read(), date_from, date_to)
-            for tenor, dvals in partial.items():
-                latest_data[tenor].update(dvals)
+        nominal_xlsx = _extract_latest_nominal_bytes(latest_bytes)
+        partial = _parse_xlsx_bytes(nominal_xlsx, date_from, date_to)
+        for tenor, dvals in partial.items():
+            latest_data[tenor].update(dvals)
         latest_ok = True
         lc = sum(len(v) for v in latest_data.values())
         print(f"    Latest parsed: {lc} (tenor,date) points")
@@ -385,7 +449,35 @@ def main() -> int:
 
     print()
     print(f"Summary: {successes} OK, {failures} failed (of {len(TENORS)} total)")
-    return 0 if failures == 0 else 1
+
+    # ── Freshness gate ──────────────────────────────────────────────────────
+    # A merge that succeeded from the stale archive alone (because the LATEST
+    # current-month source broke) is NOT a success. Fail loudly so CI goes red
+    # the same day instead of weeks later. The 10Y is the benchmark series.
+    stale = False
+    benchmark = results.get(10.0, [])
+    if benchmark:
+        newest = benchmark[-1][0]
+        try:
+            age_days = (today - datetime.strptime(newest, "%Y%m%d")).days
+        except ValueError:
+            age_days = None
+        if age_days is None:
+            print(f"FRESHNESS WARN: could not parse newest 10Y date '{newest}'.", file=sys.stderr)
+        elif age_days > STALENESS_LIMIT_DAYS:
+            stale = True
+            print(
+                f"FRESHNESS FAIL: newest 10Y gilt is {newest} ({age_days}d old, "
+                f"limit {STALENESS_LIMIT_DAYS}d). The LATEST current-month source did "
+                f"not contribute — data merged from the historical archive only "
+                f"(silent-staleness condition). Failing the run so it surfaces now. "
+                f"Likely cause: BoE changed the latest-yield-curve-data.zip packaging.",
+                file=sys.stderr,
+            )
+        else:
+            print(f"Freshness OK: newest 10Y gilt {newest} ({age_days}d old, limit {STALENESS_LIMIT_DAYS}d).")
+
+    return 0 if (failures == 0 and not stale) else 1
 
 
 if __name__ == "__main__":
