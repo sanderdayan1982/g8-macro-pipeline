@@ -85,9 +85,12 @@ SOURCE_NOTE = "DE linkers interp to 10Y (Bundesbank; HICP basis)"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 
-# Patron de los enlaces XLSX mensuales (blob-id + hash + HASH-constante + YYYY-MM)
+BASE = "https://www.bundesbank.de"
+# Patron de los enlaces XLSX mensuales. Ancla en la RUTA (/resource/blob/...), por
+# lo que casa tanto si el HTML trae el href relativo (/resource/...) como absoluto
+# (https://www.bundesbank.de/resource/...). group(0)=ruta -> se le antepone BASE.
 XLSX_RE = re.compile(
-    r"https://www\.bundesbank\.de/resource/blob/\d+/[0-9a-fA-F]+/[0-9A-F]+/"
+    r"/resource/blob/\d+/[0-9a-fA-F]+/[0-9A-F]+/"
     r"(\d{4})-(\d{2})-excel-data\.xlsx"
 )
 DATE_RE = re.compile(r"^\s*(\d{2})\.(\d{2})\.(\d{4})\s*$")   # DD.MM.YYYY
@@ -136,11 +139,17 @@ def discover_xlsx_url():
     matches = {}  # (y,m) -> url   (dedup; conserva el primero = top "Latest")
     for m in XLSX_RE.finditer(html):
         ym = (int(m.group(1)), int(m.group(2)))
-        matches.setdefault(ym, m.group(0))
+        matches.setdefault(ym, BASE + m.group(0))
     if not matches:
+        hint = ""
+        if "excel-data" in html:
+            hint = " (el HTML SI contiene 'excel-data' -> el regex no casa: revisa el patron)"
+        elif "resource/blob" in html:
+            hint = " (hay 'resource/blob' pero no '-excel-data.xlsx' -> ¿solo PDF en esta vista?)"
+        else:
+            hint = " (el HTML no contiene 'excel-data' ni 'resource/blob' -> contenido distinto/JS; len=%d)" % len(html)
         raise RuntimeError("DESCUBRIMIENTO FALLIDO: no encontre ningun enlace "
-                           "*-excel-data.xlsx en el listado del Bundesbank. "
-                           "Posible cambio de layout de la pagina.")
+                           "*-excel-data.xlsx en el listado del Bundesbank." + hint)
     today = dt.date.today()
     cur = (today.year, today.month)
     if cur in matches:

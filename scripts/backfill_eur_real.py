@@ -44,8 +44,9 @@ import datetime as dt
 
 import fetch_eur_real as fx   # motor compartido (mismo directorio scripts/)
 
-# Listado paginado: misma acción que el descubrimiento diario, con pageNumString.
-BBKSEARCH = "https://www.bundesbank.de/action/en/810710/bbksearch?sort=&query=*&pageNumString=%d"
+# Listado paginado: la URL de paginacion que devuelve resultados (probada).
+# Sin query=*/sort (el endpoint ya ordena por "Latest" y pagina sobre TODO el set).
+BBKSEARCH = "https://www.bundesbank.de/action/en/810710/bbksearch?pageNumString=%d"
 DEFAULT_MAX_PAGES = 45        # el archivo real son ~39 paginas; margen de sobra
 STOP_AFTER_EMPTY = 2          # paginas consecutivas SIN XLSX -> hemos pasado al tail PDF
 
@@ -66,9 +67,18 @@ def discover_all_monthly_xlsx(max_pages=DEFAULT_MAX_PAGES, sleep=0.3):
         for m in fx.XLSX_RE.finditer(html):
             ym = (int(m.group(1)), int(m.group(2)))
             if ym not in seen:
-                seen[ym] = m.group(0)
+                seen[ym] = fx.BASE + m.group(0)
                 hits += 1
         sys.stderr.write("[discover] pagina %2d -> %d XLSX nuevos (acum %d)\n" % (pg, hits, len(seen)))
+        if hits == 0 and pg == 0:
+            # diagnostico inmediato si la PRIMERA pagina no da nada
+            if "excel-data" in html:
+                sys.stderr.write("[discover] OJO: la pagina contiene 'excel-data' pero el regex no casa.\n")
+            elif "resource/blob" in html:
+                sys.stderr.write("[discover] OJO: hay 'resource/blob' pero no '-excel-data.xlsx' en pagina 0.\n")
+            else:
+                sys.stderr.write("[discover] OJO: pagina 0 sin 'excel-data' ni 'resource/blob' (len=%d). "
+                                 "Contenido distinto al esperado.\n" % len(html))
         if hits == 0:
             empty_streak += 1
             if empty_streak >= STOP_AFTER_EMPTY:
