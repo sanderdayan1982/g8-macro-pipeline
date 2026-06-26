@@ -194,6 +194,10 @@ jobs:
         continue-on-error: true
         run: python scripts/fetch_eur_real.py
 
+      - name: Fetch JPY Real 10Y (JGBi on-the-run, JSDA)
+        continue-on-error: true
+        run: python scripts/fetch_jpy_real.py
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
