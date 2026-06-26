@@ -190,6 +190,10 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/real_yields_g8.py
 
+      - name: Fetch EUR Real 10Y (Bundesbank DE linkers)
+        continue-on-error: true
+        run: python scripts/fetch_eur_real.py
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
