@@ -1,0 +1,37 @@
+name: Backfill EUR real (one-shot)
+
+# Lanzamiento MANUAL desde la pestaña Actions (no corre en cron).
+# Reconstruye el histórico de data/RY_G8_EUR.csv con los linkers del Bundesbank
+# y lo commitea de vuelta. Una vez hecho, puedes borrar este workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install openpyxl
+
+      - name: Run backfill (descubre, descarga ~190 XLSX, escribe data/RY_G8_EUR.csv)
+        run: python scripts/backfill_eur_real.py
+
+      - name: Commit RY_G8_EUR.csv
+        run: |
+          git config user.name  "eur-backfill-bot"
+          git config user.email "eur-backfill-bot@users.noreply.github.com"
+          git add data/RY_G8_EUR.csv
+          git commit -m "EUR real: backfill histórico (Bundesbank DE linkers interp 10Y)" \
+            || echo "nada que commitear"
+          git push
