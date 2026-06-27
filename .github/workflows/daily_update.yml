@@ -196,6 +196,8 @@ jobs:
 
       - name: Fetch JPY Real 10Y (JGBi on-the-run, JSDA)
         continue-on-error: true
+        env:
+          JSDA_BASE: ${{ vars.JSDA_BASE }}
         run: python scripts/fetch_jpy_real.py
 
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
