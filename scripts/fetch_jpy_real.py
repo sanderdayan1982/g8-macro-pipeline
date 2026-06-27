@@ -61,11 +61,22 @@ import argparse
 import datetime as dt
 import urllib.request
 import urllib.error
+import socket
+
+# Forzar IPv4: en redes con IPv6 roto (p.ej. Starlink->Japón) urllib se cuelga probando
+# IPv6 primero. Esto resuelve solo IPv4, como hace el navegador en la práctica. Inofensivo
+# en GitHub Actions (runners IPv4-only). Desactivable con FORCE_IPV4=0.
+if os.environ.get("FORCE_IPV4", "1") != "0":
+    _orig_gai = socket.getaddrinfo
+    def _gai_ipv4(host, port, family=0, type=0, proto=0, flags=0):
+        return _orig_gai(host, port, socket.AF_INET, type, proto, flags)
+    socket.getaddrinfo = _gai_ipv4
 
 # --------------------------------------------------------------------------- #
 # CONFIG
 # --------------------------------------------------------------------------- #
-JSDA_BASE = "https://market.jsda.or.jp/en/statistics/bonds/prices/otc/files"
+JSDA_BASE = os.environ.get(
+    "JSDA_BASE", "https://market.jsda.or.jp/en/statistics/bonds/prices/otc/files")
 OUT_CSV = os.path.join("data", "RY_G8_JPY.csv")
 TARGET_TENOR_Y = 10.0
 STALENESS_LIMIT_DAYS = 7
