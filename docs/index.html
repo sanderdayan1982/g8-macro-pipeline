@@ -644,6 +644,7 @@ var FEED_REGISTRY = {
         source: 'ECB Data Portal API', corsOk: true, frequency: 'daily', maxStaleness: 4, section: '01'
     },
     EUR_RY: repo('RY_G8_EUR.csv', 'EUR Real/BE 10Y (DE linkers, Bundesbank)', 'daily', 4, '01'),
+    JPY_RY: repo('RY_G8_JPY.csv', 'JPY Real/BE 10Y (JGBi on-the-run, JSDA)', 'daily', 4, '01'),
     /* Migrated 2026-06-26 from the ECB monthly real benchmark to a DAILY true-market
        real: Bundesbank "Prices and yields of listed Federal securities" exposes the 3
        German inflation-linked Bunds; fetch_eur_real.py interpolates their real yields
@@ -676,7 +677,6 @@ var FEED_REGISTRY = {
     USD_BE_FRED:   { name: 'USD Breakeven 10Y (T10YIE — fallback)', urls: ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10YIE'], source: 'FRED', corsOk: false, frequency: 'daily', maxStaleness: 4, section: '01', onDemand: true },
 
     /* ── manual constants (SYNTHETIC by construction) ──────────────────── */
-    JPY_BE_MANUAL: manualConst('JPY Breakeven (BoJ Outlook median)', 1.9, '2026-04-30', 'https://www.boj.or.jp/en/mopo/outlook/index.htm'),
     CHF_BE_MANUAL: manualConst('CHF Breakeven (SNB conditional CPI fcst)', 1.0, '2026-03-19', 'https://www.snb.ch/en/the-snb/mandates-goals/monetary-policy/decisions'),
     NZD_BE_MANUAL: manualConst('NZD Breakeven (RBNZ Survey of Expectations 2Y)', 2.1, '2026-05-15', 'https://www.rbnz.govt.nz/statistics/series/economic-indicators/survey-of-expectations'),
 
@@ -1120,10 +1120,9 @@ if (document.readyState === 'loading') {
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF'];
 var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
-var RY_CCYS = { USD: 1, EUR: 1, GBP: 1, CAD: 1, AUD: 1 };
+var RY_CCYS = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
 
 var BE_CONST = {   /* keep in sync with DQM manual feeds */
-    JPY: { v: 1.9, src: 'BoJ Outlook Report median CPI fcst', asOf: '2026-04' },
     CHF: { v: 1.0, src: 'SNB conditional CPI forecast', asOf: '2026-03' },
     NZD: { v: 2.1, src: 'RBNZ Survey of Expectations 2Y', asOf: '2026-05' }
 };
@@ -1573,15 +1572,12 @@ function assemble(raw) {
        real=statsCol(ry,'REAL10'), be=statsCol(ry,'BE10'), quality=ry.quality
        (PROXY_DE_INTERP). Former ECB-benchmark special-case removed 2026-06-26. */
 
-    /* JPY real/BE — manual constant */
-    if (data.JPY && raw.JPY && raw.JPY.acm) {
-        var jn = raw.JPY.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        data.JPY.be = statsS(constBE(jn.slice(-300), BE_CONST.JPY.v));
-        data.JPY.real = statsS(minusSeries(jn.slice(-300), constBE(jn, BE_CONST.JPY.v)));
-        data.JPY.quality = 'SYNTH_BE_CONST';
-        data.JPY.qkind = 'synth';
-        data.JPY.formula = 'BE=' + BE_CONST.JPY.v + '% (' + BE_CONST.JPY.src + ' ' + BE_CONST.JPY.asOf + ')';
-    }
+    /* JPY real/BE/quality are set by the generic repo block above (JPY ∈ RY_CCYS):
+       real=statsCol(ry,'REAL10'), be=statsCol(ry,'BE10'), quality=ry.quality
+       (PROXY_OTR_JGBI). Migrated 2026-06-27 from the manual BoJ-Outlook constant
+       (1.9%) to a DAILY true-market BEI: on-the-run 10Y JGBi real yield (JSDA price
+       + MoF coupon) vs the 10Y nominal — the MoF's own official BEI methodology,
+       routed through a Cloudflare Worker proxy. Former SYNTH_BE_CONST block removed. */
 
     /* CHF — manual nominal (TradingView TVC:CH10Y) + EUR-anchored TP + manual BE.
        History reconstructed by shifting the EUR nominal series to the manual level,
