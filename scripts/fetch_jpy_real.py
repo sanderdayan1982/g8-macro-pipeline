@@ -77,13 +77,13 @@ QUALITY_TAG = "PROXY_OTR_JGBI"
 SOURCE_NOTE = "On-the-run 10Y JGBi real (JSDA price + MoF coupon; MoF BEI method)"
 
 # Cupones fijos por serie JGBi (%), de Auction_Results_for_JGBs.xls (hoja 10年物価連動).
-# #28 y #29 faltan en ese Excel (gap del MoF) -> sólo afectan al backfill 2023-24, no al diario.
+# Tabla COMPLETA #1-#31. Al emitirse un JGBi nuevo (~anual), añade una línea aquí.
 COUPONS = {
     1: 1.200, 2: 1.100, 3: 0.500, 4: 0.500, 5: 0.800, 6: 0.800, 7: 0.800,
     8: 1.000, 9: 1.100, 10: 1.100, 11: 1.200, 12: 1.200, 13: 1.300, 14: 1.200,
     15: 1.400, 16: 1.400, 17: 0.100, 18: 0.100, 19: 0.100, 20: 0.100, 21: 0.100,
     22: 0.100, 23: 0.100, 24: 0.100, 25: 0.200, 26: 0.005, 27: 0.005,
-    30: 0.005, 31: 0.600,
+    28: 0.005, 29: 0.005, 30: 0.005, 31: 0.600,
 }
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
