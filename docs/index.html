@@ -1143,6 +1143,23 @@ if (document.readyState === 'loading') {
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF'];
 var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1, CHF: 1 };
+/* P1 (M1+M2): real-yield quality hierarchy.
+   tier 1 = market linker (10Y inflation-indexed bond) · tier 2 = model proxy
+   (interpolated / on-the-run BEI, derived from market) · tier 3 = survey or
+   constant (NOT a 10Y market breakeven — horizon/level caveat). The `hz` field
+   surfaces the breakeven horizon, so a 2Y survey on a 10Y nominal (NZD) is visible
+   rather than hidden, and a frozen constant (CHF) is flagged as such. */
+var RY_QUALITY = {
+    USD: { tier: 1, instr: 'TIPS',      hz: '10Y' },
+    GBP: { tier: 1, instr: 'ILG',       hz: '10Y' },
+    CAD: { tier: 1, instr: 'RRB',       hz: '10Y' },
+    AUD: { tier: 1, instr: 'iAGS',      hz: '10Y' },
+    EUR: { tier: 2, instr: 'DE-interp', hz: '10Y' },
+    JPY: { tier: 2, instr: 'JGBi OTR',  hz: '10Y' },
+    CHF: { tier: 3, instr: 'SNB fcst',  hz: 'const' },
+    NZD: { tier: 3, instr: 'RBNZ SoE',  hz: '2Y→10Y' }
+};
+
 var RY_CCYS = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
 
 var BE_CONST = {   /* keep in sync with DQM manual feeds */
@@ -1370,6 +1387,20 @@ function fmtZ(s) {
     return '<span class="attr-z ' + cls + '">' + tag + ' ' + (s.z > 0 ? '+' : '') + s.z.toFixed(1) + '</span>';
 }
 
+function ryBadge(ccy, fallbackQ, kind) {
+    var m = RY_QUALITY[ccy];
+    if (!m) return qBadge(fallbackQ, kind);
+    var cls = m.tier === 1 ? 'attr-q-clean' : m.tier === 2 ? 'attr-q-proxy' : 'attr-q-synth';
+    var tierLbl = m.tier === 1 ? 'LINKER' : m.tier === 2 ? 'PROXY' : 'INDIC';
+    var hzMismatch = (m.hz === 'const' || m.hz.indexOf('\u2192') >= 0);
+    var why = m.tier === 1 ? 'Tier 1 — market 10Y inflation linker (' + m.instr + '), BE horizon ' + m.hz :
+              m.tier === 2 ? 'Tier 2 — model proxy (' + m.instr + '), derived from market, BE horizon ' + m.hz :
+              'Tier 3 — INDICATIVE (' + m.instr + '): not a 10Y market breakeven' +
+                  (m.hz.indexOf('\u2192') >= 0 ? '; 2Y survey applied to a 10Y nominal — horizon mismatch' : '; constant CPI forecast, does not move with inflation expectations');
+    return '<span class="attr-q ' + cls + '" title="' + why + '">' + tierLbl + ' · ' + m.instr +
+        (hzMismatch ? ' <span style="color:#ff8c42;font-weight:700">' + m.hz + '</span>' : '') + '</span>';
+}
+
 function qBadge(q, kind) {
     if (!q) return '<span class="attr-q attr-q-na">N/A</span>';
     var cls = kind === 'synth' ? 'attr-q-synth' : (String(q).indexOf('CLEAN') === 0 ? 'attr-q-clean' : 'attr-q-proxy');
@@ -1445,7 +1476,7 @@ function minusSeries(a, b) {   /* a − b aligned on a's dates (b ffilled) */
 function build(data) {
     var html = '<table class="attr-table"><thead><tr>' +
         '<th>CCY</th><th>Nominal 10Y</th><th>TP (ACM)</th><th>RNY (path)</th>' +
-        '<th>Real 10Y</th><th>Breakeven</th><th>RY Source</th></tr></thead><tbody>';
+        '<th>Real 10Y</th><th>Breakeven</th><th>RY Quality</th></tr></thead><tbody>';
 
     CCYS.forEach(function (c) {
         var d = data[c];
@@ -1473,7 +1504,7 @@ function build(data) {
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
             cell(fmtVal(d.real), fmtDelta(d.real)) +
             cell(fmtVal(d.be), fmtDelta(d.be)) +
-            '<td>' + qBadge(d.quality, d.qkind) + '</td></tr>';
+            '<td>' + ryBadge(c, d.quality, d.qkind) + '</td></tr>';
     });
 
     var usd = data.USD;
