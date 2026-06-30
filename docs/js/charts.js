@@ -368,59 +368,109 @@
     // ACM TERM PREMIUM CHART (Section 06) — v5 NEW
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACM TERM PREMIUM CHART (Section 04) — v6: multi-currency G8 + selector
+    // ─────────────────────────────────────────────────────────────────────────
+
+    let _acmData = null;
+    let _acmCcy  = 'usd';
+    const _ACM_ORDER = ['usd', 'eur', 'gbp', 'chf', 'aud', 'cad', 'jpy'];
+
+    function hexToRgba(hex, a) {
+        const h = String(hex).replace('#', '');
+        const n = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+        const r = parseInt(n.substring(0, 2), 16);
+        const g = parseInt(n.substring(2, 4), 16);
+        const b = parseInt(n.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
     function renderACMChart(acmData) {
-        const feed = acmData.acm_tp_10y;
+        _acmData = acmData;
+        // default to USD if present, else first currency with data
+        if (!_acmData[_acmCcy] || !_acmData[_acmCcy].series || !_acmData[_acmCcy].series.dates.length) {
+            const firstOk = _ACM_ORDER.find((k) => _acmData[k] && _acmData[k].series && _acmData[k].series.dates.length);
+            if (firstOk) _acmCcy = firstOk;
+        }
+        // wire the currency selector once
+        const sel = document.getElementById('acm-ccy-selector');
+        if (sel && !sel._wired) {
+            sel.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-acm-ccy]');
+                if (!btn) return;
+                const k = btn.getAttribute('data-acm-ccy');
+                if (!_acmData[k] || !_acmData[k].series || !_acmData[k].series.dates.length) return;
+                _acmCcy = k;
+                _syncACMSelector();
+                _drawACM(k);
+            });
+            sel._wired = true;
+        }
+        _syncACMSelector();
+        _drawACM(_acmCcy);
+    }
+
+    function _syncACMSelector() {
+        const sel = document.getElementById('acm-ccy-selector');
+        if (!sel) return;
+        sel.querySelectorAll('[data-acm-ccy]').forEach((b) => {
+            const k = b.getAttribute('data-acm-ccy');
+            const has = _acmData && _acmData[k] && _acmData[k].series && _acmData[k].series.dates.length;
+            b.classList.toggle('active', k === _acmCcy);
+            b.style.opacity = has ? '' : '0.35';
+            b.style.pointerEvents = has ? '' : 'none';
+        });
+    }
+
+    function _drawACM(key) {
+        const feed = _acmData && _acmData[key];
         if (!feed || !feed.series || feed.series.dates.length === 0) {
-            setError('chart-acm', 'No ACM Term Premium data available');
+            setError('chart-acm', `No ACM data for ${(key || '').toUpperCase()}`);
             return;
         }
-
-        // 1Y lookback (vs RFR 90D) — term premium moves slowly, needs more context
-        const f = filterLastNDays(feed.series, 365);
-
-        if (f.dates.length === 0) { setError('chart-acm', 'No data in lookback window'); return; }
+        const s = feed.series;
+        const color = CCY_COLOR[feed.ccy] || COLORS.gold;
 
         const traces = [{
-            x: f.dates, y: f.values, type: 'scatter', mode: 'lines',
-            name: 'ACM TP 10Y',
-            line: { color: COLORS.gold, width: 1.8 },
-            fill: 'tozeroy',
-            fillcolor: 'rgba(253, 184, 19, 0.08)',
-            hovertemplate: `<b>ACM 10Y</b><br>%{x|%Y-%m-%d}<br>%{y:+.4f}%<extra></extra>`
+            x: s.dates, y: s.values, type: 'scatter', mode: 'lines',
+            name: `${feed.ccy} TP 10Y`,
+            line: { color: color, width: 1.8 },
+            fill: 'tozeroy', fillcolor: hexToRgba(color, 0.08),
+            hovertemplate: `<b>${feed.ccy} TP 10Y</b><br>%{x|%Y-%m}<br>%{y:+.2f}%<extra></extra>`
         }];
 
         const layout = {
             ...PLOTLY_BASE_LAYOUT,
-            yaxis: { 
-                ...PLOTLY_BASE_LAYOUT.yaxis, 
-                title: { text: 'Term Premium (%)', font: { color: COLORS.textDim, size: 11 } }, 
-                tickformat: '+.2f',
-                zeroline: true,
-                zerolinecolor: COLORS.textMuted,
-                zerolinewidth: 1
+            yaxis: {
+                ...PLOTLY_BASE_LAYOUT.yaxis,
+                title: { text: 'Term Premium (%)', font: { color: COLORS.textDim, size: 11 } },
+                tickformat: '+.2f', zeroline: true,
+                zerolinecolor: COLORS.textMuted, zerolinewidth: 1
             },
-            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%b %Y' },
+            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%Y' },
             showlegend: false
         };
         Plotly.newPlot('chart-acm', traces, layout, PLOTLY_CONFIG);
 
-        // Update footer with latest value + Z-score (252D)
+        // footer: latest TP + ACM decomposition + Z-score (60M window on monthly)
         const footerEl = document.getElementById('acm-footer-note');
         if (footerEl) {
-            const full = feed.series;
-            const latest = full.values[full.values.length - 1];
-            const window = Math.min(252, full.values.length);
-            const windowData = full.values.slice(-window);
-            const mean = windowData.reduce((a, b) => a + b, 0) / windowData.length;
-            const variance = windowData.reduce((a, b) => a + (b - mean) ** 2, 0) / windowData.length;
-            const stdev = Math.sqrt(variance);
-            const z = stdev > 0 ? (latest - mean) / stdev : 0;
-            const lastDate = formatDate(full.dates[full.dates.length - 1]);
-            footerEl.innerHTML = 
-                `Latest <b style="color:${COLORS.gold}">${latest >= 0 ? '+' : ''}${latest.toFixed(4)}%</b> · ` +
-                `Z-score 252D <b>${z >= 0 ? '+' : ''}${z.toFixed(2)}σ</b> · ` +
-                `Mean 252D ${mean >= 0 ? '+' : ''}${mean.toFixed(2)}% · ` +
-                `Last obs ${lastDate}`;
+            const v = s.values, n = v.length;
+            const latest = v[n - 1];
+            const win = Math.min(60, n);
+            const wd = v.slice(-win);
+            const mean = wd.reduce((a, b) => a + b, 0) / wd.length;
+            const sd = Math.sqrt(wd.reduce((a, b) => a + (b - mean) ** 2, 0) / wd.length);
+            const z = sd > 0 ? (latest - mean) / sd : 0;
+            const fit = s.fit ? s.fit[n - 1] : NaN, rn = s.rn ? s.rn[n - 1] : NaN;
+            const lastDate = formatDate(s.dates[n - 1]);
+            footerEl.innerHTML =
+                `<b style="color:${color}">${feed.ccy}</b> · ` +
+                `TP <b style="color:${color}">${latest >= 0 ? '+' : ''}${latest.toFixed(2)}%</b> · ` +
+                ((isFinite(fit) && isFinite(rn))
+                    ? `Yield ${fit.toFixed(2)}% = RN ${rn.toFixed(2)}% + TP ${latest.toFixed(2)}% · ` : '') +
+                `Z 5Y <b>${z >= 0 ? '+' : ''}${z.toFixed(2)}σ</b> · ` +
+                `${n} obs · Last ${lastDate}`;
         }
     }
 
@@ -454,7 +504,7 @@
             cell.className = 'quality-cell';
             const hasData = f.series && f.series.dates.length > 0;
             const lastDate = hasData ? f.series.dates[f.series.dates.length - 1] : null;
-            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : f.type === 'TermPrem' ? 'weekly' : 'daily';
+            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : f.type === 'TermPrem' ? 'monthly' : 'daily';
             const status = hasData ? global.G8DataLoader.staleStatus(lastDate, cls) : 'fail';
             const days = hasData ? global.G8DataLoader.businessDaysSince(lastDate) : null;
             const obs = hasData ? f.series.dates.length : 0;
@@ -479,7 +529,7 @@
             ...Object.entries(rfrData).filter(([k]) => k !== 'chpol').map(([_, f]) => ({ series: f.series, cls: f.eventDriven ? 'event' : 'daily' })),
             ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null, cls: 'daily' })),
             ...(policyData ? Object.values(policyData).map((f) => ({ series: f.series, cls: 'event' })) : []),
-            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series, cls: 'weekly' })) : [])
+            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series, cls: 'monthly' })) : [])
         ];
         for (const f of allFeeds) {
             totalCount++;
