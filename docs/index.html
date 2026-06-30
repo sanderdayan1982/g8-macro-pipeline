@@ -266,7 +266,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5 — 8/8 · DQM · real spread-z · availability log · CHF/NZD manual-editable</span>
+            <span class="brand-sub">Institutional Dashboard v2.5 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -296,7 +296,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching attribution feeds — repo ACM/RY CSVs + ECB / SNB / RBNZ external (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">ACM K=3 two-stage (Adrian-Crump-Moench) validated vs NY Fed corr 0.948 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD/CHF nominals fetched in-browser (RBNZ B2 / SNB rendoblid) · NZD/CHF TP = anchor-proxy formula, BE = manual constant (sources linked) · Δ in bps · Z on TP 252D (12M windows for monthly series)</span>
+                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed corr 0.992 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z on TP 252D (12M windows for monthly series)</span>
             </div>
         </div>
     </section>
@@ -1139,7 +1139,7 @@ if (document.readyState === 'loading') {
 
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 var CCYS = ['USD', 'EUR', 'JPY', 'GBP', 'CAD', 'AUD', 'NZD', 'CHF'];
-var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
+var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1, CHF: 1 };
 var RY_CCYS = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
 
 var BE_CONST = {   /* keep in sync with DQM manual feeds */
@@ -1517,7 +1517,7 @@ function build(data) {
         '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
         'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE) · ' +
         'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
-        '<b style="color:#9d7bd8">CHF &amp; NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. CHF source TVC:CH10Y (SNB cube frozen 2025-07) · NZD source RBNZ B2 “10 year” column (datacenter ASN blocked).</div>';
+        '<b style="color:#9d7bd8">NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. NZD source RBNZ B2 “10 year” column (datacenter ASN blocked). CHF now uses the own ACM K=5 (NOM/RNY/TP from the CHF zero-coupon curve; SNB cube frozen 2025-07).</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
 
@@ -1599,27 +1599,20 @@ function assemble(raw) {
        + MoF coupon) vs the 10Y nominal — the MoF's own official BEI methodology,
        routed through a Cloudflare Worker proxy. Former SYNTH_BE_CONST block removed. */
 
-    /* CHF — manual nominal (TradingView TVC:CH10Y) + EUR-anchored TP + manual BE.
-       History reconstructed by shifting the EUR nominal series to the manual level,
-       so Δ/Z context exists; today's printed value is exactly the manual input.    */
-    if (data.EUR && raw.EUR && raw.EUR.acm) {
-        var chfM = manualGet('CHF');
-        var eurNomHist = raw.EUR.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        var chfNom = anchorToManual(eurNomHist, chfM.v, chfM.date);   /* CHF≈EUR shape, level pinned */
-        var tpCHF = proxyTP(chfNom, raw.EUR.acm, null);
-        data.CHF = {
-            nom: statsS(chfNom),
-            tp: statsS(tpCHF),
-            rny: statsS(minusSeries(chfNom, tpCHF)),
-            be: statsS(constBE(chfNom, BE_CONST.CHF.v)),
-            real: statsS(minusSeries(chfNom, constBE(chfNom, BE_CONST.CHF.v))),
-            quality: 'MANUAL+SYNTH',
-            qkind: 'synth',
-            asOf: chfM.date + ' · manual',
-            manual: { ccy: 'CHF', v: chfM.v, tv: MANUAL_DEFAULTS.CHF.tv, link: MANUAL_DEFAULTS.CHF.link },
-            formula: 'NOM=manual (TVC:CH10Y) · TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
-        };
-        G8DQM.report('CHF_NOM_SNB', { status: 'MANUAL', lastDate: chfM.date, value: chfM.v, via: 'manual input' });
+    /* CHF — now a FULL ACM currency (own K=5 engine, ACM_G8_CHF ∈ REPO_ACM).
+       NOM(fitted)/RNY/TP already set by the generic repo loop above from the real
+       CHF zero-coupon ACM. Here we only add the manual SNB-forecast breakeven + real,
+       and flag the as-of: the SNB rendoblid cube is frozen at 2025-07, so CHF lags the
+       live currencies — that lag is honest, not a bug. NZD stays manual (RBNZ blocked). */
+    if (data.CHF && raw.CHF && raw.CHF.acm) {
+        var chfNomHist = raw.CHF.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
+        data.CHF.be = statsS(constBE(chfNomHist, BE_CONST.CHF.v));
+        data.CHF.real = statsS(minusSeries(chfNomHist, constBE(chfNomHist, BE_CONST.CHF.v)));
+        data.CHF.quality = 'ACM K=5';
+        data.CHF.qkind = 'synth';
+        data.CHF.asOf = '2025-07 · SNB frozen';
+        data.CHF.formula = 'NOM/RNY/TP = own ACM K=5 (CHF zero-coupon) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ') · as-of SNB frozen 2025-07';
+        G8DQM.report('CHF_NOM_SNB', { status: 'SYNTHETIC', lastDate: String(raw.CHF.acm[raw.CHF.acm.length - 1].DATE), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'ACM fitted (own K=5)' });
     }
 
     /* NZD — manual nominal (RBNZ B2 "10 year") + AUD-anchored TP + manual BE */
