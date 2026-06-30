@@ -404,18 +404,19 @@
         return out;
     }
 
-    // v6: parser for own ACM G8 CSVs (uppercase cols DATE,Y10_FIT,RNY10,TP10).
-    // series.values = TP10 (keeps quality-grid / header compat); .fit/.rn carried
-    // alongside so the chart can optionally draw fitted yield and risk-neutral.
+    // v6: parser for own ACM G8 CSVs. NOTE: loadCSV lowercases all headers via
+    // transformHeader, so columns arrive as date/y10_fit/rny10/tp10 (not DATE/...).
+    // series.values = tp10 (keeps quality-grid / header compat); .fit/.rn carried
+    // alongside so the chart can show the Yield = RN + TP decomposition.
     function parseACMG8(rows) {
         if (!rows || rows.length === 0) return { dates: [], values: [], fit: [], rn: [] };
         const recs = [];
         for (const row of rows) {
-            const d = parseDate(row.DATE);
-            const tp = typeof row.TP10 === 'number' ? row.TP10 : parseFloat(row.TP10);
+            const d = parseDate(row.date);
+            const tp = typeof row.tp10 === 'number' ? row.tp10 : parseFloat(row.tp10);
             if (!d || isNaN(tp)) continue;
-            const ft = typeof row.Y10_FIT === 'number' ? row.Y10_FIT : parseFloat(row.Y10_FIT);
-            const rn = typeof row.RNY10 === 'number' ? row.RNY10 : parseFloat(row.RNY10);
+            const ft = typeof row.y10_fit === 'number' ? row.y10_fit : parseFloat(row.y10_fit);
+            const rn = typeof row.rny10 === 'number' ? row.rny10 : parseFloat(row.rny10);
             recs.push({ d, tp, ft, rn });
         }
         recs.sort((a, b) => a.d - b.d);
