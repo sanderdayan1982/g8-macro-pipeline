@@ -52,9 +52,16 @@
         au_policy: { file: 'AU_POLICY.csv', ccy: 'AUD', source: 'BIS/RBA', label: 'RBA Cash Rate Target'    }
     };
 
-    // v5: NEW — ACM Term Premium catalog (single feed, USD-only)
+    // v6: ACM Term Premium catalog — own K=5 engine, 7 G8 currencies (monthly).
+    // CSVs: cols DATE(YYYYMMDD),Y10_FIT,RNY10,TP10 in percentage points.
     const ACM_FEED = {
-        acm_tp_10y: { file: 'ACM_TP_10Y.csv', ccy: 'USD', source: 'NY Fed', label: 'ACM 10Y Term Premium' }
+        usd: { file: 'ACM_G8_USD.csv', ccy: 'USD', source: 'G8 ACM K=5', label: 'USD ACM 10Y TP' },
+        eur: { file: 'ACM_G8_EUR.csv', ccy: 'EUR', source: 'G8 ACM K=5', label: 'EUR ACM 10Y TP' },
+        gbp: { file: 'ACM_G8_GBP.csv', ccy: 'GBP', source: 'G8 ACM K=5', label: 'GBP ACM 10Y TP' },
+        chf: { file: 'ACM_G8_CHF.csv', ccy: 'CHF', source: 'G8 ACM K=5', label: 'CHF ACM 10Y TP' },
+        aud: { file: 'ACM_G8_AUD.csv', ccy: 'AUD', source: 'G8 ACM K=5', label: 'AUD ACM 10Y TP' },
+        cad: { file: 'ACM_G8_CAD.csv', ccy: 'CAD', source: 'G8 ACM K=5', label: 'CAD ACM 10Y TP' },
+        jpy: { file: 'ACM_G8_JPY.csv', ccy: 'JPY', source: 'G8 ACM K=5', label: 'JPY ACM 10Y TP' }
     };
 
     function billFile(ccyKey, tenor) {
@@ -397,16 +404,39 @@
         return out;
     }
 
-    // v5: NEW
+    // v6: parser for own ACM G8 CSVs (uppercase cols DATE,Y10_FIT,RNY10,TP10).
+    // series.values = TP10 (keeps quality-grid / header compat); .fit/.rn carried
+    // alongside so the chart can optionally draw fitted yield and risk-neutral.
+    function parseACMG8(rows) {
+        if (!rows || rows.length === 0) return { dates: [], values: [], fit: [], rn: [] };
+        const recs = [];
+        for (const row of rows) {
+            const d = parseDate(row.DATE);
+            const tp = typeof row.TP10 === 'number' ? row.TP10 : parseFloat(row.TP10);
+            if (!d || isNaN(tp)) continue;
+            const ft = typeof row.Y10_FIT === 'number' ? row.Y10_FIT : parseFloat(row.Y10_FIT);
+            const rn = typeof row.RNY10 === 'number' ? row.RNY10 : parseFloat(row.RNY10);
+            recs.push({ d, tp, ft, rn });
+        }
+        recs.sort((a, b) => a.d - b.d);
+        return {
+            dates:  recs.map((r) => r.d),
+            values: recs.map((r) => r.tp),
+            fit:    recs.map((r) => r.ft),
+            rn:     recs.map((r) => r.rn)
+        };
+    }
+
+    // v6: NEW — loads the 7 G8 ACM term-premium feeds (own K=5 engine)
     async function loadACM() {
         const out = {};
         const promises = Object.entries(ACM_FEED).map(async ([key, cfg]) => {
             const rows = await loadCSV(cfg.file);
-            out[key] = { ...cfg, rows, series: rows ? normalizeOHLCV(rows) : null };
+            out[key] = { ...cfg, rows, series: rows ? parseACMG8(rows) : null };
         });
         await Promise.all(promises);
         const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
-        console.log(`[ACM Summary] ${okCount}/${Object.keys(ACM_FEED).length} ACM feeds loaded`);
+        console.log(`[ACM G8 Summary] ${okCount}/${Object.keys(ACM_FEED).length} ACM feeds loaded`);
         return out;
     }
 
