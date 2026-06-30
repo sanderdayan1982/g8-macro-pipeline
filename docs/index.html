@@ -332,16 +332,36 @@
         </div>
     </section>
 
-    <!-- ══ 03 — ACM USD TIME SERIES ═══════════════════════════════════════ -->
+    <!-- ══ 04 — ACM G8 TERM PREMIUM TIME SERIES ═══════════════════════════ -->
+    <style>
+        .acm-ccy-selector { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+        .acm-ccy-btn {
+            font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+            letter-spacing:.06em; padding:5px 12px; cursor:pointer;
+            background:#0f131a; color:#9ba3b4; border:1px solid #1c2330; border-radius:3px;
+            transition:all .15s;
+        }
+        .acm-ccy-btn:hover { color:#dce0e8; border-color:#2a3344; }
+        .acm-ccy-btn.active { color:#090d13; background:#fdb813; border-color:#fdb813; }
+    </style>
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
-            <h2 class="section-title">04 — Term Premium ACM 10Y USD (time series)</h2>
-            <span class="section-meta">USD 10Y zero-coupon · Adrian-Crump-Moench · NY Fed</span>
+            <h2 class="section-title">04 — Term Premium ACM 10Y G8 (time series)</h2>
+            <span class="section-meta">7 currencies · zero-coupon · Adrian-Crump-Moench K=5 · own engine</span>
         </div>
         <div class="section-body">
+            <div class="acm-ccy-selector" id="acm-ccy-selector">
+                <button class="acm-ccy-btn" data-acm-ccy="usd">USD</button>
+                <button class="acm-ccy-btn" data-acm-ccy="eur">EUR</button>
+                <button class="acm-ccy-btn" data-acm-ccy="gbp">GBP</button>
+                <button class="acm-ccy-btn" data-acm-ccy="chf">CHF</button>
+                <button class="acm-ccy-btn" data-acm-ccy="aud">AUD</button>
+                <button class="acm-ccy-btn" data-acm-ccy="cad">CAD</button>
+                <button class="acm-ccy-btn" data-acm-ccy="jpy">JPY</button>
+            </div>
             <div class="chart-container" id="chart-acm"></div>
             <div class="section-footer">
-                <span class="footer-note" id="acm-footer-note">Five-factor no-arbitrage term structure model · Updates ~weekly</span>
+                <span class="footer-note" id="acm-footer-note">Five-factor no-arbitrage term structure model · monthly</span>
             </div>
         </div>
     </section>
