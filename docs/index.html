@@ -296,7 +296,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching attribution feeds — repo ACM/RY CSVs + ECB / SNB / RBNZ external (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed corr 0.992 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z on TP 252D (12M windows for monthly series)</span>
+                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed corr 0.992 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z = 60M (5Y) window for monthly series, population σ · ⚠ lvl = TP level low-confidence (short sample &lt; 150 obs, or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable</span>
             </div>
         </div>
     </section>
@@ -343,6 +343,9 @@
         }
         .acm-ccy-btn:hover { color:#dce0e8; border-color:#2a3344; }
         .acm-ccy-btn.active { color:#090d13; background:#fdb813; border-color:#fdb813; }
+        .tp-flag { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:8px;
+            font-weight:700; letter-spacing:.04em; color:#ff8c42; background:#3a1d10;
+            border-radius:2px; padding:1px 4px; margin-left:5px; vertical-align:middle; cursor:help; }
     </style>
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
@@ -1296,7 +1299,7 @@ function statsS(series) {
     var v = values(series).filter(isFinite);
     if (!v.length) return null;
     var monthly = isMonthly(series);
-    var w1 = monthly ? 1 : 5, w2 = monthly ? 3 : 21, wz = monthly ? 12 : 252;
+    var w1 = monthly ? 1 : 5, w2 = monthly ? 3 : 21, wz = monthly ? 60 : 252;
     return {
         last: v[v.length - 1],
         d1w: G8NET.deltaBps(v, w1), d1m: G8NET.deltaBps(v, w2),
@@ -1363,7 +1366,7 @@ function fmtZ(s) {
     if (s === null || s.z === null) return '';
     var az = Math.abs(s.z);
     var cls = az > 2 ? 'attr-z-hi' : az > 1 ? 'attr-z-md' : 'attr-z-lo';
-    var tag = s.monthly ? 'Z₁₂' : 'Z';
+    var tag = s.monthly ? 'Z₆₀' : 'Z';
     return '<span class="attr-z ' + cls + '">' + tag + ' ' + (s.z > 0 ? '+' : '') + s.z.toFixed(1) + '</span>';
 }
 
@@ -1371,6 +1374,11 @@ function qBadge(q, kind) {
     if (!q) return '<span class="attr-q attr-q-na">N/A</span>';
     var cls = kind === 'synth' ? 'attr-q-synth' : (String(q).indexOf('CLEAN') === 0 ? 'attr-q-clean' : 'attr-q-proxy');
     return '<span class="attr-q ' + cls + '">' + String(q).replace(/_/g, ' ') + '</span>';
+}
+
+function tpFlag(d) {
+    if (!d || !d.tpConf || !d.tpConf.lo) return '';
+    return '<span class="tp-flag" title="' + d.tpConf.why + '">⚠ lvl</span>';
 }
 
 function cell(valHtml, deltaHtml, zHtml) {
@@ -1461,7 +1469,7 @@ function build(data) {
             '<span class="attr-sub">' + (d.asOf || '') + '</span>' +
             (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
             nomCell +
-            cell(fmtVal(d.tp), fmtDelta(d.tp), fmtZ(d.tp)) +
+            cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
             cell(fmtVal(d.real), fmtDelta(d.real)) +
             cell(fmtVal(d.be), fmtDelta(d.be)) +
@@ -1469,22 +1477,27 @@ function build(data) {
     });
 
     var usd = data.USD;
-    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · z = spread vs its own 252D history (Δz = leg-z fallback when overlap thin)</td></tr>';
+    html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · level = date-aligned at last common date (legB forward-filled onto legA grid; ~ = no overlap, last-of-each fallback) · z = spread vs its own history (60M monthly / 252D daily) · Δz = leg-z fallback when overlap thin</td></tr>';
     CCYS.forEach(function (c) {
         if (c === 'USD' || !data[c] || !usd) return;
         var d = data[c];
         function sp(a, b) {
             if (!a || !b) return '<span class="attr-na">—</span>';
-            var v = a.last - b.last;
+            /* window matched to series frequency: 60M for monthly, 252D for daily */
+            var ss = spreadStats(a, b, a.monthly ? 60 : 252);
+            /* C4: spread LEVEL is the date-aligned difference at the last common
+               date (ss.last, legB forward-filled onto legA's grid), NOT last-of-each
+               — avoids mixing vintages when legs have different as-of dates. */
+            var aligned = !!(ss && isFinite(ss.last));
+            var v = aligned ? ss.last : (a.last - b.last);
             var cls = v > 0 ? 'attr-up' : v < 0 ? 'attr-dn' : 'attr-fl';
             var ztag = '';
             /* PRIMARY: z-score of the date-aligned difference series (legA−legB)
-               against its own 252D history — true spread significance. */
-            var ss = spreadStats(a, b, 252);
+               against its own history — true spread significance. */
             if (ss && ss.z != null) {
                 var az = Math.abs(ss.z);
                 var zc = az > 2 ? 'attr-z-hi' : az > 1 ? 'attr-z-md' : 'attr-z-lo';
-                ztag = '<span class="attr-z ' + zc + '" title="spread z vs own 252D history · n=' + ss.n + ' obs">z ' +
+                ztag = '<span class="attr-z ' + zc + '" title="spread z vs own ' + (a.monthly ? '60M' : '252D') + ' history · n=' + ss.n + ' obs">z ' +
                        (ss.z > 0 ? '+' : '') + ss.z.toFixed(1) + '</span>';
             } else if (a.z != null && b.z != null) {
                 /* FALLBACK: synthetic/manual legs with no usable series overlap */
@@ -1493,7 +1506,9 @@ function build(data) {
                 ztag = '<span class="attr-z ' + zc2 + '" title="leg-z difference (series overlap too thin for true spread z)">Δz ' +
                        (dz > 0 ? '+' : '') + dz.toFixed(1) + '</span>';
             }
-            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>' + ztag;
+            /* mark when level falls back to last-of-each (no date overlap) */
+            var amark = aligned ? '' : '<span class="attr-na" title="last-of-each — no date overlap to align">~</span>';
+            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>' + amark + ztag;
         }
         /* mixed as-of detection: if this row's legs were sampled on different
            dates, Nominal−Real=BE arithmetic mixes vintages → flag it */
@@ -1586,6 +1601,16 @@ function assemble(raw) {
             quality: d.ry ? d.ry.quality : null,
             asOf: d.acm[d.acm.length - 1].DATE
         };
+        /* C2: level-confidence flag for the ACM term premium. The TP LEVEL (not its
+           shape) is biased when (a) the sample is short — finite-sample bias,
+           Bauer-Rudebusch-Wu 2012 — or (b) the gaussian model is misspecified under
+           a prolonged ZLB/YCC regime (JPY). Shape/dynamics remain informative. */
+        var nAcm = d.acm.length;
+        if (c === 'JPY') {
+            data[c].tpConf = { lo: true, why: 'ZLB/YCC — gaussian ACM misspecified: level ~plausible, monthly dynamics unreliable. Shadow-rate (Krippner/Wu-Xia) pending.' };
+        } else if (nAcm < 150) {
+            data[c].tpConf = { lo: true, why: 'Short sample (n=' + nAcm + ' < 150): finite-sample bias in TP level. Shape is informative; level not cross-comparable with long-history currencies.' };
+        }
     });
 
     /* EUR real/BE/quality are set by the generic repo block above (EUR ∈ RY_CCYS):
