@@ -296,7 +296,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching attribution feeds — repo ACM/RY CSVs + ECB / SNB / RBNZ external (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed corr 0.992 · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z = 60M (5Y) window for monthly series, population σ · ⚠ lvl = TP level low-confidence (short sample &lt; 150 obs, or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable</span>
+                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed (USD, corr 0.992) &amp; Bank of Canada (CAD, corr 0.996 — K=4 on the ultra-smooth BJM curve, level-anchored to the BoC official ACM series, 1998+ shown to drop the ACM start-up boundary) · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z = 60M (5Y) window for monthly series, population σ · ⚠ lvl = TP level low-confidence (short sample &lt; 150 obs, or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable</span>
             </div>
         </div>
     </section>
@@ -633,12 +633,18 @@ function repo(file, name, freq, maxStale, section) {
 
 var FEED_REGISTRY = {
     /* ── 01 attribution — repo ACM (own K=3 model output) ─────────────── */
-    USD_ACM: repo('ACM_G8_USD.csv', 'USD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
-    EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
-    JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
-    GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
-    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
-    AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 4, '01'),
+    /* ACM term premia are MONTHLY series (one obs per month-end), NOT daily.
+       The budget must span the monthly cadence + publication window, or a feed
+       that simply lags one month (GBP/AUD/JPY yields publish later than US/EU/CA)
+       false-alarms as DEAD under a 4bd budget. 30bd ≈ 6 weeks: a month-end obs
+       reads LIVE, a 1-month gap is tolerated, a 2-month gap -> DEGRADED, 3+ ->
+       STALE/DEAD. Same rationale as the event-driven policy rates below. */
+    USD_ACM: repo('ACM_G8_USD.csv', 'USD ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
+    EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
+    JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
+    GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
+    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'monthly', 30, '01'),
+    AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
