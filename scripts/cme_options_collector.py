@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cme_options_collector.py — v1.1.0 (Gate 1 CLOSED 2026-07-03)
+cme_options_collector.py — v1.1.1 (Gate 1 CLOSED 2026-07-03)
 ==============================================================
 Daily T+1 collector of CME FX options settlements + open interest per strike,
 via Databento GLBX.MDP3 (licensed CME distributor). Pure `requests` + stdlib.
 
+v1.1.1: cost-guard and pull windows are CAPPED at the dataset's live
+available_end (Databento returns HTTP 422 for any query end beyond it —
+bites whenever the target session is yesterday). Found in first Actions run.
 v1.1.0: env-parameterized paths (G8_OPT_OUT_DIR / G8_OPT_STATE_FILE) so the
 same file runs on macOS (launchd, local redundancy) and GitHub Actions
 (primary, repo canonical). osascript notify degrades silently off-macOS.
@@ -200,11 +203,11 @@ def guard_availability(auth, session):
         print(f"[{LOG_TAG}] Session {session} not yet fully available. "
               f"Clean exit — retry window will catch it.")
         sys.exit(0)
+    return end_dt
 
 
-def guard_cost(auth, session, symbols, schema):
+def guard_cost(auth, session, symbols, schema, end):
     start = str(session)
-    end = str(session + timedelta(days=2))
     r = api_get(auth, "metadata.get_cost", {
         "dataset": DATASET, "schema": schema,
         "symbols": ",".join(symbols), "stype_in": "parent",
@@ -274,23 +277,28 @@ def build_definition_map(def_rows, parent):
 
 def process_session(auth, session):
     print(f"\n===== SESSION {session} =====")
-    guard_availability(auth, session)
+    avail_end = guard_availability(auth, session)
+
+    # Window end: publication day + 6h UTC, CAPPED at the dataset's live
+    # available_end (minus a safety minute) — Databento 422s beyond it.
+    pub_day = next_weekday(session)
+    end_dt = datetime(pub_day.year, pub_day.month, pub_day.day,
+                      tzinfo=timezone.utc) + timedelta(hours=6)
+    cap = avail_end - timedelta(minutes=1)
+    if end_dt > cap:
+        end_dt = cap
+    end = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+    start = str(session)
+    session_iso = str(session)
 
     all_parents = OPT_PARENTS + FUT_PARENTS
     total_cost = 0.0
     for schema in ("statistics", "definition"):
-        c = guard_cost(auth, session, all_parents, schema)
+        c = guard_cost(auth, session, all_parents, schema, end)
         print(f"cost[{schema}] = ${c:.4f}")
         total_cost += c
     if total_cost > COST_LIMIT_DAY_USD:
         fail(f"cost guard: ${total_cost:.4f} > ${COST_LIMIT_DAY_USD}")
-
-    start = str(session)
-    pub_day = next_weekday(session)
-    end_dt = datetime(pub_day.year, pub_day.month, pub_day.day,
-                      tzinfo=timezone.utc) + timedelta(hours=6)
-    end = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
-    session_iso = str(session)
 
     products, oi_counts, is_opt_map = {}, {}, {}
     for parent in all_parents:
