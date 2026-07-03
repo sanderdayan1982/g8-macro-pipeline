@@ -1,0 +1,60 @@
+# ============================================================================
+# CME FX Options Surface — daily collector (Databento GLBX.MDP3, licensed)
+# Two windows: 13:30 UTC (data usually ready ~12:30) + 17:00 UTC retry.
+# Idempotent via data/options/state.json (availability guard exits clean
+# if the session is not yet fully published; catch-up backfills gaps).
+# Secret required: DATABENTO_API_KEY  (Settings -> Secrets -> Actions)
+# ============================================================================
+name: CME Options Surface
+
+on:
+  schedule:
+    - cron: '30 13 * * *'
+    - cron: '0 17 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cme-options
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Run collector (availability-guarded, catch-up)
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+          G8_OPT_OUT_DIR: data/options/canonical
+          G8_OPT_STATE_FILE: data/options/state.json
+        run: python scripts/cme_options_collector.py
+
+      - name: Build dashboard summary JSON
+        env:
+          G8_OPT_OUT_DIR: data/options/canonical
+          G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
+        run: python scripts/build_options_summary.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/options data/OPTIONS_SURFACE.json
+          if git diff --cached --quiet; then
+            echo "No new session — nothing to commit."
+          else
+            git commit -m "chore: options surface update $(date -u +%F)"
+            git push
+          fi
