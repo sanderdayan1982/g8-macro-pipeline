@@ -419,6 +419,21 @@
     </div>
 </section>
 
+<section class="dashboard-section" id="section-options">
+    <div class="section-header">
+        <h2 class="section-title">08 — Options Surface · CME FX Walls (Gate 0)</h2>
+        <span class="section-meta">settle + OI per strike · front chain · Databento GLBX.MDP3 licensed · T+1</span>
+    </div>
+    <div class="section-body">
+        <div id="opt-surface">
+            <div class="attr-err" style="color:#5d6678">Loading OPTIONS_SURFACE.json from pipeline repo…</div>
+        </div>
+        <div class="section-footer">
+            <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor, ~$0.40/mo) — collector v1.1.0 with availability/cost/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session. Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
+        </div>
+    </div>
+</section>
+
     <!-- ══ LEGACY (hidden — containers kept so charts.js init stays intact) -->
     <div class="legacy-hidden" aria-hidden="true">
         <section class="dashboard-section" id="section-rfr">
@@ -733,7 +748,11 @@ var FEED_REGISTRY = {
     NZD_OCR:   Object.assign(repo('NZD_OCR.csv',   'RBNZ OCR', 'event-driven', 45, '03'), { eventDriven: true }),
 
     /* ── 04 ACM USD time series — repo ─────────────────────────────────── */
-    ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '04')
+    ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '04'),
+
+    OPTIONS_SURFACE: Object.assign(
+        repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '08'),
+        { externalReport: true })
     /* CHF_BILL_3M deregistered 2026-06-26 — orphan feed: no rendered section
        consumed it (§02 has no CHF row: no FLOOR_CHF and no SARON fixing) and no
        job maintained it. Removed so it stops generating false-staleness noise.
@@ -1834,6 +1853,144 @@ function init() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else { init(); }
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   OPTIONS SURFACE — Section 08 module
+   Reads data/OPTIONS_SURFACE.json (built by scripts/build_options_summary.py
+   in the cme_options.yml workflow). Mirrors metals.js patterns: G8NET
+   fetch, G8DQM externalReport, Bloomberg dark, no new dependencies.
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var ORDER = ['EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF'];
+
+function vBadge(v) {
+    var cls = v === 'CLEAN' ? 'attr-q-clean' : v === 'PROXY' ? 'attr-q-proxy' : 'attr-q-na';
+    return '<span class="attr-q ' + cls + '">' + v + '</span>';
+}
+
+function fmtRef(ccy, x) {
+    return ccy === 'JPY' ? x.toFixed(6) : x.toFixed(4);
+}
+
+function fmtK(ccy, k) {
+    return ccy === 'JPY' ? k.toFixed(5) : k.toFixed(3);
+}
+
+function wallChip(ccy, w, ref) {
+    var side = w.p > w.c ? 'P' : 'C';
+    var col = side === 'P' ? '#ff8c42' : '#2fbf71';
+    var pos = w.k > ref ? 'above' : w.k < ref ? 'below' : 'at';
+    return '<span style="display:inline-block;font-family:JetBrains Mono,monospace;' +
+        'font-size:10px;font-weight:600;background:#0c1119;border:1px solid #1c2433;' +
+        'border-left:2px solid ' + col + ';border-radius:2px;padding:2px 7px;margin:2px 4px 2px 0"' +
+        ' title="strike ' + fmtK(ccy, w.k) + ' (' + pos + ' ref) · OI ' + w.oi.toLocaleString() +
+        ' = C ' + w.c.toLocaleString() + ' + P ' + w.p.toLocaleString() + '">' +
+        fmtK(ccy, w.k) + ' <span style="color:' + col + '">' + w.oi.toLocaleString() + '</span></span>';
+}
+
+function deltaOI(cur, prev) {
+    if (!prev || !isFinite(prev.oi_front)) return '';
+    var d = cur.oi_front - prev.oi_front;
+    var pctv = prev.oi_front ? (100 * d / prev.oi_front) : 0;
+    var cls = pctv > 1 ? 'attr-up' : pctv < -1 ? 'attr-dn' : 'attr-fl';
+    /* >15% one-day OI swing = repositioning alert (triangulation doctrine) */
+    var alert = Math.abs(pctv) > 15 ? ' <span class="attr-mix" title="OI swing >15% in one session — repositioning event">⚠ Δ' + pctv.toFixed(0) + '%</span>' : '';
+    return '<span class="attr-sub"><span class="' + cls + '">Δ1D ' + (d > 0 ? '+' : '') +
+        d.toLocaleString() + ' (' + (pctv > 0 ? '+' : '') + pctv.toFixed(1) + '%)</span></span>' + alert;
+}
+
+function render(doc) {
+    var el = document.getElementById('opt-surface');
+    var g0 = doc.gate0 || {};
+    var html = '<div class="dqm-bar" style="margin-bottom:10px">' +
+        '<span class="dqm-ts">session ' + doc.latest_session + ' · ' + doc.sessions_total +
+        ' sessions in canonical · generated ' + (doc.generated_utc || '—') + '</span></div>';
+
+    html += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' +
+        '<th>CCY</th><th>Ref (front fut)</th><th>Front expiry</th>' +
+        '<th>Strikes C/P (OI≥100)</th><th>Front OI</th><th>Top walls (strike · OI)</th>' +
+        '<th>Gate 0</th></tr></thead><tbody>';
+
+    ORDER.forEach(function (ccy) {
+        var d = (doc.latest || {})[ccy];
+        var g = g0[ccy] || {};
+        if (!d) {
+            html += '<tr><td><span class="attr-ccy">' + ccy + '</span></td>' +
+                '<td colspan="5" class="attr-err">no data in latest session</td>' +
+                '<td>' + vBadge(g.verdict || 'NA') + '</td></tr>';
+            return;
+        }
+        var prev = (doc.prev || {})[ccy];
+        var pata = d.pata ? '<span class="fls-badge fls-amp">PASS</span>'
+                          : '<span class="fls-badge fls-press">FAIL</span>';
+        var chips = (d.walls || []).slice(0, 3).map(function (w) {
+            return wallChip(ccy, w, d.ref);
+        }).join('');
+        var gtitle = (g.pata_pct != null)
+            ? 'Gate 0: ' + g.days + ' sessions · PataA ' + g.pata_pct + '% · Band ' + g.band_pct + '%'
+            : '';
+        html += '<tr>' +
+            '<td><span class="attr-ccy">' + ccy + '</span></td>' +
+            '<td><span class="attr-val">' + fmtRef(ccy, d.ref) + '</span></td>' +
+            '<td><span class="dqm-src">' + d.front + '</span></td>' +
+            '<td><span class="attr-val">' + d.n_call + '/' + d.n_put + '</span> ' + pata + '</td>' +
+            '<td><span class="attr-val">' + d.oi_front.toLocaleString() + '</span>' + deltaOI(d, prev) + '</td>' +
+            '<td>' + chips + '</td>' +
+            '<td title="' + gtitle + '">' + vBadge(g.verdict || '—') + '</td></tr>';
+    });
+
+    /* NZD declared row */
+    html += '<tr><td><span class="attr-ccy" style="color:#5d6678">NZD</span></td>' +
+        '<td colspan="5" class="dqm-src">excluded — VOI census: dead market (Gate 0 decision)</td>' +
+        '<td>' + vBadge('NA') + '</td></tr>';
+
+    html += '</tbody></table></div>' +
+        '<div class="attr-note">Wall chips: border green = call-dominated, orange = put-dominated; hover for C/P split and position vs ref. ' +
+        'CAD verdict PROXY is <b style="color:#fdb813">asymmetric</b>: call-side walls reliable, put-side structurally empty — use directionally only. ' +
+        '⚠ Δ flag = front-chain OI moved >15% in one session (repositioning event — inspect the chain).</div>';
+
+    el.innerHTML = html;
+
+    if (window.G8DQM && window.G8DQM.report) {
+        try {
+            window.G8DQM.report('OPTIONS_SURFACE', {
+                lastDate: doc.latest_session, via: 'repo (options module)'
+            });
+        } catch (e) { /* non-fatal */ }
+    }
+}
+
+async function init() {
+    var el = document.getElementById('opt-surface');
+    try {
+        var r = await window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true });
+        if (!r.ok) throw new Error(r.error || 'fetch failed');
+        render(JSON.parse(r.text));
+    } catch (e) {
+        el.innerHTML = '<div class="attr-err">OPTIONS_SURFACE.json unreachable — ' + e.message +
+            ' · run the CME Options Surface workflow (Actions) or check the secret DATABENTO_API_KEY</div>';
+        if (window.G8DQM && window.G8DQM.report) {
+            try { window.G8DQM.report('OPTIONS_SURFACE', { status: 'DEAD', error: e.message }); } catch (e2) {}
+        }
+    }
+}
+
+function boot(tries) {
+    tries = tries || 0;
+    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) {
+        return setTimeout(function () { boot(tries + 1); }, 120);
+    }
+    init();
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { boot(0); });
+} else { boot(0); }
 })();
 </script>
 
