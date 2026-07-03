@@ -1858,40 +1858,68 @@ if (document.readyState === 'loading') {
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   OPTIONS SURFACE — Section 08 module
-   Reads data/OPTIONS_SURFACE.json (built by scripts/build_options_summary.py
-   in the cme_options.yml workflow). Mirrors metals.js patterns: G8NET
-   fetch, G8DQM externalReport, Bloomberg dark, no new dependencies.
+   OPTIONS SURFACE — Section 08 module · v2 (user-pair convention)
+   Reads data/OPTIONS_SURFACE.json (built by scripts/build_options_summary.py).
+   v2: JPY/CAD/CHF are quoted by CME as XXX/USD (6J/6C/6S) but traded by the
+   operator as USD/XXX. This module TRANSLATES display for those three:
+   ref and wall levels inverted (1/x), call/put semantics swapped (a CME put
+   gains when USD/XXX rises -> it is a USER-CALL), positions computed in the
+   user pair. Native CME values remain in tooltips for audit. The pipeline,
+   canonical and JSON stay native (correct for Black-76 / walls layer).
+   Mirrors metals.js patterns: G8NET fetch, G8DQM externalReport.
    ════════════════════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
 
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 var ORDER = ['EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF'];
+/* CME roots quote XXX/USD; these three are traded as USD/XXX -> invert */
+var INV = { JPY: 1, CAD: 1, CHF: 1 };
+var PAIR = { EUR: 'EUR/USD', JPY: 'USD/JPY', GBP: 'GBP/USD',
+             AUD: 'AUD/USD', CAD: 'USD/CAD', CHF: 'USD/CHF' };
+var ROOT = { EUR: '6E', JPY: '6J', GBP: '6B', AUD: '6A', CAD: '6C', CHF: '6S' };
 
 function vBadge(v) {
     var cls = v === 'CLEAN' ? 'attr-q-clean' : v === 'PROXY' ? 'attr-q-proxy' : 'attr-q-na';
     return '<span class="attr-q ' + cls + '">' + v + '</span>';
 }
 
-function fmtRef(ccy, x) {
+function userLevel(ccy, x) { return INV[ccy] ? 1 / x : x; }
+
+function fmtUser(ccy, x) {
+    var v = userLevel(ccy, x);
+    return ccy === 'JPY' ? v.toFixed(2) : v.toFixed(4);
+}
+
+function fmtNative(ccy, x) {
     return ccy === 'JPY' ? x.toFixed(6) : x.toFixed(4);
 }
 
-function fmtK(ccy, k) {
+function fmtNativeK(ccy, k) {
     return ccy === 'JPY' ? k.toFixed(5) : k.toFixed(3);
 }
 
 function wallChip(ccy, w, ref) {
-    var side = w.p > w.c ? 'P' : 'C';
+    var inv = !!INV[ccy];
+    /* user-pair side: a CME put on XXX/USD gains when USD/XXX rises = user-call */
+    var uc = inv ? w.p : w.c;     /* user-call OI  */
+    var up = inv ? w.c : w.p;     /* user-put OI   */
+    var side = up > uc ? 'P' : 'C';
     var col = side === 'P' ? '#ff8c42' : '#2fbf71';
-    var pos = w.k > ref ? 'above' : w.k < ref ? 'below' : 'at';
+    var lvl = userLevel(ccy, w.k);
+    var uref = userLevel(ccy, ref);
+    var pos = lvl > uref ? 'above' : lvl < uref ? 'below' : 'at';
+    var lvlTxt = ccy === 'JPY' ? lvl.toFixed(2) : lvl.toFixed(4);
+    var title = PAIR[ccy] + ' ' + lvlTxt + ' (' + pos + ' ref) · user C ' +
+        uc.toLocaleString() + ' / P ' + up.toLocaleString() +
+        ' · OI ' + w.oi.toLocaleString() +
+        (inv ? ' · native ' + ROOT[ccy] + ' strike ' + fmtNativeK(ccy, w.k) +
+               ' (C ' + w.c.toLocaleString() + ' / P ' + w.p.toLocaleString() + ')' : '');
     return '<span style="display:inline-block;font-family:JetBrains Mono,monospace;' +
         'font-size:10px;font-weight:600;background:#0c1119;border:1px solid #1c2433;' +
         'border-left:2px solid ' + col + ';border-radius:2px;padding:2px 7px;margin:2px 4px 2px 0"' +
-        ' title="strike ' + fmtK(ccy, w.k) + ' (' + pos + ' ref) · OI ' + w.oi.toLocaleString() +
-        ' = C ' + w.c.toLocaleString() + ' + P ' + w.p.toLocaleString() + '">' +
-        fmtK(ccy, w.k) + ' <span style="color:' + col + '">' + w.oi.toLocaleString() + '</span></span>';
+        ' title="' + title + '">' +
+        lvlTxt + ' <span style="color:' + col + '">' + w.oi.toLocaleString() + '</span></span>';
 }
 
 function deltaOI(cur, prev) {
@@ -1899,7 +1927,6 @@ function deltaOI(cur, prev) {
     var d = cur.oi_front - prev.oi_front;
     var pctv = prev.oi_front ? (100 * d / prev.oi_front) : 0;
     var cls = pctv > 1 ? 'attr-up' : pctv < -1 ? 'attr-dn' : 'attr-fl';
-    /* >15% one-day OI swing = repositioning alert (triangulation doctrine) */
     var alert = Math.abs(pctv) > 15 ? ' <span class="attr-mix" title="OI swing >15% in one session — repositioning event">⚠ Δ' + pctv.toFixed(0) + '%</span>' : '';
     return '<span class="attr-sub"><span class="' + cls + '">Δ1D ' + (d > 0 ? '+' : '') +
         d.toLocaleString() + ' (' + (pctv > 0 ? '+' : '') + pctv.toFixed(1) + '%)</span></span>' + alert;
@@ -1913,20 +1940,24 @@ function render(doc) {
         ' sessions in canonical · generated ' + (doc.generated_utc || '—') + '</span></div>';
 
     html += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' +
-        '<th>CCY</th><th>Ref (front fut)</th><th>Front expiry</th>' +
-        '<th>Strikes C/P (OI≥100)</th><th>Front OI</th><th>Top walls (strike · OI)</th>' +
+        '<th>Pair</th><th>Ref (front fut)</th><th>Front expiry</th>' +
+        '<th>Strikes C/P (OI≥100)</th><th>Front OI</th><th>Top walls (level · OI)</th>' +
         '<th>Gate 0</th></tr></thead><tbody>';
 
     ORDER.forEach(function (ccy) {
         var d = (doc.latest || {})[ccy];
         var g = g0[ccy] || {};
+        var inv = !!INV[ccy];
         if (!d) {
-            html += '<tr><td><span class="attr-ccy">' + ccy + '</span></td>' +
+            html += '<tr><td><span class="attr-ccy">' + PAIR[ccy] + '</span></td>' +
                 '<td colspan="5" class="attr-err">no data in latest session</td>' +
                 '<td>' + vBadge(g.verdict || 'NA') + '</td></tr>';
             return;
         }
         var prev = (doc.prev || {})[ccy];
+        /* user-pair C/P counts: CME calls on XXX/USD are user-puts on USD/XXX */
+        var uC = inv ? d.n_put : d.n_call;
+        var uP = inv ? d.n_call : d.n_put;
         var pata = d.pata ? '<span class="fls-badge fls-amp">PASS</span>'
                           : '<span class="fls-badge fls-press">FAIL</span>';
         var chips = (d.walls || []).slice(0, 3).map(function (w) {
@@ -1935,24 +1966,29 @@ function render(doc) {
         var gtitle = (g.pata_pct != null)
             ? 'Gate 0: ' + g.days + ' sessions · PataA ' + g.pata_pct + '% · Band ' + g.band_pct + '%'
             : '';
+        var invTag = inv ? ' <span class="attr-mix" style="background:#13202e;color:#5d8aa8"' +
+            ' title="CME quotes ' + ROOT[ccy] + ' as ' + ccy + '/USD — display inverted to your pair; native values in tooltips">INV</span>' : '';
+        var refSub = inv ? '<span class="attr-sub">native ' + ROOT[ccy] + ' ' + fmtNative(ccy, d.ref) + '</span>' : '';
         html += '<tr>' +
-            '<td><span class="attr-ccy">' + ccy + '</span></td>' +
-            '<td><span class="attr-val">' + fmtRef(ccy, d.ref) + '</span></td>' +
+            '<td><span class="attr-ccy">' + PAIR[ccy] + '</span>' + invTag + '</td>' +
+            '<td><span class="attr-val">' + fmtUser(ccy, d.ref) + '</span>' + refSub + '</td>' +
             '<td><span class="dqm-src">' + d.front + '</span></td>' +
-            '<td><span class="attr-val">' + d.n_call + '/' + d.n_put + '</span> ' + pata + '</td>' +
+            '<td><span class="attr-val" title="user-pair convention' + (inv ? ' (CME C/P swapped)' : '') + '">' +
+                uC + '/' + uP + '</span> ' + pata + '</td>' +
             '<td><span class="attr-val">' + d.oi_front.toLocaleString() + '</span>' + deltaOI(d, prev) + '</td>' +
             '<td>' + chips + '</td>' +
             '<td title="' + gtitle + '">' + vBadge(g.verdict || '—') + '</td></tr>';
     });
 
-    /* NZD declared row */
     html += '<tr><td><span class="attr-ccy" style="color:#5d6678">NZD</span></td>' +
         '<td colspan="5" class="dqm-src">excluded — VOI census: dead market (Gate 0 decision)</td>' +
         '<td>' + vBadge('NA') + '</td></tr>';
 
     html += '</tbody></table></div>' +
-        '<div class="attr-note">Wall chips: border green = call-dominated, orange = put-dominated; hover for C/P split and position vs ref. ' +
-        'CAD verdict PROXY is <b style="color:#fdb813">asymmetric</b>: call-side walls reliable, put-side structurally empty — use directionally only. ' +
+        '<div class="attr-note">All levels, C/P counts and wall sides are in <b style="color:#d7dce6">your trading convention</b> ' +
+        '(USD/JPY · USD/CAD · USD/CHF rows carry the <span style="color:#5d8aa8">INV</span> tag: CME quotes them as XXX/USD, display inverts 1/x and swaps call↔put; hover any chip for the native CME strike and split). ' +
+        'Wall chips: border green = call-dominated (typically resistance above / support magnet), orange = put-dominated — <b>in the user pair</b>. ' +
+        'CAD verdict PROXY is <b style="color:#fdb813">asymmetric</b>: reliable side = CME calls = <b>USD/CAD put side (levels below ref)</b>; the ceiling side is structurally empty. ' +
         '⚠ Δ flag = front-chain OI moved >15% in one session (repositioning event — inspect the chain).</div>';
 
     el.innerHTML = html;
@@ -1960,7 +1996,7 @@ function render(doc) {
     if (window.G8DQM && window.G8DQM.report) {
         try {
             window.G8DQM.report('OPTIONS_SURFACE', {
-                lastDate: doc.latest_session, via: 'repo (options module)'
+                lastDate: doc.latest_session, via: 'repo (options module v2)'
             });
         } catch (e) { /* non-fatal */ }
     }
