@@ -266,7 +266,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.1 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · stale-manual demotion · §01 fetch hardened</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -944,7 +944,16 @@ function healthScore() {
         var s = (state[id] || {}).status || (f.onDemand ? 'UNKNOWN' : 'UNKNOWN');
         if (s === 'UNKNOWN') return;           /* not part of the monitored denominator */
         total++;
-        if (s === 'LIVE' || s === 'MANUAL' || s === 'SYNTHETIC') healthy++;
+        /* v2.5.1 (audit — D2): a MANUAL input past its lag budget is no longer
+           "healthy". The ⚠ age badge already showed it in the panel, but the
+           header count stayed green — trading on a month-old hand-typed nominal
+           with a green board is exactly the silent-corruption class the suite
+           bans. Stale-manual now counts as WATCH (amber), matching the badge. */
+        if (s === 'MANUAL') {
+            var adm = calBusinessDays((state[id] || {}).lastDate);
+            if (adm !== null && adm > (f.maxStaleness || 5)) watch++; else healthy++;
+        }
+        else if (s === 'LIVE' || s === 'SYNTHETIC') healthy++;
         else if (s === 'DEGRADED') watch++;
         else broken++;                          /* STALE | DEAD */
     });
@@ -1220,7 +1229,20 @@ function manualSet(ccy, v, date) {
 window.G8Manual = { get: manualGet, set: manualSet, DEFAULTS: MANUAL_DEFAULTS };
 
 function fetchCsv(url) {
-    return fetch(url, { cache: 'no-store' }).then(function (r) {
+    /* v2.5.1 (audit — D3): route through G8NET (per-attempt timeout + Netlify/
+       public proxy cascade + 60-min cache) instead of a raw fetch. The raw
+       fetch had NO timeout: on the Bata proxy/SSL network a stalled GitHub
+       response hung §01 indefinitely — the exact failure class FIX-1 already
+       patched in the metals module (getText). This is the same pattern. */
+    if (window.G8NET && window.G8NET.fetchChain) {
+        return window.G8NET.fetchChain([url], { corsOk: true }).then(function (r) {
+            if (r && r.ok) return r.text;
+            throw new Error(url.split('/').pop().split('?')[0] + ' — ' + (r && r.error ? r.error : 'unreachable'));
+        });
+    }
+    /* defensive fallback (G8NET missing = file:// dev open): keep a hard timeout */
+    var sig = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(8000) : undefined;
+    return fetch(url, { cache: 'no-store', signal: sig }).then(function (r) {
         if (!r.ok) throw new Error(url.split('/').pop().split('?')[0] + ' HTTP ' + r.status);
         return r.text();
     });
