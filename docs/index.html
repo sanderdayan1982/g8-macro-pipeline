@@ -266,7 +266,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.2 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · stale-manual demotion · metals display-gate · stale-leg badges · weighted health · disclaimer</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.3 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · metals display-gate · stale-leg badges · weighted health · disclaimer · metals auto-pipeline (weekly)</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -681,9 +681,12 @@ var FEED_REGISTRY = {
        correct LIVE report from metals.js. externalReport tells checkFeed to skip
        it: metals.js (which parses the JSON properly) is the single source of
        truth for this feed's freshness. */
-    MFV_STATE: Object.assign(repo('MFV_G8_state.json', 'Metals MDP bridge state', 'daily', 5, '06'), { externalReport: true }),
-    XAU_MFV:   repo('MFV_G8_XAU.csv',    'Gold MDP (Kalman TVP/MMT)',  'daily', 5, '06'),
-    XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'daily', 5, '07'),
+    /* metals model is WEEKLY (COT W-TUE) and auto-refreshed by the metals_update
+       workflow every Saturday; budget 10bd spans a week + slack so a healthy weekly
+       feed doesn't false-alarm mid-week, while a truly frozen feed (>2.5×) still DEADs. */
+    MFV_STATE: Object.assign(repo('MFV_G8_state.json', 'Metals MDP bridge state', 'weekly', 10, '06'), { externalReport: true }),
+    XAU_MFV:   repo('MFV_G8_XAU.csv',    'Gold MDP (Kalman TVP/MMT)',  'weekly', 10, '06'),
+    XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'weekly', 10, '07'),
 
     /* ── 01 attribution — in-browser external feeds ────────────────────── */
     EUR_NOM_ECB: {
@@ -2256,7 +2259,7 @@ function paint(metal, ids, st, rows) {
     // on its face — not only in §05. (Same thresholds as the gauge sub-labels.)
     var lastDate = rows.length ? rows[rows.length - 1].DATE : null;
     var dataStatus = (window.G8DQM && window.G8DQM.computeStaleness)
-        ? window.G8DQM.computeStaleness(lastDate, 5) : 'LIVE';
+        ? window.G8DQM.computeStaleness(lastDate, 10) : 'LIVE';   /* weekly model — 10bd budget */
     var dataStale = (dataStatus === 'STALE' || dataStatus === 'DEAD');
     var breaches = [];
     if (st) {
