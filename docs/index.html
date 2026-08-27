@@ -266,7 +266,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.1 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · stale-manual demotion · §01 fetch hardened</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.2 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · stale-manual demotion · metals display-gate · stale-leg badges · weighted health · disclaimer</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -449,6 +449,10 @@
 
 </main>
 <footer class="dashboard-footer">
+    <div class="footer-disclaimer" style="font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;line-height:1.55;color:#7e879a;letter-spacing:.01em;padding:12px 0 14px;border-bottom:1px solid #151c28;margin-bottom:12px">
+        <b style="color:#b8c0cf">Uso interno / investigación · no es asesoramiento de inversión.</b>
+        Este panel no constituye una recomendación para comprar, vender ni mantener ningún instrumento. Los fair value, las primas por plazo ACM (Adrian-Crump-Moench) y el MDP (Monetary Disorder Premium) son estimaciones de modelos propios, sujetas a error, revisión y cambios de régimen; MDP es valoración, no timing. Las celdas marcadas <span style="color:#fdb813">PROXY / INDIC / MANUAL</span>, <span style="color:#fdb813">⧗ as-of</span>, <span style="color:#ff8c42">FROZEN</span> o <span style="color:#ff5c72">STALE / DEAD</span> no son observaciones de mercado corrientes — verifique cada cifra en su fuente (§05 · Data Quality Monitor) antes de decidir. Riesgo de modelo y de datos asumido por el operador.
+    </div>
     <div class="footer-inner">
         <div class="footer-left">
             <span class="footer-meta">G8 Macro Pipeline · MMT/Mosler framework · Daily TF</span>
@@ -937,13 +941,23 @@ function fmtDate(d) {
      broken    = STALE + DEAD
    Denominator excludes UNKNOWN (on-demand feeds not yet checked) so the score
    reflects what we actually monitor, not what we *could* poll. */
+/* v2.5.2 (audit — H-11): a feed that drives a RENDERED valuation (§01 attribution,
+   §06/§07 metals) must move the header more than a redundant fallback. The raw
+   count stays honest (healthy/total), but the header dots are computed from a
+   criticality-WEIGHTED share so 4 dead valuation feeds no longer read as a mostly
+   green board. Critical = §01/§06/§07 and not an on-demand fallback. */
+function feedWeight(f) {
+    return ((f.section === '01' || f.section === '06' || f.section === '07') && !f.onDemand) ? 2 : 1;
+}
 function healthScore() {
     var healthy = 0, watch = 0, broken = 0, total = 0;
+    var wHealthy = 0, wWatch = 0, wBroken = 0, wTotal = 0;
     Object.keys(FEED_REGISTRY).forEach(function (id) {
         var f = FEED_REGISTRY[id];
         var s = (state[id] || {}).status || (f.onDemand ? 'UNKNOWN' : 'UNKNOWN');
         if (s === 'UNKNOWN') return;           /* not part of the monitored denominator */
         total++;
+        var wt = feedWeight(f), bucket;
         /* v2.5.1 (audit — D2): a MANUAL input past its lag budget is no longer
            "healthy". The ⚠ age badge already showed it in the panel, but the
            header count stayed green — trading on a month-old hand-typed nominal
@@ -951,13 +965,18 @@ function healthScore() {
            bans. Stale-manual now counts as WATCH (amber), matching the badge. */
         if (s === 'MANUAL') {
             var adm = calBusinessDays((state[id] || {}).lastDate);
-            if (adm !== null && adm > (f.maxStaleness || 5)) watch++; else healthy++;
+            bucket = (adm !== null && adm > (f.maxStaleness || 5)) ? 'watch' : 'healthy';
         }
-        else if (s === 'LIVE' || s === 'SYNTHETIC') healthy++;
-        else if (s === 'DEGRADED') watch++;
-        else broken++;                          /* STALE | DEAD */
+        else if (s === 'LIVE' || s === 'SYNTHETIC') bucket = 'healthy';
+        else if (s === 'DEGRADED') bucket = 'watch';
+        else bucket = 'broken';                 /* STALE | DEAD */
+        if (bucket === 'healthy') { healthy++; wHealthy += wt; }
+        else if (bucket === 'watch') { watch++; wWatch += wt; }
+        else { broken++; wBroken += wt; }
+        wTotal += wt;
     });
-    return { healthy: healthy, watch: watch, broken: broken, total: total };
+    return { healthy: healthy, watch: watch, broken: broken, total: total,
+             wHealthy: wHealthy, wWatch: wWatch, wBroken: wBroken, wTotal: wTotal };
 }
 
 function syncHeader() {
@@ -967,15 +986,19 @@ function syncHeader() {
     var upEl    = document.getElementById('last-update');
     if (countEl) countEl.textContent = h.healthy + '/' + h.total;
     if (dotsEl && h.total) {
-        /* 15-dot bar mapped to healthy/watch/broken proportions */
-        var N = 15, g = Math.round(N * h.healthy / h.total), a = Math.round(N * h.watch / h.total);
+        /* 15-dot bar mapped to CRITICALITY-WEIGHTED healthy/watch/broken proportions
+           (audit — H-11): valuation feeds count double, so dead §01/§06/§07 sources
+           pull the board red instead of hiding in a 4-of-37 rounding. */
+        var wt = h.wTotal || h.total;
+        var N = 15, g = Math.round(N * h.wHealthy / wt), a = Math.round(N * h.wWatch / wt);
         if (g + a > N) a = N - g;
         var r = N - g - a;
         dotsEl.innerHTML =
             '<span style="color:#2fbf71">' + '●'.repeat(g) + '</span>' +
             '<span style="color:#fdb813">' + '●'.repeat(a) + '</span>' +
             '<span style="color:#ff5c72">' + '●'.repeat(r) + '</span>';
-        dotsEl.title = h.healthy + ' healthy · ' + h.watch + ' watch · ' + h.broken + ' broken';
+        dotsEl.title = h.healthy + '/' + h.total + ' feeds healthy · dots weighted by criticality (' +
+            h.wBroken + '/' + h.wTotal + ' weighted broken · valuation feeds ×2)';
     }
     /* freshest monitored last-date drives "LAST UPDATE" */
     if (upEl) {
@@ -1459,6 +1482,21 @@ function tpFlag(d) {
     return '<span class="tp-flag" title="' + d.tpConf.why + '">⚠ lvl</span>';
 }
 
+/* Staleness badge for a DAILY leg (real/BE/market nominal). Monthly ACM legs are
+   expected to lag a month, so only legs > ~15 calendar days behind are flagged —
+   this surfaces the dead EUR real/BE (DE linkers) and any frozen leg on the card
+   itself, not only in §05. (audit 2026-08 · H-04) */
+function staleTag(s) {
+    if (!s || !s.lastDate) return '';
+    var iso = isoNorm(s.lastDate).slice(0, 10);
+    var t = new Date(iso);
+    if (isNaN(t.getTime())) return '';
+    var days = Math.floor((Date.now() - t.getTime()) / 86400000);
+    if (days <= 15) return '';
+    return '<span class="attr-z attr-z-md" title="leg as-of ' + iso + ' · ' + days +
+        'd old — this daily feed is not updating (see §05 · Data Quality Monitor)">⧗ ' + iso.slice(5) + '</span>';
+}
+
 function cell(valHtml, deltaHtml, zHtml) {
     return '<td><span class="attr-val">' + valHtml + '</span>' + (zHtml || '') + (deltaHtml || '') + '</td>';
 }
@@ -1541,7 +1579,7 @@ function build(data) {
                 '<a class="attr-edit-src" href="' + d.manual.link + '" target="_blank" rel="noopener">↗ src</a>' +
                 '</span></td>';
         } else {
-            nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom));
+            nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom), staleTag(d.nom));
         }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
             '<span class="attr-sub">' + (d.asOf || '') + '</span>' +
@@ -1549,8 +1587,8 @@ function build(data) {
             nomCell +
             cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
-            cell(fmtVal(d.real), fmtDelta(d.real)) +
-            cell(fmtVal(d.be), fmtDelta(d.be)) +
+            cell(fmtVal(d.real), fmtDelta(d.real), staleTag(d.real)) +
+            cell(fmtVal(d.be), fmtDelta(d.be), staleTag(d.be)) +
             '<td>' + ryBadge(c, d.quality, d.qkind) + '</td></tr>';
     });
 
@@ -1598,7 +1636,10 @@ function build(data) {
             ? ' <span class="attr-mix" title="legs sampled on different dates: ' + uniq.join(', ') +
               ' — cross-leg arithmetic (NOM−REAL=BE) mixes vintages">⚠ mixed as-of</span>'
             : '';
-        html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + '</td>' +
+        var frozenFlag = (c === 'CHF')
+            ? ' <span class="attr-mix" title="CHF ACM &amp; nominal frozen at the SNB cube 2025-07 — this spread is measured against a >1-year-old level, not a live cross-market read; treat as informative only">FROZEN</span>'
+            : '';
+        html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + frozenFlag + '</td>' +
             '<td>' + sp(d.nom, usd.nom) + '</td>' +
             '<td>' + sp(d.tp, usd.tp) + '</td>' +
             '<td>' + sp(d.rny, usd.rny) + '</td>' +
@@ -1941,7 +1982,7 @@ function wallChip(ccy, w, ref) {
         'font-size:10px;font-weight:600;background:#0c1119;border:1px solid #1c2433;' +
         'border-left:2px solid ' + col + ';border-radius:2px;padding:2px 7px;margin:2px 4px 2px 0"' +
         ' title="' + title + '">' +
-        lvlTxt + ' <span style="color:' + col + '">' + w.oi.toLocaleString() + '</span></span>';
+        lvlTxt + ' <span style="color:' + col + '">' + side + ' ' + w.oi.toLocaleString() + '</span></span>';
 }
 
 function deltaOI(cur, prev) {
@@ -2207,6 +2248,38 @@ function paint(metal, ids, st, rows) {
     var devpct = (px && fair) ? (px / fair - 1) : null;
     var reg = st ? st.regime : null;
 
+    // ── EFFECTIVE GATE + DATA FRESHNESS (audit 2026-08 · H-01/H-02/H-03) ──────
+    // The precomputed st.quality ("CLEAN") does NOT incorporate every institutional
+    // limit that the gauges below already display. Recompute a DISPLAY gate here so
+    // a model that breaches its own thresholds cannot show a green tactical verdict,
+    // and detect whether the series itself is stale/dead so the whole card can say so
+    // on its face — not only in §05. (Same thresholds as the gauge sub-labels.)
+    var lastDate = rows.length ? rows[rows.length - 1].DATE : null;
+    var dataStatus = (window.G8DQM && window.G8DQM.computeStaleness)
+        ? window.G8DQM.computeStaleness(lastDate, 5) : 'LIVE';
+    var dataStale = (dataStatus === 'STALE' || dataStatus === 'DEAD');
+    var breaches = [];
+    if (st) {
+        if (isFinite(st.var_ratio) && st.var_ratio > 1)  breaches.push('var-ratio ' + fmt(st.var_ratio, 2) + ' >1');
+        if (isFinite(st.halflife)  && st.halflife > 156) breaches.push('half-life ' + Math.round(st.halflife) + 'w >156');
+        if (isFinite(st.ic_8w)     && st.ic_8w < 0.10)   breaches.push('IC8w ' + fmt(st.ic_8w, 2) + ' <0.10');
+        if (isFinite(st.hit_8w)    && st.hit_8w < 0.52)  breaches.push('hit8w ' + pct(st.hit_8w, 0) + ' <52%');
+    }
+    var effGate = dataStale ? 'STALE DATA' : (breaches.length ? 'REVIEW' : (st ? st.quality : '—'));
+    var effGateCol = dataStale ? C.red
+                   : (breaches.length ? C.amber : (st && /CLEAN/i.test(st.quality) ? C.green : C.amber));
+    // The tactical regime label is only trustworthy when the gate is clean AND data fresh.
+    var regTradeable = !dataStale && !breaches.length;
+    var semCol   = dataStale ? C.mute : b.col;
+    var semState = b.lbl + (dataStale ? ' · STALE' : '');
+    var staleBanner = dataStale
+        ? '<div class="mfv-alert mfv-alert-hot">● DATOS CONGELADOS — última observación ' +
+          (lastDate ? ymd(lastDate) : '—') + ' · estado ' + dataStatus + '. El pipeline de este metal ' +
+          'no se está actualizando: PRECIO, FAIR VALUE y MDP-Z mostrados son de esa fecha, no del mercado ' +
+          'actual, así que la desviación no es una señal viva. Trátese como histórico hasta reanudar el ' +
+          'pipeline (§05 · Data Quality Monitor).</div>'
+        : '';
+
     // D1/D2: provenance badges. The operator must know which cascade tier feeds
     // the model and which silver channel is live — silent degradation is the enemy.
     var badges = '';
@@ -2227,10 +2300,10 @@ function paint(metal, ids, st, rows) {
     // ── HERO: traffic-light + MDP read ────────────────────────────────────
     var hero =
       '<div class="mfv-hero">' +
-        '<div class="mfv-sem" style="--sem:' + b.col + ';--semfill:' + b.bg + '">' +
+        '<div class="mfv-sem" style="--sem:' + semCol + ';--semfill:' + b.bg + '">' +
           '<div class="mfv-sem-dot"></div>' +
           '<div class="mfv-sem-txt">' +
-            '<span class="mfv-sem-state">' + b.lbl + '</span>' +
+            '<span class="mfv-sem-state">' + semState + '</span>' +
             '<span class="mfv-sem-sub">' + dir(st ? st.mdp_z : null) + '</span>' +
           '</div>' +
         '</div>' +
@@ -2240,7 +2313,8 @@ function paint(metal, ids, st, rows) {
           mkStat('FAIR VALUE', fmt(fair, 2), C.blue) +
           mkStat('DEV.', devpct === null ? '—' : (devpct > 0 ? '+' : '') + pct(devpct, 1),
                  devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.green)) +
-          mkStat('REGIME', reg || '—', reg === 'REVERSION' ? C.green : reg === 'MOMENTUM' ? C.amber : C.mute) +
+          mkStat('REGIME', (reg || '—') + (reg && !regTradeable ? ' ⚠' : ''),
+                 !regTradeable ? C.mute : (reg === 'REVERSION' ? C.green : reg === 'MOMENTUM' ? C.amber : C.mute)) +
         '</div>' +
         (badges ? '<div class="mfv-badges">' + badges + '</div>' : '') +
       '</div>';
@@ -2264,6 +2338,14 @@ function paint(metal, ids, st, rows) {
                  Math.round(st.halflife) + 'w (≈' + hlYrs + ' yr) is not reversion on a tactical ' +
                  'horizon. Treat the misalignment as slow structural drift and size accordingly.</div>';
     }
+    // Composite display-gate breach (audit 2026-08 · H-01/H-02): the model exceeds
+    // one or more of its OWN institutional limits, so QUALITY is degraded to REVIEW
+    // and the regime label is not tactically operable.
+    if (!dataStale && breaches.length) {
+        alert += '<div class="mfv-alert mfv-alert-warn">⚠ GATE (display) — el modelo supera sus propios ' +
+                 'límites institucionales: ' + breaches.join(' · ') + '. QUALITY degradada a REVIEW; el ' +
+                 'veredicto de régimen no es operable tácticamente (deriva estructural, no reversión).</div>';
+    }
 
     // ── CONTROL PANEL: validation metrics with limits ─────────────────────
     var ctrl =
@@ -2277,7 +2359,10 @@ function paint(metal, ids, st, rows) {
           kv('δ FORGETTING', fmt(st ? st.delta : null, 3), 'TVP beta agility') +
           kv('LJUNG-BOX p', fmt(st ? st.ljung_p : null, 3), st && st.ljung_p < 0.10 ? 'MDP structured ✓' : 'review') +
           kv('IC 4w / 12w', fmt(st ? st.ic_4w : null, 2) + ' / ' + fmt(st ? st.ic_12w : null, 2), 'short / long horizon') +
-          kv('QUALITY', st ? st.quality : '—', 'global gate') +
+          '<div class="mfv-kv"><span class="mfv-kv-lbl">QUALITY</span>' +
+            '<span class="mfv-kv-val" style="color:' + effGateCol + '">' + effGate + '</span>' +
+            '<span class="mfv-kv-sub">' + (dataStale ? 'stale — see §05'
+                : (breaches.length ? 'gate: ' + breaches.join(' · ') : 'global gate')) + '</span></div>' +
         '</div>' +
       '</div>';
 
@@ -2296,7 +2381,7 @@ function paint(metal, ids, st, rows) {
         'Cross-check against PSI-G8 / RTF10-G8 and the central-bank calendar before ' +
         'closing a thesis — the model carries lag on CB events. Daily TF · MMT/Mosler lens.</div>';
 
-    host.innerHTML = hero + alert + ctrl + charts + disc;
+    host.innerHTML = staleBanner + hero + alert + ctrl + charts + disc;
 
     if (rows.length) {
         drawFair(ids.cFair, rows);
