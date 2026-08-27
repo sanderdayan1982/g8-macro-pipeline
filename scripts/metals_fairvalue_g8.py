@@ -612,6 +612,60 @@ def cot_activation(mdp_z, cot_z):
     return mult
 
 
+# ==================================================== drivers estructurales del oro
+# Fecha del QUIEBRE DE NIVEL en tipos reales (audit 2026-08). Post-liftoff de la Fed
+# (mar-2022) el oro se DESACOPLÓ del rendimiento real: subió a la vez que los reales,
+# rompiendo la relación negativa histórica. Se modela con un término real10×1[t≥break]
+# que deja que la sensibilidad al real cambie de régimen (la β la afina el TVP).
+RATE_BREAK = "2022-03-01"
+
+
+def load_real10():
+    """Rendimiento REAL 10Y (USD, DFII10/TIPS). PRIMARY data/RY_G8_USD.csv (REAL10),
+    fallback FRED DFII10. El oro clásico se ancla al real; el modelo MMT lo había
+    omitido — se reincorpora con su quiebre de nivel."""
+    path = os.path.join(DATA_DIR, "RY_G8_USD.csv")
+    if os.path.exists(path):
+        try:
+            df = pd.read_csv(path, comment="#")
+            df.columns = [c.strip().upper() for c in df.columns]
+            if {"DATE", "REAL10"}.issubset(df.columns):
+                df["DATE"] = pd.to_datetime(df["DATE"].astype(str), format="%Y%m%d", errors="coerce")
+                s = pd.to_numeric(df.set_index("DATE")["REAL10"], errors="coerce").dropna()
+                print(f"    [REAL10] {len(s)} obs de RY_G8_USD (PRIMARY)")
+                return s.sort_index()
+        except Exception:
+            pass
+    s = fetch_fred("DFII10")
+    print("    [REAL10] fallback FRED DFII10")
+    return s
+
+
+def load_official_demand():
+    """DEMANDA OFICIAL (bancos centrales) como stock acumulado de tenencias oficiales
+    de oro (base ~2005 + compras netas World Gold Council). PRIMARY
+    data/OFFICIAL_GOLD_DEMAND.csv (DATE,CUM_TONNES). Es el bid estructural que
+    reprecio el oro desde 2022 (des-dolarización) y que el modelo puramente financiero
+    no capturaba. None si el CSV no existe -> el driver 'official' no entra (spec base).
+    Se interpola/forward-fill as-of martes en el panel."""
+    path = os.path.join(DATA_DIR, "OFFICIAL_GOLD_DEMAND.csv")
+    if not os.path.exists(path):
+        return None
+    try:
+        df = pd.read_csv(path, comment="#")
+        df.columns = [c.strip().upper() for c in df.columns]
+        col = "CUM_TONNES" if "CUM_TONNES" in df.columns else ("VALUE" if "VALUE" in df.columns else None)
+        if "DATE" not in df.columns or col is None:
+            return None
+        df["DATE"] = pd.to_datetime(df["DATE"].astype(str), errors="coerce")
+        s = pd.to_numeric(df.set_index("DATE")[col], errors="coerce").dropna().sort_index()
+        s = s[s > 0]
+        print(f"    [OFFICIAL] {len(s)} pts de OFFICIAL_GOLD_DEMAND.csv (WGC cum tonnes)")
+        return s if len(s) >= 8 else None
+    except Exception:
+        return None
+
+
 # ================================================================ build per-metal
 def build_panel_xau(tuesdays, log):
     """Ensambla el panel semanal del ORO: y=log(XAU), drivers TVP=[const,BE,slope,
@@ -626,19 +680,32 @@ def build_panel_xau(tuesdays, log):
     slope = load_slope()
     nfa   = load_nfa_total()
     dxy   = fetch_fred(FRED_DXY)
+    real  = load_real10()               # driver estructural: real10 + quiebre
+    official = load_official_demand()   # driver estructural: demanda oficial (opcional)
 
     P  = asof_weekly(price.rename("PX"), tuesdays)
     BE = asof_weekly(be.rename("BE"), tuesdays)
     SL = asof_weekly(slope.rename("SL"), tuesdays)
     NF = asof_weekly(nfa.rename("NFA"), tuesdays)
     DX = asof_weekly(dxy.rename("DXY"), tuesdays)
-    panel = pd.concat([P, BE, SL, NF, DX], axis=1, sort=True).dropna()
+    RL = asof_weekly(real.rename("REAL"), tuesdays)
+    # baseline requiere PX/BE/SL/NFA/DXY/REAL; official es opcional (se une después)
+    panel = pd.concat([P, BE, SL, NF, DX, RL], axis=1, sort=True).dropna(
+        subset=["PX", "BE", "SL", "NFA", "DXY", "REAL"])
     # blindaje numérico: NFA y PX deben ser > 0 para el log; descarta lo que no lo sea
     panel = panel[(panel["PX"] > 0) & (panel["NFA"] > 0)]
     panel["LOGPX"]  = np.log(panel["PX"])
     panel["LOGNFA"] = np.log(panel["NFA"])
-    # elimina cualquier fila no finita que sobreviva (cinturón y tirantes)
-    panel = panel.replace([np.inf, -np.inf], np.nan).dropna()
+    # quiebre de nivel en tipos reales: real10 activo sólo desde RATE_BREAK
+    brk = (panel.index >= pd.Timestamp(RATE_BREAK)).astype(float)
+    panel["REAL_BRK"] = panel["REAL"].values * brk
+    # demanda oficial (opcional): log del stock acumulado, as-of martes
+    if official is not None:
+        OF = asof_weekly(official.rename("OFF"), tuesdays)
+        panel = panel.join(OF)
+        panel["LOGOFF"] = np.log(panel["OFF"].clip(lower=1e-9))
+    panel = panel.replace([np.inf, -np.inf], np.nan)
+    panel = panel.dropna(subset=["PX", "BE", "SL", "NFA", "DXY", "REAL", "LOGPX", "LOGNFA", "REAL_BRK"])
     return panel, src
 
 
@@ -657,10 +724,14 @@ def build_panel_xag(tuesdays, log):
         log.append("plata requiere oro (XAU) presente para el canal monetario — falta.")
         return None, None, False
     copper, csrc = find_local_price("COPPER")
+    real = load_real10()                 # plata también responde a tipos reales
+    dxy  = fetch_fred(FRED_DXY)           # y al dólar
 
     P  = asof_weekly(price.rename("PX"), tuesdays)
     AU = asof_weekly(xau.rename("XAU"), tuesdays)
-    cols = [P, AU]
+    RL = asof_weekly(real.rename("REAL"), tuesdays)
+    DX = asof_weekly(dxy.rename("DXY"), tuesdays)
+    cols = [P, AU, RL, DX]
     has_copper = copper is not None
     if has_copper:
         HG = asof_weekly(copper.rename("HG"), tuesdays)
@@ -668,7 +739,8 @@ def build_panel_xag(tuesdays, log):
         log.append(f"cobre LOCAL: {os.path.basename(csrc)} → canal industrial activo")
     else:
         log.append("COBRE ausente → plata degrada a canal monetario (exporta HG1! a ~/Downloads)")
-    panel = pd.concat(cols, axis=1, sort=True).dropna()
+    panel = pd.concat(cols, axis=1, sort=True).dropna(
+        subset=["PX", "XAU", "REAL", "DXY"] + (["HG"] if has_copper else []))
     panel = panel[panel["PX"] > 0]
     panel["LOGPX"]  = np.log(panel["PX"])
     panel["LOGXAU"] = np.log(panel["XAU"].clip(lower=1e-9))
@@ -690,19 +762,56 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
         if panel is None or len(panel) < BURN + 60:
             return False
         y = panel["LOGPX"].values
-        # X_tvp con constante: [1, BE, slope, logNFA]
-        Xtvp = np.column_stack([np.ones(len(panel)),
-                                panel["BE"].values, panel["SL"].values, panel["LOGNFA"].values])
         # DXY fijo: lo proyectamos fuera del TVP por OLS y lo restamos del observable
         dxy = panel["DXY"].values
         Adx = np.column_stack([np.ones_like(dxy), dxy])
         gdx, *_ = np.linalg.lstsq(Adx, y, rcond=None)
         gamma_dxy = float(gdx[1])
         y_adj = y - gamma_dxy * dxy            # quita el canal DXY (beta fija)
-        driver_names = ["const", "be", "slope", "log_nfa"]
-        extra = {"gamma_dxy": round(gamma_dxy, 6)}
-        Xrun = Xtvp
         ycol = y_adj
+
+        # ---- SELECCIÓN DE ESPECIFICACIÓN (audit 2026-08): que decida el dato ----
+        # BASE      = MMT puro [const, BE, slope, logNFA]  (comportamiento anterior)
+        # ENHANCED  = + real10 + real10×quiebre  (+ demanda oficial si el CSV existe)
+        # El enhanced sólo se adopta si MEJORA el IC fuera de muestra respetando
+        # var_ratio≥0.20 — mismo criterio que la selección del cobre en la plata, así
+        # que NO puede regresionar la especificación sana. Cierra el hueco del oro:
+        # captura el quiebre real y el bid oficial que el modelo financiero no veía.
+        X_base = np.column_stack([np.ones(len(panel)),
+                                  panel["BE"].values, panel["SL"].values, panel["LOGNFA"].values])
+        names_base = ["const", "be", "slope", "log_nfa"]
+        cols_e = [np.ones(len(panel)), panel["BE"].values, panel["SL"].values,
+                  panel["LOGNFA"].values, panel["REAL"].values, panel["REAL_BRK"].values]
+        names_e = ["const", "be", "slope", "log_nfa", "real", "real_brk"]
+        has_off = ("LOGOFF" in panel.columns and panel["LOGOFF"].notna().sum() > BURN + 60)
+        if has_off:
+            lo = panel["LOGOFF"].values
+            lo = np.where(np.isnan(lo), np.nanmedian(lo), lo)   # rellena bordes (no NaN al filtro)
+            cols_e.append(lo); names_e.append("official")
+        X_enh = np.column_stack(cols_e)
+
+        d_b, _ = calibrate_delta(ycol, X_base, cfg["z_window"], [])
+        m_b, _ = evaluate_delta(ycol, X_base, d_b, cfg["z_window"])
+        d_e, _ = calibrate_delta(ycol, X_enh, cfg["z_window"], [])
+        m_e, _ = evaluate_delta(ycol, X_enh, d_e, cfg["z_window"])
+
+        def _ok(m):  return (m["var_ratio"] is not None and m["var_ratio"] >= MIN_VARRATIO)
+        def _ic(m):  s = m.get("score"); return s if s is not None else -9
+        base_ok, enh_ok = _ok(m_b), _ok(m_e)
+        ic_b, ic_e = _ic(m_b), _ic(m_e)
+        log.append(f"selección oro: base(IC={ic_b:+.3f},vr={m_b['var_ratio']:.3f},ok={base_ok}) vs "
+                   f"enhanced[real-break{'+official' if has_off else ''}]"
+                   f"(IC={ic_e:+.3f},vr={m_e['var_ratio']:.3f},ok={enh_ok})")
+        use_enh = (enh_ok and (not base_ok)) or (enh_ok and base_ok and abs(ic_e) > abs(ic_b) + 0.005)
+        if use_enh:
+            Xrun, driver_names = X_enh, names_e
+            log.append("→ spec ENHANCED aceptada (quiebre real / demanda oficial mejora el OOS)")
+            spec = "enhanced+official" if has_off else "enhanced"
+        else:
+            Xrun, driver_names = X_base, names_base
+            log.append("→ spec BASE (el enhanced no mejora el OOS; sin regresión)")
+            spec = "baseline"
+        extra = {"gamma_dxy": round(gamma_dxy, 6), "spec": spec, "official": bool(has_off and use_enh)}
     else:  # XAG
         panel, src, has_copper = build_panel_xag(tuesdays, log)
         if panel is None or len(panel) < BURN + 60:
@@ -710,52 +819,45 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
         y = panel["LOGPX"].values
         ycol = y
 
-        # Modelo MONETARIO puro (siempre disponible): XAG ~ const + log(XAU)
-        X_mon = np.column_stack([np.ones(len(panel)), panel["LOGXAU"].values])
-        names_mon = ["const", "log_xau"]
-
+        # ---- Candidatos de especificación (audit 2026-08): que decida el dato ----
+        # La plata tenía poca habilidad OOS (IC≈0.07) por depender casi solo de
+        # log(XAU) — su MDP era un eco del oro. Se amplía con el canal MACRO (real10 +
+        # DXY, a los que la plata sí responde) y el INDUSTRIAL (cobre⊥oro). Se evalúan
+        # todas las specs disponibles y gana la de mayor |IC| que respete
+        # var_ratio≥0.20; si ninguna supera a la monetaria por margen, gana la simple
+        # (sin regresión ni sobreajuste).
+        base  = [np.ones(len(panel)), panel["LOGXAU"].values]
+        macro = [panel["REAL"].values, panel["DXY"].values]
+        cands = {
+            "monetary":  (np.column_stack(base),         ["const", "log_xau"]),
+            "mon+macro": (np.column_stack(base + macro), ["const", "log_xau", "real", "dxy"]),
+        }
         if has_copper:
-            # SELECCIÓN POR EL DATO: comparar monetario vs dual (con cobre) y quedarse
-            # con el de mejor IC 4/8w que respete var_ratio≥0.20. El cobre entra solo
-            # si MEJORA la señal; si baja el IC o vacía el MDP, el motor lo descarta.
-            X_dual = np.column_stack([np.ones(len(panel)),
-                                      panel["LOGXAU"].values, panel["HG_ORTH"].values])
-            names_dual = ["const", "log_xau", "hg_orth"]
+            hg = [panel["HG_ORTH"].values]
+            cands["dual"]       = (np.column_stack(base + hg),         ["const", "log_xau", "hg_orth"])
+            cands["dual+macro"] = (np.column_stack(base + hg + macro), ["const", "log_xau", "hg_orth", "real", "dxy"])
 
-            d_mon, _ = calibrate_delta(ycol, X_mon, cfg["z_window"], log_sink := [])
-            m_mon, _ = evaluate_delta(ycol, X_mon, d_mon, cfg["z_window"])
-            d_dual, _ = calibrate_delta(ycol, X_dual, cfg["z_window"], log_sink2 := [])
-            m_dual, _ = evaluate_delta(ycol, X_dual, d_dual, cfg["z_window"])
-
-            def _ok(m):  # respeta el piso var_ratio
-                return (m["var_ratio"] is not None and m["var_ratio"] >= MIN_VARRATIO)
-            def _ic(m):
-                s = m.get("score"); return s if s is not None else -9
-
-            mon_ok, dual_ok = _ok(m_mon), _ok(m_dual)
-            ic_mon, ic_dual = _ic(m_mon), _ic(m_dual)
-            log.append(f"selección cobre: monetario(IC={ic_mon:+.3f},vr={m_mon['var_ratio']:.3f},"
-                       f"ok={mon_ok}) vs dual(IC={ic_dual:+.3f},vr={m_dual['var_ratio']:.3f},ok={dual_ok})")
-
-            # decide: prioriza válidos; entre válidos, mayor |IC|; el dual debe SUPERAR
-            # al monetario para justificar el driver extra (no solo empatar)
-            use_dual = False
-            if dual_ok and (not mon_ok):
-                use_dual = True
-            elif dual_ok and mon_ok and abs(ic_dual) > abs(ic_mon) + 0.005:
-                use_dual = True
-            if use_dual:
-                Xrun, driver_names = X_dual, names_dual
-                log.append("→ cobre ACEPTADO (el canal industrial mejora la señal OOS)")
-                extra = {"copper": True}
-            else:
-                Xrun, driver_names = X_mon, names_mon
-                log.append("→ cobre DESCARTADO por el dato (no mejora IC / baja var_ratio); "
-                           "plata = modelo monetario puro")
-                extra = {"copper": False, "copper_available": True}
-        else:
-            Xrun, driver_names = X_mon, names_mon
-            extra = {"copper": False}
+        def _ok(m):  return (m["var_ratio"] is not None and m["var_ratio"] >= MIN_VARRATIO)
+        def _ic(m):  s = m.get("score"); return s if s is not None else -9
+        scored = {}
+        for nm, (Xc, ns) in cands.items():
+            dc, _ = calibrate_delta(ycol, Xc, cfg["z_window"], [])
+            mc, _ = evaluate_delta(ycol, Xc, dc, cfg["z_window"])
+            scored[nm] = (mc, Xc, ns)
+            log.append(f"  spec {nm}: IC={_ic(mc):+.3f} vr={mc['var_ratio']:.3f} ok={_ok(mc)}")
+        valid = {nm: v for nm, v in scored.items() if _ok(v[0])}
+        pool = valid if valid else scored
+        best_nm = max(pool, key=lambda nm: abs(_ic(pool[nm][0])))
+        # una spec más rica sólo se adopta si SUPERA a la monetaria por margen (>0.005)
+        if best_nm != "monetary" and "monetary" in pool and _ok(pool["monetary"][0]):
+            if abs(_ic(pool[best_nm][0])) <= abs(_ic(pool["monetary"][0])) + 0.005:
+                best_nm = "monetary"
+        m_best, Xrun, driver_names = scored[best_nm]
+        log.append(f"→ plata: spec elegida = {best_nm} (IC={_ic(m_best):+.3f}, vr={m_best['var_ratio']:.3f})")
+        used_copper = "hg_orth" in driver_names
+        extra = {"copper": used_copper, "spec": best_nm}
+        if has_copper and not used_copper:
+            extra["copper_available"] = True
 
     # ---- calibración de δ por walk-forward (o δ fijo por CLI)
     if fixed_delta is not None:
