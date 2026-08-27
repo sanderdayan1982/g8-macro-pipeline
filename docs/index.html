@@ -266,7 +266,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.3 — 8/8 · DQM · real spread-z · availability log · NZD manual-editable · 7-ccy ACM K=5 · metals display-gate · stale-leg badges · weighted health · disclaimer · metals auto-pipeline (weekly)</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.4 — 8/8 · DQM · CHF live (FRED OECD) · metals spec-select (official demand + real break) · BE refreshed · availability-log fix · disclaimer · metals auto-pipeline (weekly)</span>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -701,12 +701,15 @@ var FEED_REGISTRY = {
        German inflation-linked Bunds; fetch_eur_real.py interpolates their real yields
        to 10Y (and the nominal Bunds to NOM10), so RY_G8_EUR.csv carries NOM10/REAL10/BE10
        just like USD/GBP/CAD/AUD. QUALITY=PROXY_DE_INTERP (DE-only, 10Y interpolated). */
-    CHF_NOM_SNB: {
-        name: 'CHF Nominal 10Y (manual — TVC:CH10Y)',
-        urls: [], source: 'Manual input — TradingView TVC:CH10Y (SNB cube frozen 2025-07)',
-        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, liveCcy: 'CHF', value: 0.399, lastDate: '2026-06-13',
-        manualLink: 'https://data.snb.ch/en/topics/ziredev/cube/rendoblid'
-    },
+    /* CHF nominal now LIVE from FRED OECD 10Y (monthly) via the attribution module,
+       replacing the frozen SNB cube. externalReport: the §01 module reports its
+       freshness; monthly cadence so the budget spans ~2 months. (audit 2026-08) */
+    CHF_NOM_SNB: Object.assign({
+        name: 'CHF Nominal 10Y (FRED OECD IRLTLT01CHM156N)',
+        urls: [], source: 'FRED OECD 10Y govt yield (monthly) — via Netlify proxy; SNB cube frozen fallback',
+        frequency: 'monthly', maxStaleness: 45, section: '01', liveCcy: 'CHF',
+        manualLink: 'https://fred.stlouisfed.org/series/IRLTLT01CHM156N'
+    }, { externalReport: true }),
     NZD_NOM_RBNZ: {
         name: 'NZD Nominal 10Y (manual — RBNZ B2 10Y)',
         urls: [], source: 'Manual input — RBNZ B2 “10 year” col (datacenter ASN blocked)',
@@ -728,8 +731,10 @@ var FEED_REGISTRY = {
     USD_BE_FRED:   { name: 'USD Breakeven 10Y (T10YIE — fallback)', urls: ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10YIE'], source: 'FRED', corsOk: false, frequency: 'daily', maxStaleness: 4, section: '01', onDemand: true },
 
     /* ── manual constants (SYNTHETIC by construction) ──────────────────── */
-    CHF_BE_MANUAL: manualConst('CHF Breakeven (SNB conditional CPI fcst)', 1.0, '2026-03-19', 'https://www.snb.ch/en/the-snb/mandates-goals/monetary-policy/decisions'),
-    NZD_BE_MANUAL: manualConst('NZD Breakeven (RBNZ Survey of Expectations 2Y)', 2.1, '2026-05-15', 'https://www.rbnz.govt.nz/statistics/series/economic-indicators/survey-of-expectations'),
+    /* refreshed 2026-08 (audit): CHF → SNB Jun-2026 conditional forecast (0.6/0.6/0.7% '26/'27/'28,
+       0.7% long horizon); NZD → RBNZ Survey of Expectations Q3-2026 2Y = 2.34%. */
+    CHF_BE_MANUAL: manualConst('CHF Breakeven (SNB conditional CPI fcst)', 0.7, '2026-06-18', 'https://www.snb.ch/en/the-snb/mandates-goals/monetary-policy/decisions'),
+    NZD_BE_MANUAL: manualConst('NZD Breakeven (RBNZ Survey of Expectations 2Y)', 2.34, '2026-08-13', 'https://www.rbnz.govt.nz/statistics/series/economic-indicators/survey-of-expectations'),
 
     /* ── 02 floor spreads — repo ───────────────────────────────────────── */
     SOFR:  repo('SOFR.csv',  'SOFR fixing',  'daily', 4, '02'),
@@ -1026,11 +1031,22 @@ function persistAudit(h) {
         var KEY = 'g8dqm_audit_v1';
         var log = JSON.parse(localStorage.getItem(KEY) || '[]');
         var stamp = new Date().toISOString().slice(0, 16);
-        if (!log.length || log[log.length - 1].t.slice(0, 10) !== stamp.slice(0, 10)) {
-            log.push({ t: stamp, h: h.healthy, w: h.watch, b: h.broken, n: h.total });
+        var today = stamp.slice(0, 10);
+        var entry = { t: stamp, h: h.healthy, w: h.watch, b: h.broken, n: h.total };
+        var lastIsToday = log.length && log[log.length - 1].t.slice(0, 10) === today;
+        if (lastIsToday) {
+            /* audit v2.5.4 (H — availability strip): the day's entry used to be FROZEN
+               at the first render, which happens BEFORE any feed resolves (0/0), so the
+               strip read "today 0/1 healthy" all day on a green board. Update today's
+               entry with the most COMPLETE reading seen (largest denominator = fully
+               loaded board), so it converges to the real state instead of the pre-load one. */
+            var prev = log[log.length - 1];
+            if (h.total >= (prev.n || 0)) log[log.length - 1] = entry;
+        } else {
+            log.push(entry);
             if (log.length > 90) log = log.slice(-90);
-            localStorage.setItem(KEY, JSON.stringify(log));
         }
+        localStorage.setItem(KEY, JSON.stringify(log));
     } catch (e) { /* private mode / quota — non-fatal */ }
 }
 
@@ -1223,8 +1239,8 @@ var RY_QUALITY = {
 var RY_CCYS = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1 };
 
 var BE_CONST = {   /* keep in sync with DQM manual feeds */
-    CHF: { v: 1.0, src: 'SNB conditional CPI forecast', asOf: '2026-03' },
-    NZD: { v: 2.1, src: 'RBNZ Survey of Expectations 2Y', asOf: '2026-05' }
+    CHF: { v: 0.7, src: 'SNB conditional CPI forecast (Jun-2026)', asOf: '2026-06' },
+    NZD: { v: 2.34, src: 'RBNZ Survey of Expectations 2Y (Q3-2026)', asOf: '2026-08' }
 };
 
 /* ── Manual nominal overrides (CHF / NZD) — editable in-page, persisted ──
@@ -1639,8 +1655,8 @@ function build(data) {
             ? ' <span class="attr-mix" title="legs sampled on different dates: ' + uniq.join(', ') +
               ' — cross-leg arithmetic (NOM−REAL=BE) mixes vintages">⚠ mixed as-of</span>'
             : '';
-        var frozenFlag = (c === 'CHF')
-            ? ' <span class="attr-mix" title="CHF ACM &amp; nominal frozen at the SNB cube 2025-07 — this spread is measured against a >1-year-old level, not a live cross-market read; treat as informative only">FROZEN</span>'
+        var frozenFlag = (c === 'CHF' && d.frozen)
+            ? ' <span class="attr-mix" title="CHF fell back to the frozen SNB-cube ACM (2025-07) — FRED 10Y fetch failed this load; spread is vs a >1-year-old level, informative only">FROZEN</span>'
             : '';
         html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + frozenFlag + '</td>' +
             '<td>' + sp(d.nom, usd.nom) + '</td>' +
@@ -1654,7 +1670,7 @@ function build(data) {
         '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
         'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE) · ' +
         'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
-        '<b style="color:#9d7bd8">NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. NZD source RBNZ B2 “10 year” column (datacenter ASN blocked). CHF now uses the own ACM K=5 (NOM/RNY/TP from the CHF zero-coupon curve; SNB cube frozen 2025-07).</div>';
+        '<b style="color:#9d7bd8">NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. NZD source RBNZ B2 “10 year” column (datacenter ASN blocked). CHF nominal = FRED OECD 10Y (IRLTLT01CHM156N, monthly) with an EUR anchor-proxy TP — revived from the frozen SNB cube; falls back to the frozen own-ACM K=5 (flagged FROZEN) only if the FRED fetch fails.</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
 
@@ -1672,6 +1688,17 @@ function build(data) {
         inp.addEventListener('change', commit);
         inp.addEventListener('click', function (e) { e.stopPropagation(); });
     });
+}
+
+/* FRED fredgraph.csv (2 cols: date, value). '.' = missing. (audit 2026-08 — CHF) */
+function parseFredCsv(text) {
+    var p = Papa.parse(String(text).trim(), { header: true, skipEmptyLines: true });
+    var cols = (p.meta && p.meta.fields) || [];
+    var dcol = cols[0], vcol = cols[1];
+    if (!dcol || !vcol) return [];
+    return p.data.map(function (r) { return { d: r[dcol], v: parseFloat(r[vcol]) }; })
+        .filter(function (x) { return x.d && isFinite(x.v); })
+        .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
 }
 
 /* ── orchestration ──────────────────────────────────────────────────── */
@@ -1695,9 +1722,16 @@ function init() {
        it fetches RY_G8_EUR.csv and parseRy()s it exactly like USD/GBP/CAD/AUD.
        The former in-browser ECB monthly-benchmark fetch was removed 2026-06-26. */
 
-    /* CHF & NZD nominals are MANUAL inputs (SNB cube frozen 2025-07, RBNZ B2
-       blocks datacenter ASNs incl. Netlify and Azure/GH runners). No network
-       attempt — values come from localStorage via manualGet() in assemble(). */
+    /* CHF nominal 10Y — LIVE from FRED OECD (IRLTLT01CHM156N, monthly) via the
+       same-origin Netlify FRED proxy (corsOk:false). Revives CHF from the frozen SNB
+       cube; assemble() builds an EUR anchor-proxy TP from it. Falls back to the frozen
+       own-ACM if the fetch fails. NZD stays manual (RBNZ blocks datacenter ASNs). */
+    if (window.G8NET && window.G8NET.fetchChain) {
+        jobs.push(window.G8NET.fetchChain(
+            ['https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01CHM156N'], { corsOk: false })
+            .then(function (r) { if (r && r.ok && r.text) raw.chfFred = parseFredCsv(r.text); })
+            .catch(function (e) { console.warn('[attr] CHF FRED', e.message); }));
+    }
 
     Promise.all(jobs).then(function () { window.__G8raw = raw; assemble(raw); });
 }
@@ -1746,20 +1780,40 @@ function assemble(raw) {
        + MoF coupon) vs the 10Y nominal — the MoF's own official BEI methodology,
        routed through a Cloudflare Worker proxy. Former SYNTH_BE_CONST block removed. */
 
-    /* CHF — now a FULL ACM currency (own K=5 engine, ACM_G8_CHF ∈ REPO_ACM).
-       NOM(fitted)/RNY/TP already set by the generic repo loop above from the real
-       CHF zero-coupon ACM. Here we only add the manual SNB-forecast breakeven + real,
-       and flag the as-of: the SNB rendoblid cube is frozen at 2025-07, so CHF lags the
-       live currencies — that lag is honest, not a bug. NZD stays manual (RBNZ blocked). */
-    if (data.CHF && raw.CHF && raw.CHF.acm) {
+    /* CHF — LIVE from FRED OECD 10Y (IRLTLT01CHM156N, monthly) + EUR anchor-proxy TP.
+       Revives CHF from the frozen SNB cube (2025-07): NOM is the fetched monthly yield,
+       TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR), real=NOM−BE_const. Falls back to the frozen
+       own-ACM K=5 (flagged FROZEN) if the FRED fetch failed. (audit 2026-08) */
+    if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm) {
+        var chfNom = raw.chfFred;
+        var eurNomRy = raw.EUR.ry ? raw.EUR.ry.rows.map(function (r) {
+            var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
+        }) : null;
+        var tpCHF = proxyTP(chfNom, raw.EUR.acm, eurNomRy);
+        var chfBe = constBE(chfNom, BE_CONST.CHF.v);
+        var chfLast = isoNorm(chfNom[chfNom.length - 1].d);
+        data.CHF = {
+            nom: statsS(chfNom),
+            tp: statsS(tpCHF),
+            rny: statsS(minusSeries(chfNom, tpCHF)),
+            be: statsS(chfBe),
+            real: statsS(minusSeries(chfNom, chfBe)),
+            quality: 'PROXY · CH10Y', qkind: 'proxy',
+            asOf: chfLast.slice(0, 7) + ' · FRED',
+            formula: 'NOM=FRED OECD 10Y (IRLTLT01CHM156N, monthly) · TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
+        };
+        G8DQM.report('CHF_NOM_SNB', { lastDate: chfLast.replace(/-/g, ''), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'FRED CH10Y (OECD)' });
+    } else if (data.CHF && raw.CHF && raw.CHF.acm) {
+        /* fallback: frozen own-ACM K=5 (honest lag, flagged FROZEN in spreads) */
         var chfNomHist = raw.CHF.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
         data.CHF.be = statsS(constBE(chfNomHist, BE_CONST.CHF.v));
         data.CHF.real = statsS(minusSeries(chfNomHist, constBE(chfNomHist, BE_CONST.CHF.v)));
         data.CHF.quality = 'ACM K=5';
         data.CHF.qkind = 'synth';
         data.CHF.asOf = '2025-07 · SNB frozen';
+        data.CHF.frozen = true;
         data.CHF.formula = 'NOM/RNY/TP = own ACM K=5 (CHF zero-coupon) · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ') · as-of SNB frozen 2025-07';
-        G8DQM.report('CHF_NOM_SNB', { status: 'SYNTHETIC', lastDate: String(raw.CHF.acm[raw.CHF.acm.length - 1].DATE), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'ACM fitted (own K=5)' });
+        G8DQM.report('CHF_NOM_SNB', { status: 'SYNTHETIC', lastDate: String(raw.CHF.acm[raw.CHF.acm.length - 1].DATE), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'ACM fitted (own K=5, frozen)' });
     }
 
     /* NZD — manual nominal (RBNZ B2 "10 year") + AUD-anchored TP + manual BE */
@@ -2298,6 +2352,13 @@ function paint(metal, ids, st, rows) {
                                                         : 'MONETARY · copper absent');
         badges += '<span class="mfv-badge ' + (dual ? 'mfv-badge-ok' : 'mfv-badge-neutral') + '">' +
                   'MODEL: ' + lbl + '</span>';
+    }
+    // spec seleccionada por el dato (audit 2026-08): oro base vs enhanced (quiebre real
+    // + demanda oficial); plata monetary vs +macro/dual. Transparencia de qué ganó OOS.
+    if (st && st.spec) {
+        var richer = /enhanced|official|macro|dual/i.test(st.spec);
+        badges += '<span class="mfv-badge ' + (richer ? 'mfv-badge-ok' : 'mfv-badge-neutral') +
+                  '" title="especificación elegida por walk-forward OOS (que decide el dato)">SPEC: ' + st.spec + '</span>';
     }
 
     // ── HERO: traffic-light + MDP read ────────────────────────────────────
