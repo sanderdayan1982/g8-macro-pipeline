@@ -174,16 +174,62 @@ def _parse_sheet_date(name):
         return None
 
 
-def _row_bond(row, sheet_date):
-    """Devuelve (desc, residual_years, yield, is_linker) si la fila es un bono
-    valido; si no, None. Indices posicionales estables (validados):
-    [4]=desc  [5]=maturity DD.MM.YYYY  [9]=yield(%)  ('index.' en desc = linker)."""
-    if row is None or len(row) < 10:
+def _to_date(x):
+    """Normaliza a datetime.date desde CUALQUIER forma que use el Bundesbank:
+    objeto date/datetime (openpyxl data_only devuelve datetime en el layout nuevo
+    2026-07), string ISO 'YYYY-MM-DD[ ...]', o string 'DD.MM.YYYY' (layout viejo).
+    None si no parsea. (audit 2026-08: el rediseño de fin de junio paso las
+    fechas de texto DD.MM.YYYY a objeto datetime -> este helper cubre ambos.)"""
+    if x is None:
         return None
-    desc, mat, yld = row[4], row[5], row[9]
+    if isinstance(x, dt.datetime):
+        return x.date()
+    if isinstance(x, dt.date):
+        return x
+    if isinstance(x, str):
+        s = x.strip()
+        m = DATE_RE.match(s)                              # DD.MM.YYYY (viejo)
+        if m:
+            try: return dt.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+            except ValueError: return None
+        m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", s)      # ISO YYYY-MM-DD[...] (nuevo)
+        if m:
+            try: return dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            except ValueError: return None
+    return None
+
+
+def _is_linker(desc, isin):
+    """Detecta un Bund ligado a inflacion — SOLO por descripcion.
+    Layout nuevo (Bundesbank 2026-07): los linkers llevan prefijo 'DBRI' y sufijo
+    'I/L' (p.ej. 'DBRI 0.1 04/15/33 I/L'); su yield en la tabla es el yield REAL.
+    Los nominales normales, VERDES ('DBR … G') y GEMELOS ('DBR … TWI'/'… T') NO.
+    IMPORTANTE (audit 2026-08, confirmado con --diagnose sobre el fichero de agosto):
+    NO usar el prefijo de ISIN DE0001030 — esa familia incluye bonos VERDES
+    NOMINALES (p.ej. DE0001030708 'DBR 0 08/15/30 G', yield 2.87%) que se colaban
+    como linkers y contaminaban REAL10 con yields nominales. La descripcion es el
+    unico discriminador fiable: 'DBRI'/'I/L' (viejo layout: 'index.')."""
+    dl = (desc or '').lower()
+    return any(k in dl for k in ('dbri', 'i/l', 'index', 'inflation', 'linker', 'ilb'))
+
+
+# Layout posicional por defecto. Actualizado 2026-08 tras el rediseño Bundesbank:
+# ISIN=0 · Coupon=1 · Description=2 · Maturity=3 · Yield=7 (antes 4/5/9). El
+# auto-detector (autodetect_cols) recalibra igualmente si vuelve a cambiar.
+POS_ISIN, POS_DESC, POS_MAT, POS_YLD = 0, 2, 3, 7
+
+
+def _row_bond_at(row, sheet_date, desc_i, mat_i, yld_i):
+    """Como _row_bond pero con indices de columna CONFIGURABLES. Devuelve
+    (desc, residual_years, yield, is_linker) o None. Usado tanto por el layout
+    posicional como por el auto-detector de columnas (fallback)."""
+    n = len(row) if row is not None else 0
+    if n <= max(desc_i, mat_i, yld_i):
+        return None
+    desc, mat, yld = row[desc_i], row[mat_i], row[yld_i]
     if not isinstance(desc, str):
         return None
-    md = _parse_sheet_date(mat) if isinstance(mat, str) else None
+    md = _to_date(mat)
     if md is None:
         return None
     try:
@@ -195,8 +241,77 @@ def _row_bond(row, sheet_date):
     resid = (md - sheet_date).days / 365.25
     if resid <= 0:
         return None
-    is_linker = "index" in desc.lower()
-    return (desc.strip(), resid, y, is_linker)
+    isin = row[POS_ISIN] if n > POS_ISIN else ''
+    return (desc.strip(), resid, y, _is_linker(desc, isin))
+
+
+def _row_bond(row, sheet_date):
+    """Layout posicional validado (desc=4, mat=5, yield=9). 'index.' -> linker."""
+    if row is None or len(row) < 10:
+        return None
+    return _row_bond_at(row, sheet_date, POS_DESC, POS_MAT, POS_YLD)
+
+
+def _extract_bonds(rows, sheet_date, desc_i, mat_i, yld_i):
+    """Recorre las filas con un juego de indices dado y separa linkers/nominales."""
+    linkers, nominals = [], []
+    for row in rows:
+        b = _row_bond_at(row, sheet_date, desc_i, mat_i, yld_i)
+        if b is None:
+            continue
+        _desc, resid, y, is_linker = b
+        (linkers if is_linker else nominals).append((resid, y, _desc))
+    return linkers, nominals
+
+
+def autodetect_cols(rows, sheet_date):
+    """FALLBACK auto-calibrante (audit 2026-08).
+    El parser posicional [4]/[5]/[9] se rompe en silencio si el Bundesbank
+    inserta/mueve una columna (causa mas probable del feed congelado 2026-06-30,
+    con descubrimiento + red ya verificados OK). La columna de VENCIMIENTO es
+    inequivoca (muchas fechas DD.MM.YYYY futuras); la estructura interna de la
+    tabla es estable, asi que el yield esta a un offset fijo del vencimiento
+    (validado = +4) y la descripcion a -1. Se puntua cada combinacion candidata
+    por nº de bonos validos y se elige la que da >=2 linkers y >=2 nominales.
+    Devuelve (desc_i, mat_i, yld_i) o None. NUNCA se llama si el layout
+    posicional ya funciona -> no puede regresionar el caso sano."""
+    ncols = max((len(r) for r in rows if r), default=0)
+    if ncols < 6:
+        return None
+    # 1) localizar la columna de vencimiento: la que tiene mas fechas FUTURAS
+    #    (objeto datetime / ISO / DD.MM.YYYY — _to_date cubre las tres formas)
+    matscore = [0] * ncols
+    for r in rows:
+        if not r:
+            continue
+        for j in range(min(len(r), ncols)):
+            d = _to_date(r[j])
+            if d is not None and d > sheet_date:
+                matscore[j] += 1
+    if not any(matscore):
+        return None
+    mat = matscore.index(max(matscore))
+    # 2) confirmar offsets de yield/desc puntuando bonos validos
+    best = None
+    for dy in (4, 5, 3, 6, 2):          # offset yield vs vencimiento (validado +4)
+        for dd in (-1, -2):             # offset descripcion
+            yld, desc = mat + dy, mat + dd
+            if yld >= ncols or desc < 0:
+                continue
+            lk, nm = _extract_bonds(rows, sheet_date, desc, mat, yld)
+            if len(lk) >= 2 and len(nm) >= 2:
+                score = len(lk) + len(nm)
+                if best is None or score > best[0]:
+                    best = (score, desc, mat, yld, len(lk), len(nm))
+    if best:
+        sys.stderr.write("[autodetect] layout recalibrado -> desc=%d mat=%d yld=%d "
+                         "(%d linkers / %d nominales)\n"
+                         % (best[1], best[2], best[3], best[4], best[5]))
+        return best[1], best[2], best[3]
+    sys.stderr.write("[autodetect] no encontre un layout con >=2 linkers y >=2 nominales "
+                     "(mat col=%d). El Excel pudo cambiar de estructura mas alla de un "
+                     "desplazamiento de columnas; usa --diagnose.\n" % mat)
+    return None
 
 
 def _interp(points, x):
@@ -233,19 +348,24 @@ def compute_sheet(ws, sheet_date, strict=True, require_bracket=False,
     require_bracket=True -> ademas exige que 10Y caiga dentro del span de linkers
                             (+/- bracket_tol); si no, None (real seria extrapolacion
                             grande, no fiable). Guardarrail del backfill."""
-    linkers, nominals = [], []
-    for row in ws.iter_rows(values_only=True):
-        b = _row_bond(row, sheet_date)
-        if b is None:
-            continue
-        desc, resid, y, is_linker = b
-        (linkers if is_linker else nominals).append((resid, y, desc))
+    rows = list(ws.iter_rows(values_only=True))
+    # 1) intento con el layout posicional validado (comportamiento sin cambios)
+    linkers, nominals = _extract_bonds(rows, sheet_date, POS_DESC, POS_MAT, POS_YLD)
+
+    # 2) FALLBACK auto-calibrante (audit 2026-08): si el posicional ya no da datos
+    #    suficientes -> el Excel cambio de columnas. Se recalibra sobre esta misma
+    #    hoja y se reintenta. Solo entra en juego cuando el posicional falla.
+    if len(linkers) < 2 or len(nominals) < 2:
+        cols = autodetect_cols(rows, sheet_date)
+        if cols is not None:
+            linkers, nominals = _extract_bonds(rows, sheet_date, cols[0], cols[1], cols[2])
 
     if len(linkers) < 2 or len(nominals) < 2:
         if strict:
             raise RuntimeError("PARSEO FALLIDO: hoja %s con %d linkers / %d nominales "
-                               "(esperaba >=2 de cada)." % (sheet_date.isoformat(),
-                                                            len(linkers), len(nominals)))
+                               "(esperaba >=2 de cada; ni el layout posicional ni el "
+                               "auto-detector encontraron suficientes bonos)."
+                               % (sheet_date.isoformat(), len(linkers), len(nominals)))
         return None
 
     if require_bracket:
@@ -375,11 +495,59 @@ def _print_summary(result):
 # --------------------------------------------------------------------------- #
 # MAIN
 # --------------------------------------------------------------------------- #
+def diagnose(xlsx_bytes_or_path):
+    """Vuelca la estructura de la hoja mas reciente para depurar un cambio de
+    layout: nº de hojas, cabeceras/columnas por indice, que ve el parser
+    posicional y que ve el auto-detector. Uso: --diagnose (red) o --diagnose FILE."""
+    wb, dated = _sheets_by_date(xlsx_bytes_or_path)
+    sheet_date, sheet_name = dated[-1]
+    ws = wb[sheet_name]
+    rows = list(ws.iter_rows(values_only=True))
+    ncols = max((len(r) for r in rows if r), default=0)
+    print("Hojas con fecha : %d  ·  ultima = %s (%s)" % (len(dated), sheet_name, sheet_date.isoformat()))
+    print("Columnas (max)  : %d" % ncols)
+    print("\nTODAS las filas con datos (indice:valor, truncado) · ⟵LINKER? marca los que")
+    print("el detector cree ligados a inflacion (por descripcion o ISIN DE0001030…):")
+    for r in rows:
+        if not r or all(c is None or c == "" for c in r):
+            continue
+        cells = " | ".join("%d:%s" % (j, str(r[j])[:18]) for j in range(len(r)) if r[j] not in (None, ""))
+        isin = r[POS_ISIN] if len(r) > POS_ISIN else ''
+        desc = r[POS_DESC] if len(r) > POS_DESC else ''
+        mark = ' ⟵LINKER?' if (isinstance(desc, str) and _is_linker(desc, isin if isinstance(isin, str) else '')) else ''
+        print("  " + cells[:210] + mark)
+    lk, nm = _extract_bonds(rows, sheet_date, POS_DESC, POS_MAT, POS_YLD)
+    print("\nPosicional [desc=%d mat=%d yld=%d] -> %d linkers / %d nominales" % (POS_DESC, POS_MAT, POS_YLD, len(lk), len(nm)))
+    if lk:
+        print("  linkers detectados:")
+        for r_, y_, d_ in sorted(lk):
+            print("    %-24s %5.2fy  real %.3f%%" % (d_, r_, y_))
+    cols = autodetect_cols(rows, sheet_date)
+    if cols:
+        lk2, nm2 = _extract_bonds(rows, sheet_date, cols[0], cols[1], cols[2])
+        print("Auto-detector    -> desc=%d mat=%d yld=%d  ·  %d linkers / %d nominales"
+              % (cols[0], cols[1], cols[2], len(lk2), len(nm2)))
+    else:
+        print("Auto-detector    -> sin layout valido (revisa el volcado de columnas arriba)")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="EUR(DE) real 10Y diario desde Bundesbank linkers")
     ap.add_argument("--test", metavar="XLSX", help="valida el parseo contra un XLSX local (no escribe, no freshness)")
     ap.add_argument("--dry-run", action="store_true", help="descubre+descarga+parsea, imprime, NO escribe")
+    ap.add_argument("--diagnose", nargs="?", const="__net__", metavar="XLSX",
+                    help="vuelca la estructura de la hoja mas reciente (red, o un XLSX local) para depurar layout")
     args = ap.parse_args()
+
+    # Modo diagnose: estructura de columnas (local o descargando el mes vigente)
+    if args.diagnose:
+        if args.diagnose == "__net__":
+            url, ym = discover_xlsx_url()
+            sys.stderr.write("[discover] XLSX %04d-%02d -> %s\n" % (ym[0], ym[1], url))
+            import io
+            return diagnose(io.BytesIO(http_bytes(url)))
+        return diagnose(args.diagnose)
 
     # Modo test: parsea un fichero local, sin red, sin escribir, sin gate
     if args.test:
