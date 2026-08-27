@@ -1,0 +1,71 @@
+# .github/workflows/metals_update.yml
+# Metals Fair Value / MDP (§06 Gold · §07 Silver) — fully automatic.
+# metals_fairvalue_g8.py v3 (Kalman TVP under MMT). Prices come from Yahoo/Stooq
+# (headless), NFA from Treasury/FRED, breakeven from data/RY_G8_USD.csv, slope+DXY
+# from FRED — no local TradingView exports needed. Weekly cadence (COT is W-TUE).
+name: Metals Fair Value (MDP)
+
+on:
+  schedule:
+    # Saturdays 07:00 UTC — after Friday's CFTC COT release; the model anchors to
+    # the Tuesday-COT grid, so once a week keeps §06/§07 within their weekly budget.
+    - cron: '0 7 * * 6'
+  workflow_dispatch:   # manual "Run workflow" button
+
+concurrency:
+  group: metals-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  metals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute metals fair value (XAU + XAG)
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}   # optional; keyless FRED CSV fallback if unset
+        run: python scripts/metals_fairvalue_g8.py
+
+      - name: Commit updated metals data
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # only the metals outputs — never touch other pipelines' files
+          git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json 2>/dev/null || true
+          git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv 2>/dev/null || true
+
+          if git diff --staged --quiet; then
+            echo "No metals changes — skipping commit"
+            exit 0
+          fi
+          git commit -m "chore: weekly metals fair value update $(date -u '+%Y-%m-%d')"
+
+          for attempt in 1 2 3 4 5; do
+            echo "Push attempt $attempt"
+            git pull --rebase origin main
+            if git push origin main; then
+              echo "✓ pushed on attempt $attempt"; exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "✗ push failed after 5 attempts"; exit 1
