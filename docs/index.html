@@ -434,6 +434,223 @@
     </div>
 </section>
 
+<!-- ===== SECTION 09 — COT POSITIONING (added) ===== -->
+<style>
+/* only new CSS — everything else inherits attr-table/attr-ccy/attr-val/dqm-bar */
+.cot-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;
+    font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:2px;border:1px solid #1c2433}
+.cot-crowd{background:#221a05;color:#fdb813;border-color:#3a2e08}
+.cot-stretch{background:#221608;color:#ff8c42;border-color:#3a2410}
+.cot-neutral{background:#0c1119;color:#5d6678}
+.cot-na{background:#2a0e14;color:#ff5c72;border-color:#3a1620}
+.cot-div{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+    background:#0e1c22;color:#5d8aa8;border:1px solid #1c3340;border-radius:2px;padding:1px 5px}
+.cot-sub{color:#5d6678}
+.cot-metalhdr td{background:#0c1119;color:#fdb813;font-family:'IBM Plex Sans Condensed',sans-serif;
+    font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    text-align:left !important;padding:8px 14px !important}
+</style>
+
+<section class="dashboard-section" id="section-cot">
+    <div class="section-header">
+        <h2 class="section-title">09 — COT Positioning G8 (TFF · Managed Money)</h2>
+        <span class="section-meta">CFTC direct · TFF Leveraged Funds/Asset Mgrs + Disagg Managed Money · Z-156w fx/gold · Z-104w silver · Fri(Tue)</span>
+    </div>
+    <div class="section-body">
+        <div id="cot-panel">
+            <div class="attr-err" style="color:#5d6678">Loading COT positioning — pos_g8_cot.json (repo)…</div>
+        </div>
+    </div>
+    <div class="section-footer">
+        <span class="section-meta">who is already inside the trade · positioning flow (weeks/months), context filter never a trigger</span>
+    </div>
+</section>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   COT POSITIONING — Section 09 module · v1.0.0
+   Reads data/pos_g8_cot.json (built by pos_g8_cot_collector.py).
+   Same question as the POS-G8 v1.1.3 Pine study, enriched with the metrics the
+   Pine environment can't compute: COT index, empirical percentile, % of OI,
+   LF/AM divergence, positioning velocity (Δ4w/Δ13w), time-in-state.
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var GREEN = '#2fbf71', RED = '#e0485a', MUTE = '#5d6678', GOLD = '#fdb813', AMBER = '#ff8c42';
+
+function k(x) {
+    if (x == null || !isFinite(x)) return '<span class="cot-sub">·</span>';
+    return (x >= 0 ? '+' : '') + (x / 1000).toFixed(1) + 'k';
+}
+function z(x) {
+    if (x == null || !isFinite(x)) return '·';
+    return (x >= 0 ? '+' : '') + x.toFixed(2);
+}
+function pctOI(x) {
+    if (x == null || !isFinite(x)) return '<span class="cot-sub">·</span>';
+    return (x >= 0 ? '+' : '') + x.toFixed(1) + '%';
+}
+function idx(x)  { return (x == null || !isFinite(x)) ? '·' : x.toFixed(0); }
+function pcti(x) { return (x == null || !isFinite(x)) ? '·' : x.toFixed(0); }
+
+function netCol(x) { return x == null ? MUTE : x > 0 ? GREEN : x < 0 ? RED : MUTE; }
+
+function zCell(zz, warn, ext) {
+    if (zz == null || !isFinite(zz)) return '<td class="cot-sub">·</td>';
+    var a = Math.abs(zz);
+    var c = a >= ext ? GOLD : a >= warn ? AMBER : zz > 0 ? GREEN : RED;
+    return '<td style="color:' + c + '">' + z(zz) + '</td>';
+}
+
+function stateBadge(s) {
+    var cls = 'cot-neutral', t = s || 'NA';
+    if (s === 'CROWD LONG' || s === 'CROWD SHORT') cls = 'cot-crowd';
+    else if (s === 'STRETCH+' || s === 'STRETCH-') cls = 'cot-stretch';
+    else if (!s || s === 'NA') cls = 'cot-na';
+    return '<span class="cot-badge ' + cls + '">' + t + '</span>';
+}
+
+/* COT index 0-100: color the number by extreme (>85 crowd-long / <15 crowd-short) */
+function idxCell(v) {
+    if (v == null || !isFinite(v)) return '<td class="cot-sub">·</td>';
+    var c = v >= 85 ? GOLD : v <= 15 ? GOLD : v >= 70 || v <= 30 ? AMBER : MUTE;
+    return '<td style="color:' + c + '">' + idx(v) + '</td>';
+}
+
+function velCell(x) {
+    if (x == null || !isFinite(x)) return '<td class="cot-sub">·</td>';
+    var c = x > 0 ? GREEN : x < 0 ? RED : MUTE;
+    return '<td style="color:' + c + '">' + k(x) + '</td>';
+}
+
+function inStateCell(n) {
+    if (n == null) return '<td class="cot-sub">·</td>';
+    return '<td class="cot-sub">' + n + 'w</td>';
+}
+
+function ccyRow(r) {
+    var warn = 1.5, ext = 2.0;  /* fx thresholds (mirror POS-G8) */
+    var div = r.divergence ? ' <span class="cot-div" title="Leveraged Funds and Asset Managers positioned on opposite sides — fast money vs structural money disagree">DIV</span>' : '';
+    return '<tr>' +
+        '<td><span class="attr-ccy">' + r.ccy + (r.proxy ? '°' : '') + '</span>' + div + '</td>' +
+        '<td style="color:' + netCol(r.lf_net) + '">' + k(r.lf_net) + '</td>' +
+        zCell(r.lf_z, warn, ext) +
+        idxCell(r.lf_cot_index) +
+        '<td class="cot-sub">' + pcti(r.lf_pctile) + '</td>' +
+        '<td style="color:' + netCol(r.lf_pct_oi) + '">' + pctOI(r.lf_pct_oi) + '</td>' +
+        velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
+        '<td style="color:' + netCol(r.am_net) + '">' + k(r.am_net) + '</td>' +
+        zCell(r.am_z, warn, ext) +
+        '<td style="text-align:left">' + stateBadge(r.state) + '</td>' +
+        inStateCell(r.time_in_state) +
+        '</tr>';
+}
+
+function metalRow(r, thr) {
+    var warn = thr.warn, ext = thr.ext;
+    return '<tr>' +
+        '<td><span class="attr-ccy" style="color:' + (r.ccy === 'XAU' ? GOLD : '#c5ccd6') + '">' + r.ccy + '</span></td>' +
+        '<td style="color:' + netCol(r.mm_net) + '">' + k(r.mm_net) + '</td>' +
+        zCell(r.mm_z, warn, ext) +
+        idxCell(r.mm_cot_index) +
+        '<td class="cot-sub">' + pcti(r.mm_pctile) + '</td>' +
+        '<td style="color:' + netCol(r.mm_pct_oi) + '">' + pctOI(r.mm_pct_oi) + '</td>' +
+        velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
+        '<td class="cot-sub">·</td><td class="cot-sub">·</td>' +
+        '<td style="text-align:left">' + stateBadge(r.state) + '</td>' +
+        inStateCell(r.time_in_state) +
+        '</tr>';
+}
+
+function render(doc) {
+    var el = document.getElementById('cot-panel');
+    var f = doc.freshness || {};
+    var fc = f.status === 'FRESH' ? GREEN : f.status === 'AGING' ? AMBER : RED;
+    var thr = doc.thresholds || {};
+
+    var html = '<div class="dqm-bar" style="margin-bottom:12px">' +
+        '<span class="dqm-ts">report ' + (doc.report_date || '—') +
+        ' · <span style="color:' + fc + ';font-weight:700">' + (f.status || 'NA') + '</span>' +
+        (f.age_days != null ? ' (' + f.age_days + 'd)' : '') +
+        ' · generated ' + (doc.generated_utc || '—') + '</span>' +
+        '<span class="dqm-ts cot-sub">' + (doc.source || '') + '</span></div>';
+
+    html += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' +
+        '<th>CCY</th><th>LF NET</th><th>LF Z</th>' +
+        '<th title="COT index 0-100 (Williams: position in own 3y min-max)">COTi</th>' +
+        '<th title="Empirical percentile in own window — distribution-free">%ile</th>' +
+        '<th title="Net as % of open interest — cross-currency comparable">%OI</th>' +
+        '<th title="Δ vs previous distinct COT print">Δprt</th>' +
+        '<th title="Net change over 4 weeks">Δ4w</th>' +
+        '<th title="Net change over 13 weeks">Δ13w</th>' +
+        '<th>AM NET</th><th>AM Z</th><th style="text-align:left">STATE</th>' +
+        '<th title="Weeks held in current state">held</th></tr></thead><tbody>';
+
+    (doc.currencies || []).forEach(function (r) { html += ccyRow(r); });
+    if (doc.usd) html += ccyRow(doc.usd);
+
+    if ((doc.metals || []).length) {
+        html += '<tr class="cot-metalhdr"><td colspan="13">── METALS · MM (Managed Money) ──</td></tr>';
+        (doc.metals || []).forEach(function (r) {
+            var t = (thr[r.ccy]) || { warn: 1.6, ext: 2.25 };
+            html += metalRow(r, t);
+        });
+    }
+
+    html += '</tbody></table></div>';
+
+    var fxt = thr.fx || { warn: 1.5, ext: 2.0 };
+    html += '<div class="attr-note">' +
+        '<b style="color:#d7dce6">Who is already inside the trade.</b> ' +
+        'LF = Leveraged Funds (fast money) · AM = Asset Managers (structural) · MM = Managed Money (metals). ' +
+        'STATE on LF Z: CROWD ≥ ' + fxt.ext + 'σ · STRETCH ≥ ' + fxt.warn + 'σ ' +
+        '<span style="color:' + AMBER + '">[fx PROV]</span> · metals <span style="color:' + GREEN + '">[CAL]</span>. ' +
+        '<b>COTi</b> 0-100 Williams · <b>%ile</b> empirical percentile (distribution-free, robust for non-normal metals) · ' +
+        '<b>%OI</b> net as % open interest (comparable across currencies) · <b>Δprt</b> vs previous distinct print · ' +
+        '<b>Δ4w/Δ13w</b> positioning velocity · <b>DIV</b> = LF and AM on opposite sides · <b>held</b> = weeks in state.<br>' +
+        '<b style="color:#d7dce6">Cross-read:</b> a suite signal (IYDT/RTF10) in the SAME direction as a CROWD state = <b style="color:' + AMBER + '">exhausted</b> (everyone already in); ' +
+        'in the OPPOSITE direction = <b style="color:' + GREEN + '">squeeze fuel</b>. For metals, cross with the §06/07 MDP residual: MM CROWD + stretched residual = exhausted; MM CROWD against the residual = squeeze fuel.' +
+        '</div>';
+
+    el.innerHTML = html;
+
+    if (window.G8DQM && window.G8DQM.report) {
+        try {
+            window.G8DQM.report('POS_COT', { lastDate: doc.report_date, via: 'repo (cot module v1)' });
+        } catch (e) { /* non-fatal */ }
+    }
+}
+
+async function init() {
+    var el = document.getElementById('cot-panel');
+    try {
+        var r = await window.G8NET.fetchChain([RAW + 'pos_g8_cot.json'], { corsOk: true });
+        if (!r.ok) throw new Error(r.error || 'fetch failed');
+        render(JSON.parse(r.text));
+    } catch (e) {
+        el.innerHTML = '<div class="attr-err">pos_g8_cot.json unreachable — ' + e.message +
+            ' · run pos_g8_cot_collector.py (or its GH Action) to publish data/pos_g8_cot.json</div>';
+        if (window.G8DQM && window.G8DQM.report) {
+            try { window.G8DQM.report('POS_COT', { status: 'DEAD', error: e.message }); } catch (e2) {}
+        }
+    }
+}
+
+function boot(tries) {
+    tries = tries || 0;
+    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) {
+        return setTimeout(function () { boot(tries + 1); }, 120);
+    }
+    init();
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { boot(0); });
+} else { boot(0); }
+})();
+</script>
+
     <!-- ══ LEGACY (hidden — containers kept so charts.js init stays intact) -->
     <div class="legacy-hidden" aria-hidden="true">
         <section class="dashboard-section" id="section-rfr">
@@ -764,6 +981,14 @@ var FEED_REGISTRY = {
 
     OPTIONS_SURFACE: Object.assign(
         repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '08'),
+        { externalReport: true }),
+
+    /* ── 09 COT positioning — repo (pos_g8_cot_collector.py) ──────────────
+       Weekly (COT W-TUE), published Friday; budget 10bd spans a week + slack.
+       externalReport: the §09 module parses the JSON date and reports its own
+       freshness (extractLastDate can't read a JSON), same as OPTIONS_SURFACE. */
+    POS_COT: Object.assign(
+        repo('pos_g8_cot.json', 'COT Positioning G8 (TFF + Disagg MM)', 'weekly', 10, '09'),
         { externalReport: true })
     /* CHF_BILL_3M deregistered 2026-06-26 — orphan feed: no rendered section
        consumed it (§02 has no CHF row: no FLOOR_CHF and no SARON fixing) and no
