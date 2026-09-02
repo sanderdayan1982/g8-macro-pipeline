@@ -27,17 +27,62 @@ MIN_WEEKS = 4
 MAX_DISCREPANCY_PCT = 10.0
 
 
+# ── adapters: turn a raw TradingView export into (data_date, key, state_pine) ──
+def _generic(pine):
+    state_cols = [c for c in pine.columns if c.endswith("_state")]
+    long = pine.melt(id_vars=["data_date"], value_vars=state_cols, var_name="key", value_name="state_pine")
+    long["key"] = long["key"].str.replace("_state", "", regex=False)
+    return long
+
+
+def _pos_g8(pine):
+    """POS-G8 v1.1.3 exports LANES, not states: plot = lane + clip(z * 0.9 / z_cap), z_cap = 3.
+    z = (plot - lane) / 0.3 ; state via the frozen thresholds (fx 1.5/2.0, XAU 1.68/2.29, XAG 1.61/2.25)."""
+    LANE = {"USD°": 16, "EUR": 14, "GBP": 12, "JPY": 10, "AUD": 8, "NZD": 6, "CAD": 4, "CHF": 2, "XAU": 18, "XAG": 20}
+    THR = {"XAU": (1.68, 2.29), "XAG": (1.61, 2.25)}
+
+    def st(z, w, e):
+        if pd.isna(z):
+            return "NA"
+        return "CROWD LONG" if z >= e else "STRETCH+" if z >= w else "CROWD SHORT" if z <= -e else "STRETCH-" if z <= -w else "NEUTRAL"
+
+    recs = []
+    for col, lane in LANE.items():
+        if col not in pine.columns:
+            continue
+        key = col.rstrip("°")
+        w, e = THR.get(key, (1.5, 2.0))
+        z = (pine[col].astype(float) - lane) / 0.3
+        recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": [st(v, w, e) for v in z]}))
+    long = pd.concat(recs, ignore_index=True)
+    # A COT report dated Tuesday R is released Friday R+3 and reaches the TradingView mirror
+    # the following days; the Pine bar on R+9 (next Thursday) is stable and unambiguous.
+    long["report_date"] = long["data_date"] - pd.Timedelta(days=9)
+    return long
+
+
+ADAPTERS = {"pos_g8": _pos_g8}
+
+
 def main(script):
     script = script.lower()
+    if not script.endswith(("_2y", "_10y", "_g8")):
+        script += "_g8"          # POS -> pos_g8 (state file stems)
     pine = pd.read_csv(TWIN / ("%s_pine.csv" % script))
     py = pd.read_csv(TWIN / ("%s_py_history.csv" % script), parse_dates=["data_date"])
     pine["data_date"] = pd.to_datetime(pine["time"], unit="s", errors="coerce").fillna(pd.to_datetime(pine["time"], errors="coerce")).dt.normalize()
 
-    state_cols = [c for c in pine.columns if c.endswith("_state")]
-    long = pine.melt(id_vars=["data_date"], value_vars=state_cols, var_name="key", value_name="state_pine")
-    long["key"] = long["key"].str.replace("_state", "", regex=False)
+    long = ADAPTERS[script](pine) if script in ADAPTERS else _generic(pine)
     py = py.rename(columns={"ccy_or_pair": "key", "state": "state_py"})
-    m = long.merge(py, on=["data_date", "key"], how="inner")
+    if "report_date" in long.columns:
+        # keep, per (report_date, key), the Pine bar closest to the R+9 anchor
+        long = long.sort_values("data_date")
+        py["report_date"] = py["data_date"]
+        m = pd.merge_asof(py.sort_values("report_date"), long.drop(columns=["data_date"]).sort_values("report_date"),
+                          on="report_date", by="key", direction="nearest", tolerance=pd.Timedelta(days=3))
+        m = m.dropna(subset=["state_pine"])
+    else:
+        m = long.merge(py, on=["data_date", "key"], how="inner")
     if m.empty:
         raise SystemExit("twin-test %s: no overlapping bars — check export and history" % script)
 
