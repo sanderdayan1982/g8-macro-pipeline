@@ -71,4 +71,4 @@ jobs:
       # ── principle 9: any failure above → Telegram ───────────────────────────
       - name: Alert on failure
         if: failure()
-        run: python scripts/notify_telegram.py --fail "step failed: cot=${{ steps.cot.outcome }} pos=${{ steps.pos.outcome }}"
+        run: python scripts/notify_telegram.py --fail "cot=${{ steps.cot.outcome }} pos=${{ steps.pos.outcome }}"
