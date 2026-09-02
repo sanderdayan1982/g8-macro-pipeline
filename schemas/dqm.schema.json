@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "G8 PORT — Data Quality Monitor state (data/state/dqm.json)",
+  "description": "Written by scripts/dqm.py every run from sources/registry.csv + data/. Replaces the in-browser FEED_REGISTRY checks (principle 1). One entry per feed; the front only renders.",
+  "type": "object",
+  "required": ["generated_at", "run_id", "commit", "global_health", "counts", "feeds", "pipeline_alerts"],
+  "properties": {
+    "generated_at": { "type": "string", "format": "date-time" },
+    "run_id":  { "type": "string" },
+    "commit":  { "type": "string" },
+    "global_health": { "type": "number", "minimum": 0, "maximum": 100, "description": "Weighted by registry.weight. Manual expired counts as 0.5, STALE 0.5, DEAD 0." },
+    "counts": {
+      "type": "object",
+      "required": ["LIVE","PROXY","MANUAL","STALE","DEAD","MANUAL_EXPIRED"],
+      "additionalProperties": { "type": "integer" }
+    },
+    "feeds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["feed_id","section","name","frequency","calendar","max_staleness_bd","last_data_date","age_bd","quality","source_used","consumers"],
+        "properties": {
+          "feed_id":          { "type": "string" },
+          "section":          { "type": "string", "pattern": "^[0-9]{2}$" },
+          "name":             { "type": "string" },
+          "frequency":        { "type": "string", "enum": ["intraday","daily","weekly","monthly","event-driven","manual"] },
+          "calendar":         { "type": "string" },
+          "max_staleness_bd": { "type": "integer" },
+          "last_data_date":   { "type": ["string","null"], "format": "date" },
+          "age_bd":           { "type": ["integer","null"] },
+          "quality":          { "type": "string", "enum": ["LIVE","PROXY","MANUAL","STALE","DEAD","MANUAL_EXPIRED"] },
+          "source_used":      { "type": "string", "enum": ["PRIMARY","FALLBACK","MANUAL","NONE"] },
+          "last_value":       { "type": ["number","null"] },
+          "plausibility":     { "type": "string", "enum": ["OK","REJECTED_RANGE","REJECTED_JUMP","NOT_CHECKED"] },
+          "manual_expires":   { "type": ["string","null"], "format": "date" },
+          "consumers":        { "type": "array", "items": { "type": "string" }, "description": "Generators that read this feed. Used to raise per-script alerts." },
+          "note":             { "type": ["string","null"] }
+        }
+      }
+    },
+    "pipeline_alerts": {
+      "type": "array",
+      "description": "Principle 9. Each item is one Telegram line. Classes: FEED_DEAD_2D, GENERATOR_BROKEN, BRIEF_NOT_GENERATED, MANUAL_EXPIRED, PLAUSIBILITY_REJECT.",
+      "items": {
+        "type": "object",
+        "required": ["class","feed_id","message","since"],
+        "properties": {
+          "class":   { "type": "string", "enum": ["FEED_DEAD_2D","GENERATOR_BROKEN","BRIEF_NOT_GENERATED","MANUAL_EXPIRED","PLAUSIBILITY_REJECT"] },
+          "feed_id": { "type": ["string","null"] },
+          "message": { "type": "string" },
+          "since":   { "type": "string", "format": "date" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "G8 PORT — journal row (journal/journal.jsonl, one JSON object per line, append-only)",
+  "description": "One row per DECISION of the operator (including the decision not to trade). The row points to the exact pipeline state that justified it via state hashes + commit. The system NEVER executes trades; size is computed by the machine, never by hand (audit finding c).",
+  "type": "object",
+  "required": ["journal_id", "ts_decision", "operator", "decision", "pair", "direction", "funnel", "evidence", "risk", "outcome", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "journal_id":   { "type": "string", "pattern": "^J[0-9]{6}$" },
+    "ts_decision":  { "type": "string", "format": "date-time" },
+    "operator":     { "type": "string", "const": "Sander" },
+    "decision":     { "type": "string", "enum": ["ENTER","SKIP","EXIT","REDUCE","ABORT_FUNNEL","NO_SETUP"] },
+    "pair":         { "type": ["string","null"], "pattern": "^[A-Z]{6}$" },
+    "direction":    { "type": ["string","null"], "enum": ["LONG","SHORT",null] },
+
+    "funnel": {
+      "type": "object",
+      "required": ["brief_ts", "funnel_state_hash", "commit", "setup", "confluence_family", "hard_stop_9", "concentration_chip", "module_19"],
+      "properties": {
+        "brief_ts":          { "type": "string", "format": "date-time", "description": "Timestamp of the §00 brief the operator read (07:00 or 13:30 Bata)." },
+        "funnel_state_hash": { "type": "string", "description": "journal_link.state_hash of data/state/funnel.json at brief_ts." },
+        "commit":            { "type": "string" },
+        "setup":             { "type": ["string","null"], "enum": ["S1","S2","S3","S4","S5","S6",null] },
+        "confluence_family": { "type": ["string","null"] },
+        "hard_stop_9":       { "type": "boolean", "description": "true = Hard Stop 9 was active → decision must be SKIP/ABORT_FUNNEL." },
+        "concentration_chip":{ "type": ["string","null"] },
+        "module_19":         { "type": ["string","null"] },
+        "abort_reason":      { "type": ["string","null"] }
+      }
+    },
+
+    "evidence": {
+      "type": "object",
+      "description": "Per-script state hashes at decision time so any row can be reconstructed from git history.",
+      "required": ["state_hashes", "dqm_global_health"],
+      "properties": {
+        "state_hashes":      { "type": "object", "additionalProperties": { "type": "string" }, "description": "script → journal_link.state_hash" },
+        "dqm_global_health": { "type": "number" },
+        "tape": {
+          "type": "object",
+          "description": "TradingView cockpit (RGD, VRE, VLA, CFE, BREADTH) read by the operator on 4H. Descriptive only (IS-8 moratorium).",
+          "properties": {
+            "alert_name":  { "type": ["string","null"] },
+            "alert_ts":    { "type": ["string","null"], "format": "date-time" },
+            "rgd":         { "type": ["string","null"] },
+            "vre":         { "type": ["string","null"] },
+            "vla":         { "type": ["string","null"] },
+            "cfe":         { "type": ["string","null"] },
+            "breadth":     { "type": ["string","null"] }
+          }
+        }
+      }
+    },
+
+    "risk": {
+      "type": "object",
+      "required": ["size_machine", "size_actual", "size_override", "risk_per_thesis_pct", "weekly_loss_used_pct", "dd_stop_active"],
+      "properties": {
+        "size_machine":        { "type": ["number","null"], "description": "Size computed by the risk module (policy document, Fase 6)." },
+        "size_actual":         { "type": ["number","null"] },
+        "size_override":       { "type": "boolean", "description": "true if size_actual != size_machine. MUST be false. Any true is a behavioural-risk flag reviewed weekly." },
+        "risk_per_thesis_pct": { "type": ["number","null"] },
+        "weekly_loss_used_pct":{ "type": ["number","null"] },
+        "dd_stop_active":      { "type": "boolean" },
+        "entry":               { "type": ["number","null"] },
+        "stop":                { "type": ["number","null"] },
+        "target":              { "type": ["number","null"] }
+      }
+    },
+
+    "outcome": {
+      "type": "object",
+      "description": "Filled on EXIT (or after forward windows for SKIP/NO_SETUP, by the Gate M runner).",
+      "properties": {
+        "ts_exit":        { "type": ["string","null"], "format": "date-time" },
+        "pnl_r":          { "type": ["number","null"], "description": "Result in R multiples." },
+        "pnl_ccy":        { "type": ["number","null"] },
+        "exit_reason":    { "type": ["string","null"], "enum": ["STOP","TARGET","TIME","MACRO_CHANGE","DISCRETIONARY","OPEN",null] },
+        "counterfactual_r": { "type": ["number","null"], "description": "For SKIP rows: what the setup would have returned. Feeds Gate M." }
+      }
+    },
+
+    "notes": { "type": "string" }
+  }
+}
