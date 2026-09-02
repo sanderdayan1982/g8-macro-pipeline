@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # =============================================================================
-# POS-G8 COT collector  [pos_g8_cot_collector v1.0.0]
+# POS-G8 COT collector  [pos_g8_cot_collector v1.0.1]
+# -----------------------------------------------------------------------------
+# v1.0.1 (02-sep-2026) — CFTC SODA COLUMN RENAME. The TFF dataset dropped the
+#   `_all` suffix on asset_mgr_* and lev_money_* columns (open_interest_all kept).
+#   COL map updated; fetch() now retries with the alternate suffix on HTTP 400,
+#   and _f() reads either spelling. Error bodies are printed. NO change to any
+#   calculation, window or threshold — same source, same series. (G8 PORT D10)
 # -----------------------------------------------------------------------------
 # Feeds the G8 Macro Pipeline dashboard (g8-institutional.netlify.app) with the
 # same COT positioning table produced by the POS-G8 v1.1.3 Pine study, PLUS the
@@ -32,6 +38,7 @@
 import json
 import sys
 import urllib.request
+import urllib.error
 import urllib.parse
 import datetime as dt
 from pathlib import Path
@@ -70,10 +77,10 @@ COL = {
     "code": "cftc_contract_market_code",
     "oi":   "open_interest_all",
     "tff": {
-        "lf_long": "lev_money_positions_long_all",
-        "lf_short": "lev_money_positions_short_all",
-        "am_long": "asset_mgr_positions_long_all",
-        "am_short": "asset_mgr_positions_short_all",
+        "lf_long": "lev_money_positions_long",
+        "lf_short": "lev_money_positions_short",
+        "am_long": "asset_mgr_positions_long",
+        "am_short": "asset_mgr_positions_short",
     },
     "disagg": {
         "mm_long": "m_money_positions_long_all",
@@ -87,20 +94,38 @@ COL = {
 def _get(dataset, params):
     url = BASE + dataset + "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={"User-Agent": "pos-g8/1.0"})
-    with urllib.request.urlopen(req, timeout=45) as r:
-        return json.loads(r.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=45) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")[:400]
+        print("CFTC HTTP %s on %s\n  BODY: %s" % (e.code, dataset, body), file=sys.stderr)
+        raise
+
+
+def _alt(col):
+    """Alternate spelling of a CFTC column: toggle the `_all` suffix."""
+    return col[:-4] if col.endswith("_all") else col + "_all"
 
 
 def fetch(dataset, codes, extra_cols):
     """Return {code: [rows oldest->newest]} for the given contract codes."""
     quoted = ",".join("'%s'" % c for c in codes)
-    select = ",".join([COL["date"], COL["code"], COL["oi"]] + extra_cols)
-    rows = _get(dataset, {
-        "$select": select,
-        "$where": "%s in (%s)" % (COL["code"], quoted),
-        "$order": COL["date"] + " DESC",
-        "$limit": len(codes) * (PULL_WEEKS + 10),
-    })
+    rows = None
+    for attempt, cols in enumerate((extra_cols, [_alt(c) for c in extra_cols])):
+        select = ",".join([COL["date"], COL["code"], COL["oi"]] + cols)
+        try:
+            rows = _get(dataset, {
+                "$select": select,
+                "$where": "%s in (%s)" % (COL["code"], quoted),
+                "$order": COL["date"] + " DESC",
+                "$limit": len(codes) * (PULL_WEEKS + 10),
+            })
+            break
+        except urllib.error.HTTPError as e:
+            if e.code != 400 or attempt == 1:
+                raise
+            print("  retrying %s with alternate column names" % dataset, file=sys.stderr)
     out = {c: [] for c in codes}
     for row in rows:
         c = row.get(COL["code"])
@@ -124,6 +149,8 @@ def probe(dataset):
 # ----------------------------------------------------------------------------
 def _f(row, key):
     v = row.get(key)
+    if v is None:
+        v = row.get(_alt(key))
     try:
         return float(v)
     except (TypeError, ValueError):
