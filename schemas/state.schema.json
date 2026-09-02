@@ -1,92 +1,314 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://xccy-g8.netlify.app/schemas/state.schema.json",
-  "title": "G8 PORT — master state schema (one JSON per question / per ported Pine script)",
+  "title": "G8 PORT \u2014 master state schema (one JSON per question / per ported Pine script)",
   "description": "Every generator writes exactly one file matching this schema to data/state/<script>.json. Gate M and journal columns are mandatory from day one (D8). Missing data is never null/zero: last-good value + quality=STALE + age_bd (principle 2).",
   "type": "object",
-  "required": ["meta", "inputs", "outputs", "dqm", "gate_m", "journal_link"],
+  "required": [
+    "meta",
+    "inputs",
+    "outputs",
+    "dqm",
+    "gate_m",
+    "journal_link"
+  ],
   "additionalProperties": false,
   "properties": {
-
     "meta": {
       "type": "object",
-      "required": ["script", "question", "pine_version", "py_version", "generated_at", "run_id", "commit", "twin_test", "schema_version"],
+      "required": [
+        "script",
+        "question",
+        "pine_version",
+        "py_version",
+        "generated_at",
+        "run_id",
+        "commit",
+        "twin_test",
+        "schema_version"
+      ],
       "additionalProperties": false,
       "properties": {
-        "script":        { "type": "string", "enum": ["IYDT_2Y","IYDT_10Y","CURVA","PSI","XCCY","POS","POL","RISK","RTF10","FFVA"] },
-        "question":      { "type": "string", "description": "The ONE question this script answers (doctrine: one script = one question = one place)." },
-        "pine_version":  { "type": "string", "description": "Version of the Pine script being ported, e.g. v1_1_3_EN. Frozen thresholds come from here." },
-        "py_version":    { "type": "string", "description": "Semver of the Python generator." },
-        "generated_at":  { "type": "string", "format": "date-time" },
-        "run_id":        { "type": "string", "description": "GitHub Actions run id, or 'local'." },
-        "commit":        { "type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "Commit of the repo state that produced this file." },
-        "schema_version":{ "type": "string", "const": "1.0" },
+        "script": {
+          "type": "string",
+          "enum": [
+            "IYDT_2Y",
+            "IYDT_10Y",
+            "CURVA",
+            "PSI",
+            "XCCY",
+            "POS",
+            "POL",
+            "RISK",
+            "RTF10",
+            "FFVA"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "description": "The ONE question this script answers (doctrine: one script = one question = one place)."
+        },
+        "pine_version": {
+          "type": "string",
+          "description": "Version of the Pine script being ported, e.g. v1_1_3_EN. Frozen thresholds come from here."
+        },
+        "py_version": {
+          "type": "string",
+          "description": "Semver of the Python generator."
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "run_id": {
+          "type": "string",
+          "description": "GitHub Actions run id, or 'local'."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$",
+          "description": "Commit of the repo state that produced this file."
+        },
+        "schema_version": {
+          "type": "string",
+          "const": "1.0"
+        },
         "twin_test": {
           "type": "object",
           "description": "D9: nothing enters the funnel without a closed twin-test.",
-          "required": ["status", "started", "weeks_elapsed", "state_discrepancy_pct", "acta"],
+          "required": [
+            "status",
+            "started",
+            "weeks_elapsed",
+            "state_discrepancy_pct",
+            "acta"
+          ],
           "properties": {
-            "status": { "type": "string", "enum": ["NOT_STARTED","RUNNING","PASSED","FAILED","RECALIBRATING"] },
-            "started": { "type": ["string","null"], "format": "date" },
-            "weeks_elapsed": { "type": "number", "minimum": 0 },
-            "state_discrepancy_pct": { "type": ["number","null"], "description": "% of bars where Pine state != Python state. >10 → FAILED + acta." },
-            "acta": { "type": ["string","null"], "description": "Path to gates/actas/*.md if a recalibration acta exists." }
+            "status": {
+              "type": "string",
+              "enum": [
+                "NOT_STARTED",
+                "RUNNING",
+                "PASSED",
+                "FAILED",
+                "RECALIBRATING"
+              ]
+            },
+            "started": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date"
+            },
+            "weeks_elapsed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "state_discrepancy_pct": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "% of bars where Pine state != Python state. >10 \u2192 FAILED + acta."
+            },
+            "acta": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Path to gates/actas/*.md if a recalibration acta exists."
+            }
           }
         },
-        "funnel_eligible": { "type": "boolean", "description": "Derived: twin_test.status == PASSED. funnel.py refuses anything else." }
+        "funnel_eligible": {
+          "type": "boolean",
+          "description": "Derived: twin_test.status == PASSED. funnel.py refuses anything else."
+        }
       }
     },
-
     "inputs": {
       "type": "array",
       "description": "Every input series actually consumed in this run, with provenance (principle 3).",
       "items": {
         "type": "object",
-        "required": ["feed_id", "ccy", "metric", "value", "data_date", "age_bd", "quality", "source_used", "calendar"],
+        "required": [
+          "feed_id",
+          "ccy",
+          "metric",
+          "value",
+          "data_date",
+          "age_bd",
+          "quality",
+          "source_used",
+          "calendar"
+        ],
         "additionalProperties": false,
         "properties": {
-          "feed_id":     { "type": "string", "description": "Key in sources/registry.csv." },
-          "ccy":         { "type": "string", "enum": ["USD","EUR","GBP","JPY","AUD","CAD","NZD","CHF","XAU","XAG","GLOBAL"] },
-          "metric":      { "type": "string" },
-          "value":       { "type": "number" },
-          "data_date":   { "type": "string", "format": "date", "description": "Date OF the observation, not of the download." },
-          "age_bd":      { "type": "integer", "minimum": 0, "description": "Business days old by the feed's own country calendar (principle 4)." },
-          "quality":     { "type": "string", "enum": ["LIVE","PROXY","MANUAL","STALE","DEAD","MANUAL_EXPIRED"] },
-          "source_used": { "type": "string", "enum": ["PRIMARY","FALLBACK","MANUAL"] },
-          "calendar":    { "type": "string", "description": "Business-day calendar used: US, EU, GB, JP, AU, CA, NZ, CH, CME." },
-          "plausibility":{ "type": "string", "enum": ["OK","REJECTED_RANGE","REJECTED_JUMP"], "description": "Principle 5. REJECTED → value shown is last good, quality=STALE, alert raised." }
+          "feed_id": {
+            "type": "string",
+            "description": "Key in sources/registry.csv."
+          },
+          "ccy": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR",
+              "GBP",
+              "JPY",
+              "AUD",
+              "CAD",
+              "NZD",
+              "CHF",
+              "XAU",
+              "XAG",
+              "GLOBAL"
+            ]
+          },
+          "metric": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "data_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date OF the observation, not of the download."
+          },
+          "age_bd": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Business days old by the feed's own country calendar (principle 4)."
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "LIVE",
+              "PROXY",
+              "MANUAL",
+              "STALE",
+              "DEAD",
+              "MANUAL_EXPIRED"
+            ]
+          },
+          "source_used": {
+            "type": "string",
+            "enum": [
+              "PRIMARY",
+              "FALLBACK",
+              "MANUAL"
+            ]
+          },
+          "calendar": {
+            "type": "string",
+            "description": "Business-day calendar used: US, EU, GB, JP, AU, CA, NZ, CH, CME."
+          },
+          "plausibility": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "REJECTED_RANGE",
+              "REJECTED_JUMP"
+            ],
+            "description": "Principle 5. REJECTED \u2192 value shown is last good, quality=STALE, alert raised."
+          }
         }
       }
     },
-
     "outputs": {
       "type": "object",
       "description": "Script-specific results. Keys are the Pine plot/table names, untranslated. Two mandatory sub-objects: per_ccy and pairs (pairs may be empty for non-pair scripts).",
-      "required": ["per_ccy", "pairs", "regime"],
+      "required": [
+        "per_ccy",
+        "pairs",
+        "regime"
+      ],
       "properties": {
         "regime": {
           "type": "object",
-          "required": ["label", "since", "changed_this_run"],
+          "required": [
+            "label",
+            "since",
+            "changed_this_run"
+          ],
           "properties": {
-            "label": { "type": "string", "description": "Global regime label of the script (e.g. RISK-ON / STRESS / NEUTRAL). Drives Telegram diff (D6)." },
-            "since": { "type": "string", "format": "date" },
-            "changed_this_run": { "type": "boolean" }
+            "label": {
+              "type": "string",
+              "description": "Global regime label of the script (e.g. RISK-ON / STRESS / NEUTRAL). Drives Telegram diff (D6)."
+            },
+            "since": {
+              "type": "string",
+              "format": "date"
+            },
+            "changed_this_run": {
+              "type": "boolean"
+            }
           }
         },
         "per_ccy": {
           "type": "object",
           "additionalProperties": {
             "type": "object",
-            "required": ["score", "state", "percentile", "z", "window_bars", "thresholds_frozen"],
+            "required": [
+              "score",
+              "state",
+              "percentile",
+              "z",
+              "window_bars",
+              "thresholds_frozen"
+            ],
             "properties": {
-              "score":      { "type": "number" },
-              "state":      { "type": "string", "description": "Discrete state as in Pine (this is what the twin-test compares)." },
-              "percentile": { "type": ["number","null"], "minimum": 0, "maximum": 100, "description": "MEASURED percentile over window_bars — never assumed." },
-              "z":          { "type": ["number","null"] },
-              "window_bars":{ "type": "integer" },
-              "thresholds_frozen": { "type": "object", "description": "The exact frozen thresholds applied (Rule 32). Copied verbatim from the Pine inputs.", "additionalProperties": { "type": "number" } },
-              "components": { "type": "object", "additionalProperties": { "type": ["number","string","null"] } },
-              "na_reason":  { "type": ["string","null"], "description": "If state is NA: which input caused the pause (NA = pause, not reset)." }
+              "score": {
+                "type": "number"
+              },
+              "state": {
+                "type": "string",
+                "description": "Discrete state as in Pine (this is what the twin-test compares)."
+              },
+              "percentile": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100,
+                "description": "MEASURED percentile over window_bars \u2014 never assumed."
+              },
+              "z": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "window_bars": {
+                "type": "integer"
+              },
+              "thresholds_frozen": {
+                "type": "object",
+                "description": "The exact frozen thresholds applied (Rule 32). Copied verbatim from the Pine inputs.",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "components": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": [
+                    "number",
+                    "string",
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "na_reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "If state is NA: which input caused the pause (NA = pause, not reset)."
+              }
             }
           }
         },
@@ -95,56 +317,163 @@
           "description": "Only for scripts that emit pair-level output (IYDT/PairDIV). Keys like EURUSD.",
           "additionalProperties": {
             "type": "object",
-            "required": ["direction", "diff", "state"],
+            "required": [
+              "direction",
+              "diff",
+              "state"
+            ],
             "properties": {
-              "direction": { "type": "string", "enum": ["LONG","SHORT","NONE"] },
-              "diff":      { "type": "number" },
-              "state":     { "type": "string" },
-              "setup":     { "type": ["string","null"], "enum": ["S1","S2","S3","S4","S5","S6",null] }
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "LONG",
+                  "SHORT",
+                  "NONE"
+                ]
+              },
+              "diff": {
+                "type": "number"
+              },
+              "state": {
+                "type": "string"
+              },
+              "setup": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "S1",
+                  "S2",
+                  "S3",
+                  "S4",
+                  "S5",
+                  "S6",
+                  null
+                ]
+              }
             }
           }
         }
       }
     },
-
     "dqm": {
       "type": "object",
       "description": "Health of THIS script's inputs (the global DQM lives in dqm.json).",
-      "required": ["health_score", "n_inputs", "n_live", "n_proxy", "n_manual", "n_stale", "n_dead", "n_manual_expired", "alerts"],
+      "required": [
+        "health_score",
+        "n_inputs",
+        "n_live",
+        "n_proxy",
+        "n_manual",
+        "n_stale",
+        "n_dead",
+        "n_manual_expired",
+        "alerts"
+      ],
       "properties": {
-        "health_score":     { "type": "number", "minimum": 0, "maximum": 100 },
-        "n_inputs":         { "type": "integer" },
-        "n_live":           { "type": "integer" },
-        "n_proxy":          { "type": "integer" },
-        "n_manual":         { "type": "integer" },
-        "n_stale":          { "type": "integer" },
-        "n_dead":           { "type": "integer" },
-        "n_manual_expired": { "type": "integer" },
-        "alerts": { "type": "array", "items": { "type": "string" }, "description": "Human-readable, one per problem. Non-empty → Telegram (principle 9)." }
+        "health_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "n_inputs": {
+          "type": "integer"
+        },
+        "n_live": {
+          "type": "integer"
+        },
+        "n_proxy": {
+          "type": "integer"
+        },
+        "n_manual": {
+          "type": "integer"
+        },
+        "n_stale": {
+          "type": "integer"
+        },
+        "n_dead": {
+          "type": "integer"
+        },
+        "n_manual_expired": {
+          "type": "integer"
+        },
+        "alerts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Human-readable, one per problem. Non-empty \u2192 Telegram (principle 9)."
+        }
       }
     },
-
     "gate_m": {
       "type": "object",
       "description": "Gate M (pre-registered exam of the macro layer). Filled EVERY run so the exam can be reconstructed from history. See gates/GATE_M_prereg_v0.1.md.",
-      "required": ["is_oos", "cutoff_date", "signal_snapshot", "forward_windows_bd"],
+      "required": [
+        "is_oos",
+        "cutoff_date",
+        "signal_snapshot",
+        "forward_windows_bd"
+      ],
       "properties": {
-        "is_oos":          { "type": "boolean", "description": "true if generated_at > cutoff_date (out-of-sample for this script)." },
-        "cutoff_date":     { "type": "string", "format": "date", "description": "Per-script calibration cut-off. Resolves audit finding (a)." },
-        "signal_snapshot": { "type": "object", "description": "Minimal frozen copy of what Gate M evaluates: per ccy/pair → state + direction + score at this timestamp.", "additionalProperties": true },
-        "forward_windows_bd": { "type": "array", "items": { "type": "integer" }, "description": "Horizons over which realised outcomes will be measured (e.g. [5,10,20])." },
-        "realised": { "type": ["object","null"], "description": "Filled by the Gate M runner post-hoc, never by the generator.", "additionalProperties": true }
+        "is_oos": {
+          "type": "boolean",
+          "description": "true if generated_at > cutoff_date (out-of-sample for this script)."
+        },
+        "cutoff_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Per-script calibration cut-off. Resolves audit finding (a)."
+        },
+        "signal_snapshot": {
+          "type": "object",
+          "description": "Minimal frozen copy of what Gate M evaluates: per ccy/pair \u2192 state + direction + score at this timestamp.",
+          "additionalProperties": true
+        },
+        "forward_windows_bd": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Horizons over which realised outcomes will be measured (e.g. [5,10,20])."
+        },
+        "realised": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Filled by the Gate M runner post-hoc, never by the generator.",
+          "additionalProperties": true
+        }
       }
     },
-
     "journal_link": {
       "type": "object",
       "description": "Lets a journal row point back to the exact state that justified it.",
-      "required": ["state_hash", "prev_state_hash", "diff_vs_prev"],
+      "required": [
+        "state_hash",
+        "prev_state_hash",
+        "diff_vs_prev"
+      ],
       "properties": {
-        "state_hash":      { "type": "string", "description": "sha256 of outputs (canonical JSON). Journal rows reference this." },
-        "prev_state_hash": { "type": ["string","null"] },
-        "diff_vs_prev":    { "type": "array", "items": { "type": "string" }, "description": "Keys whose state changed since previous run. Empty → no Telegram (D6)." }
+        "state_hash": {
+          "type": "string",
+          "description": "sha256 of outputs (canonical JSON). Journal rows reference this."
+        },
+        "prev_state_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "diff_vs_prev": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keys whose state changed since previous run. Empty \u2192 no Telegram (D6)."
+        }
       }
     }
   }
