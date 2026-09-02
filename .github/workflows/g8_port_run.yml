@@ -1,0 +1,74 @@
+# .github/workflows/g8_port_run.yml
+# G8 PORT — pipeline run (D6): every 4 h aligned to 4H candle closes, Telegram only on change.
+# Phase 2: POS only. Each ported generator is appended as a step; nothing else in the repo is touched.
+name: G8 Port Run
+
+on:
+  schedule:
+    - cron: '5 0,4,8,12,16,20 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: g8-port-run
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── ingest ──────────────────────────────────────────────────────────────
+      - name: COT collector (CFTC SODA) — untouched v1.0.0
+        id: cot
+        run: python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json
+
+      # ── generators (one per ported Pine script) ─────────────────────────────
+      - name: Generator POS
+        id: pos
+        run: python scripts/generators/pos_g8.py
+
+      # ── twin-test (runs only when the Pine export exists) ───────────────────
+      - name: Twin-test POS
+        if: hashFiles('data/twin/pos_g8_pine.csv') != ''
+        continue-on-error: true
+        run: python scripts/twin_test.py POS
+
+      # ── notify only on change (D6) ──────────────────────────────────────────
+      - name: Telegram (diff-based)
+        run: python scripts/notify_telegram.py --states data/state/pos_g8.json
+
+      # ── commit only if something other than timestamps changed ─────────────
+      - name: Commit state
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/pos_g8_cot.json data/state data/twin
+          if git diff --cached --quiet -I '"generated_at"' -I '"generated_utc"' -I '"run_id"' -I '"commit"' -I '"age_days"' -I '"age_bd"'; then
+            echo "no material change — no commit"
+            git reset -q
+          else
+            git commit -m "g8-port: state update $(date -u +%Y-%m-%dT%H:%MZ) [POS]"
+            for i in 1 2 3; do
+              git pull --rebase -q && git push && break
+              sleep 10
+            done
+          fi
+
+      # ── principle 9: any failure above → Telegram ───────────────────────────
+      - name: Alert on failure
+        if: failure()
+        run: python scripts/notify_telegram.py --fail "step failed: cot=${{ steps.cot.outcome }} pos=${{ steps.pos.outcome }}"
