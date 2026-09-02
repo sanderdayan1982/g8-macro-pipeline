@@ -1,0 +1,351 @@
+{
+  "meta": {
+    "script": "POS",
+    "question": "Who is already inside the trade? Speculative COT positioning (LF/MM) vs structural (AM), per G8 currency and metals.",
+    "pine_version": "v1_1_3_EN",
+    "py_version": "0.1.0",
+    "generated_at": "2026-09-02T21:45:47+00:00",
+    "run_id": "33686873717",
+    "commit": "efc053a57899",
+    "schema_version": "1.0",
+    "twin_test": {
+      "status": "NOT_STARTED",
+      "started": null,
+      "weeks_elapsed": 0,
+      "state_discrepancy_pct": null,
+      "acta": null
+    },
+    "funnel_eligible": false
+  },
+  "inputs": [
+    {
+      "feed_id": "CFTC_TFF",
+      "ccy": "GLOBAL",
+      "metric": "tff",
+      "value": 9.0,
+      "data_date": "2026-08-25",
+      "age_bd": 6,
+      "quality": "LIVE",
+      "source_used": "PRIMARY",
+      "calendar": "US",
+      "plausibility": "OK"
+    }
+  ],
+  "outputs": {
+    "regime": {
+      "label": "CROWDED",
+      "since": "2026-08-25",
+      "changed_this_run": false
+    },
+    "per_ccy": {
+      "EUR": {
+        "score": -1.6,
+        "state": "STRETCH-",
+        "percentile": 9.0,
+        "z": -1.6,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -38359.0,
+          "lf_cot_index": 22.1,
+          "lf_pct_oi": -4.7,
+          "d_print": 19357.0,
+          "d_4w": 26839.0,
+          "d_13w": -45655.0,
+          "am_net": 261426.0,
+          "am_z": -0.51,
+          "time_in_state": 1,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "GBP": {
+        "score": 0.9,
+        "state": "NEUTRAL",
+        "percentile": 82.7,
+        "z": 0.9,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": 47909.0,
+          "lf_cot_index": 63.0,
+          "lf_pct_oi": 15.0,
+          "d_print": 5032.0,
+          "d_4w": 6812.0,
+          "d_13w": 19080.0,
+          "am_net": -104491.0,
+          "am_z": -1.15,
+          "time_in_state": 9,
+          "divergence": true
+        },
+        "na_reason": null
+      },
+      "JPY": {
+        "score": -0.89,
+        "state": "NEUTRAL",
+        "percentile": 18.6,
+        "z": -0.89,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -77042.0,
+          "lf_cot_index": 24.9,
+          "lf_pct_oi": -20.1,
+          "d_print": -9071.0,
+          "d_4w": 24948.0,
+          "d_13w": -6534.0,
+          "am_net": -20116.0,
+          "am_z": -0.42,
+          "time_in_state": 4,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "AUD": {
+        "score": 1.85,
+        "state": "STRETCH+",
+        "percentile": 93.6,
+        "z": 1.85,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": 54061.0,
+          "lf_cot_index": 85.9,
+          "lf_pct_oi": 16.2,
+          "d_print": 1953.0,
+          "d_4w": 26443.0,
+          "d_13w": -6173.0,
+          "am_net": -45427.0,
+          "am_z": -0.08,
+          "time_in_state": 3,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "NZD": {
+        "score": -2.5,
+        "state": "CROWD SHORT",
+        "percentile": 1.3,
+        "z": -2.5,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -31994.0,
+          "lf_cot_index": 2.8,
+          "lf_pct_oi": -36.0,
+          "d_print": -5188.0,
+          "d_4w": -1967.0,
+          "d_13w": -18324.0,
+          "am_net": 430.0,
+          "am_z": 1.32,
+          "time_in_state": 13,
+          "divergence": true
+        },
+        "na_reason": null
+      },
+      "CAD": {
+        "score": -0.79,
+        "state": "NEUTRAL",
+        "percentile": 25.6,
+        "z": -0.79,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -72092.0,
+          "lf_cot_index": 27.4,
+          "lf_pct_oi": -21.9,
+          "d_print": 16805.0,
+          "d_4w": 30403.0,
+          "d_13w": -33997.0,
+          "am_net": -58943.0,
+          "am_z": 0.1,
+          "time_in_state": 1,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "CHF": {
+        "score": -0.58,
+        "state": "NEUTRAL",
+        "percentile": 28.8,
+        "z": -0.58,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -8825.0,
+          "lf_cot_index": 49.1,
+          "lf_pct_oi": -8.1,
+          "d_print": 246.0,
+          "d_4w": 822.0,
+          "d_13w": -4002.0,
+          "am_net": -28655.0,
+          "am_z": 0.1,
+          "time_in_state": 73,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "USD": {
+        "score": 0.52,
+        "state": "NEUTRAL",
+        "percentile": null,
+        "z": 0.52,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": 126342.0,
+          "proxy": true,
+          "note": "desk proxy: -mean(7 LF Z)"
+        },
+        "na_reason": null
+      },
+      "XAU": {
+        "score": 0.35,
+        "state": "NEUTRAL",
+        "percentile": 65.4,
+        "z": 0.35,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.68,
+          "ext": 2.29,
+          "z_cap": 3.0
+        },
+        "components": {
+          "mm_net": 144747.0,
+          "mm_cot_index": 69.8,
+          "mm_pct_oi": 33.8,
+          "d_print": 3099.0,
+          "d_4w": 24952.0,
+          "d_13w": 47301.0,
+          "time_in_state": 99
+        },
+        "na_reason": null
+      },
+      "XAG": {
+        "score": -0.86,
+        "state": "NEUTRAL",
+        "percentile": 31.7,
+        "z": -0.86,
+        "window_bars": 104,
+        "thresholds_frozen": {
+          "warn": 1.61,
+          "ext": 2.25,
+          "z_cap": 3.0
+        },
+        "components": {
+          "mm_net": 14073.0,
+          "mm_cot_index": 21.2,
+          "mm_pct_oi": 12.4,
+          "d_print": 2378.0,
+          "d_4w": 4891.0,
+          "d_13w": 4018.0,
+          "time_in_state": 18
+        },
+        "na_reason": null
+      }
+    },
+    "pairs": {}
+  },
+  "dqm": {
+    "health_score": 100.0,
+    "n_inputs": 1,
+    "n_live": 1,
+    "n_proxy": 0,
+    "n_manual": 0,
+    "n_stale": 0,
+    "n_dead": 0,
+    "n_manual_expired": 0,
+    "alerts": []
+  },
+  "gate_m": {
+    "is_oos": true,
+    "cutoff_date": "2026-06-19",
+    "signal_snapshot": {
+      "EUR": {
+        "state": "STRETCH-",
+        "score": -1.6
+      },
+      "GBP": {
+        "state": "NEUTRAL",
+        "score": 0.9
+      },
+      "JPY": {
+        "state": "NEUTRAL",
+        "score": -0.89
+      },
+      "AUD": {
+        "state": "STRETCH+",
+        "score": 1.85
+      },
+      "NZD": {
+        "state": "CROWD SHORT",
+        "score": -2.5
+      },
+      "CAD": {
+        "state": "NEUTRAL",
+        "score": -0.79
+      },
+      "CHF": {
+        "state": "NEUTRAL",
+        "score": -0.58
+      },
+      "USD": {
+        "state": "NEUTRAL",
+        "score": 0.52
+      },
+      "XAU": {
+        "state": "NEUTRAL",
+        "score": 0.35
+      },
+      "XAG": {
+        "state": "NEUTRAL",
+        "score": -0.86
+      }
+    },
+    "forward_windows_bd": [
+      5,
+      10,
+      20
+    ],
+    "realised": null
+  },
+  "journal_link": {
+    "state_hash": "926df046aa6406fcd7d1ef76633d94a654f08162eb734551cb92fe559292c568",
+    "prev_state_hash": null,
+    "diff_vs_prev": [
+      "initial"
+    ]
+  }
+}
