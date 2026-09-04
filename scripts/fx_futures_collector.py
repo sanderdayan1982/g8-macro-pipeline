@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.5 (daily mode skips products whose session already has OI on disk — one paid pull per session, not one per cron run) (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.6 (IFUS does not publish definitions every day: if a 1-day definition window is empty, widen to the previous 10 days) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -254,6 +254,12 @@ def run_range(auth, start, end, yes, cost_cap, products=None, skip_done_session=
                 d0 = (dt.date.fromisoformat(d0) + dt.timedelta(days=1)).isoformat()
             d1 = (dt.date.fromisoformat(d0) + dt.timedelta(days=1)).isoformat()
             dmap = defs_map(pull(auth, ds, parent, "definition", d0, min(d1, ce6[:10])))
+            if not dmap:   # ICE (IFUS) definitions are not daily — widen the window
+                d0w = (dt.date.fromisoformat(d0) - dt.timedelta(days=10)).isoformat()
+                dmap = defs_map(pull(auth, ds, parent, "definition", d0w, min(d1, ce6[:10])))
+                print("[%s] %s: definition widened to %s..%s (%d instruments)" % (LOG_TAG, root, d0w, d1, len(dmap)), flush=True)
+            if not dmap:
+                fail("%s: no definitions available around %s — cannot map instruments" % (root, d0))
             stats = pull(auth, ds, parent, "statistics", cs, ce6)
             recs = build_records(root, stats, dmap)
             recs_all += recs
