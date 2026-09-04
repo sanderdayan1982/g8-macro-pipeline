@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.1 (end capped at dataset available_end; per-product quotes) (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.2 (definition schema pulled for ONE day only — expiries do not change daily; IFUS definition over a range cost $17) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -109,6 +109,14 @@ def cap_end(auth, dataset, end_ex):
     return min(end_ex, ae[:19]) if ae else end_ex
 
 
+def def_day(end_iso):
+    """Start of the single day used for the definition schema: the last weekday before `end`."""
+    d = dt.date.fromisoformat(end_iso[:10]) - dt.timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= dt.timedelta(days=1)
+    return d.isoformat()
+
+
 def quote(auth, dataset, parent, schema, start, end):
     r = api_get(auth, "metadata.get_cost", {"dataset": dataset, "schema": schema, "symbols": parent,
                                             "stype_in": "parent", "start": start, "end": end})
@@ -179,10 +187,12 @@ def run_range(auth, start, end, yes, cost_cap):
     for root, (ds, parent) in PRODUCTS.items():
         e = cap_end(auth, ds, end_ex)
         ends[root] = e
-        c = quote(auth, ds, parent, "statistics", start, e) + quote(auth, ds, parent, "definition", start, e)
-        per[root] = c
-        total += c
-        print("[%s] quote %s (%s) %s -> %s : $%.4f" % (LOG_TAG, root, ds, start, e[:10], c))
+        d0 = def_day(e)
+        cs = quote(auth, ds, parent, "statistics", start, e)
+        cd = quote(auth, ds, parent, "definition", d0, e)
+        per[root] = cs + cd
+        total += cs + cd
+        print("[%s] quote %s (%s) %s -> %s : stats $%.4f + definition(1d) $%.4f" % (LOG_TAG, root, ds, start, e[:10], cs, cd))
     print("[%s] cost quote %s -> %s : $%.4f TOTAL" % (LOG_TAG, start, end, total))
     if cost_cap is not None and total > cost_cap:
         fail("cost guard: $%.4f > $%.2f" % (total, cost_cap))
@@ -191,7 +201,7 @@ def run_range(auth, start, end, yes, cost_cap):
         return 0
     for root, (ds, parent) in PRODUCTS.items():
         stats = pull(auth, ds, parent, "statistics", start, ends[root])
-        defs = pull(auth, ds, parent, "definition", start, ends[root])
+        defs = pull(auth, ds, parent, "definition", def_day(ends[root]), ends[root])
         recs = build_records(root, stats, defs_map(defs))
         n = merge_write(root, recs)
         n_vol = sum(1 for r in recs if r["volume"] != "")
