@@ -19,6 +19,10 @@ on:
         description: 'Comma list of roots (e.g. 6E,6B,6J,6A,6N,6C,6S or DX). Empty = all 8'
         default: '6E,6B,6J,6A,6N,6C,6S'
 
+concurrency:
+  group: g8-port-run
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -49,8 +53,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/futures
-          git commit -m "data(futures): backfill ${{ inputs.start }}..${{ inputs.end }} [FFVA]" || echo "nothing to commit"
-          git push
+          git commit -m "data(futures): backfill ${{ inputs.start }}..${{ inputs.end }} [FFVA]" || { echo "nothing to commit"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs -q && git push && exit 0
+            echo "push rejected, retry $i"; sleep 15
+          done
+          echo "FATAL: could not push after 5 attempts"; exit 1
       - name: Alert on failure
         if: failure()
         run: python scripts/notify_telegram.py --fail "fx_futures_backfill"
