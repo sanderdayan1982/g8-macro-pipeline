@@ -3,27 +3,28 @@
     "script": "FFVA",
     "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
     "pine_version": "v1_3_2_EN",
-    "py_version": "0.1.0",
-    "generated_at": "2026-09-04T19:54:51+00:00",
-    "run_id": "33913393058",
-    "commit": "5585f5bbf974",
+    "py_version": "0.1.1",
+    "generated_at": "2026-09-04T20:17:50+00:00",
+    "run_id": "33915471319",
+    "commit": "253aee3ecd1f",
     "schema_version": "1.0",
     "twin_test": {
       "status": "FAILED",
       "started": "2026-09-04",
       "weeks_elapsed": 0.0,
-      "state_discrepancy_pct": 60.0,
+      "state_discrepancy_pct": 32.31,
       "acta": null,
       "per_key": {
         "AUD": 0.0,
         "CAD": 40.0,
         "EUR": 93.75,
         "GBP": 40.0,
-        "JPY": 0.0
+        "JPY": 0.0,
+        "USD": 0.0
       },
-      "bars_compared": 35,
-      "py_warmup_na_pct": 98.08,
-      "compared_from": "2026-08-05",
+      "bars_compared": 65,
+      "py_warmup_na_pct": 96.89,
+      "compared_from": "2026-07-14",
       "compared_to": "2026-09-02"
     },
     "funnel_eligible": false
@@ -128,16 +129,16 @@
   ],
   "outputs": {
     "regime": {
-      "label": "SC:1 FLAT_OI:1 NA:6",
+      "label": "ACCUM:1 SC:2 FLAT_OI:4 NA:1",
       "since": "2026-09-04",
-      "changed_this_run": false
+      "changed_this_run": true
     },
     "per_ccy": {
       "EUR": {
         "score": 0.0,
-        "state": "NA",
+        "state": "FLAT_OI",
         "percentile": null,
-        "z": null,
+        "z": -0.13,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -163,28 +164,28 @@
           "expiry": "2026-09-14",
           "settle": 1.1638,
           "oi": 730187.0,
-          "vel": null,
-          "acc": null,
+          "vel": -0.201,
+          "acc": -0.093,
           "dir": null,
-          "d1d": null,
-          "d1w": null,
+          "d1d": -0.227,
+          "d1w": 0.0,
           "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": 1.98,
-          "mass": "WITH MASS",
+          "persist": 1,
+          "pmax": 4,
+          "exhaustion": 0.25,
+          "vol_ratio": 1.49,
+          "mass": "NORMAL",
           "status": "FRESH",
           "bars_loaded": 324,
-          "z_warm": false
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
+        "na_reason": null
       },
       "GBP": {
-        "score": 0.0,
-        "state": "NA",
+        "score": -1.5,
+        "state": "SC",
         "percentile": null,
-        "z": null,
+        "z": -3.0,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -210,28 +211,28 @@
           "expiry": "2026-09-14",
           "settle": 1.3538,
           "oi": 209749.0,
-          "vel": null,
-          "acc": null,
-          "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": 2.83,
+          "vel": -1.76,
+          "acc": -0.776,
+          "dir": -1.5,
+          "d1d": -2.233,
+          "d1w": -1.753,
+          "d1m": -1.5,
+          "persist": 1,
+          "pmax": 3,
+          "exhaustion": 0.333,
+          "vol_ratio": 2.12,
           "mass": "WITH MASS",
           "status": "FRESH",
           "bars_loaded": 324,
-          "z_warm": false
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
+        "na_reason": null
       },
       "JPY": {
         "score": 0.0,
-        "state": "NA",
+        "state": "FLAT_OI",
         "percentile": null,
-        "z": null,
+        "z": -0.11,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -257,28 +258,28 @@
           "expiry": "2026-09-14",
           "settle": 0.00643,
           "oi": 311731.0,
-          "vel": null,
-          "acc": null,
+          "vel": -0.207,
+          "acc": 0.433,
           "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": 3.36,
+          "d1d": 0.504,
+          "d1w": 0.0,
+          "d1m": 0.0,
+          "persist": 1,
+          "pmax": 2,
+          "exhaustion": 0.5,
+          "vol_ratio": 2.48,
           "mass": "WITH MASS",
           "status": "FRESH",
           "bars_loaded": 324,
-          "z_warm": false
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
+        "na_reason": null
       },
       "AUD": {
-        "score": 0.0,
-        "state": "NA",
+        "score": 0.413,
+        "state": "ACCUM",
         "percentile": null,
-        "z": null,
+        "z": 0.41,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -304,22 +305,22 @@
           "expiry": "2026-09-14",
           "settle": 0.72055,
           "oi": 308382.0,
-          "vel": null,
-          "acc": null,
-          "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": 2.61,
+          "vel": -0.295,
+          "acc": 0.634,
+          "dir": 0.413,
+          "d1d": 0.668,
+          "d1w": 0.413,
+          "d1m": -0.151,
+          "persist": 1,
+          "pmax": 3,
+          "exhaustion": 0.333,
+          "vol_ratio": 1.98,
           "mass": "WITH MASS",
           "status": "FRESH",
           "bars_loaded": 324,
-          "z_warm": false
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
+        "na_reason": null
       },
       "NZD": {
         "score": 0.0,
@@ -370,9 +371,9 @@
       },
       "CAD": {
         "score": 0.0,
-        "state": "NA",
+        "state": "FLAT_OI",
         "percentile": null,
-        "z": null,
+        "z": -0.09,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -398,22 +399,22 @@
           "expiry": "2026-09-15",
           "settle": 0.7256,
           "oi": 292081.0,
-          "vel": null,
-          "acc": null,
+          "vel": -0.03,
+          "acc": -0.593,
           "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": 2.09,
+          "d1d": 0.0,
+          "d1w": 0.0,
+          "d1m": 0.0,
+          "persist": 2,
+          "pmax": 6,
+          "exhaustion": 0.333,
+          "vol_ratio": 1.52,
           "mass": "WITH MASS",
           "status": "FRESH",
           "bars_loaded": 324,
-          "z_warm": false
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
+        "na_reason": null
       },
       "CHF": {
         "score": -0.493,
@@ -530,27 +531,27 @@
     "cutoff_date": "2026-06-29",
     "signal_snapshot": {
       "EUR": {
-        "state": "NA",
+        "state": "FLAT_OI",
         "score": 0.0
       },
       "GBP": {
-        "state": "NA",
-        "score": 0.0
+        "state": "SC",
+        "score": -1.5
       },
       "JPY": {
-        "state": "NA",
+        "state": "FLAT_OI",
         "score": 0.0
       },
       "AUD": {
-        "state": "NA",
-        "score": 0.0
+        "state": "ACCUM",
+        "score": 0.413
       },
       "NZD": {
         "state": "FLAT_OI",
         "score": 0.0
       },
       "CAD": {
-        "state": "NA",
+        "state": "FLAT_OI",
         "score": 0.0
       },
       "CHF": {
@@ -570,8 +571,14 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "3c7d668394dd52956d8c61a6ad2573a101ccfa9ccd9807c84263c9d384b198c0",
-    "prev_state_hash": "2b1ef5f8fdf26eeb0d187eed03374f43b0a146f649e8daa9df733f66147f3337",
-    "diff_vs_prev": []
+    "state_hash": "e512465614a245d597d61786f21089dacaf3ef811145ed59f6e84db95483bafb",
+    "prev_state_hash": "3c7d668394dd52956d8c61a6ad2573a101ccfa9ccd9807c84263c9d384b198c0",
+    "diff_vs_prev": [
+      "EUR",
+      "GBP",
+      "JPY",
+      "AUD",
+      "CAD"
+    ]
   }
 }
