@@ -15,6 +15,9 @@ on:
       confirm:
         description: 'Type yes to actually download (anything else = quote only)'
         default: 'no'
+      products:
+        description: 'Comma list of roots (e.g. 6E,6B,6J,6A,6N,6C,6S or DX). Empty = all 8'
+        default: '6E,6B,6J,6A,6N,6C,6S'
 
 permissions:
   contents: write
@@ -22,7 +25,7 @@ permissions:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     env:
       DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -34,12 +37,14 @@ jobs:
           python-version: '3.11'
       - run: pip install -q requests
       - name: Quote (always)
-        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}"
+        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}" --products "${{ inputs.products }}"
       - name: Download (only if confirm == yes)
         if: inputs.confirm == 'yes'
-        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}" --yes
-      - name: Commit
-        if: inputs.confirm == 'yes'
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}" --products "${{ inputs.products }}" --yes
+      - name: Commit (also on partial download)
+        if: always() && inputs.confirm == 'yes'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
