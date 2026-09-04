@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.2 (definition schema pulled for ONE day only — expiries do not change daily; IFUS definition over a range cost $17) (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.3 (--products filter; monthly chunks with progress; per-product write so partial runs persist) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -180,11 +180,24 @@ def merge_write(root, new_recs):
     return len(rows)
 
 
-def run_range(auth, start, end, yes, cost_cap):
-    """Quote all products first; download only if approved."""
+def month_chunks(start, end_ex):
+    """[(s, e), ...] monthly slices covering [start, end_ex) — progress visible, partial failure cheap."""
+    out, s = [], dt.date.fromisoformat(start[:10])
+    e_final = dt.datetime.fromisoformat(end_ex[:19])
+    while s.isoformat() < end_ex[:10]:
+        nxt = (s.replace(day=1) + dt.timedelta(days=32)).replace(day=1)
+        e = min(dt.datetime.combine(nxt, dt.time()), e_final)
+        out.append((s.isoformat(), e.isoformat()))
+        s = nxt
+    return out
+
+
+def run_range(auth, start, end, yes, cost_cap, products=None):
+    """Quote selected products first; download only if approved. Writes per product as it goes."""
+    prods = {k: v for k, v in PRODUCTS.items() if not products or k in products}
     end_ex = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat()
     total, per, ends = 0.0, {}, {}
-    for root, (ds, parent) in PRODUCTS.items():
+    for root, (ds, parent) in prods.items():
         e = cap_end(auth, ds, end_ex)
         ends[root] = e
         d0 = def_day(e)
@@ -192,29 +205,39 @@ def run_range(auth, start, end, yes, cost_cap):
         cd = quote(auth, ds, parent, "definition", d0, e)
         per[root] = cs + cd
         total += cs + cd
-        print("[%s] quote %s (%s) %s -> %s : stats $%.4f + definition(1d) $%.4f" % (LOG_TAG, root, ds, start, e[:10], cs, cd))
+        print("[%s] quote %s (%s) %s -> %s : stats $%.4f + definition(1d) $%.4f" % (LOG_TAG, root, ds, start, e[:10], cs, cd), flush=True)
     print("[%s] cost quote %s -> %s : $%.4f TOTAL" % (LOG_TAG, start, end, total))
     if cost_cap is not None and total > cost_cap:
         fail("cost guard: $%.4f > $%.2f" % (total, cost_cap))
     if not yes:
         print("[%s] quote only — re-run with --yes to download." % LOG_TAG)
         return 0
-    for root, (ds, parent) in PRODUCTS.items():
-        stats = pull(auth, ds, parent, "statistics", start, ends[root])
+    for root, (ds, parent) in prods.items():
         defs = pull(auth, ds, parent, "definition", def_day(ends[root]), ends[root])
-        recs = build_records(root, stats, defs_map(defs))
-        n = merge_write(root, recs)
-        n_vol = sum(1 for r in recs if r["volume"] != "")
-        print("[%s] %s: +%d rows (volume on %d)  file now %d rows" % (LOG_TAG, root, len(recs), n_vol, n))
+        dmap = defs_map(defs)
+        recs_all = []
+        for (cs, ce) in month_chunks(start, ends[root]):
+            t0 = time.time()
+            stats = pull(auth, ds, parent, "statistics", cs, ce)
+            recs = build_records(root, stats, dmap)
+            recs_all += recs
+            n = merge_write(root, recs)                 # persist chunk by chunk
+            print("[%s] %s %s..%s: %d stat rows -> +%d recs (%.0fs) file=%d" % (
+                LOG_TAG, root, cs, ce[:10], len(stats), len(recs), time.time() - t0, n), flush=True)
+        n_vol = sum(1 for r in recs_all if r["volume"] != "")
+        print("[%s] %s DONE: +%d rows (volume on %d)" % (LOG_TAG, root, len(recs_all), n_vol), flush=True)
     return 0
 
 
 def main(argv):
     auth = (get_api_key(), "")
+    products = None
+    if "--products" in argv:
+        products = [x.strip().upper() for x in argv[argv.index("--products") + 1].split(",") if x.strip()]
     if "--backfill" in argv:
         i = argv.index("--backfill")
         start, end = argv[i + 1], argv[i + 2]
-        return run_range(auth, start, end, "--yes" in argv, cost_cap=None)
+        return run_range(auth, start, end, "--yes" in argv, cost_cap=None, products=products)
     if "--session" in argv:
         s = argv[argv.index("--session") + 1]
     else:
@@ -223,7 +246,7 @@ def main(argv):
             d -= dt.timedelta(days=1)
         s = d.isoformat()
     # daily: quote, cap, pull; OI of session T publishes ~01:44 UTC of T+1 → runs after that
-    return run_range(auth, s, s, True, cost_cap=COST_LIMIT_DAY_USD)
+    return run_range(auth, s, s, True, cost_cap=COST_LIMIT_DAY_USD, products=products)
 
 
 if __name__ == "__main__":
