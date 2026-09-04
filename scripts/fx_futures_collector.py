@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.4 (definition per monthly chunk; pull windows extend to T+1 06:00 UTC so OI is captured; field-wise merge) (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.5 (daily mode skips products whose session already has OI on disk — one paid pull per session, not one per cron run) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -204,9 +204,28 @@ def month_chunks(start, end_ex):
     return out
 
 
-def run_range(auth, start, end, yes, cost_cap, products=None):
+def have_oi(root, session):
+    """True if data/futures/canonical/{root}.csv already holds OI for that session (any contract)."""
+    p = OUT_DIR / ("%s.csv" % root)
+    if not p.exists():
+        return False
+    with open(p, newline="") as f:
+        for r in csv.DictReader(f):
+            if r["session"] == session and r.get("oi", "") not in ("", None):
+                return True
+    return False
+
+
+def run_range(auth, start, end, yes, cost_cap, products=None, skip_done_session=None):
     """Quote selected products first; download only if approved. Writes per product as it goes."""
     prods = {k: v for k, v in PRODUCTS.items() if not products or k in products}
+    if skip_done_session:
+        done = [k for k in prods if have_oi(k, skip_done_session)]
+        if done:
+            print("[%s] session %s already complete for %s — no paid pull" % (LOG_TAG, skip_done_session, ",".join(done)))
+        prods = {k: v for k, v in prods.items() if k not in done}
+        if not prods:
+            return 0
     end_ex = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat()
     total, per, ends = 0.0, {}, {}
     for root, (ds, parent) in prods.items():
@@ -263,7 +282,7 @@ def main(argv):
             d -= dt.timedelta(days=1)
         s = d.isoformat()
     # daily: quote, cap, pull; OI of session T publishes ~01:44 UTC of T+1 → runs after that
-    return run_range(auth, s, s, True, cost_cap=COST_LIMIT_DAY_USD, products=products)
+    return run_range(auth, s, s, True, cost_cap=COST_LIMIT_DAY_USD, products=products, skip_done_session=s)
 
 
 if __name__ == "__main__":
