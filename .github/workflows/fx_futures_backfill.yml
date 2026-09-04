@@ -1,0 +1,51 @@
+# One-shot backfill of FX futures (settle/OI/volume, contract-level) for FFVA.
+# Run 1: confirm = no  -> prints the Databento USD quote and stops.
+# Run 2: confirm = yes -> downloads, commits data/futures/canonical/*.csv
+name: FX Futures Backfill (one-shot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'Start session (YYYY-MM-DD)'
+        default: '2025-06-01'
+      end:
+        description: 'End session (YYYY-MM-DD)'
+        default: '2026-09-03'
+      confirm:
+        description: 'Type yes to actually download (anything else = quote only)'
+        default: 'no'
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -q requests
+      - name: Quote (always)
+        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}"
+      - name: Download (only if confirm == yes)
+        if: inputs.confirm == 'yes'
+        run: python scripts/fx_futures_collector.py --backfill "${{ inputs.start }}" "${{ inputs.end }}" --yes
+      - name: Commit
+        if: inputs.confirm == 'yes'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/futures
+          git commit -m "data(futures): backfill ${{ inputs.start }}..${{ inputs.end }} [FFVA]" || echo "nothing to commit"
+          git push
+      - name: Alert on failure
+        if: failure()
+        run: python scripts/notify_telegram.py --fail "fx_futures_backfill"
