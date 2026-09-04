@@ -4,9 +4,9 @@
     "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
     "pine_version": "v1_3_2_EN",
     "py_version": "0.1.0",
-    "generated_at": "2026-09-04T16:09:26+00:00",
-    "run_id": "33893308176",
-    "commit": "8863a04798dd",
+    "generated_at": "2026-09-04T17:49:27+00:00",
+    "run_id": "33902397045",
+    "commit": "b4a323b589fd",
     "schema_version": "1.0",
     "twin_test": {
       "status": "NOT_STARTED",
@@ -22,10 +22,10 @@
       "feed_id": "CME_6E",
       "ccy": "EUR",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -34,10 +34,10 @@
       "feed_id": "CME_6B",
       "ccy": "GBP",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -46,10 +46,10 @@
       "feed_id": "CME_6J",
       "ccy": "JPY",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -58,10 +58,10 @@
       "feed_id": "CME_6A",
       "ccy": "AUD",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -70,10 +70,10 @@
       "feed_id": "CME_6N",
       "ccy": "NZD",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -82,10 +82,10 @@
       "feed_id": "CME_6C",
       "ccy": "CAD",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -94,10 +94,10 @@
       "feed_id": "CME_6S",
       "ccy": "CHF",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -147,8 +147,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6E"
+        "components": {
+          "front": "6EU6",
+          "expiry": "2026-09-14",
+          "settle": 1.1638,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 3,
+          "pmax": 4,
+          "exhaustion": 0.75,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "GBP": {
         "score": 0.0,
@@ -175,8 +194,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6B"
+        "components": {
+          "front": "6BU6",
+          "expiry": "2026-09-14",
+          "settle": 1.3538,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 4,
+          "pmax": 4,
+          "exhaustion": 1.0,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "JPY": {
         "score": 0.0,
@@ -203,8 +241,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6J"
+        "components": {
+          "front": "6JU6",
+          "expiry": "2026-09-14",
+          "settle": 0.00643,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 1,
+          "pmax": 1,
+          "exhaustion": 1.0,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "AUD": {
         "score": 0.0,
@@ -231,8 +288,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6A"
+        "components": {
+          "front": "6AU6",
+          "expiry": "2026-09-14",
+          "settle": 0.72055,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 1,
+          "pmax": 1,
+          "exhaustion": 1.0,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "NZD": {
         "score": 0.0,
@@ -259,8 +335,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6N"
+        "components": {
+          "front": "6NU6",
+          "expiry": "2026-09-14",
+          "settle": 0.5885,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": false
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "CAD": {
         "score": 0.0,
@@ -287,8 +382,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6C"
+        "components": {
+          "front": "6CU6",
+          "expiry": "2026-09-15",
+          "settle": 0.7256,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 1,
+          "pmax": 3,
+          "exhaustion": 0.333,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "CHF": {
         "score": 0.0,
@@ -315,8 +429,27 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for 6S"
+        "components": {
+          "front": "6SU6",
+          "expiry": "2026-09-14",
+          "settle": 1.2406,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 319,
+          "z_warm": false
+        },
+        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
       },
       "USD": {
         "score": 0.0,
@@ -350,22 +483,22 @@
     "pairs": {}
   },
   "dqm": {
-    "health_score": 0.0,
+    "health_score": 87.5,
     "n_inputs": 8,
-    "n_live": 0,
+    "n_live": 7,
     "n_proxy": 0,
     "n_manual": 0,
     "n_stale": 0,
-    "n_dead": 8,
+    "n_dead": 1,
     "n_manual_expired": 0,
     "alerts": [
-      "FFVA EUR: no data (CME_6E)",
-      "FFVA GBP: no data (CME_6B)",
-      "FFVA JPY: no data (CME_6J)",
-      "FFVA AUD: no data (CME_6A)",
-      "FFVA NZD: no data (CME_6N)",
-      "FFVA CAD: no data (CME_6C)",
-      "FFVA CHF: no data (CME_6S)",
+      "FFVA EUR status STALE (last session 2026-09-03)",
+      "FFVA GBP status STALE (last session 2026-09-03)",
+      "FFVA JPY status STALE (last session 2026-09-03)",
+      "FFVA AUD status STALE (last session 2026-09-03)",
+      "FFVA NZD status STALE (last session 2026-09-03)",
+      "FFVA CAD status STALE (last session 2026-09-03)",
+      "FFVA CHF status STALE (last session 2026-09-03)",
       "FFVA USD: no data (ICE_DX)"
     ]
   },
@@ -414,10 +547,8 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "f501b94f8307eb218fb9aa5c0ee65db141544b59f0b527c82fedd86d68f58f87",
-    "prev_state_hash": null,
-    "diff_vs_prev": [
-      "initial"
-    ]
+    "state_hash": "62a3b0e4599e4ad86c0d9d52bd3328eb564c596466dfd907b9a4428652504160",
+    "prev_state_hash": "f501b94f8307eb218fb9aa5c0ee65db141544b59f0b527c82fedd86d68f58f87",
+    "diff_vs_prev": []
   }
 }
