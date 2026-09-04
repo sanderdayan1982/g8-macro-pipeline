@@ -3,10 +3,10 @@
     "script": "FFVA",
     "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
     "pine_version": "v1_3_2_EN",
-    "py_version": "0.1.2",
-    "generated_at": "2026-09-04T22:12:20+00:00",
-    "run_id": "33924452083",
-    "commit": "d2ffe892170a",
+    "py_version": "0.1.3",
+    "generated_at": "2026-09-04T22:18:22+00:00",
+    "run_id": "33924889199",
+    "commit": "2820aa743e1c",
     "schema_version": "1.0",
     "twin_test": {
       "status": "RUNNING",
@@ -120,9 +120,9 @@
       "feed_id": "ICE_DX",
       "ccy": "USD",
       "metric": "fut_settle_oi",
-      "value": NaN,
-      "data_date": "2026-09-03",
-      "age_bd": 1,
+      "value": 44438.0,
+      "data_date": "2026-09-02",
+      "age_bd": 2,
       "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
@@ -131,9 +131,9 @@
   ],
   "outputs": {
     "regime": {
-      "label": "ACCUM:1 SC:2 FLAT_OI:4 NA:1",
+      "label": "ACCUM:1 SC:2 FLAT_OI:5",
       "since": "2026-09-04",
-      "changed_this_run": false
+      "changed_this_run": true
     },
     "per_ccy": {
       "EUR": {
@@ -467,9 +467,9 @@
       },
       "USD": {
         "score": 0.0,
-        "state": "NA",
+        "state": "FLAT_OI",
         "percentile": null,
-        "z": null,
+        "z": 0.03,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -493,24 +493,24 @@
         "components": {
           "front": "DX  FMU0026!",
           "expiry": "2026-09-14",
-          "settle": 98.88,
-          "oi": null,
-          "vel": null,
-          "acc": null,
+          "settle": 99.552,
+          "oi": 44438.0,
+          "vel": -0.21,
+          "acc": 0.059,
           "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
+          "d1d": 0.0,
+          "d1w": -0.351,
+          "d1m": -0.29,
           "persist": 2,
           "pmax": 10,
           "exhaustion": 0.2,
           "vol_ratio": null,
           "mass": null,
-          "status": "STALE",
-          "bars_loaded": 328,
+          "status": "FRESH",
+          "bars_loaded": 327,
           "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 328 bars loaded, need ~285"
+        "na_reason": null
       }
     },
     "pairs": {}
@@ -524,9 +524,7 @@
     "n_stale": 0,
     "n_dead": 0,
     "n_manual_expired": 0,
-    "alerts": [
-      "FFVA USD status STALE (last session 2026-09-03)"
-    ]
+    "alerts": []
   },
   "gate_m": {
     "is_oos": true,
@@ -561,7 +559,7 @@
         "score": -0.493
       },
       "USD": {
-        "state": "NA",
+        "state": "FLAT_OI",
         "score": 0.0
       }
     },
@@ -573,8 +571,10 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "37a00a61243db82a0eaf69a0ab2d92eb77223ca714eba9b46c1fa20f5a894f72",
+    "state_hash": "56ec8b927f89a8cbf87d3cd0c983a181eb63bbb9ba5f9193c6e52fa704502d62",
     "prev_state_hash": "37a00a61243db82a0eaf69a0ab2d92eb77223ca714eba9b46c1fa20f5a894f72",
-    "diff_vs_prev": []
+    "diff_vs_prev": [
+      "USD"
+    ]
   }
 }
