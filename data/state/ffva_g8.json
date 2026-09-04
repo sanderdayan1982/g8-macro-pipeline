@@ -4,9 +4,9 @@
     "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
     "pine_version": "v1_3_2_EN",
     "py_version": "0.1.0",
-    "generated_at": "2026-09-04T19:00:19+00:00",
-    "run_id": "33908648371",
-    "commit": "177baff0dde0",
+    "generated_at": "2026-09-04T19:54:51+00:00",
+    "run_id": "33913393058",
+    "commit": "5585f5bbf974",
     "schema_version": "1.0",
     "twin_test": {
       "status": "FAILED",
@@ -22,7 +22,7 @@
         "JPY": 0.0
       },
       "bars_compared": 35,
-      "py_warmup_na_pct": 98.05,
+      "py_warmup_na_pct": 98.08,
       "compared_from": "2026-08-05",
       "compared_to": "2026-09-02"
     },
@@ -117,10 +117,10 @@
       "feed_id": "ICE_DX",
       "ccy": "USD",
       "metric": "fut_settle_oi",
-      "value": 0.0,
-      "data_date": "2026-09-04",
-      "age_bd": 0,
-      "quality": "DEAD",
+      "value": NaN,
+      "data_date": "2026-09-03",
+      "age_bd": 1,
+      "quality": "LIVE",
       "source_used": "PRIMARY",
       "calendar": "CME",
       "plausibility": "OK"
@@ -130,7 +130,7 @@
     "regime": {
       "label": "SC:1 FLAT_OI:1 NA:6",
       "since": "2026-09-04",
-      "changed_this_run": true
+      "changed_this_run": false
     },
     "per_ccy": {
       "EUR": {
@@ -487,23 +487,42 @@
           "pmax_len": 252,
           "exh_ratio": 0.8
         },
-        "components": {},
-        "na_reason": "no futures data for DX"
+        "components": {
+          "front": "DX  FMU0026!",
+          "expiry": "2026-09-14",
+          "settle": 98.88,
+          "oi": null,
+          "vel": null,
+          "acc": null,
+          "dir": null,
+          "d1d": null,
+          "d1w": null,
+          "d1m": null,
+          "persist": 2,
+          "pmax": 10,
+          "exhaustion": 0.2,
+          "vol_ratio": null,
+          "mass": null,
+          "status": "STALE",
+          "bars_loaded": 328,
+          "z_warm": true
+        },
+        "na_reason": "Z-252 warm-up: 328 bars loaded, need ~285"
       }
     },
     "pairs": {}
   },
   "dqm": {
-    "health_score": 87.5,
+    "health_score": 100.0,
     "n_inputs": 8,
-    "n_live": 7,
+    "n_live": 8,
     "n_proxy": 0,
     "n_manual": 0,
     "n_stale": 0,
-    "n_dead": 1,
+    "n_dead": 0,
     "n_manual_expired": 0,
     "alerts": [
-      "FFVA USD: no data (ICE_DX)"
+      "FFVA USD status STALE (last session 2026-09-03)"
     ]
   },
   "gate_m": {
@@ -551,11 +570,8 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "2b1ef5f8fdf26eeb0d187eed03374f43b0a146f649e8daa9df733f66147f3337",
-    "prev_state_hash": "62a3b0e4599e4ad86c0d9d52bd3328eb564c596466dfd907b9a4428652504160",
-    "diff_vs_prev": [
-      "NZD",
-      "CHF"
-    ]
+    "state_hash": "3c7d668394dd52956d8c61a6ad2573a101ccfa9ccd9807c84263c9d384b198c0",
+    "prev_state_hash": "2b1ef5f8fdf26eeb0d187eed03374f43b0a146f649e8daa9df733f66147f3337",
+    "diff_vs_prev": []
   }
 }
