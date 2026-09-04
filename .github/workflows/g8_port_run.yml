@@ -30,9 +30,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -q -r requirements.txt
 
       # ── ingest ──────────────────────────────────────────────────────────────
-      - name: COT collector (CFTC SODA) — untouched v1.0.0
+      - name: COT collector (CFTC SODA) v1.0.1
         id: cot
         run: python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json
 
