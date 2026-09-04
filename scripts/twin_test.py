@@ -61,7 +61,18 @@ def _pos_g8(pine):
     return long
 
 
-ADAPTERS = {"pos_g8": _pos_g8}
+def _ffva_g8(pine):
+    """FFVA-G8 v1.3.2 exports z_<CCY> (ΔOI Z-252 capped ±3). Bucket with z_flow = 0.25."""
+    recs = []
+    for col in [c for c in pine.columns if c.startswith("z_")]:
+        key = col[2:]
+        z = pd.to_numeric(pine[col], errors="coerce")
+        b = ["NA" if pd.isna(v) else "Z+" if v > 0.25 else "Z-" if v < -0.25 else "Z0" for v in z]
+        recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": b}))
+    return pd.concat(recs, ignore_index=True)
+
+
+ADAPTERS = {"pos_g8": _pos_g8, "ffva_g8": _ffva_g8}
 
 
 def main(script):
@@ -69,7 +80,7 @@ def main(script):
     if not script.endswith(("_2y", "_10y", "_g8")):
         script += "_g8"          # POS -> pos_g8 (state file stems)
     pine = pd.read_csv(TWIN / ("%s_pine.csv" % script))
-    py = pd.read_csv(TWIN / ("%s_py_history.csv" % script), parse_dates=["data_date"])
+    py = pd.read_csv(TWIN / ("%s_py_history.csv" % script), parse_dates=["data_date"], keep_default_na=False)
     pine["data_date"] = pd.to_datetime(pine["time"], unit="s", errors="coerce").fillna(pd.to_datetime(pine["time"], errors="coerce")).dt.normalize()
 
     long = ADAPTERS[script](pine) if script in ADAPTERS else _generic(pine)
@@ -86,14 +97,21 @@ def main(script):
     if m.empty:
         raise SystemExit("twin-test %s: no overlapping bars — check export and history" % script)
 
-    m["mismatch"] = m["state_pine"].astype(str) != m["state_py"].astype(str)
-    disc = float(m["mismatch"].mean() * 100.0)
-    per_key = m.groupby("key")["mismatch"].mean().mul(100).round(2).to_dict()
-    started = m["data_date"].min()
-    weeks = float((m["data_date"].max() - started).days / 7.0)
+    # Python NA from warm-up (not enough history) is not a logic discrepancy: reported apart.
+    warm = m["state_py"].astype(str) == "NA"
+    py_na_pct = float(warm.mean() * 100.0)
+    c = m[~warm]
+    if c.empty:
+        raise SystemExit("twin-test %s: all Python bars are NA (warm-up) — nothing to compare yet" % script)
+    c = c.assign(mismatch=c["state_pine"].astype(str) != c["state_py"].astype(str))
+    disc = float(c["mismatch"].mean() * 100.0)
+    per_key = c.groupby("key")["mismatch"].mean().mul(100).round(2).to_dict()
 
+    # D9: the parallel-run clock starts at the FIRST twin-test run, not at the first bar
     prev_p = TWIN / ("%s_twin.json" % script)
     prev = json.loads(prev_p.read_text()) if prev_p.exists() else {}
+    started = pd.Timestamp(prev["started"]) if prev.get("started") else pd.Timestamp.now("UTC").normalize().tz_localize(None)
+    weeks = float((pd.Timestamp.now("UTC").normalize().tz_localize(None) - started).days / 7.0)
     if disc > MAX_DISCREPANCY_PCT:
         status = "FAILED"
     elif weeks >= MIN_WEEKS:
@@ -102,7 +120,9 @@ def main(script):
         status = "RUNNING"
     out = {"status": status, "started": started.strftime("%Y-%m-%d"), "weeks_elapsed": round(weeks, 1),
            "state_discrepancy_pct": round(disc, 2), "acta": prev.get("acta"), "per_key": per_key,
-           "bars_compared": int(len(m))}
+           "bars_compared": int(len(c)), "py_warmup_na_pct": round(py_na_pct, 2),
+           "compared_from": c["data_date"].min().strftime("%Y-%m-%d"),
+           "compared_to": c["data_date"].max().strftime("%Y-%m-%d")}
     prev_p.write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
     return 1 if status == "FAILED" else 0
