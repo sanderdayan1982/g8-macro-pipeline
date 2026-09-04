@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.0 (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.1 (end capped at dataset available_end; per-product quotes) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -93,6 +93,22 @@ def api_get(auth, endpoint, params):
     fail("%s failed after %d attempts (%s)" % (endpoint, RETRIES, last))
 
 
+_RANGE = {}
+
+
+def available_end(auth, dataset):
+    """Databento 422s on any end beyond the dataset's live available_end — cap to it."""
+    if dataset not in _RANGE:
+        r = api_get(auth, "metadata.get_dataset_range", {"dataset": dataset})
+        _RANGE[dataset] = r.json().get("end") or r.json().get("available_end")
+    return _RANGE[dataset]
+
+
+def cap_end(auth, dataset, end_ex):
+    ae = available_end(auth, dataset)
+    return min(end_ex, ae[:19]) if ae else end_ex
+
+
 def quote(auth, dataset, parent, schema, start, end):
     r = api_get(auth, "metadata.get_cost", {"dataset": dataset, "schema": schema, "symbols": parent,
                                             "stype_in": "parent", "start": start, "end": end})
@@ -159,21 +175,23 @@ def merge_write(root, new_recs):
 def run_range(auth, start, end, yes, cost_cap):
     """Quote all products first; download only if approved."""
     end_ex = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat()
-    total, per = 0.0, {}
+    total, per, ends = 0.0, {}, {}
     for root, (ds, parent) in PRODUCTS.items():
-        c = quote(auth, ds, parent, "statistics", start, end_ex) + quote(auth, ds, parent, "definition", start, end_ex)
+        e = cap_end(auth, ds, end_ex)
+        ends[root] = e
+        c = quote(auth, ds, parent, "statistics", start, e) + quote(auth, ds, parent, "definition", start, e)
         per[root] = c
         total += c
-    print("[%s] cost quote %s -> %s : $%.4f total  %s" % (
-        LOG_TAG, start, end, total, "  ".join("%s=$%.4f" % kv for kv in per.items())))
+        print("[%s] quote %s (%s) %s -> %s : $%.4f" % (LOG_TAG, root, ds, start, e[:10], c))
+    print("[%s] cost quote %s -> %s : $%.4f TOTAL" % (LOG_TAG, start, end, total))
     if cost_cap is not None and total > cost_cap:
         fail("cost guard: $%.4f > $%.2f" % (total, cost_cap))
     if not yes:
         print("[%s] quote only — re-run with --yes to download." % LOG_TAG)
         return 0
     for root, (ds, parent) in PRODUCTS.items():
-        stats = pull(auth, ds, parent, "statistics", start, end_ex)
-        defs = pull(auth, ds, parent, "definition", start, end_ex)
+        stats = pull(auth, ds, parent, "statistics", start, ends[root])
+        defs = pull(auth, ds, parent, "definition", start, ends[root])
         recs = build_records(root, stats, defs_map(defs))
         n = merge_write(root, recs)
         n_vol = sum(1 for r in recs if r["volume"] != "")
