@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+fx_futures_collector.py — v1.0.0 (G8 PORT, Fase 2 / FFVA)
+==========================================================
+Daily T+1 collector AND one-shot backfill of FX futures settlement, open
+interest and cleared volume, contract by contract (principle 7), via Databento.
+Same access pattern as cme_options_collector.py v1.1.1 (untouched).
+
+Products (FFVA-G8 v1.3.2 scope — NZD and DX INCLUDED, decision Sander 04-sep-2026):
+  GLBX.MDP3  : 6E 6B 6J 6A 6N 6C 6S      (parent symbology X.FUT)
+  IFUS.IMPACT: DX                        (ICE US Dollar Index)
+
+Data model (statistics schema): stat_type 3 = settlement (price),
+  9 = open interest (quantity), 6 = cleared volume (quantity).
+  definition schema: instrument_id -> symbol, expiration, instrument_class F.
+
+Output (long format, one file per root, sorted by session, idempotent):
+  data/futures/canonical/{ROOT}.csv
+  session,root,symbol,expiry,settle,settle_flag,oi,volume
+
+COST DOCTRINE (D5): every pull is quoted first with metadata.get_cost.
+  --backfill START END   quotes, prints the USD amount and STOPS unless --yes.
+  daily mode             quotes; refuses above COST_LIMIT_DAY_USD (0.25).
+
+USAGE
+  python3 scripts/fx_futures_collector.py                       # yesterday's session (T+1)
+  python3 scripts/fx_futures_collector.py --backfill 2025-06-01 2026-09-03          # quote only
+  python3 scripts/fx_futures_collector.py --backfill 2025-06-01 2026-09-03 --yes    # download
+  python3 scripts/fx_futures_collector.py --session 2026-09-03  # a specific session
+"""
+import csv
+import datetime as dt
+import io
+import os
+import sys
+import time
+from pathlib import Path
+
+try:
+    import requests
+except ImportError:
+    sys.exit("FATAL: requests not installed (pip install requests)")
+
+BASE = "https://hist.databento.com/v0"
+PRODUCTS = {  # root -> (dataset, parent symbol)
+    "6E": ("GLBX.MDP3", "6E.FUT"), "6B": ("GLBX.MDP3", "6B.FUT"), "6J": ("GLBX.MDP3", "6J.FUT"),
+    "6A": ("GLBX.MDP3", "6A.FUT"), "6N": ("GLBX.MDP3", "6N.FUT"), "6C": ("GLBX.MDP3", "6C.FUT"),
+    "6S": ("GLBX.MDP3", "6S.FUT"), "DX": ("IFUS.IMPACT", "DX.FUT"),
+}
+STAT_SETTLE, STAT_VOLUME, STAT_OI = "3", "6", "9"
+COST_LIMIT_DAY_USD = 0.25
+RETRIES, BACKOFF_S = 3, [10, 30, 60]
+LOG_TAG = "FX-FUT"
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+OUT_DIR = Path(os.environ.get("G8_FUT_OUT_DIR", ROOT_DIR / "data" / "futures" / "canonical"))
+FIELDS = ["session", "root", "symbol", "expiry", "settle", "settle_flag", "oi", "volume"]
+
+
+def fail(msg):
+    print("[%s] FAIL: %s" % (LOG_TAG, msg), file=sys.stderr)
+    sys.exit(1)
+
+
+def get_api_key():
+    key = os.environ.get("DATABENTO_API_KEY", "").strip()
+    if not key:
+        kf = Path.home() / ".databento_key"
+        if kf.exists():
+            key = kf.read_text().strip()
+    if not key:
+        fail("No API key: set DATABENTO_API_KEY or create ~/.databento_key")
+    return key
+
+
+def api_get(auth, endpoint, params):
+    last = ""
+    for attempt in range(RETRIES):
+        try:
+            r = requests.get("%s/%s" % (BASE, endpoint), params=params, auth=auth, timeout=300)
+        except requests.RequestException as e:
+            last = "network error: %s" % e
+            time.sleep(BACKOFF_S[min(attempt, 2)])
+            continue
+        if r.status_code in (200, 206):
+            return r
+        if 500 <= r.status_code < 600:
+            last = "HTTP %s" % r.status_code
+            time.sleep(BACKOFF_S[min(attempt, 2)])
+            continue
+        fail("HTTP %s on %s: %s" % (r.status_code, endpoint, r.text[:300]))
+    fail("%s failed after %d attempts (%s)" % (endpoint, RETRIES, last))
+
+
+def quote(auth, dataset, parent, schema, start, end):
+    r = api_get(auth, "metadata.get_cost", {"dataset": dataset, "schema": schema, "symbols": parent,
+                                            "stype_in": "parent", "start": start, "end": end})
+    return float(r.text.strip())
+
+
+def pull(auth, dataset, parent, schema, start, end):
+    r = api_get(auth, "timeseries.get_range", {"dataset": dataset, "schema": schema, "symbols": parent,
+                                               "stype_in": "parent", "start": start, "end": end,
+                                               "encoding": "csv", "pretty_px": "true", "pretty_ts": "true",
+                                               "map_symbols": "true"})
+    return list(csv.DictReader(io.StringIO(r.text)))
+
+
+def defs_map(rows):
+    m = {}
+    for r in rows:
+        if r.get("instrument_class") != "F":
+            continue
+        m[r["instrument_id"]] = {"symbol": r.get("symbol") or r.get("raw_symbol", ""),
+                                 "expiry": (r.get("expiration") or "")[:10]}
+    return m
+
+
+def build_records(root, stats, dmap):
+    """(session, instrument) -> record. One row per contract per session."""
+    recs = {}
+    for r in stats:
+        iid, sess = r["instrument_id"], r["ts_ref"][:10]
+        d = dmap.get(iid)
+        if d is None:
+            continue
+        k = (sess, iid)
+        rec = recs.setdefault(k, {"session": sess, "root": root, "symbol": d["symbol"], "expiry": d["expiry"],
+                                  "settle": "", "settle_flag": "", "oi": "", "volume": ""})
+        st = r["stat_type"]
+        if st == STAT_SETTLE:
+            rec["settle"], rec["settle_flag"] = r["price"], r.get("stat_flags", "")
+        elif st == STAT_OI:
+            rec["oi"] = r["quantity"]
+        elif st == STAT_VOLUME:
+            rec["volume"] = r["quantity"]
+    return [v for v in recs.values() if v["settle"] != ""]
+
+
+def merge_write(root, new_recs):
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    p = OUT_DIR / ("%s.csv" % root)
+    old = {}
+    if p.exists():
+        with open(p, newline="") as f:
+            for r in csv.DictReader(f):
+                old[(r["session"], r["symbol"])] = r
+    for r in new_recs:
+        old[(r["session"], r["symbol"])] = r          # newer pull wins (idempotent)
+    rows = sorted(old.values(), key=lambda r: (r["session"], r["expiry"], r["symbol"]))
+    with open(p, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+    return len(rows)
+
+
+def run_range(auth, start, end, yes, cost_cap):
+    """Quote all products first; download only if approved."""
+    end_ex = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat()
+    total, per = 0.0, {}
+    for root, (ds, parent) in PRODUCTS.items():
+        c = quote(auth, ds, parent, "statistics", start, end_ex) + quote(auth, ds, parent, "definition", start, end_ex)
+        per[root] = c
+        total += c
+    print("[%s] cost quote %s -> %s : $%.4f total  %s" % (
+        LOG_TAG, start, end, total, "  ".join("%s=$%.4f" % kv for kv in per.items())))
+    if cost_cap is not None and total > cost_cap:
+        fail("cost guard: $%.4f > $%.2f" % (total, cost_cap))
+    if not yes:
+        print("[%s] quote only — re-run with --yes to download." % LOG_TAG)
+        return 0
+    for root, (ds, parent) in PRODUCTS.items():
+        stats = pull(auth, ds, parent, "statistics", start, end_ex)
+        defs = pull(auth, ds, parent, "definition", start, end_ex)
+        recs = build_records(root, stats, defs_map(defs))
+        n = merge_write(root, recs)
+        n_vol = sum(1 for r in recs if r["volume"] != "")
+        print("[%s] %s: +%d rows (volume on %d)  file now %d rows" % (LOG_TAG, root, len(recs), n_vol, n))
+    return 0
+
+
+def main(argv):
+    auth = (get_api_key(), "")
+    if "--backfill" in argv:
+        i = argv.index("--backfill")
+        start, end = argv[i + 1], argv[i + 2]
+        return run_range(auth, start, end, "--yes" in argv, cost_cap=None)
+    if "--session" in argv:
+        s = argv[argv.index("--session") + 1]
+    else:
+        d = dt.datetime.now(dt.timezone.utc).date() - dt.timedelta(days=1)
+        while d.weekday() >= 5:            # T+1 of the last weekday session
+            d -= dt.timedelta(days=1)
+        s = d.isoformat()
+    # daily: quote, cap, pull; OI of session T publishes ~01:44 UTC of T+1 → runs after that
+    return run_range(auth, s, s, True, cost_cap=COST_LIMIT_DAY_USD)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
