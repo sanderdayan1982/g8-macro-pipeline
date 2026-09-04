@@ -44,7 +44,7 @@ REGISTRY = ROOT / "sources" / "registry.csv"
 STATE_OUT = ROOT / "data" / "state" / "ffva_g8.json"
 TWIN_HIST = ROOT / "data" / "twin" / "ffva_g8_py_history.csv"
 
-SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.1"
+SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.2"
 QUESTION = "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?"
 CUTOFF_DATE = "2026-06-29"      # calibrate_ffva.py --multi, 29-jun-2026 (Gate M 3.1)
 FORWARD_WINDOWS_BD = [5, 10, 20]
@@ -350,19 +350,14 @@ def main():
     STATE_OUT.parent.mkdir(parents=True, exist_ok=True)
     STATE_OUT.write_text(json.dumps(state, indent=2))
 
-    # twin history: full per-bar quadrant history, idempotent
+    # twin history: FFVA recomputes the whole history every run from contract data,
+    # so the file is REWRITTEN (a stale row from an earlier code version must not survive).
     TWIN_HIST.parent.mkdir(parents=True, exist_ok=True)
-    existing = set()
-    if TWIN_HIST.exists():
-        with open(TWIN_HIST, newline="") as f:
-            existing = {(r["data_date"], r["ccy_or_pair"]) for r in csv.DictReader(f)}
-    else:
-        TWIN_HIST.write_text("data_date,ccy_or_pair,state\n")
-    with open(TWIN_HIST, "a", newline="") as f:
+    with open(TWIN_HIST, "w", newline="") as f:
         wr = csv.writer(f)
-        for s, c, qd in hist_rows:
-            if (s, c) not in existing:
-                wr.writerow([s, c, qd])
+        wr.writerow(["data_date", "ccy_or_pair", "state"])
+        for s, c, qd in sorted(hist_rows):
+            wr.writerow([s, c, qd])
     print("FFVA state written: %s | health %.0f | diff %s" % (label, state["dqm"]["health_score"], diff))
     return 0
 
