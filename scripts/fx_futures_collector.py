@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fx_futures_collector.py — v1.0.3 (--products filter; monthly chunks with progress; per-product write so partial runs persist) (G8 PORT, Fase 2 / FFVA)
+fx_futures_collector.py — v1.0.4 (definition per monthly chunk; pull windows extend to T+1 06:00 UTC so OI is captured; field-wise merge) (G8 PORT, Fase 2 / FFVA)
 ==========================================================
 Daily T+1 collector AND one-shot backfill of FX futures settlement, open
 interest and cleared volume, contract by contract (principle 7), via Databento.
@@ -109,6 +109,12 @@ def cap_end(auth, dataset, end_ex):
     return min(end_ex, ae[:19]) if ae else end_ex
 
 
+def plus_6h(end_iso):
+    """OI of session T publishes ~01:44 UTC of T+1 (Fri sessions at next Globex open): extend window to T+1 06:00."""
+    e = dt.datetime.fromisoformat(end_iso[:19]) + dt.timedelta(hours=6)
+    return e.isoformat()
+
+
 def def_day(end_iso):
     """Start of the single day used for the definition schema: the last weekday before `end`."""
     d = dt.date.fromisoformat(end_iso[:10]) - dt.timedelta(days=1)
@@ -159,7 +165,7 @@ def build_records(root, stats, dmap):
             rec["oi"] = r["quantity"]
         elif st == STAT_VOLUME:
             rec["volume"] = r["quantity"]
-    return [v for v in recs.values() if v["settle"] != ""]
+    return [v for v in recs.values() if v["settle"] != "" or v["oi"] != ""]
 
 
 def merge_write(root, new_recs):
@@ -171,7 +177,13 @@ def merge_write(root, new_recs):
             for r in csv.DictReader(f):
                 old[(r["session"], r["symbol"])] = r
     for r in new_recs:
-        old[(r["session"], r["symbol"])] = r          # newer pull wins (idempotent)
+        k = (r["session"], r["symbol"])
+        if k in old:                                   # field-wise: non-empty wins, never overwrite good with empty
+            for f in FIELDS:
+                if r.get(f) not in ("", None):
+                    old[k][f] = r[f]
+        else:
+            old[k] = dict(r)
     rows = sorted(old.values(), key=lambda r: (r["session"], r["expiry"], r["symbol"]))
     with open(p, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
@@ -201,11 +213,11 @@ def run_range(auth, start, end, yes, cost_cap, products=None):
         e = cap_end(auth, ds, end_ex)
         ends[root] = e
         d0 = def_day(e)
-        cs = quote(auth, ds, parent, "statistics", start, e)
-        cd = quote(auth, ds, parent, "definition", d0, e)
+        cs = quote(auth, ds, parent, "statistics", start, cap_end(auth, ds, plus_6h(e)))
+        cd = quote(auth, ds, parent, "definition", d0, e) * len(month_chunks(start, e))
         per[root] = cs + cd
         total += cs + cd
-        print("[%s] quote %s (%s) %s -> %s : stats $%.4f + definition(1d) $%.4f" % (LOG_TAG, root, ds, start, e[:10], cs, cd), flush=True)
+        print("[%s] quote %s (%s) %s -> %s : stats $%.4f + definition $%.4f" % (LOG_TAG, root, ds, start, e[:10], cs, cd), flush=True)
     print("[%s] cost quote %s -> %s : $%.4f TOTAL" % (LOG_TAG, start, end, total))
     if cost_cap is not None and total > cost_cap:
         fail("cost guard: $%.4f > $%.2f" % (total, cost_cap))
@@ -213,12 +225,17 @@ def run_range(auth, start, end, yes, cost_cap, products=None):
         print("[%s] quote only — re-run with --yes to download." % LOG_TAG)
         return 0
     for root, (ds, parent) in prods.items():
-        defs = pull(auth, ds, parent, "definition", def_day(ends[root]), ends[root])
-        dmap = defs_map(defs)
         recs_all = []
         for (cs, ce) in month_chunks(start, ends[root]):
             t0 = time.time()
-            stats = pull(auth, ds, parent, "statistics", cs, ce)
+            ce6 = cap_end(auth, ds, plus_6h(ce))
+            # definition of the contracts listed on the FIRST weekday of the chunk (expired ones are still there)
+            d0 = cs
+            while dt.date.fromisoformat(d0).weekday() >= 5:
+                d0 = (dt.date.fromisoformat(d0) + dt.timedelta(days=1)).isoformat()
+            d1 = (dt.date.fromisoformat(d0) + dt.timedelta(days=1)).isoformat()
+            dmap = defs_map(pull(auth, ds, parent, "definition", d0, min(d1, ce6[:10])))
+            stats = pull(auth, ds, parent, "statistics", cs, ce6)
             recs = build_records(root, stats, dmap)
             recs_all += recs
             n = merge_write(root, recs)                 # persist chunk by chunk
