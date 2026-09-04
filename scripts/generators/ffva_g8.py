@@ -17,7 +17,8 @@ SCOPE OF THIS VERSION (core engine only — Sections 2 and 4 of the Pine):
 
 FRONT-CONTRACT RULE (twin-test relevant): the Pine reads TradingView continuous
 `X1!` / `X1!_OI`. Here the front series is rebuilt from contract-level data as the
-nearest-expiry contract with expiry > session (TradingView rolls 1! at expiration).
+nearest-expiry QUARTERLY contract (H/M/U/Z) with expiry > session — CME FX serial
+months are ignored, as TradingView does (1! rolls at expiration).
 The OI-jump roll detector then behaves exactly as in Pine.
 
 Inputs   data/futures/canonical/{ROOT}.csv   (fx_futures_collector.py)
@@ -43,7 +44,7 @@ REGISTRY = ROOT / "sources" / "registry.csv"
 STATE_OUT = ROOT / "data" / "state" / "ffva_g8.json"
 TWIN_HIST = ROOT / "data" / "twin" / "ffva_g8_py_history.csv"
 
-SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.0"
+SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.1"
 QUESTION = "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?"
 CUTOFF_DATE = "2026-06-29"      # calibrate_ffva.py --multi, 29-jun-2026 (Gate M 3.1)
 FORWARD_WINDOWS_BD = [5, 10, 20]
@@ -74,6 +75,9 @@ def load_front(root):
         df[c] = pd.to_numeric(df[c], errors="coerce")
     df = df[df["expiry"].notna() & (df["expiry"] != "")]
     df = df[df["expiry"] > df["session"]]
+    # QUARTERLY ONLY (H/M/U/Z): CME FX also lists monthly "serial" contracts with tiny OI.
+    # TradingView's X1! is the quarterly front; matching it is what the twin-test measures.
+    df = df[df["expiry"].str[5:7].isin(["03", "06", "09", "12"])]
     front = df.sort_values(["session", "expiry"]).groupby("session").first().reset_index()
     front["session"] = pd.to_datetime(front["session"])
     return front.set_index("session")[["symbol", "expiry", "settle", "oi", "volume"]].sort_index()
