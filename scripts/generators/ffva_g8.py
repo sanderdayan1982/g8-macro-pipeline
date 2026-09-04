@@ -44,7 +44,7 @@ REGISTRY = ROOT / "sources" / "registry.csv"
 STATE_OUT = ROOT / "data" / "state" / "ffva_g8.json"
 TWIN_HIST = ROOT / "data" / "twin" / "ffva_g8_py_history.csv"
 
-SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.2"
+SCRIPT, PINE_VERSION, PY_VERSION = "FFVA", "v1_3_2_EN", "0.1.3"
 QUESTION = "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?"
 CUTOFF_DATE = "2026-06-29"      # calibrate_ffva.py --multi, 29-jun-2026 (Gate M 3.1)
 FORWARD_WINDOWS_BD = [5, 10, 20]
@@ -80,7 +80,14 @@ def load_front(root):
     df = df[df["expiry"].str[5:7].isin(["03", "06", "09", "12"])]
     front = df.sort_values(["session", "expiry"]).groupby("session").first().reset_index()
     front["session"] = pd.to_datetime(front["session"])
-    return front.set_index("session")[["symbol", "expiry", "settle", "oi", "volume"]].sort_index()
+    front = front.set_index("session")[["symbol", "expiry", "settle", "oi", "volume"]].sort_index()
+    # Trailing sessions without OI yet (ICE publishes OI later than CME): use the last COMPLETE
+    # session and let age_bd/status carry the lag — NA = pause, never a hole. Max 3 dropped.
+    dropped = 0
+    while len(front) > 1 and pd.isna(front["oi"].iloc[-1]) and dropped < 3:
+        front = front.iloc[:-1]
+        dropped += 1
+    return front
 
 
 # NA POLICY (declared, twin-test arbitrates): rolling windows count VALID prints and
