@@ -1,0 +1,423 @@
+{
+  "meta": {
+    "script": "FFVA",
+    "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
+    "pine_version": "v1_3_2_EN",
+    "py_version": "0.1.0",
+    "generated_at": "2026-09-04T16:09:26+00:00",
+    "run_id": "33893308176",
+    "commit": "8863a04798dd",
+    "schema_version": "1.0",
+    "twin_test": {
+      "status": "NOT_STARTED",
+      "started": null,
+      "weeks_elapsed": 0,
+      "state_discrepancy_pct": null,
+      "acta": null
+    },
+    "funnel_eligible": false
+  },
+  "inputs": [
+    {
+      "feed_id": "CME_6E",
+      "ccy": "EUR",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6B",
+      "ccy": "GBP",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6J",
+      "ccy": "JPY",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6A",
+      "ccy": "AUD",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6N",
+      "ccy": "NZD",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6C",
+      "ccy": "CAD",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "CME_6S",
+      "ccy": "CHF",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    },
+    {
+      "feed_id": "ICE_DX",
+      "ccy": "USD",
+      "metric": "fut_settle_oi",
+      "value": 0.0,
+      "data_date": "2026-09-04",
+      "age_bd": 0,
+      "quality": "DEAD",
+      "source_used": "PRIMARY",
+      "calendar": "CME",
+      "plausibility": "OK"
+    }
+  ],
+  "outputs": {
+    "regime": {
+      "label": "NA:8",
+      "since": "2026-09-04",
+      "changed_this_run": false
+    },
+    "per_ccy": {
+      "EUR": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6E"
+      },
+      "GBP": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6B"
+      },
+      "JPY": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6J"
+      },
+      "AUD": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6A"
+      },
+      "NZD": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6N"
+      },
+      "CAD": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6C"
+      },
+      "CHF": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for 6S"
+      },
+      "USD": {
+        "score": 0.0,
+        "state": "NA",
+        "percentile": null,
+        "z": null,
+        "window_bars": 252,
+        "thresholds_frozen": {
+          "roll_drop": 0.4,
+          "roll_cooldown": 3,
+          "stale_bars": 3,
+          "oi_mean_len": 21,
+          "z_len_hi": 252,
+          "z_len_med": 252,
+          "z_len_lo": 252,
+          "z_cap": 3.0,
+          "vel_lb": 5,
+          "acc_lb": 3,
+          "vel_smooth": 3,
+          "z_flow": 0.25,
+          "vol_hi": 1.5,
+          "vol_lo": 0.5,
+          "vol_len": 21,
+          "pmax_len": 252,
+          "exh_ratio": 0.8
+        },
+        "components": {},
+        "na_reason": "no futures data for DX"
+      }
+    },
+    "pairs": {}
+  },
+  "dqm": {
+    "health_score": 0.0,
+    "n_inputs": 8,
+    "n_live": 0,
+    "n_proxy": 0,
+    "n_manual": 0,
+    "n_stale": 0,
+    "n_dead": 8,
+    "n_manual_expired": 0,
+    "alerts": [
+      "FFVA EUR: no data (CME_6E)",
+      "FFVA GBP: no data (CME_6B)",
+      "FFVA JPY: no data (CME_6J)",
+      "FFVA AUD: no data (CME_6A)",
+      "FFVA NZD: no data (CME_6N)",
+      "FFVA CAD: no data (CME_6C)",
+      "FFVA CHF: no data (CME_6S)",
+      "FFVA USD: no data (ICE_DX)"
+    ]
+  },
+  "gate_m": {
+    "is_oos": true,
+    "cutoff_date": "2026-06-29",
+    "signal_snapshot": {
+      "EUR": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "GBP": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "JPY": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "AUD": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "NZD": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "CAD": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "CHF": {
+        "state": "NA",
+        "score": 0.0
+      },
+      "USD": {
+        "state": "NA",
+        "score": 0.0
+      }
+    },
+    "forward_windows_bd": [
+      5,
+      10,
+      20
+    ],
+    "realised": null
+  },
+  "journal_link": {
+    "state_hash": "f501b94f8307eb218fb9aa5c0ee65db141544b59f0b527c82fedd86d68f58f87",
+    "prev_state_hash": null,
+    "diff_vs_prev": [
+      "initial"
+    ]
+  }
+}
