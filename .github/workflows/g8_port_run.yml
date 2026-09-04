@@ -41,9 +41,20 @@ jobs:
         run: python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json
 
       # ── generators (one per ported Pine script) ─────────────────────────────
+      - name: FX futures collector (Databento, T+1)
+        id: fut
+        continue-on-error: true
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: python scripts/fx_futures_collector.py
+
       - name: Generator POS
         id: pos
         run: python scripts/generators/pos_g8.py
+
+      - name: Generator FFVA
+        id: ffva
+        run: python scripts/generators/ffva_g8.py
 
       # ── twin-test (runs only when the Pine export exists) ───────────────────
       - name: Twin-test POS
@@ -52,20 +63,25 @@ jobs:
         run: python scripts/twin_test.py POS
 
       # ── notify only on change (D6) ──────────────────────────────────────────
+      - name: Twin-test FFVA
+        if: hashFiles('data/twin/ffva_g8_pine.csv') != ''
+        continue-on-error: true
+        run: python scripts/twin_test.py FFVA
+
       - name: Telegram (diff-based)
-        run: python scripts/notify_telegram.py --states data/state/pos_g8.json
+        run: python scripts/notify_telegram.py --states data/state/pos_g8.json data/state/ffva_g8.json
 
       # ── commit only if something other than timestamps changed ─────────────
       - name: Commit state
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/pos_g8_cot.json data/state data/twin
+          git add data/pos_g8_cot.json data/futures data/state data/twin
           if git diff --cached --quiet -I '"generated_at"' -I '"generated_utc"' -I '"run_id"' -I '"commit"' -I '"age_days"' -I '"age_bd"'; then
             echo "no material change — no commit"
             git reset -q
           else
-            git commit -m "g8-port: state update $(date -u +%Y-%m-%dT%H:%MZ) [POS]"
+            git commit -m "g8-port: state update $(date -u +%Y-%m-%dT%H:%MZ) [POS FFVA]"
             for i in 1 2 3; do
               git pull --rebase -q && git push && break
               sleep 10
@@ -75,4 +91,4 @@ jobs:
       # ── principle 9: any failure above → Telegram ───────────────────────────
       - name: Alert on failure
         if: failure()
-        run: python scripts/notify_telegram.py --fail "cot=${{ steps.cot.outcome }} pos=${{ steps.pos.outcome }}"
+        run: python scripts/notify_telegram.py --fail "cot=${{ steps.cot.outcome }} fut=${{ steps.fut.outcome }} pos=${{ steps.pos.outcome }} ffva=${{ steps.ffva.outcome }}"
