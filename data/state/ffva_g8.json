@@ -4,16 +4,27 @@
     "question": "Does physical demand in regulated FX futures (CME/ICE) validate or contradict the IYDT rates signal?",
     "pine_version": "v1_3_2_EN",
     "py_version": "0.1.0",
-    "generated_at": "2026-09-04T17:49:27+00:00",
-    "run_id": "33902397045",
-    "commit": "b4a323b589fd",
+    "generated_at": "2026-09-04T19:00:19+00:00",
+    "run_id": "33908648371",
+    "commit": "177baff0dde0",
     "schema_version": "1.0",
     "twin_test": {
-      "status": "NOT_STARTED",
-      "started": null,
-      "weeks_elapsed": 0,
-      "state_discrepancy_pct": null,
-      "acta": null
+      "status": "FAILED",
+      "started": "2026-09-04",
+      "weeks_elapsed": 0.0,
+      "state_discrepancy_pct": 60.0,
+      "acta": null,
+      "per_key": {
+        "AUD": 0.0,
+        "CAD": 40.0,
+        "EUR": 93.75,
+        "GBP": 40.0,
+        "JPY": 0.0
+      },
+      "bars_compared": 35,
+      "py_warmup_na_pct": 98.05,
+      "compared_from": "2026-08-05",
+      "compared_to": "2026-09-02"
     },
     "funnel_eligible": false
   },
@@ -22,7 +33,7 @@
       "feed_id": "CME_6E",
       "ccy": "EUR",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 730187.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -34,7 +45,7 @@
       "feed_id": "CME_6B",
       "ccy": "GBP",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 209749.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -46,7 +57,7 @@
       "feed_id": "CME_6J",
       "ccy": "JPY",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 311731.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -58,7 +69,7 @@
       "feed_id": "CME_6A",
       "ccy": "AUD",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 308382.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -70,7 +81,7 @@
       "feed_id": "CME_6N",
       "ccy": "NZD",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 95389.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -82,7 +93,7 @@
       "feed_id": "CME_6C",
       "ccy": "CAD",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 292081.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -94,7 +105,7 @@
       "feed_id": "CME_6S",
       "ccy": "CHF",
       "metric": "fut_settle_oi",
-      "value": NaN,
+      "value": 79009.0,
       "data_date": "2026-09-03",
       "age_bd": 1,
       "quality": "LIVE",
@@ -117,9 +128,9 @@
   ],
   "outputs": {
     "regime": {
-      "label": "NA:8",
+      "label": "SC:1 FLAT_OI:1 NA:6",
       "since": "2026-09-04",
-      "changed_this_run": false
+      "changed_this_run": true
     },
     "per_ccy": {
       "EUR": {
@@ -151,23 +162,23 @@
           "front": "6EU6",
           "expiry": "2026-09-14",
           "settle": 1.1638,
-          "oi": null,
+          "oi": 730187.0,
           "vel": null,
           "acc": null,
           "dir": null,
           "d1d": null,
           "d1w": null,
           "d1m": null,
-          "persist": 3,
-          "pmax": 4,
-          "exhaustion": 0.75,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": true
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": 1.98,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": false
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
       },
       "GBP": {
         "score": 0.0,
@@ -198,23 +209,23 @@
           "front": "6BU6",
           "expiry": "2026-09-14",
           "settle": 1.3538,
-          "oi": null,
+          "oi": 209749.0,
           "vel": null,
           "acc": null,
           "dir": null,
           "d1d": null,
           "d1w": null,
           "d1m": null,
-          "persist": 4,
-          "pmax": 4,
-          "exhaustion": 1.0,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": true
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": 2.83,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": false
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
       },
       "JPY": {
         "score": 0.0,
@@ -245,23 +256,23 @@
           "front": "6JU6",
           "expiry": "2026-09-14",
           "settle": 0.00643,
-          "oi": null,
+          "oi": 311731.0,
           "vel": null,
           "acc": null,
           "dir": null,
           "d1d": null,
           "d1w": null,
           "d1m": null,
-          "persist": 1,
-          "pmax": 1,
-          "exhaustion": 1.0,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": true
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": 3.36,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": false
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
       },
       "AUD": {
         "score": 0.0,
@@ -292,29 +303,29 @@
           "front": "6AU6",
           "expiry": "2026-09-14",
           "settle": 0.72055,
-          "oi": null,
+          "oi": 308382.0,
           "vel": null,
           "acc": null,
           "dir": null,
           "d1d": null,
           "d1w": null,
           "d1m": null,
-          "persist": 1,
-          "pmax": 1,
-          "exhaustion": 1.0,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": true
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": 2.61,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": false
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
       },
       "NZD": {
         "score": 0.0,
-        "state": "NA",
+        "state": "FLAT_OI",
         "percentile": null,
-        "z": null,
+        "z": 0.11,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -339,23 +350,23 @@
           "front": "6NU6",
           "expiry": "2026-09-14",
           "settle": 0.5885,
-          "oi": null,
-          "vel": null,
-          "acc": null,
+          "oi": 95389.0,
+          "vel": 0.61,
+          "acc": -0.075,
           "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": false
+          "d1d": 1.341,
+          "d1w": 0.534,
+          "d1m": 0.0,
+          "persist": 1,
+          "pmax": 11,
+          "exhaustion": 0.091,
+          "vol_ratio": 1.45,
+          "mass": "NORMAL",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": null
       },
       "CAD": {
         "score": 0.0,
@@ -386,29 +397,29 @@
           "front": "6CU6",
           "expiry": "2026-09-15",
           "settle": 0.7256,
-          "oi": null,
+          "oi": 292081.0,
           "vel": null,
           "acc": null,
           "dir": null,
           "d1d": null,
           "d1w": null,
           "d1m": null,
-          "persist": 1,
-          "pmax": 3,
-          "exhaustion": 0.333,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": true
+          "persist": 0,
+          "pmax": 0,
+          "exhaustion": null,
+          "vol_ratio": 2.09,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": false
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": "Z-252 warm-up: 324 bars loaded, need ~285"
       },
       "CHF": {
-        "score": 0.0,
-        "state": "NA",
+        "score": -0.493,
+        "state": "SC",
         "percentile": null,
-        "z": null,
+        "z": -0.99,
         "window_bars": 252,
         "thresholds_frozen": {
           "roll_drop": 0.4,
@@ -433,23 +444,23 @@
           "front": "6SU6",
           "expiry": "2026-09-14",
           "settle": 1.2406,
-          "oi": null,
-          "vel": null,
-          "acc": null,
-          "dir": null,
-          "d1d": null,
-          "d1w": null,
-          "d1m": null,
-          "persist": 0,
-          "pmax": 0,
-          "exhaustion": null,
-          "vol_ratio": null,
-          "mass": null,
-          "status": "STALE",
-          "bars_loaded": 319,
-          "z_warm": false
+          "oi": 79009.0,
+          "vel": -1.42,
+          "acc": -1.61,
+          "dir": -0.493,
+          "d1d": -1.993,
+          "d1w": -0.493,
+          "d1m": -0.782,
+          "persist": 1,
+          "pmax": 7,
+          "exhaustion": 0.143,
+          "vol_ratio": 1.93,
+          "mass": "WITH MASS",
+          "status": "FRESH",
+          "bars_loaded": 324,
+          "z_warm": true
         },
-        "na_reason": "Z-252 warm-up: 319 bars loaded, need ~285"
+        "na_reason": null
       },
       "USD": {
         "score": 0.0,
@@ -492,13 +503,6 @@
     "n_dead": 1,
     "n_manual_expired": 0,
     "alerts": [
-      "FFVA EUR status STALE (last session 2026-09-03)",
-      "FFVA GBP status STALE (last session 2026-09-03)",
-      "FFVA JPY status STALE (last session 2026-09-03)",
-      "FFVA AUD status STALE (last session 2026-09-03)",
-      "FFVA NZD status STALE (last session 2026-09-03)",
-      "FFVA CAD status STALE (last session 2026-09-03)",
-      "FFVA CHF status STALE (last session 2026-09-03)",
       "FFVA USD: no data (ICE_DX)"
     ]
   },
@@ -523,7 +527,7 @@
         "score": 0.0
       },
       "NZD": {
-        "state": "NA",
+        "state": "FLAT_OI",
         "score": 0.0
       },
       "CAD": {
@@ -531,8 +535,8 @@
         "score": 0.0
       },
       "CHF": {
-        "state": "NA",
-        "score": 0.0
+        "state": "SC",
+        "score": -0.493
       },
       "USD": {
         "state": "NA",
@@ -547,8 +551,11 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "62a3b0e4599e4ad86c0d9d52bd3328eb564c596466dfd907b9a4428652504160",
-    "prev_state_hash": "f501b94f8307eb218fb9aa5c0ee65db141544b59f0b527c82fedd86d68f58f87",
-    "diff_vs_prev": []
+    "state_hash": "2b1ef5f8fdf26eeb0d187eed03374f43b0a146f649e8daa9df733f66147f3337",
+    "prev_state_hash": "62a3b0e4599e4ad86c0d9d52bd3328eb564c596466dfd907b9a4428652504160",
+    "diff_vs_prev": [
+      "NZD",
+      "CHF"
+    ]
   }
 }
