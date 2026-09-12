@@ -47,13 +47,22 @@ jobs:
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
         run: python scripts/build_options_summary.py
 
+      # Dashboard alerts (strike walls card on every new session; $0, repo data only)
+      - name: Dashboard alerts (Telegram on change)
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/dashboard_alerts.py
+
       - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/options data/OPTIONS_SURFACE.json
+          git add data/options data/OPTIONS_SURFACE.json data/alerts
           if git diff --cached --quiet; then
-            echo "No new session — nothing to commit."
+            echo "No new session / no alert-state change — nothing to commit."
           else
             git commit -m "chore: options surface update $(date -u +%F)"
             git push
