@@ -200,6 +200,17 @@ jobs:
           JSDA_BASE: ${{ vars.JSDA_BASE }}
         run: python scripts/fetch_jpy_real.py
 
+      # ── 5c. Dashboard alerts (Telegram, one message/day only on change) ───
+      # v1.0 2026-09-12: reads repo data only (no downloads, $0). State lives in
+      # data/alerts/state.json and is committed by the step below (git add data/).
+      - name: Dashboard alerts (Telegram on change)
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/dashboard_alerts.py
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
