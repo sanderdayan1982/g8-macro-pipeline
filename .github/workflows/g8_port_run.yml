@@ -1,6 +1,7 @@
 # .github/workflows/g8_port_run.yml
-# G8 PORT — pipeline run (D6): every 4 h aligned to 4H candle closes, Telegram only on change.
-# Phase 2: POS only. Each ported generator is appended as a step; nothing else in the repo is touched.
+# G8 PORT — pipeline run (D6): Telegram only on change.
+# Phase 2: POS only. COT is a WEEKLY release (CFTC, Fri 19:30 UTC, report as of Tue) — the
+# 4-hourly cadence belonged to the (paused) FFVA generators. Cadence now: Fri 21:05 UTC + Sat 09:05 UTC retry.
 #
 # 2026-09-12 — FFVA PAUSED (decision: no more Databento spend for the port project).
 #   Removed from this run: FX futures collector (Databento), Generator FFVA, Twin-test FFVA,
@@ -10,7 +11,8 @@ name: G8 Port Run
 
 on:
   schedule:
-    - cron: '5 0,4,8,12,16,20 * * *'
+    - cron: '5 21 * * 5'
+    - cron: '5 9 * * 6'
   workflow_dispatch:
 
 concurrency:
