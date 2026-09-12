@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.0  (2026-09-12)
+G8 Macro Pipeline — dashboard_alerts.py  v1.1  (2026-09-12)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -23,6 +23,11 @@ Uso
   python3 scripts/dashboard_alerts.py --dry-run  # imprime, no envía, no guarda estado
   python3 scripts/dashboard_alerts.py --baseline # fija el estado actual y envía un resumen
 Secrets (env): TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  (los mismos del G8 Port Run)
+
+v1.1: formato en bloques legibles (varios mensajes si hace falta); walls desde la
+      CADENA COMPLETA (data/options/canonical/<sesión>/<root>.csv), no del resumen:
+      pin · call wall · put wall · corredor · top-OI · distancias · DTE · Δ vs sesión
+      anterior · siguiente mensual cuando el front vence en ≤7 días.
 
 Secciones cubiertas (todas las divisas con dato en repo)
   §02 floor spreads   USD EUR GBP JPY CAD AUD   badge AMPLE/TIGHT/PRESSURE · |z| 252d
@@ -362,47 +367,118 @@ def check_metals(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §08 strike walls (CME options) — tarjeta completa en cada sesión nueva
+# §08 strike walls (CME options) — cadena COMPLETA, tarjeta por par en cada sesión nueva
 # ═════════════════════════════════════════════════════════════════════════════
+OPT_ROOT = {"EUR": "EUU", "JPY": "JPU", "GBP": "GBU", "AUD": "ADU", "CAD": "CAU", "CHF": "CHU"}
+FUT_ROOT = {"EUR": "6E", "JPY": "6J", "GBP": "6B", "AUD": "6A", "CAD": "6C", "CHF": "6S"}
+MIN_OI = 100                     # mismo filtro que build_options_summary.py
+NEXT_MONTHLY_DTE = 7             # si el front vence en ≤7 días, enseña también el siguiente
+TOP_N = 5
+
+
 def user_lvl(ccy, x):
     return 1.0 / x if ccy in INV else x
 
 
-def fmt_lvl(ccy, x):
-    v = user_lvl(ccy, x)
-    return ("%.2f" if ccy == "JPY" else "%.4f") % v
+def fk(ccy, k):
+    return ("%.2f" if ccy == "JPY" else "%.4f") % k
 
 
-def walls_user(ccy, entry):
-    """Convierte los walls a la convención del operador (USD/XXX invertidos, call↔put)."""
-    ref = user_lvl(ccy, entry["ref"])
-    ws = []
-    for w in entry.get("walls", []):
-        k = user_lvl(ccy, w["k"])
-        c, p = (w["p"], w["c"]) if ccy in INV else (w["c"], w["p"])   # un put CME = call del usuario
-        ws.append({"k": k, "oi": w["oi"], "c": c, "p": p})
-    ws.sort(key=lambda w: -w["oi"])
-    return ref, ws
+def fkk(oi):
+    return "%.1fk" % (oi / 1000.0)
 
 
-def describe_walls(ccy, entry):
-    ref, ws = walls_user(ccy, entry)
-    if not ws:
+def load_chain(session, ccy):
+    """Lee los CSV canónicos de la sesión → (ref_future, {expiry: {strike_user: {c,p}}}).
+    Convención del operador: USD/XXX invertidos (1/k) y call↔put intercambiados."""
+    d = os.path.join(DATA, "options", "canonical", session)
+    fp = os.path.join(d, FUT_ROOT[ccy] + ".csv")
+    op = os.path.join(d, OPT_ROOT[ccy] + ".csv")
+    if not (os.path.exists(fp) and os.path.exists(op)):
+        return None, None
+    with open(fp, encoding="utf-8", errors="ignore") as fh:
+        futs = [r for r in csv.DictReader(fh) if r.get("type") == "FUT" and r.get("expiry", "") >= session
+                and r.get("settle") not in (None, "")]
+    if not futs:
+        return None, None
+    futs.sort(key=lambda r: r["expiry"])
+    ref = user_lvl(ccy, float(futs[0]["settle"]))
+    chains = {}
+    with open(op, encoding="utf-8", errors="ignore") as fh:
+        for r in csv.DictReader(fh):
+            if r.get("type") != "OPT" or r.get("expiry", "") <= session:
+                continue
+            try:
+                k = user_lvl(ccy, float(r["strike"]))
+                oi = float(r.get("oi") or 0)
+            except ValueError:
+                continue
+            side = (r.get("right") or "").upper()[:1]
+            if ccy in INV:
+                side = "P" if side == "C" else "C"          # un put CME = call del operador
+            e = chains.setdefault(r["expiry"], {}).setdefault(k, {"c": 0.0, "p": 0.0})
+            e["c" if side == "C" else "p"] += oi
+    return ref, chains
+
+
+def analyse_expiry(ccy, ref, chain):
+    ch = {k: e for k, e in chain.items() if e["c"] + e["p"] >= MIN_OI}
+    if not ch:
         return None
-    pin = ws[0]
-    above = [w for w in ws if w["k"] > ref]
-    below = [w for w in ws if w["k"] < ref]
-    call_wall = max(above, key=lambda w: w["c"]) if above else None
-    put_wall = max(below, key=lambda w: w["p"]) if below else None
-    near = min(ws, key=lambda w: abs(w["k"] - ref))
-    near_pct = abs(near["k"] - ref) / ref
-    return {"ref": ref, "pin": pin, "call": call_wall, "put": put_wall, "near": near,
-            "near_pct": near_pct, "oi_front": entry.get("oi_front"), "front": entry.get("front"),
-            "pata": entry.get("pata"), "band": entry.get("band")}
+    tot = sorted(ch.items(), key=lambda kv: -(kv[1]["c"] + kv[1]["p"]))
+    pin_k, pin = tot[0]
+    above = {k: e for k, e in ch.items() if k > ref}
+    below = {k: e for k, e in ch.items() if k < ref}
+    cw = max(above.items(), key=lambda kv: kv[1]["c"]) if above else None
+    pw = max(below.items(), key=lambda kv: kv[1]["p"]) if below else None
+    near_k, near = min(ch.items(), key=lambda kv: abs(kv[0] - ref))
+    return {"pin_k": pin_k, "pin_oi": pin["c"] + pin["p"],
+            "call_k": cw[0] if cw else None, "call_oi": cw[1]["c"] if cw else None,
+            "put_k": pw[0] if pw else None, "put_oi": pw[1]["p"] if pw else None,
+            "near_k": near_k, "near_oi": near["c"] + near["p"], "near_pct": abs(near_k - ref) / ref,
+            "oi_total": sum(e["c"] + e["p"] for e in ch.values()),
+            "n_strikes": len(ch),
+            "top": [(k, e["c"] + e["p"], e["c"], e["p"]) for k, e in tot[:TOP_N]]}
 
 
-def k_str(ccy, w):
-    return None if w is None else "%s (%.1fk)" % (("%.2f" if ccy == "JPY" else "%.4f") % w["k"], w["oi"] / 1000.0)
+def pct_from(ref, k):
+    return None if k is None else (k / ref - 1.0) * 100.0
+
+
+def wall_block(ccy, ref, expiry, a, dte, gate, prev, oi_prev, label="front"):
+    p = PAIR[ccy]
+    out = ["🧱 <b>%s</b> · spot %s · %s vence %s (%d DTE) · OI %s · %d strikes · %s"
+           % (p, fk(ccy, ref), label, expiry, dte, fkk(a["oi_total"]), a["n_strikes"], gate)]
+    out.append("   pin        %s  %s  (%+.2f %%)" % (fk(ccy, a["pin_k"]), fkk(a["pin_oi"]), pct_from(ref, a["pin_k"])))
+    out.append("   call wall  %s" % ("%s  %s calls  (%+.2f %%)" % (fk(ccy, a["call_k"]), fkk(a["call_oi"]), pct_from(ref, a["call_k"]))
+                                    if a["call_k"] else "— (sin OI ≥100 por encima)"))
+    out.append("   put wall   %s" % ("%s  %s puts  (%+.2f %%)" % (fk(ccy, a["put_k"]), fkk(a["put_oi"]), pct_from(ref, a["put_k"]))
+                                    if a["put_k"] else "— (sin OI ≥100 por debajo)"))
+    if a["call_k"] and a["put_k"]:
+        out.append("   corredor   %s – %s  (%.2f %% de ancho)" % (fk(ccy, a["put_k"]), fk(ccy, a["call_k"]),
+                                                                  (a["call_k"] / a["put_k"] - 1) * 100))
+    out.append("   top OI     " + " · ".join("%s %s (c%s/p%s)" % (fk(ccy, k), fkk(t), fkk(c), fkk(pp)) for k, t, c, pp in a["top"]))
+    flags = []
+    if a["near_pct"] < WALL_NEAR_PCT:
+        flags.append("⚠ spot a %.2f %% del strike %s (%s)" % (a["near_pct"] * 100, fk(ccy, a["near_k"]), fkk(a["near_oi"])))
+    if dte <= 2:
+        flags.append("⚠ vencimiento inminente — efecto pin máximo, mapa se reconstruye después")
+    if prev:
+        if prev.get("pin_k") is not None and abs(prev["pin_k"] - a["pin_k"]) > 1e-9:
+            flags.append("pin migró %s → %s" % (fk(ccy, prev["pin_k"]), fk(ccy, a["pin_k"])))
+        if prev.get("call_k") is not None and a["call_k"] is not None and abs(prev["call_k"] - a["call_k"]) > 1e-9:
+            flags.append("call wall %s → %s" % (fk(ccy, prev["call_k"]), fk(ccy, a["call_k"])))
+        if prev.get("put_k") is not None and a["put_k"] is not None and abs(prev["put_k"] - a["put_k"]) > 1e-9:
+            flags.append("put wall %s → %s" % (fk(ccy, prev["put_k"]), fk(ccy, a["put_k"])))
+    if oi_prev and a["oi_total"]:
+        j = (a["oi_total"] - oi_prev) / oi_prev
+        if abs(j) > OI_FRONT_JUMP:
+            flags.append("OI %+.0f %% vs sesión anterior (%s)" % (j * 100, "dinero nuevo" if j > 0 else "cierre / roll"))
+    if gate not in ("CLEAN",):
+        flags.append("calidad %s — lectura de baja confianza" % gate)
+    for f in flags:
+        out.append("   " + f)
+    return out
 
 
 def check_walls(st, lines):
@@ -412,45 +488,42 @@ def check_walls(st, lines):
         return
     sess = js.get("latest_session")
     if not sess or sess == s.get("session"):
-        return                                              # ninguna sesión nueva → silencio
-    latest, prevj = js.get("latest") or {}, js.get("prev") or {}
+        return
     gate0 = js.get("gate0") or {}
-    lines.append("§08 STRIKE WALLS · sesión %s (front = 1er vencimiento > sesión)" % sess)
+    sd = date.fromisoformat(sess)
+    age_bd = bdays_between(sd, TODAY)
+    head = "🧱 <b>§08 STRIKE WALLS · sesión %s</b>" % sess
+    if age_bd > 4:
+        head += " · ⚠ %d bd de antigüedad (Databento bloqueado / sin sesiones nuevas)" % age_bd
+    blocks = [head, "(convención operador: USD/JPY, USD/CAD, USD/CHF ya invertidos; OI ≥ 100 contratos)"]
+    prev_sess = s.get("session")
     for ccy in ["EUR", "JPY", "GBP", "AUD", "CAD", "CHF"]:
-        e = latest.get(ccy)
-        if not e or not e.get("walls"):
-            lines.append("  %s — sin cadena (%s)" % (PAIR[ccy], (gate0.get(ccy) or {}).get("verdict", "NA")))
+        gate = (gate0.get(ccy) or {}).get("verdict", "NA")
+        ref, chains = load_chain(sess, ccy)
+        if not chains:
+            blocks.append("🧱 <b>%s</b> — sin cadena en la sesión (%s)" % (PAIR[ccy], gate))
             continue
-        d = describe_walls(ccy, e)
-        pe = s.get(ccy) or {}
-        pd_ = describe_walls(ccy, prevj[ccy]) if prevj.get(ccy) and prevj[ccy].get("walls") else None
-        parts = ["  %s %s" % (PAIR[ccy], fmt_lvl(ccy, e["ref"]))]
-        parts.append("pin %s" % k_str(ccy, d["pin"]))
-        parts.append("call wall %s" % (k_str(ccy, d["call"]) or "—"))
-        parts.append("put wall %s" % (k_str(ccy, d["put"]) or "—"))
-        if d["put"] and d["call"]:
-            parts.append("corredor %s–%s" % (("%.2f" if ccy == "JPY" else "%.4f") % d["put"]["k"],
-                                             ("%.2f" if ccy == "JPY" else "%.4f") % d["call"]["k"]))
-        flags = []
-        if d["near_pct"] < WALL_NEAR_PCT:
-            flags.append("⚠ spot a %.2f %% del wall %s" % (d["near_pct"] * 100, ("%.2f" if ccy == "JPY" else "%.4f") % d["near"]["k"]))
-        pin_prev = pe.get("pin") if pe else (pd_["pin"]["k"] if pd_ else None)
-        if pin_prev is not None and abs(pin_prev - d["pin"]["k"]) > 1e-9:
-            flags.append("pin migró %s → %s" % (("%.2f" if ccy == "JPY" else "%.4f") % pin_prev,
-                                                ("%.2f" if ccy == "JPY" else "%.4f") % d["pin"]["k"]))
-        oi_prev = pe.get("oi_front") if pe else (pd_["oi_front"] if pd_ else None)
-        if oi_prev and d["oi_front"]:
-            j = (d["oi_front"] - oi_prev) / oi_prev
-            if abs(j) > OI_FRONT_JUMP:
-                flags.append("OI front %+.0f %% (%s)" % (j * 100, "dinero nuevo" if j > 0 else "cierre/roll"))
-        front_prev = pe.get("front") if pe else (pd_["front"] if pd_ else None)
-        if front_prev and front_prev != d["front"]:
-            flags.append("nuevo front %s (mapa reconstruido)" % d["front"])
-        if not d["pata"] or not d["band"]:
-            flags.append("cadena delgada — lectura de baja confianza")
-        lines.append(" · ".join(parts) + ((" · " + " · ".join(flags)) if flags else ""))
-        s[ccy] = {"pin": d["pin"]["k"], "oi_front": d["oi_front"], "front": d["front"]}
+        exps = sorted(chains)
+        front = exps[0]
+        a = analyse_expiry(ccy, ref, chains[front])
+        if not a:
+            blocks.append("🧱 <b>%s</b> — cadena vacía en %s" % (PAIR[ccy], front))
+            continue
+        dte = (date.fromisoformat(front) - sd).days
+        prev = (s.get(ccy) or {}).get("front_metrics") if (s.get(ccy) or {}).get("front") == front else None
+        oi_prev = (s.get(ccy) or {}).get("front_oi") if prev else None
+        blocks.append("")
+        blocks.extend(wall_block(ccy, ref, front, a, dte, gate, prev, oi_prev))
+        rec = {"front": front, "front_metrics": {"pin_k": a["pin_k"], "call_k": a["call_k"], "put_k": a["put_k"]},
+               "front_oi": a["oi_total"]}
+        if dte <= NEXT_MONTHLY_DTE and len(exps) > 1:
+            nxt = exps[1]
+            b = analyse_expiry(ccy, ref, chains[nxt])
+            if b:
+                blocks.extend(wall_block(ccy, ref, nxt, b, (date.fromisoformat(nxt) - sd).days, gate, None, None, label="siguiente"))
+        s[ccy] = rec
     s["session"] = sess
+    lines.append(("WALLS", blocks))
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -555,24 +628,54 @@ def save_state(st):
 
 
 def summary_baseline(st):
-    """Foto del estado actual (para --baseline o primer arranque)."""
-    out = ["ESTADO ACTUAL"]
+    """Foto legible del estado actual (--baseline o primer arranque)."""
+    out = ["<b>ESTADO ACTUAL DEL DASHBOARD</b>", ""]
     f = st.get("floors", {})
     if f:
-        out.append("§02 floors: " + " · ".join("%s %+.1f %s" % (k, v["last"], v["badge"][0]) for k, v in f.items()))
+        out.append("<b>§02 Floor spreads</b> (RFR − suelo, bp · AMPLE ≤2 · TIGHT 2–10 · PRESSURE >10)")
+        for k, v in f.items():
+            out.append("   %s  %+.1f bp  %s%s" % (k, v["last"], v["badge"],
+                                                 "  · z extremo" if v.get("zband") else ""))
+        out.append("")
     p = st.get("policy", {})
     if p:
-        out.append("§03 policy: " + " · ".join("%s %.2f" % (k, v["v"]) for k, v in p.items()))
+        out.append("<b>§03 Policy rates</b>")
+        out.append("   " + " · ".join("%s %.2f" % (k, v["v"]) for k, v in p.items()))
+        out.append("")
     t = st.get("tp", {})
     if t:
-        out.append("§04 TP/NOM: " + " · ".join("%s %s" % (k, "—" if v["ratio"] is None else "%.0f%%" % (v["ratio"] * 100)) for k, v in t.items()))
+        out.append("<b>§04 Term premium ACM 10Y</b> (TP · TP/NOM; >60 % = prima domina, eje fiscal)")
+        for k, v in t.items():
+            out.append("   %s  TP %.2f %%  TP/NOM %s%s" % (k, v["tp"], "—" if v["ratio"] is None else "%.0f %%" % (v["ratio"] * 100),
+                                                        "  ▲ >60 %" if v.get("fiscal") else ""))
+        out.append("")
     u = st.get("vs_usd", {})
     if u:
-        out.append("§01 vs USD 10Y: " + " · ".join("%s %+.0f bp" % (k, v["spread_bp"]) for k, v in u.items()))
+        out.append("<b>§01 Spread 10Y nominal vs USD</b> (+ = rinde más que USD)")
+        for k, v in u.items():
+            out.append("   %s−USD  %+.0f bp%s" % (k, v["spread_bp"], "  · z extremo" if v.get("zband") else ""))
+        out.append("")
     m = st.get("metals", {})
     if m:
-        out.append("§06/07: " + " · ".join("%s z %+.2f %s" % (k, v["z"] or 0, v["regime"]) for k, v in m.items()))
+        out.append("<b>§06/§07 Metales MDP</b> (z vs ancla NFA · régimen)")
+        for k, v in m.items():
+            out.append("   %s  z %+.2f  %s  · quality %s" % (k, v["z"] or 0, v["regime"], v.get("quality")))
+        out.append("")
     return out
+
+
+def split_messages(parts, limit=3800):
+    """parts: list[str] (líneas). Corta en mensajes ≤ limit respetando líneas."""
+    msgs, cur = [], ""
+    for ln in parts:
+        add = ln + "\n"
+        if len(cur) + len(add) > limit and cur:
+            msgs.append(cur.rstrip())
+            cur = ""
+        cur += add
+    if cur.strip():
+        msgs.append(cur.rstrip())
+    return msgs
 
 
 def main(argv):
@@ -588,24 +691,49 @@ def main(argv):
             note("ERROR %s: %s" % (fn.__name__, e))
     if first and not baseline:
         baseline = True                                # primer arranque = baseline automático
-    body = []
+
+    walls = [b for b in lines if isinstance(b, tuple) and b[0] == "WALLS"]
+    events = [l for l in lines if isinstance(l, str)]
+    head = "<b>G8 MACRO · %s</b>" % TODAY.isoformat()
+    body = [head]
     if baseline:
-        body.append("🟢 dashboard_alerts v1.0 activado — baseline fijado")
+        body.append("🟢 dashboard_alerts v1.1 — baseline fijado (a partir de ahora solo cambios)")
+        body.append("")
         body.extend(summary_baseline(st))
-        body.extend(l for l in lines if l.startswith("§08"))   # walls: tarjeta completa siempre
-        body.extend(l for l in lines if l.startswith("  ") and any(x in l for x in PAIR.values()))
-    else:
-        body.extend(lines)
+    elif events:
+        body.append("<b>CAMBIOS DETECTADOS</b>")
+        body.append("")
+        sec_names = {"§01": "§01 Spread vs USD", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
+                     "§04": "§04 Term premium", "§05": "§05 Data quality", "§06": "§06 Oro", "§07": "§07 Plata",
+                     "§09": "§09 COT"}
+        last_sec = None
+        for l in events:
+            sec = l[:3]
+            if sec in sec_names and sec != last_sec:
+                if last_sec is not None:
+                    body.append("")
+                body.append("<b>%s</b>" % sec_names[sec])
+                last_sec = sec
+            body.append(("   " + l[4:].strip()) if sec in sec_names else l)
     if NOTES:
+        body.append("")
         body.append("DQM: " + " | ".join(NOTES[:6]))
-    if not body:
+
+    msgs = []
+    if len(body) > 1:
+        msgs.extend(split_messages(body))
+    for _, blocks in walls:
+        msgs.extend(split_messages(blocks))
+    if not msgs:
         print("dashboard_alerts: sin cambios — nada que enviar")
     else:
-        text = "<b>G8 MACRO · %s</b>\n" % TODAY.isoformat() + "\n".join(body)
-        text = text[:3900]                              # límite Telegram 4096
-        print(text)
-        if not dry:
-            tg_send(text)
+        for i, m in enumerate(msgs):
+            tag = "" if len(msgs) == 1 else " (%d/%d)" % (i + 1, len(msgs))
+            text = m if i == 0 else "<b>G8 MACRO · %s</b>%s\n" % (TODAY.isoformat(), tag) + m
+            print(text)
+            print("-" * 60)
+            if not dry:
+                tg_send(text)
     if not dry:
         save_state(st)
     return 0
