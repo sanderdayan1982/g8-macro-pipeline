@@ -51,12 +51,15 @@ def real_acm_is_fresh(nz_dates):
     if not os.path.exists(p):
         return False
     with open(p, encoding="utf-8", errors="ignore") as fh:
-        head = fh.readline().strip().upper()
-        last = None
+        head = [h.strip().upper() for h in fh.readline().split(",")]
+        last, lastq = None, ""
+        qi = head.index("QUALITY") if "QUALITY" in head else -1
         for l in fh:
             if l.strip():
-                last = l.split(",")[0].strip()
-    if "QUALITY" in head or not last:
+                cells = l.split(",")
+                last = cells[0].strip()
+                lastq = cells[qi].strip() if 0 <= qi < len(cells) else ""
+    if "SYNTH" in lastq.upper() or not last:
         return False
     behind = [d for d in nz_dates if d > last]
     return len(behind) <= 3

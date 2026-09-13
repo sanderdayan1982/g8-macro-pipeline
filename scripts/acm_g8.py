@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-acm_g8.py v2.3 — ACM Term Premium decomposition, multi-currency
+acm_g8.py v2.4 — ACM Term Premium decomposition, multi-currency
 ===============================================================
 Adrian-Crump-Moench (2013) three-step OLS estimator.
 
@@ -64,6 +64,14 @@ RX_MATS = np.array([6, 12, 24, 36, 48, 60, 84, 120])   # excess-return maturitie
 K = 3                                                  # PCA factors (= NS dimensionality; K=5 requires Svensson curve — phase 1b)
 MIN_OBS_MONTHLY = 240                                  # hard floor (20y) for estimation
 WARN_OBS_MONTHLY = 420                                 # below this -> WARN (35y)
+# v2.4 (2026-09-13): documented per-currency exception. NZD open data (RBNZ B2 daily close)
+# only carries bonds/bills from 2009-01 — no earlier open curve exists (the 1985-2017 file
+# has only OCR/cash before 2009). Monte Carlo with the estimated NZ dynamics as truth
+# (5 observed tenors + 8 bp noise, NS refit, 40 reps): T=136 months -> TP shape corr
+# median 0.99, p10 0.96-0.98, worst 0.78. Shape (z-scores/deltas — how G8 consumes TP) is
+# recoverable; LEVEL stays low-confidence and is flagged SHORT_SAMPLE downstream. Decision
+# 2026-09-13: real fit beats the AUD-anchored proxy. Grows by one month every month.
+MIN_OBS_OVERRIDE = {"NZD": 120}
 
 UA = {"User-Agent": "Mozilla/5.0 (g8-macro-pipeline acm_g8/2.0)"}
 
@@ -589,10 +597,12 @@ def run_currency(ccy):
     z_hist_dec.columns = GRID_MONTHS
     z_m = z_hist_dec.resample("ME").last().dropna()
     n_m = len(z_m)
-    if n_m < MIN_OBS_MONTHLY:
-        raise RuntimeError(f"{ccy}: {n_m} monthly obs < {MIN_OBS_MONTHLY} — refuse to "
+    min_obs = MIN_OBS_OVERRIDE.get(ccy, MIN_OBS_MONTHLY)
+    if n_m < min_obs:
+        raise RuntimeError(f"{ccy}: {n_m} monthly obs < {min_obs} — refuse to "
                            f"estimate (small-sample TP is unreliable; see header)")
-    flag = "OK" if n_m >= WARN_OBS_MONTHLY else "WARN (borderline sample)"
+    flag = "OK" if n_m >= WARN_OBS_MONTHLY else ("SHORT_SAMPLE (documented exception, level low-confidence)"
+                                                 if n_m < MIN_OBS_MONTHLY else "WARN (borderline sample)")
     print(f"  estimation sample: {n_m} month-end obs [{flag}]  NS lambda={lam_h:.2f}")
     params = acm_estimate(z_m)
 
@@ -627,6 +637,10 @@ def run_currency(ccy):
                         "Y10_FIT": np.round(y10, 4),
                         "RNY10": np.round(rny, 4),
                         "TP10": np.round(tp, 4)})
+    # v2.4: provenance column (same shape the SYNTH proxy uses, so every reader can tell
+    # a real fit from the proxy by value: /SYNTH/ = proxy, ACM_K3… = real). SHORT_SAMPLE
+    # marks a documented exception (MIN_OBS_OVERRIDE) — level low-confidence.
+    out["QUALITY"] = f"ACM_K{K}" + ("_SHORT_SAMPLE" if n_m < MIN_OBS_MONTHLY else "") + f"_{n_m}m"
     out_path = os.path.join(DATA_DIR, f"ACM_G8_{ccy}.csv")
     out.to_csv(out_path, index=False)
 

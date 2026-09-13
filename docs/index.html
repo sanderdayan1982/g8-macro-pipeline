@@ -940,7 +940,7 @@ var FEED_REGISTRY = {
     AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
-    NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD 10Y TP — SYNTH proxy (AUD anchor, β=0.4)', 'daily', 7, '04'),
+    NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '04'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
@@ -2190,6 +2190,7 @@ function assemble(raw) {
         var acmReal = !!(nzAcm && !(nzAcm[nzAcm.length - 1].QUALITY && /SYNTH/i.test(String(nzAcm[nzAcm.length - 1].QUALITY))));
         var acmLast = nzAcm ? String(nzAcm[nzAcm.length - 1].DATE) : null;
         var acmFresh = acmReal && G8DQM.computeStaleness(acmLast, 7) !== 'DEAD';
+        var nzQ = acmFresh ? String(nzAcm[nzAcm.length - 1].QUALITY || '') : '';
         var nzRy = raw.NZD && raw.NZD.ry && raw.NZD.ry.rows && raw.NZD.ry.rows.length > 60 ? raw.NZD.ry : null;
         var ryLast = nzRy ? String(nzRy.rows[nzRy.rows.length - 1].DATE) : null;
         var ryFresh = nzRy && G8DQM.computeStaleness(ryLast, 10) !== 'DEAD';
@@ -2212,12 +2213,13 @@ function assemble(raw) {
             asOf: useLive ? b2Last.d + ' · RBNZ B2 (local fetch)' : nzdM.date + ' · manual (' + (nzdM.src || 'default') + ')' + (b2Last ? ' · B2 ' + b2St + ' ' + b2Last.d : ''),
             manual: useLive ? null : { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
             formula: (useLive ? 'NOM=RBNZ B2 10Y daily close' : 'NOM=manual (RBNZ B2 / TVC:NZ10Y)') +
-                     (acmFresh ? ' · TP=own ACM K=3 (B2 90d/1/2/5/10Y, 1985+)' : ' · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) [proxy' + (acmReal && !acmFresh ? ', real ACM file stale' : '') + ']') +
+                     (acmFresh ? ' · TP=own ACM K=3 (B2 90d/1/2/5/10Y' + (/SHORT/i.test(nzQ) ? ', sample 2009+ SHORT' : '') + ')' : ' · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) [proxy' + (acmReal && !acmFresh ? ', real ACM file stale' : '') + ']') +
                      (ryFresh ? ' · BE=NOM−REAL (NZ IIB interpolated 10Y, ' + (nzRy.quality || 'PROXY') + ')' : ' · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')')
         };
         /* badge tier follows the data actually used: IIB linker = tier 1 (thin market), else SoE constant */
         RY_QUALITY.NZD = ryFresh ? { tier: 1, instr: 'NZ IIB', hz: '10Y' } : { tier: 3, instr: 'RBNZ SoE', hz: '2Y→10Y' };
-        if (acmFresh && nzAcm.length < 150) data.NZD.tpConf = { lo: true, why: 'Short daily sample (n=' + nzAcm.length + ' < 150) — TP shape informative, level not cross-comparable.' };
+        if (acmFresh && /SHORT/i.test(nzQ)) data.NZD.tpConf = { lo: true, why: 'Estimation sample ' + (nzQ.match(/(\d+)m/) || [,'?'])[1] + ' months (RBNZ B2 bonds only open from 2009; documented exception, min 120): Monte Carlo shape corr median 0.99 / p10 0.96 — z-scores and deltas usable, LEVEL low-confidence, not cross-comparable.' };
+        else if (acmFresh && nzAcm.length < 150) data.NZD.tpConf = { lo: true, why: 'Short daily sample (n=' + nzAcm.length + ' < 150) — TP shape informative, level not cross-comparable.' };
         if (useLive) G8DQM.report('NZD_NOM_RBNZ', { lastDate: b2Last.d.replace(/-/g, ''), value: b2Last.v, via: 'data/NZD_BOND_10Y.csv (B2 local fetch)' });
         else G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' + (b2Last ? ' (B2 ' + b2St + ')' : ' (B2 unreachable)') });
     }

@@ -712,12 +712,24 @@ def _last_date(name, col="CLOSE"):
 
 
 def _acm_nzd_is_synth():
+    """True if ACM_G8_NZD.csv is the AUD-anchored proxy (QUALITY value contains SYNTH)."""
     p = os.path.join(DATA, "ACM_G8_NZD.csv")
     try:
         with open(p, encoding="utf-8", errors="ignore") as fh:
-            return "QUALITY" in fh.readline().upper()
+            rows = list(csv.DictReader(l for l in fh if l.strip() and not l.startswith("#")))
+        return "SYNTH" in str((rows[-1] if rows else {}).get("QUALITY", "SYNTH")).upper()
     except OSError:
         return True
+
+
+def _acm_nzd_quality():
+    p = os.path.join(DATA, "ACM_G8_NZD.csv")
+    try:
+        with open(p, encoding="utf-8", errors="ignore") as fh:
+            rows = list(csv.DictReader(l for l in fh if l.strip() and not l.startswith("#")))
+        return str((rows[-1] if rows else {}).get("QUALITY", ""))
+    except OSError:
+        return ""
 
 
 def build_book(st):
@@ -783,7 +795,9 @@ def build_book(st):
                 r["flags"].append("TP FROZEN 2025-07")
             if c == "NZD":
                 # v1.6: real ACM (acm_g8.py NZD) has no QUALITY column; the proxy file tags SYNTH
-                r["flags"].append("TP SYNTH (AUD anchor)" if _acm_nzd_is_synth() else "TP ACM K=3 (B2)")
+                q = _acm_nzd_quality()
+                r["flags"].append("TP SYNTH (AUD anchor)" if _acm_nzd_is_synth()
+                                  else ("TP ACM K=3 short sample" if "SHORT" in q.upper() else "TP ACM K=3 (B2)"))
         else:
             r["tp"] = r["tp_z"] = r["tp_asof"] = None
             if c == "NZD":
