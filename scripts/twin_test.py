@@ -24,6 +24,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 TWIN = ROOT / "data" / "twin"
 MIN_WEEKS = 4
+MIN_DATES = 3        # distinct report/data dates required before FAILED can be declared (audit 2026-09-12)
 MAX_DISCREPANCY_PCT = 10.0
 
 
@@ -112,7 +113,12 @@ def main(script):
     prev = json.loads(prev_p.read_text()) if prev_p.exists() else {}
     started = pd.Timestamp(prev["started"]) if prev.get("started") else pd.Timestamp.now("UTC").normalize().tz_localize(None)
     weeks = float((pd.Timestamp.now("UTC").normalize().tz_localize(None) - started).days / 7.0)
-    if disc > MAX_DISCREPANCY_PCT:
+    # audit 2026-09-12: a FAILED verdict needs a real sample. One report date
+    # (10 keys × 1 bar) is statistically meaningless and was blocking the funnel.
+    n_dates = int(c["data_date"].nunique())
+    if n_dates < MIN_DATES:
+        status = "INSUFFICIENT"          # not eligible, not FAILED either
+    elif disc > MAX_DISCREPANCY_PCT:
         status = "FAILED"
     elif weeks >= MIN_WEEKS:
         status = "PASSED"
@@ -120,7 +126,7 @@ def main(script):
         status = "RUNNING"
     out = {"status": status, "started": started.strftime("%Y-%m-%d"), "weeks_elapsed": round(weeks, 1),
            "state_discrepancy_pct": round(disc, 2), "acta": prev.get("acta"), "per_key": per_key,
-           "bars_compared": int(len(c)), "py_warmup_na_pct": round(py_na_pct, 2),
+           "bars_compared": int(len(c)), "dates_compared": n_dates, "py_warmup_na_pct": round(py_na_pct, 2),
            "compared_from": c["data_date"].min().strftime("%Y-%m-%d"),
            "compared_to": c["data_date"].max().strftime("%Y-%m-%d")}
     prev_p.write_text(json.dumps(out, indent=2))
