@@ -28,7 +28,7 @@
     border-left:3px solid var(--sem,#2fbf71)}
 .mfv-sem-dot{width:16px;height:16px;border-radius:50%;background:var(--sem,#2fbf71);
     box-shadow:0 0 12px var(--sem,#2fbf71);flex:0 0 auto;
-    animation:mfvpulse 2.6s ease-in-out infinite}
+    animation:none}
 @keyframes mfvpulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.mfv-sem-dot{animation:none}}
 .mfv-sem-txt{display:flex;flex-direction:column;gap:3px}
@@ -109,7 +109,7 @@
 .mfv-alert-hot {
     border-left-color: #ff5c72; background: linear-gradient(90deg, #2a0e14 0%, #0e1420 60%);
     color: #ffb3bd;
-    animation: mfvPulse 2.6s ease-in-out infinite;
+    animation: none; /* v2.5.5: sin pulso — color = excepción, no espectáculo */
 }
 @keyframes mfvPulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255, 92, 114, 0); }
@@ -229,6 +229,42 @@
     .dqm-SYNTHETIC{background:#13202e;color:#5d8aa8}
     .dqm-MANUAL{background:#1f1830;color:#9d7bd8}
     .dqm-UNKNOWN{background:#1a1f2b;color:#5d6678}
+    /* v2.5.5 methodology footers collapsed by default (desk view); toggle per section */
+    .section-footer.is-collapsed .footer-note{display:none}
+    .footer-toggle{cursor:pointer;color:#5d6678;font-family:'JetBrains Mono',monospace;font-size:11px;user-select:none}
+    .footer-toggle:hover{color:#fdb813}
+    /* v2.5.5 sticky section nav + header as-of chips */
+    .desk-nav{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:4px 16px;background:#090d13;border-bottom:1px solid #161b26;font-family:'JetBrains Mono',monospace;font-size:11px}
+    .desk-nav a{color:#8a93a6;text-decoration:none;padding:3px 8px;border-radius:2px}
+    .desk-nav a:hover,.desk-nav a.is-active{color:#e6e9ef;background:#161b26}
+    .desk-nav-hint{margin-left:auto;color:#5d6678}
+    .asof-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8a93a6}
+    .asof-chips b{color:#e6e9ef;font-weight:600}
+    .asof-chips .g-warn{color:#fdb813}.asof-chips .g-bad{color:#ff5c72}.asof-chips .g-off{color:#5d8aa8}
+    .book{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11.5px;margin:6px 0 10px}
+    .book th{color:#5d6678;font-weight:500;text-align:right;padding:4px 6px;border-bottom:1px solid #1c2230}
+    .book th:first-child,.book td:first-child{text-align:left}
+    .book td{text-align:right;padding:4px 6px;border-bottom:1px solid #121620;color:#c9ced8;white-space:nowrap}
+    .book td.flags{text-align:left;color:#8a93a6;white-space:normal}
+    .book .z-hi{color:#ff8c42}.book .z-x{color:#ff5c72}.book .badge-t{color:#fdb813}.book .badge-p{color:#ff5c72}
+    /* v2.5.5 §00 brief */
+    .dashboard-section{scroll-margin-top:34px}
+    .brief-wrap{display:grid;grid-template-columns:1fr;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px}
+    .brief-asof{display:flex;flex-wrap:wrap;gap:14px;color:#8a93a6}
+    .brief-asof b{color:#e6e9ef;font-weight:600}
+    .brief-gates{display:flex;flex-wrap:wrap;gap:8px}
+    .brief-gate{padding:3px 8px;border-radius:2px;background:#1a1f2b;color:#8a93a6}
+    .brief-gate.g-warn{background:#3a2c10;color:#fdb813}
+    .brief-gate.g-bad{background:#3d1420;color:#ff5c72}
+    .brief-gate.g-off{background:#13202e;color:#5d8aa8}
+    .brief-list{margin:0;padding:0;list-style:none}
+    .brief-list li{padding:3px 0;border-bottom:1px solid #161b26}
+    .brief-list .sec{color:#8a93a6;display:inline-block;min-width:170px}
+    .brief-walls{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+    .brief-wall{background:#0e1219;border:1px solid #161b26;padding:6px 8px;border-radius:2px}
+    .brief-wall .pair{color:#e6e9ef;font-weight:600}
+    .brief-wall .near{color:#fdb813}
+    .brief-doctrine{color:#5d6678;font-size:11px}
     .dqm-lat{color:#5d6678;font-size:10.5px}
     .dqm-age{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
         font-weight:600;color:#5d8aa8;background:#13202e;border-radius:2px;padding:1px 5px;margin-left:6px}
@@ -266,7 +302,8 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.4 — 8/8 · DQM · CHF live (FRED OECD) · metals spec-select (official demand + real break) · BE refreshed · availability-log fix · disclaimer · metals auto-pipeline (weekly)</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.5 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
             <div class="status-block">
@@ -283,7 +320,25 @@
         </div>
     </div>
 </header>
+<nav class="desk-nav" id="desk-nav" aria-label="secciones">
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a>
+    <span class="desk-nav-hint">teclas 0–9</span>
+</nav>
 <main class="dashboard-main">
+
+    <!-- ══ 00 — BRIEF (lectura de 8 segundos) — v2.5.5 ═══════════════════ -->
+    <!-- Pintado desde data/alerts/brief.json (generado por scripts/dashboard_alerts.py,
+         la MISMA lectura que llega por Telegram). El navegador no calcula nada aquí. -->
+    <section class="dashboard-section" id="section-brief">
+        <div class="section-header">
+            <h2 class="section-title">00 — Brief · lectura de 8 segundos</h2>
+            <span class="section-meta" id="brief-meta">as-of por capa · gates · extremos vigentes · fuente: data/alerts/brief.json</span>
+        </div>
+        <div class="section-body">
+            <div id="brief-body" class="brief-wrap"><div class="attr-err" style="color:#5d6678">Cargando brief…</div></div>
+            <div class="section-footer"><span class="footer-note">Contexto de composición — el embudo 7+1 (RISK-G8 → XCCY/PSI → Curva/RTF10 → POL → IYDT → POS → FFVA → cockpit) vive en TradingView. Ninguna línea de este bloque es una señal de entrada; los walls son permiso (Gate 0), nunca trigger.</span></div>
+        </div>
+    </section>
 
     <!-- ══ 01 — LONG-END ATTRIBUTION MATRIX ══════════════════════════════ -->
     <section class="dashboard-section" id="section-attribution">
@@ -379,7 +434,7 @@
             <div id="dqm-panel">
                 <div class="attr-err" style="color:#5d6678">Initialising feed registry…</div>
             </div>
-            <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5 — RFR · Bills · Policy · ACM)</div>
+            <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5.2 — RFR · Bills · Policy · ACM) · mismo motor de frescura que la tabla superior (G8DQM.computeStaleness)</div>
             <div class="quality-grid" id="quality-grid"></div>
             <div class="section-footer">
                 <span class="footer-note">Registry-based monitor · single canonical health score drives the header. LIVE = within the feed's own expected publication lag (daily feeds stay LIVE across weekends/G8 holidays; policy rates are event-driven so a flat inter-meeting series is LIVE) · DEGRADED = late, inside grace band (1.0–1.5× lag) · STALE = 1.5–2.5× lag · DEAD = beyond 2.5× lag or unreachable · SYNTHETIC = computed proxy · MANUAL = hand-set constant; a ⚠ age badge appears once a manual input exceeds its lag. Business-day counting skips weekends + a G8 holiday union (extend yearly). RUN ALL re-checks every registered source live and appends to a 90-entry localStorage audit log. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy. Cache 60 min · auto re-check every 4 h.</span>
@@ -869,18 +924,17 @@ function repo(file, name, freq, maxStale, section) {
 
 var FEED_REGISTRY = {
     /* ── 01 attribution — repo ACM (own K=3 model output) ─────────────── */
-    /* ACM term premia are MONTHLY series (one obs per month-end), NOT daily.
-       The budget must span the monthly cadence + publication window, or a feed
-       that simply lags one month (GBP/AUD/JPY yields publish later than US/EU/CA)
-       false-alarms as DEAD under a 4bd budget. 30bd ≈ 6 weeks: a month-end obs
-       reads LIVE, a 1-month gap is tolerated, a 2-month gap -> DEGRADED, 3+ ->
-       STALE/DEAD. Same rationale as the event-driven policy rates below. */
-    USD_ACM: repo('ACM_G8_USD.csv', 'USD ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
-    EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
-    JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
-    GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
-    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'monthly', 30, '01'),
-    AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'monthly', 30, '01'),
+    /* v2.5.5 (audit 2026-09): ACM_G8_*.csv are regenerated DAILY by acm_g8.py
+       (one row per business day, ~1250 rows/5y). The old 'monthly/30bd' class
+       let a dead ACM go 6 weeks unnoticed. Budget 5bd = same as the yield feeds
+       it is fitted on (GBP/AUD/JPY publish T+2). The Z window of the matrix is
+       unchanged. */
+    USD_ACM: repo('ACM_G8_USD.csv', 'USD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'daily', 5, '01'),
+    AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
@@ -1067,6 +1121,13 @@ function computeStaleness(lastDateStr, maxStale) {
     if (isNaN(lastDate.getTime())) return 'DEAD';
     lastDate.setHours(0, 0, 0, 0);
     var today = new Date(); today.setHours(0, 0, 0, 0);
+    /* v2.5.5: fechas futuras. Un administered rate (IORB/DFR) llega con su fecha
+       EFECTIVA del lunes siguiente — legítimo: se recorta a hoy (= LIVE). Más de
+       5 días por delante es una fecha imposible -> DEAD (fallo ruidoso). */
+    if (lastDate > today) {
+        if ((lastDate - today) / 86400000 > 5) return 'DEAD';
+        return 'LIVE';
+    }
     var bd = 0, cur = new Date(lastDate), guard = 0;
     while (cur < today && guard++ < 400) {
         cur.setDate(cur.getDate() + 1);
@@ -1240,6 +1301,8 @@ function syncHeader() {
             var ld = state[id] && state[id].lastDate;
             if (ld && /^\d{4}-?\d{2}-?\d{2}/.test(String(ld))) {
                 var iso = String(ld).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3').slice(0, 10);
+                var todayIso = new Date().toISOString().slice(0, 10);
+                if (iso > todayIso) return;            /* v2.5.5: effective-dated future rows don't set the book's as-of */
                 if (!best || iso > best) best = iso;
             }
         });
@@ -1479,11 +1542,35 @@ var MANUAL_DEFAULTS = {
            link: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates' }
 };
 
+/* v2.5.5 (audit 2026-09 — one source of truth): data/manual/manual_inputs.json
+   in the repo is the PRIMARY manual store (principle 6). localStorage is only
+   an override when its date is strictly newer (you typed a fresher print in
+   this browser). MANUAL_DEFAULTS is the last-resort boot fallback. */
+var MANUAL_REPO = {};
+var MANUAL_REPO_KEYS = { NZD: 'NZD_NOM_RBNZ', CHF: 'CHF_NOM_MANUAL' };
+var manualReady = (function () {
+    return fetch(RAW + 'manual/manual_inputs.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+            if (!j) return;
+            Object.keys(MANUAL_REPO_KEYS).forEach(function (ccy) {
+                var e = j[MANUAL_REPO_KEYS[ccy]];
+                if (e && isFinite(e.value) && e.date)
+                    MANUAL_REPO[ccy] = { v: Number(e.value), date: String(e.date).slice(0, 10), src: 'repo manual_inputs.json' };
+            });
+        })
+        .catch(function (e) { console.warn('[manual] manual_inputs.json unreachable', e.message); });
+})();
+
 function manualGet(ccy) {
+    var repoV = MANUAL_REPO[ccy] || null, ls = null;
     try {
         var raw = localStorage.getItem('g8_manual_' + ccy);
-        if (raw) { var o = JSON.parse(raw); if (isFinite(o.v)) return o; }
+        if (raw) { var o = JSON.parse(raw); if (isFinite(o.v)) ls = o; }
     } catch (e) { /* ignore */ }
+    if (repoV && ls && ls.date && ls.date > repoV.date) return Object.assign({ src: 'browser override' }, ls);
+    if (repoV) return Object.assign({}, MANUAL_DEFAULTS[ccy] || {}, repoV);
+    if (ls) return Object.assign({ src: 'browser (repo unreachable)' }, ls);
     return MANUAL_DEFAULTS[ccy];
 }
 
@@ -1493,7 +1580,7 @@ function manualSet(ccy, v, date) {
 }
 
 /* Expose so the inline onchange handler (rendered in build()) can reach it */
-window.G8Manual = { get: manualGet, set: manualSet, DEFAULTS: MANUAL_DEFAULTS };
+window.G8Manual = { get: manualGet, set: manualSet, DEFAULTS: MANUAL_DEFAULTS, ready: manualReady };
 
 function fetchCsv(url) {
     /* v2.5.1 (audit — D3): route through G8NET (per-attempt timeout + Netlify/
@@ -1958,7 +2045,7 @@ function init() {
             .catch(function (e) { console.warn('[attr] CHF FRED', e.message); }));
     }
 
-    Promise.all(jobs).then(function () { window.__G8raw = raw; assemble(raw); });
+    Promise.all(jobs.concat([manualReady])).then(function () { window.__G8raw = raw; assemble(raw); });
 }
 
 function isoDaysAgo(d) {
@@ -2058,7 +2145,7 @@ function assemble(raw) {
             real: statsS(minusSeries(nzdNom, constBE(nzdNom, BE_CONST.NZD.v))),
             quality: 'MANUAL+SYNTH',
             qkind: 'synth',
-            asOf: nzdM.date + ' · manual',
+            asOf: nzdM.date + ' · manual (' + (nzdM.src || 'default') + ')',
             manual: { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
             formula: 'NOM=manual (RBNZ B2 / TVC:NZ10Y) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
         };
@@ -2375,6 +2462,121 @@ if (document.readyState === 'loading') {
 })();
 </script>
 
+<script>
+/* ═══ 00 — BRIEF module (v2.5.5): paints data/alerts/brief.json. No math here. ═══ */
+(function () {
+'use strict';
+var RAW_B = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/alerts/brief.json';
+function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function fmtK(p, v) { if (v == null) return '—'; return (p === 'USD/JPY' ? Number(v).toFixed(2) : Number(v).toFixed(4)); }
+function render(b) {
+    var el = document.getElementById('brief-body');
+    var a = b.as_of || {}, g = b.gates || {};
+    var h = '<div class="brief-asof">' +
+        '<span>Rates <b>' + esc(a.rates || '—') + '</b></span>' +
+        '<span>COT <b>' + esc(a.cot || '—') + '</b></span>' +
+        '<span>Options <b>' + esc(a.options || '—') + '</b></span>' +
+        '<span>Metals <b>' + esc(a.metals || '—') + '</b></span>' +
+        '<span>Brief <b>' + esc((b.generated_utc || '').replace('T', ' ').slice(0, 16)) + ' UTC</b></span></div>';
+    h += '<div class="brief-gates">';
+    if (g.pos_twin) {
+        var st = g.pos_twin.status, cls = st === 'PASSED' ? '' : st === 'FAILED' ? 'g-bad' : 'g-warn';
+        h += '<span class="brief-gate ' + cls + '" title="' + esc(g.pos_twin.label) + '">' + esc(g.pos_twin.label) + '</span>';
+    }
+    if (g.ffva) h += '<span class="brief-gate g-off">' + esc(g.ffva.label) + '</span>';
+    (b.dqm || []).forEach(function (d) { h += '<span class="brief-gate g-bad">DQM · ' + esc(d.feed) + ' ' + esc(d.status) + '</span>'; });
+    h += '</div>';
+    /* libro G8 — una fila por divisa (server-side, brief.json) */
+    if (b.book && b.book.length) {
+        var n2 = function (v, d) { return v == null ? '—' : Number(v).toFixed(d == null ? 2 : d); };
+        var zc = function (z) { if (z == null) return ''; var a = Math.abs(z); return a >= 2 ? ' class="z-x"' : a >= 1 ? ' class="z-hi"' : ''; };
+        h += '<table class="book"><thead><tr><th>CCY</th><th>NOM 10Y</th><th>REAL</th><th>BE</th><th>TP</th><th>TP z</th><th>RFR</th><th>floor bp</th><th>vs USD bp</th><th>LF z</th><th>COT</th><th style="text-align:left">flags</th></tr></thead><tbody>';
+        b.book.forEach(function (r) {
+            var fb = r.floor_badge === 'PRESSURE' ? ' class="badge-p"' : r.floor_badge === 'TIGHT' ? ' class="badge-t"' : '';
+            h += '<tr><td>' + esc(r.ccy) + '</td><td>' + n2(r.nom) + '</td><td>' + n2(r.real) + '</td><td>' + n2(r.be) + '</td><td>' + n2(r.tp) +
+                 '</td><td' + zc(r.tp_z) + '>' + (r.tp_z == null ? '—' : (r.tp_z >= 0 ? '+' : '') + n2(r.tp_z)) + '</td><td>' + n2(r.rfr) +
+                 '</td><td' + fb + '>' + (r.floor_bp == null ? '—' : (r.floor_bp >= 0 ? '+' : '') + n2(r.floor_bp, 1)) +
+                 '</td><td>' + (r.vs_usd_bp == null ? '—' : (r.vs_usd_bp >= 0 ? '+' : '') + n2(r.vs_usd_bp, 0)) +
+                 '</td><td' + zc(r.lf_z) + '>' + (r.lf_z == null ? '—' : (r.lf_z >= 0 ? '+' : '') + n2(r.lf_z)) + '</td><td>' + esc(r.cot_state || '—') +
+                 '</td><td class="flags">' + esc((r.flags || []).join(' · ') || '—') + '</td></tr>';
+        });
+        h += '</tbody></table>';
+    }
+    h += '<ul class="brief-list">';
+    (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(x.sec) + '</span>' + esc(x.text) + '</li>'; });
+    h += '</ul>';
+    if (b.walls && b.walls.length) {
+        h += '<div class="brief-walls">';
+        b.walls.forEach(function (w) {
+            if (w.note) { h += '<div class="brief-wall"><span class="pair">' + esc(w.pair) + '</span> · ' + esc(w.note) + '</div>'; return; }
+            h += '<div class="brief-wall"><span class="pair">' + esc(w.pair) + '</span> ' + fmtK(w.pair, w.spot) +
+                 ' <span style="color:#5d6678">· ' + esc(w.expiry) + ' · ' + esc(w.gate0) + '</span><br>' +
+                 'pin ' + fmtK(w.pair, w.pin) + ' · call ' + fmtK(w.pair, w.call) + ' · put ' + fmtK(w.pair, w.put) +
+                 (w.near_pct != null && w.near_pct < 0.5 ? '<br><span class="near">⚠ spot a ' + w.near_pct.toFixed(2) + ' % de ' + fmtK(w.pair, w.near_k) + '</span>' : '') +
+                 '</div>';
+        });
+        h += '</div>';
+    }
+    h += '<div class="brief-doctrine">' + esc(b.doctrine || '') + '</div>';
+    el.innerHTML = h;
+    /* header as-of chips (same brief.json) */
+    var chips = document.getElementById('asof-chips');
+    if (chips) {
+        var pt = g.pos_twin || {}, cls = pt.status === 'PASSED' ? '' : pt.status === 'FAILED' ? 'g-bad' : 'g-warn';
+        chips.innerHTML = '<span>rates <b>' + esc(a.rates || '—') + '</b></span><span>COT <b>' + esc(a.cot || '—') + '</b></span>' +
+            '<span>options <b>' + esc(a.options || '—') + '</b></span><span>metals <b>' + esc(a.metals || '—') + '</b></span>' +
+            '<span class="' + cls + '">twin POS ' + esc(pt.status || '—') + '</span><span class="g-off">FFVA PAUSED</span>' +
+            ((b.dqm || []).length ? '<span class="g-bad">DQM ' + b.dqm.length + ' feed(s) STALE/DEAD</span>' : '');
+    }
+}
+/* teclas 0–9 → sección; resalta la activa al hacer scroll */
+(function nav() {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#desk-nav a'));
+    if (!links.length) return;
+    document.addEventListener('keydown', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+        var tag = (ev.target && ev.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        var l = links.filter(function (x) { return x.dataset.key === ev.key; })[0];
+        if (l) { ev.preventDefault(); var t = document.querySelector(l.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                links.forEach(function (x) { x.classList.toggle('is-active', x.getAttribute('href') === '#' + e.target.id); });
+            });
+        }, { rootMargin: '-40% 0px -55% 0px' });
+        links.forEach(function (x) { var t = document.querySelector(x.getAttribute('href')); if (t) io.observe(t); });
+    }
+})();
+function init() {
+    fetch(RAW_B, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(render)
+        .catch(function (e) {
+            document.getElementById('brief-body').innerHTML =
+                '<div class="attr-err">brief.json no disponible (' + esc(e.message) + ') — el bloque §00 se genera en el pipeline (dashboard_alerts.py). Loud failure, no fallback.</div>';
+        });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script>
+/* v2.5.5: methodology footers collapse behind an "i" toggle — monitor first, paper on demand. */
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.section-footer').forEach(function (f) {
+        if (!f.querySelector('.footer-note')) return;
+        f.classList.add('is-collapsed');
+        var t = document.createElement('span');
+        t.className = 'footer-toggle'; t.textContent = 'ⓘ metodología';
+        t.addEventListener('click', function () {
+            f.classList.toggle('is-collapsed');
+            t.textContent = f.classList.contains('is-collapsed') ? 'ⓘ metodología' : 'ⓘ ocultar metodología';
+        });
+        f.insertBefore(t, f.firstChild);
+    });
+});
+</script>
 <script src="js/data-loader.js"></script>
 <script src="js/charts.js"></script>
 <!-- ===== METALS MODULE JS (EN · audited v2: corsOk + DQM registry + boot + provenance) ===== -->
