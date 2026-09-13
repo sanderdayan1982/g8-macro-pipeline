@@ -13,8 +13,9 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 
 | Componente | Estado |
 |---|---|
-| Dashboard `docs/index.html` | **v2.6.0** — §00 brief (libro G8 + walls §08), §02 una divisa a la vez, las 8 divisas con floor + ACM propio; loader/charts `docs/js/` **v5.6** |
-| Alertas Telegram `scripts/dashboard_alerts.py` | **v1.8** — un mensaje/día solo en cambios; genera `data/alerts/brief.json`; vigila los feeds del Mac |
+| Dashboard `docs/index.html` | **v2.6.1** — §00 brief (libro G8 + walls §08), §02 una divisa a la vez, las 8 divisas con floor + ACM propio; loader/charts `docs/js/` **v5.6** |
+| Alertas Telegram `scripts/dashboard_alerts.py` | **v1.9** — un mensaje/día solo en cambios; genera `data/alerts/brief.json`; vigila los feeds del Mac; diferencial REAL vs USD |
+| CI de humo `validate.yml` | **Activo** — en cada push: sintaxis Python/JS/YAML, registry, `dashboard_alerts.py --dry-run` |
 | Feeds locales (Mac) | **Activo** — `fetch_nzd_b2.py` v1.4 + `fetch_chf_snb.py` v1.0 + `push_nzd_to_github.py` v1.2, launchd 08:00 (ver *Eslabón Mac*) |
 | Fase 1 (feeds macro) | Sellada |
 | Fase 2 — port FFVA (Databento futuros) | **PAUSADO** (2026-09-12): sin gasto Databento en futuros |
@@ -26,7 +27,7 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 
 | § | Sección | Fuente en `data/` |
 |---|---|---|
-| 00 | Brief · lectura de 8 segundos (as-of por capa, gates, extremos vigentes, walls) | `alerts/brief.json` |
+| 00 | Brief · lectura de 8 segundos (as-of por capa, gates, libro G8 con spread nominal y REAL vs USD, extremos vigentes, walls §08) | `alerts/brief.json` |
 | 01 | Long-End Attribution Matrix (NOM = REAL + BE · Y10 = RNY + TP, ACM propio, 8 divisas) | `ACM_G8_*.csv`, `RY_G8_*.csv`, `NZD_BOND_10Y.csv`, `CHF_NOM_10Y.csv`, `manual/manual_inputs.json` (BE NZD/CHF) |
 | 02 | Money-market floor spreads (RFR − suelo administrado), selector por divisa | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `NZD_CASH_ON.csv`, `CHF_SARON.csv`, `FLOOR_*.csv`, `*_POLICY.csv`, `NZD_OCR.csv` |
 | 03 | Policy rates | `*_POLICY.csv`, `FLOOR_*.csv`, `NZD_OCR.csv` |
@@ -45,6 +46,7 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 | `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. Bloques FFVA comentados (pausa) |
 | `metals_update.yml` | semanal | `metals_fairvalue_g8.py` (MDP) |
 | `acm_validate.yml`, `ry_validate.yml` | manual | Validaciones ACM/real yields |
+| `validate.yml` | push / PR | CI de humo: compila `scripts/`, valida YAML, registry y JS inline, corre `dashboard_alerts.py --dry-run` (sin secrets, sin datos) |
 | `fx_futures_backfill.yml` | **manual, no lanzar** | Backfill Databento de futuros (proyecto pausado; consume presupuesto) |
 
 Secrets: `FRED_API_KEY`, `DATABENTO_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
