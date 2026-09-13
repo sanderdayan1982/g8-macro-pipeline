@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.7  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.8  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -41,6 +41,11 @@ v1.7: CHF activado como NZD — §02 floor SARON − policy (CHF_SARON.csv), NOM
       diario (CHF_NOM_10Y.csv), TP del ACM real (ACM_G8_CHF.csv con QUALITY; NOWCAST =
       filas puente con el 10Y del RSS hasta que el SNB publique la curva del mes).
 
+v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER CSV del registry
+      (los RY_G8_* con NOM10 no se vigilaban); §01 vs USD incluye CHF; los feeds del Mac
+      (NZD B2, IIB, SNB curva/SARON/10Y, ACM NZD/CHF, RY NZD) entran en sources/registry.csv
+      con presupuesto → un Mac apagado dispara §05 STALE/DEAD por Telegram.
+
 v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
       del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
       efectivo del lunes) se recortan a hoy para la frescura.
@@ -49,7 +54,7 @@ Secciones cubiertas (todas las divisas con dato en repo)
   §02 floor spreads   USD EUR GBP JPY CAD AUD NZD CHF   badge AMPLE/TIGHT/PRESSURE · |z| 252d
   §03 policy rates    USD(IORB) EUR(DFR) GBP JPY CHF AUD CAD(BoC) NZD(OCR)   cambio de tasa
   §04 term premium    USD EUR JPY GBP CAD AUD   |ΔTP 1d| > P95 · TP/NOM cruza 60 %
-  §01 spread vs USD   EUR JPY GBP CAD AUD (NOM10 − NOM10_USD)   |z| 252d · |Δ1w| > P95
+  §01 spread vs USD   EUR JPY GBP CAD AUD NZD CHF (NOM10 − NOM10_USD)   |z| 252d · |Δ1w| > P95
   §06/§07 metales     XAU XAG   cambio de régimen · MDP z cruza ±2 · |Δz sem| > P95
   §08 strike walls    EUR JPY GBP AUD CAD CHF   nueva sesión: tarjeta completa + cambios
   §09 COT             7 divisas + USD + XAU/XAG   nuevo reporte: cambios de estado / EXT
@@ -323,10 +328,15 @@ def check_vs_usd(st, lines):
     usd = read_series("RY_G8_USD.csv", col="NOM10")
     if not usd:
         return
-    for ccy in ["EUR", "JPY", "GBP", "CAD", "AUD", "NZD"]:
-        nom = read_series("RY_G8_%s.csv" % ccy, col="NOM10") if ccy != "NZD" else read_series("NZD_BOND_10Y.csv", col="Value", datecol="Date")
-        if ccy == "NZD" and nom and bdays_between(nom[-1][0], TODAY) > 7:
-            nom = None                                  # B2 rancio: no fabricar z sobre dato viejo
+    for ccy in ["EUR", "JPY", "GBP", "CAD", "AUD", "NZD", "CHF"]:
+        if ccy == "NZD":
+            nom = read_series("NZD_BOND_10Y.csv", col="Value", datecol="Date")
+        elif ccy == "CHF":
+            nom = read_series("CHF_NOM_10Y.csv", col="Value", datecol="Date")   # v1.8: SNB spot (Mac fetch)
+        else:
+            nom = read_series("RY_G8_%s.csv" % ccy, col="NOM10")
+        if ccy in ("NZD", "CHF") and nom and bdays_between(nom[-1][0], TODAY) > 7:
+            nom = None                                  # fetch local rancio: no fabricar z sobre dato viejo
         if not nom:
             continue
         sp = [(d, va - vb) for d, va, vb in ffill_join(nom, usd)]          # pp, + = rinde más que USD
@@ -599,6 +609,22 @@ def check_cot(st, lines):
 # ═════════════════════════════════════════════════════════════════════════════
 # §05 DQM — frescura contra el presupuesto del registry
 # ═════════════════════════════════════════════════════════════════════════════
+def _last_csv_date(path):
+    """Última fecha (yyyymmdd) de un CSV del repo, sea OHLCV, Date,Value o NOM10/REAL10.
+    v1.8: antes check_dqm solo leía CLOSE/Value y los RY_G8_* (NOM10) quedaban sin vigilar."""
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as fh:
+            rows = [l for l in fh if l.strip() and not l.startswith("#")]
+        last = None
+        for r in csv.DictReader(rows):
+            d = (r.get("DATE") or r.get("Date") or r.get("date") or "").strip().replace("-", "")[:8]
+            if len(d) == 8 and d.isdigit() and (last is None or d > last):
+                last = d
+        return last
+    except Exception:
+        return None
+
+
 def check_dqm(st, lines):
     s = st.setdefault("dqm", {})
     if not os.path.exists(REGISTRY):
@@ -622,10 +648,9 @@ def check_dqm(st, lines):
                     last = str(js[key])[:10].replace("-", "")
                     break
         else:
-            ser = read_series(os.path.relpath(path, DATA))
-            if ser:
-                last = ser[-1][0].strftime("%Y%m%d")
+            last = _last_csv_date(path)          # v1.8: any CSV shape (DATE/Date, any value column)
         if not last or len(last) != 8:
+            note("DQM · %s sin fecha legible" % fid)
             continue
         ld = date(int(last[:4]), int(last[4:6]), int(last[6:8]))
         bd = bdays_between(ld, TODAY)

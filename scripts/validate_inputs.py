@@ -90,9 +90,6 @@ SERIES_METADATA = {
     "GBP_BILL_10Y": {"currency": "GBP", "tenor": "10Y", "instrument_type": "gov_gilt",      "credit_nature": "sovereign", "exp_min": -0.5, "exp_max": 15.0, "update_method": "auto", "cadence": "daily", "continuity_class": "fitted_curve"},
 
     # CHF — 3 series (sovereign gov yields, MANUAL from TradingView; SARON family removed 2026-05-31)
-    "CHF_BILL_3M": {"currency": "CHF", "tenor": "3M", "instrument_type": "gov_bill", "credit_nature": "sovereign", "exp_min": -2.0, "exp_max": 5.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
-    "CHF_BILL_6M": {"currency": "CHF", "tenor": "6M", "instrument_type": "gov_bill", "credit_nature": "sovereign", "exp_min": -2.0, "exp_max": 5.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
-    "CHF_BILL_1Y": {"currency": "CHF", "tenor": "1Y", "instrument_type": "gov_bill", "credit_nature": "sovereign", "exp_min": -2.0, "exp_max": 5.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
 
     # JPY — 7 series (no 3M, no 6M; automated daily, MOF)
     "TONA":         {"currency": "JPY", "tenor": "ON",  "instrument_type": "rfr_overnight", "credit_nature": "near_rfr",  "exp_min": -0.5, "exp_max": 5.0, "update_method": "auto", "cadence": "daily", "continuity_class": "observed"},
@@ -117,9 +114,6 @@ SERIES_METADATA = {
 
     # NZD — 4 series (OCR automated + 3 sovereign gov yields MANUAL from TradingView)
     "NZD_OCR":     {"currency": "NZD", "tenor": "ON", "instrument_type": "policy_rate", "credit_nature": "policy_proxy", "exp_min": -0.5, "exp_max": 10.0, "update_method": "auto",   "cadence": "daily", "continuity_class": "observed"},
-    "NZD_BILL_3M": {"currency": "NZD", "tenor": "3M", "instrument_type": "gov_bill",    "credit_nature": "sovereign",    "exp_min": -0.5, "exp_max": 12.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
-    "NZD_BILL_6M": {"currency": "NZD", "tenor": "6M", "instrument_type": "gov_bill",    "credit_nature": "sovereign",    "exp_min": -0.5, "exp_max": 12.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
-    "NZD_BILL_1Y": {"currency": "NZD", "tenor": "1Y", "instrument_type": "gov_bill",    "credit_nature": "sovereign",    "exp_min": -0.5, "exp_max": 12.0, "update_method": "manual", "cadence": "manual", "continuity_class": "manual"},
 }
 
 # Validation thresholds (global — except freshness, which is per-series cadence)
