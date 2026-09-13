@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-acm_g8.py v2 — ACM Term Premium decomposition, multi-currency
+acm_g8.py v2.3 — ACM Term Premium decomposition, multi-currency
 ===============================================================
 Adrian-Crump-Moench (2013) three-step OLS estimator.
 
@@ -365,7 +365,19 @@ HIST_SOURCES = {
         5:    lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG5"),
         10:   lambda: fetch_rba_concat(RBA_F2_ALL, "FCMYGBAG10"),
     },
-    # Phase 1c: CHF/NZD via beta-to-USD-TP proxy (insufficient open tenors)
+    # v2.3 (2026-09-13): NZD — RBNZ B2 daily close spliced 1985-2017 + 2018-current by the
+    # operator's local fetch (fetch_nzd_b2.py v1.4, RBNZ WAF blocks datacenter IPs), read
+    # from the repo CSVs (Date,Value). 5 tenors (90d bill, 1/2/5/10Y bonds) — same spirit as
+    # AUD (5 tenors). Refuses (< MIN_OBS_MONTHLY) until the history splice has landed; the
+    # workflow then keeps the AUD-anchored proxy (nzd_tp_synth.py) as fallback.
+    "NZD": {
+        0.25: lambda: load_dv("NZD_BILL_90D.csv"),
+        1:    lambda: load_dv("NZD_BOND_1Y.csv"),
+        2:    lambda: load_dv("NZD_BOND_2Y.csv"),
+        5:    lambda: load_dv("NZD_BOND_5Y.csv"),
+        10:   lambda: load_dv("NZD_BOND_10Y.csv"),
+    },
+    # Phase 1c: CHF via beta-to-USD-TP proxy (insufficient open tenors)
 }
 
 # Daily repo CSVs for APPLICATION (tenor years -> filename)
@@ -380,6 +392,11 @@ DAILY_FILES = {
             5: "JPY_BILL_5Y.csv", 10: "JPY_BILL_10Y.csv"},
     "CAD": {0.25: "CAD_BILL_3M.csv", 0.5: "CAD_BILL_6M.csv", 1: "CAD_BILL_1Y.csv"},
     "AUD": {0.25: "AUD_BILL_3M.csv", 0.5: "AUD_BILL_6M.csv"},
+    "NZD": {},   # v2.3: daily panel = same B2 CSVs (DAILY_DV_FILES), last 5y slice
+}
+DAILY_DV_FILES = {
+    "NZD": {0.25: "NZD_BILL_90D.csv", 1: "NZD_BOND_1Y.csv", 2: "NZD_BOND_2Y.csv",
+            5: "NZD_BOND_5Y.csv", 10: "NZD_BOND_10Y.csv"},
 }
 # Long-end daily for currencies whose repo CSVs stop short: fetched from the
 # same primary source (last 5y slice) inside build_daily_panel().
@@ -513,6 +530,21 @@ def load_ohlcv(path):
     return df.set_index("DATE")["CLOSE"].astype(float).sort_index()
 
 
+def load_dv(fname):
+    """Repo CSV in Date,Value (ISO) shape — RBNZ B2 local-fetch files. Full history."""
+    path = os.path.join(DATA_DIR, fname)
+    if not os.path.isfile(path):
+        raise RuntimeError(f"{fname} missing in data/ (local B2 fetch not pushed yet)")
+    df = pd.read_csv(path, comment="#")
+    dcol = "Date" if "Date" in df.columns else df.columns[0]
+    vcol = "Value" if "Value" in df.columns else df.columns[1]
+    df[dcol] = pd.to_datetime(df[dcol].astype(str).str.slice(0, 10), errors="coerce")
+    s = pd.to_numeric(df.set_index(dcol)[vcol], errors="coerce").dropna()
+    s = s[~s.index.isna()].sort_index()
+    print(f"    [repo {fname}] {len(s)} obs  {s.index[0].date()} → {s.index[-1].date()}")
+    return s
+
+
 def build_hist_panel(ccy):
     print(f"  [stage 1] fetching long history for {ccy}…")
     cols = {t: fn() for t, fn in sorted(HIST_SOURCES[ccy].items())}
@@ -534,6 +566,9 @@ def build_daily_panel(ccy):
         start = (pd.Timestamp.today() - pd.DateOffset(years=5)).strftime("%Y-%m-%d")
         cols[tenor] = fetch_fred(sid, start)
     cutoff = pd.Timestamp.today() - pd.DateOffset(years=5)
+    for tenor, fname in DAILY_DV_FILES.get(ccy, {}).items():          # v2.3 NZD
+        s = load_dv(fname)
+        cols[tenor] = s[s.index >= cutoff]
     for tenor, fn in DAILY_SOURCE_EXTRA.get(ccy, {}).items():
         s = fn()
         cols[tenor] = s[s.index >= cutoff]

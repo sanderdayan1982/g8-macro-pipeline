@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-real_yields_g8.py v1 — Market real yields & breakevens (G8)
+real_yields_g8.py v1.1 — Market real yields & breakevens (G8)
 =============================================================
 10Y real yields observed in inflation-linked sovereign markets, plus the
 implied breakeven (BE10 = nominal 10Y - real 10Y). Pure market data — no
@@ -24,7 +24,10 @@ Coverage v1
   EUR  Bundesbank BBSIS indexed-Bund 10Y real        PROXY   label: DE_CORE
   CAD  BoC Valet RRB long-term real return bond      PROXY   label: LT_TENOR (~30Y)
   AUD  RBA F2 indexed AGS 10Y                        PROXY   label: THIN_MARKET
-  JPY / CHF / NZD                                    N/A     no open daily linker/BEI feed
+  NZD  RBNZ B2 inflation-indexed bonds (local fetch) PROXY   label: THIN_MARKET (v1.1)
+       REAL10 = IIB yield interpolated to a 10Y constant maturity across the
+       listed maturities (data/NZD_IIB_<year>.csv); NOM10 = NZD_BOND_10Y.csv
+  JPY / CHF                                          N/A     no open daily linker/BEI feed
 
 Outputs (data/):  RY_G8_<CCY>.csv  columns: DATE,NOM10,REAL10,BE10  (percent)
 The QUALITY label per currency is printed to the run log and embedded in the
@@ -45,6 +48,7 @@ Sanity gates (per currency, printed as VALIDATION block):
 requirements.txt: numpy, pandas, openpyxl, xlrd (all already present).
 """
 
+import glob
 import io
 import os
 import sys
@@ -317,12 +321,60 @@ def build_aud():
     return nom, real, None, "PROXY_THIN_MARKET", "Indexed AGS (RBA; thin linker market)"
 
 
+def _load_dv(fname):
+    """Repo CSV Date,Value (ISO) — RBNZ B2 local-fetch files."""
+    path = os.path.join(DATA_DIR, fname)
+    if not os.path.isfile(path):
+        raise RuntimeError(f"{fname} missing in data/ (local B2 fetch v1.4 not pushed yet)")
+    df = pd.read_csv(path, comment="#")
+    df["Date"] = pd.to_datetime(df["Date"].astype(str).str.slice(0, 10), errors="coerce")
+    s = pd.to_numeric(df.set_index("Date")["Value"], errors="coerce").dropna()
+    return s[~s.index.isna()].sort_index()
+
+
+def build_nzd():
+    """v1.1 — NZ inflation-indexed bonds from RBNZ B2 (data/NZD_IIB_<year>.csv, one per
+    maturity, written by fetch_nzd_b2.py v1.4 on the operator's Mac). The 10Y constant-
+    maturity real yield is linearly interpolated, on each date, between the two listed
+    IIBs bracketing 10 years-to-maturity (NZ IIBs mature 20 September); if 10Y lies
+    outside the listed range the nearest bond is used (flat extrapolation, flagged)."""
+    import glob, re
+    files = sorted(glob.glob(os.path.join(DATA_DIR, "NZD_IIB_*.csv")))
+    if not files:
+        raise RuntimeError("no data/NZD_IIB_<year>.csv — run fetch_nzd_b2.py v1.4 on the Mac (--list to pin IIB columns)")
+    cols = {}
+    for f in files:
+        m = re.search(r"NZD_IIB_(\d{4})", os.path.basename(f))
+        if m:
+            cols[int(m.group(1))] = _load_dv(os.path.basename(f))
+    panel = pd.DataFrame(cols).sort_index()
+    years = sorted(panel.columns)
+    real = []
+    for d, row in panel.iterrows():
+        avail = [(y, row[y]) for y in years if pd.notna(row[y])]
+        if not avail:
+            real.append(np.nan); continue
+        ttm = [(pd.Timestamp(year=y, month=9, day=20) - d).days / 365.25 for y, _ in avail]
+        pts = sorted(zip(ttm, [v for _, v in avail]))
+        if len(pts) == 1 or 10 <= pts[0][0]:
+            real.append(pts[0][1]); continue
+        if 10 >= pts[-1][0]:
+            real.append(pts[-1][1]); continue
+        lo = max(p for p in pts if p[0] <= 10)
+        hi = min(p for p in pts if p[0] > 10)
+        w = (10 - lo[0]) / (hi[0] - lo[0])
+        real.append(lo[1] + w * (hi[1] - lo[1]))
+    real = pd.Series(real, index=panel.index, name="REAL10").dropna()
+    nom = _load_dv("NZD_BOND_10Y.csv")
+    print(f"    [NZD IIB] maturities {years}  {real.index[0].date()} → {real.index[-1].date()}  ({len(real)} obs)")
+    return nom, real, None, "PROXY_THIN_MARKET", f"NZ IIB {years} interpolated to 10Y (RBNZ B2 local fetch; thin linker market)"
+
+
 BUILDERS = {"USD": build_usd, "GBP": build_gbp, "EUR": build_eur,
-            "CAD": build_cad, "AUD": build_aud}
-STALE_DAYS = {"AUD": 12}   # RBA F2 daily file published with weekly cadence
+            "CAD": build_cad, "AUD": build_aud, "NZD": build_nzd}
+STALE_DAYS = {"AUD": 12, "NZD": 10}   # RBA F2 weekly cadence; NZD local fetch may skip a day
 NOT_AVAILABLE = {"JPY": "no open daily JGBi BEI feed (MoF publishes PDFs only)",
-                 "CHF": "no CHF linker market",
-                 "NZD": "RBNZ WAF-blocked; NZ IIB feed not open"}
+                 "CHF": "no CHF linker market"}
 
 
 # ====================================================================== runner
@@ -384,6 +436,12 @@ def main():
             continue
         if ccy not in BUILDERS:
             print(f"\n[{ccy}] not configured")
+            continue
+        if ccy == "NZD" and not args and not glob.glob(os.path.join(DATA_DIR, "NZD_IIB_*.csv")):
+            # v1.1: silent-but-loud skip until the Mac fetch v1.4 has pushed the IIB files —
+            # not a red step (the dashboard keeps the manual BE constant meanwhile)
+            print("\n[NZD] PENDING — no data/NZD_IIB_<year>.csv yet (fetch_nzd_b2.py v1.4 on the Mac); "
+                  "skipped, manual BE constant stays in force")
             continue
         try:
             if not run_currency(ccy):

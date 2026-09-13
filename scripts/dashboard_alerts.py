@@ -32,6 +32,10 @@ v1.1: formato en bloques legibles (varios mensajes si hace falta); walls desde l
 v1.6: libro G8 — NZD/CHF REAL y BE en el brief: BE = constante manual de
       data/manual/manual_inputs.json (NZD_BE_MANUAL / CHF_BE_MANUAL, la misma que
       pinta §01), REAL = NOM − BE. Flag "BE manual …" (SYNTH); "(caducado)" > 95 d.
+      Cuando existe RY_G8_NZD.csv (linkers NZ IIB, real_yields_g8.py v1.1) NZD entra por la
+      vía genérica (flag "REAL IIB (B2)"); TP flag según el fichero ACM (real K=3 o SYNTH).
+      Walls del brief = la fila de §08 (strikes C/P OI≥100, front OI + Δ1D, top-3 walls)
+      en convención de usuario, además de pin/call/put del mapa operable.
 
 v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
       del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
@@ -707,6 +711,15 @@ def _last_date(name, col="CLOSE"):
 
 
 
+def _acm_nzd_is_synth():
+    p = os.path.join(DATA, "ACM_G8_NZD.csv")
+    try:
+        with open(p, encoding="utf-8", errors="ignore") as fh:
+            return "QUALITY" in fh.readline().upper()
+    except OSError:
+        return True
+
+
 def build_book(st):
     """Libro G8: una fila por divisa con lo que un operador lee en 8 segundos.
     Todo sale de ficheros del repo; flags declaran MANUAL/FROZEN/PROXY/NA."""
@@ -720,11 +733,18 @@ def build_book(st):
            "CAD": "CORRA.csv", "AUD": "AONIA.csv", "NZD": "NZD_OCR.csv", "CHF": "CH_POLICY.csv"}
     for c in ["USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF"]:
         r = {"ccy": c, "flags": []}
-        nom = read_series("RY_G8_%s.csv" % c, col="NOM10") if c not in ("NZD", "CHF") else None
+        # v1.6: NZD joins the generic RY path when RY_G8_NZD.csv exists and is fresh (NZ IIB linkers)
+        nom = None
+        if c != "CHF" and (c != "NZD" or os.path.exists(os.path.join(DATA, "RY_G8_NZD.csv"))):
+            nom = read_series("RY_G8_%s.csv" % c, col="NOM10")
+            if c == "NZD" and nom and bdays_between(nom[-1][0], TODAY) > 10:
+                nom = None                                  # stale linker file → B2 nominal + BE const
         real = read_series("RY_G8_%s.csv" % c, col="REAL10") if nom else None
         be = read_series("RY_G8_%s.csv" % c, col="BE10") if nom else None
         if nom:
             r["nom"], r["real"], r["be"], r["nom_asof"] = nom[-1][1], (real[-1][1] if real else None), (be[-1][1] if be else None), nom[-1][0].isoformat()
+            if c == "NZD":
+                r["flags"].append("REAL IIB (B2)")
         elif c == "NZD":
             b2 = read_series("NZD_BOND_10Y.csv", col="Value", datecol="Date")
             if b2 and bdays_between(b2[-1][0], TODAY) <= 7:
@@ -762,7 +782,8 @@ def build_book(st):
             if c == "CHF":
                 r["flags"].append("TP FROZEN 2025-07")
             if c == "NZD":
-                r["flags"].append("TP SYNTH (AUD anchor)")
+                # v1.6: real ACM (acm_g8.py NZD) has no QUALITY column; the proxy file tags SYNTH
+                r["flags"].append("TP SYNTH (AUD anchor)" if _acm_nzd_is_synth() else "TP ACM K=3 (B2)")
         else:
             r["tp"] = r["tp_z"] = r["tp_asof"] = None
             if c == "NZD":
@@ -798,6 +819,32 @@ def build_book(st):
                 r["flags"].append("walls %s" % g)
         rows.append(r)
     return rows
+
+def surface_snapshot(oj, ccy):
+    """v1.6: la fila de §08 para el brief — MISMOS datos (OPTIONS_SURFACE.json latest[ccy])
+    y MISMA convención de usuario que §08: en JPY/CAD/CHF el nivel es 1/k y call↔put
+    se intercambian. Devuelve strikes C/P (OI≥100), front OI (+Δ1D) y top-3 walls."""
+    d = (oj.get("latest") or {}).get(ccy) or {}
+    if not d:
+        return {}
+    inv = ccy in INV
+    prev = (oj.get("prev") or {}).get(ccy) or {}
+    out = {"front": d.get("front"),
+           "strikes_c": d.get("n_put") if inv else d.get("n_call"),
+           "strikes_p": d.get("n_call") if inv else d.get("n_put"),
+           "front_oi": d.get("oi_front"),
+           "front_oi_d1": (d["oi_front"] - prev["oi_front"]) if (d.get("oi_front") is not None and prev.get("oi_front") is not None) else None,
+           "top": []}
+    for x in (d.get("walls") or [])[:3]:
+        try:
+            k = float(x["k"])
+            lvl = (1.0 / k) if inv else k
+            c, p = (x.get("p"), x.get("c")) if inv else (x.get("c"), x.get("p"))
+            out["top"].append({"level": round(lvl, 2 if ccy == "JPY" else 4), "oi": x.get("oi"), "c": c, "p": p})
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            continue
+    return out
+
 
 def build_brief(st, wall_lines):
     b = {"generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -871,11 +918,13 @@ def build_brief(st, wall_lines):
                 a = analyse_expiry(ccy, ref, chains[use])
                 if not a:
                     b["walls"].append({"pair": PAIR[ccy], "note": "cadena vacía"}); continue
-                b["walls"].append({"pair": PAIR[ccy], "spot": round(ref, 5), "expiry": use,
-                                   "pin": round(a["pin_k"], 5), "call": None if a["call_k"] is None else round(a["call_k"], 5),
-                                   "put": None if a["put_k"] is None else round(a["put_k"], 5),
-                                   "near_pct": round(a["near_pct"] * 100, 2), "near_k": round(a["near_k"], 5),
-                                   "gate0": (gate0.get(ccy) or {}).get("verdict", "NA")})
+                w = {"pair": PAIR[ccy], "spot": round(ref, 5), "expiry": use,
+                     "pin": round(a["pin_k"], 5), "call": None if a["call_k"] is None else round(a["call_k"], 5),
+                     "put": None if a["put_k"] is None else round(a["put_k"], 5),
+                     "near_pct": round(a["near_pct"] * 100, 2), "near_k": round(a["near_k"], 5),
+                     "gate0": (gate0.get(ccy) or {}).get("verdict", "NA")}
+                w.update(surface_snapshot(oj, ccy))      # v1.6: §08 row (strikes C/P, front OI, top-3 walls)
+                b["walls"].append(w)
             except Exception as e:
                 b["walls"].append({"pair": PAIR[ccy], "note": "error %s" % e})
     try:
