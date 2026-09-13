@@ -38,8 +38,12 @@
         jpy: { ccy: 'JPY', source: 'MoF Japan',      label: 'JGB',               tenors: ['1Y', '2Y', '3Y', '5Y', '10Y', '20Y']            },
         aud: { ccy: 'AUD', source: 'RBA F1',         label: 'AGS',               tenors: ['1M', '3M', '6M']                                },
         cad: { ccy: 'CAD', source: 'BoC Valet',      label: 'GoC Bills',         tenors: ['3M', '6M', '1Y']                                },
-        chf: { ccy: 'CHF', source: 'SNB manual',     label: 'CHF Confederation', tenors: ['3M', '6M', '1Y']                                },
-        nzd: { ccy: 'NZD', source: 'RBNZ/NZDM',      label: 'NZ Govt Bonds',     tenors: ['3M', '6M', '1Y']                                }
+        // v5.6: CHF/NZD curves come from the Mac local fetch (SNB rendeiduebd / RBNZ B2), Date,Value files.
+        // The manual CHF_BILL_* / NZD_BILL_3M/6M/1Y CSVs (May-2026, dead) were removed from the repo.
+        chf: { ccy: 'CHF', source: 'SNB rendeiduebd (Mac fetch)', label: 'CHF Confederation spot', tenors: ['1Y', '2Y', '5Y', '10Y'],
+               files: { '1Y': 'CHF_SPOT_1Y.csv', '2Y': 'CHF_SPOT_2Y.csv', '5Y': 'CHF_SPOT_5Y.csv', '10Y': 'CHF_SPOT_10Y.csv' } },
+        nzd: { ccy: 'NZD', source: 'RBNZ B2 (Mac fetch)',        label: 'NZ Govt Bonds',          tenors: ['90D', '1Y', '2Y', '5Y', '10Y'],
+               files: { '90D': 'NZD_BILL_90D.csv', '1Y': 'NZD_BOND_1Y.csv', '2Y': 'NZD_BOND_2Y.csv', '5Y': 'NZD_BOND_5Y.csv', '10Y': 'NZD_BOND_10Y.csv' } }
     };
 
     // v5: Policy rates catalog. v5.2 (audit 2026-09): the panel is now G8-complete —
@@ -73,6 +77,7 @@
 
     function billFile(ccyKey, tenor) {
         const cfg = BILLS_CATALOG[ccyKey];
+        if (cfg.files && cfg.files[tenor]) return cfg.files[tenor];   // v5.6: explicit file map
         const prefix = cfg.filePrefix || cfg.ccy;
         return `${prefix}_BILL_${tenor}.csv`;
     }
@@ -482,7 +487,7 @@
         daysSince, businessDaysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
         FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
-        VERSION: 'v5.5'
+        VERSION: 'v5.6'
     };
 
 })(window);

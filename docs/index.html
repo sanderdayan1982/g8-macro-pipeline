@@ -152,6 +152,14 @@
         color:#d7dce6;vertical-align:top;white-space:nowrap}
     .attr-table td:first-child{text-align:left}
     .attr-table tr:hover td{background:#0d1320}
+    /* v2.6.0: the matrix must fit a 1440–1600 px desk screen without horizontal scroll —
+       the first column wraps its provenance line (was nowrap → pushed RNY/Real/BE off-screen). */
+    .attr-table td:first-child{white-space:normal;max-width:440px}
+    .attr-formula{white-space:normal;word-break:break-word}
+    @media (max-width:1700px){
+        .attr-table td{padding:8px 9px}.attr-table th{padding:7px 9px}
+        .attr-table{font-size:12px}.attr-val{font-size:13px}.attr-table td:first-child{max-width:360px}
+    }
     .attr-ccy{font-weight:700;color:#fdb813;font-size:14px;letter-spacing:.05em}
     .attr-val{font-weight:600;font-size:14px}
     .attr-sub{display:block;font-size:10px;color:#5d6678;margin-top:3px}
@@ -304,7 +312,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.9 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.6.0 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -1987,8 +1995,12 @@ function build(data) {
         var dates = [d.nom, d.tp, d.rny, d.real, d.be]
             .map(function (x) { return x && x.lastDate ? String(x.lastDate).slice(0, 10) : null; })
             .filter(Boolean);
-        var uniq = dates.filter(function (v, i, s) { return s.indexOf(v) === i; });
-        var mixFlag = uniq.length > 1
+        var uniq = dates.filter(function (v, i, s) { return s.indexOf(v) === i; }).sort();
+        /* v2.6.0: one business day of publication lag between legs (ACM T vs RY T+1, or a
+           weekend in between) is normal pipeline cadence, not a vintage mix — flag only
+           when the legs are more than ~1 bd apart (> 4 calendar days covers a weekend). */
+        var spanDays = uniq.length > 1 ? (new Date(uniq[uniq.length - 1]) - new Date(uniq[0])) / 86400000 : 0;
+        var mixFlag = uniq.length > 1 && spanDays > 4
             ? ' <span class="attr-mix" title="legs sampled on different dates: ' + uniq.join(', ') +
               ' — cross-leg arithmetic (NOM−REAL=BE) mixes vintages">⚠ mixed as-of</span>'
             : '';
@@ -2007,7 +2019,7 @@ function build(data) {
         '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
         'CHF real = NOM − manual BE constant (SNB CPI fcst) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv exists (else RBNZ SoE constant) · NZD TP = own ACM K=3 on RBNZ B2 1985+ when ACM_G8_NZD.csv is a real fit (else AUD-anchored proxy) · ' +
         'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
-        '<b style="color:#9d7bd8">NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. NZD source RBNZ B2 “10 year” column (datacenter ASN blocked). CHF nominal = FRED OECD 10Y (IRLTLT01CHM156N, monthly) with an EUR anchor-proxy TP — revived from the frozen SNB cube; falls back to the frozen own-ACM K=5 (flagged FROZEN) only if the FRED fetch fails.</div>';
+        '<b style="color:#9d7bd8">NZD / CHF live via the operator Mac</b>: RBNZ B2 and the SNB data portal reject datacenter IPs, so a launchd job on the Mac fetches them daily (fetch_nzd_b2.py / fetch_chf_snb.py) and pushes the CSVs through the GitHub API; Actions then runs the ACM and real-yield builds. NZD nominal = RBNZ B2 10Y daily close (manual_inputs.json only as fallback when the file exceeds its budget). CHF nominal = SNB 10Y spot (curve month-end + official RSS daily); CHF TP = own ACM K=3 on the SNB zero curve, NOWCAST rows flagged until the SNB publishes the month; frozen 2025-07 cube only as last resort (FROZEN).</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
 

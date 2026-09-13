@@ -602,6 +602,6 @@
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.5' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.6' };
 
 })(window);
