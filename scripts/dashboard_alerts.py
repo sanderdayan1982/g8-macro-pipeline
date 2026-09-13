@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.5  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.6  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -28,6 +28,10 @@ v1.1: formato en bloques legibles (varios mensajes si hace falta); walls desde l
       CADENA COMPLETA (data/options/canonical/<sesión>/<root>.csv), no del resumen:
       pin · call wall · put wall · corredor · top-OI · distancias · DTE · Δ vs sesión
       anterior · siguiente mensual cuando el front vence en ≤7 días.
+
+v1.6: libro G8 — NZD/CHF REAL y BE en el brief: BE = constante manual de
+      data/manual/manual_inputs.json (NZD_BE_MANUAL / CHF_BE_MANUAL, la misma que
+      pinta §01), REAL = NOM − BE. Flag "BE manual …" (SYNTH); "(caducado)" > 95 d.
 
 v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
       del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
@@ -733,6 +737,24 @@ def build_book(st):
         else:
             r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
             r["flags"].append("NOM NA (SNB)")
+        # v1.6: NZD/CHF no tienen linker → BE = constante manual (misma fuente que §01:
+        # manual_inputs.json NZD_BE_MANUAL / CHF_BE_MANUAL) y REAL = NOM − BE (SYNTH).
+        # Presupuesto de la constante: registry manual_expiry_days = 95 (trimestral).
+        if c in ("NZD", "CHF") and r.get("be") is None:
+            be_e = man.get("%s_BE_MANUAL" % c) or {}
+            try:
+                be_v = float(be_e.get("value"))
+                be_d = date.fromisoformat(str(be_e.get("date"))[:10])
+            except (TypeError, ValueError):
+                be_v, be_d = None, None
+            if be_v is not None:
+                r["be"] = be_v
+                r["real"] = round(r["nom"] - be_v, 4) if r.get("nom") is not None else None
+                stale = be_d is None or (TODAY - be_d).days > 95
+                r["flags"].append("BE manual %s%s" % ("SoE 2Y" if c == "NZD" else "SNB fcst",
+                                                       " (caducado)" if stale else ""))
+            else:
+                r["flags"].append("BE manual ausente")
         tp = read_series("ACM_G8_%s.csv" % c, col="TP10")
         if tp:
             vals = [v for _, v in tp]
