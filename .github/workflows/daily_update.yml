@@ -248,3 +248,11 @@ jobs:
 
           echo "✗ Push failed after $max_attempts attempts — manual review required"
           exit 1
+
+      # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
+      - name: Alert on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=daily run=${{ github.run_number }} — ver Actions"

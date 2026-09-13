@@ -67,3 +67,11 @@ jobs:
             git commit -m "chore: options surface update $(date -u +%F)"
             git push
           fi
+
+      # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
+      - name: Alert on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=options run=${{ github.run_number }} — ver Actions"
