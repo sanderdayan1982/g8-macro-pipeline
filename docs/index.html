@@ -302,7 +302,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.5 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.6 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -368,7 +368,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching RFR + floor CSVs from pipeline repo (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF N/A (SARON behind SNB Cloudflare) · NZD N/A (OCR is the policy rate itself)</span>
+                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF N/A (SARON behind SNB Cloudflare) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch</span>
             </div>
         </div>
     </section>
@@ -981,12 +981,16 @@ var FEED_REGISTRY = {
         frequency: 'monthly', maxStaleness: 45, section: '01', liveCcy: 'CHF',
         manualLink: 'https://fred.stlouisfed.org/series/IRLTLT01CHM156N'
     }, { externalReport: true }),
-    NZD_NOM_RBNZ: {
-        name: 'NZD Nominal 10Y (manual — RBNZ B2 10Y)',
-        urls: [], source: 'Manual input — RBNZ B2 “10 year” col (datacenter ASN blocked)',
-        frequency: 'daily', maxStaleness: 5, section: '01', manual: true, liveCcy: 'NZD', value: 4.55, lastDate: '2026-06-11',
+    /* v2.5.6: NZD 10Y is LIVE from data/NZD_BOND_10Y.csv (RBNZ B2, fetched on the
+       operator's Mac — RBNZ blocks datacenter IPs — and pushed via GitHub API).
+       manual_inputs.json remains the fallback when the file exceeds its budget;
+       the §01 module reports which path is in use. */
+    NZD_NOM_RBNZ: Object.assign({
+        name: 'NZD Nominal 10Y (RBNZ B2 via Mac local fetch · manual fallback)',
+        urls: [], source: 'RBNZ B2 daily close (local fetch) → data/NZD_BOND_10Y.csv; fallback manual_inputs.json',
+        frequency: 'daily', maxStaleness: 5, section: '01', liveCcy: 'NZD',
         manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
-    },
+    }, { externalReport: true }),
 
     /* ── 01 — USD TP external fallback chain (NY Fed reference) ────────── */
     USD_TP_MIRROR: {
@@ -2030,6 +2034,17 @@ function init() {
         }
     });
 
+    /* v2.5.6: NZD nominal 10Y from RBNZ B2 (Date,Value CSV) — local-fetch feed */
+    jobs.push(fetchCsv(RAW + 'NZD_BOND_10Y.csv')
+        .then(function (t) {
+            var p = Papa.parse(t.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+            var rows = p.data.filter(function (r) { return r.Date && isFinite(r.Value); })
+                .map(function (r) { return { d: String(r.Date).slice(0, 10), v: Number(r.Value) }; })
+                .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+            raw.NZD = raw.NZD || {}; raw.NZD.b2 = rows;
+        })
+        .catch(function (e) { console.warn('[attr] NZD B2', e.message); }));
+
     /* EUR real/BE now flow through the generic RY loop above (EUR ∈ RY_CCYS):
        it fetches RY_G8_EUR.csv and parseRy()s it exactly like USD/GBP/CAD/AUD.
        The former in-browser ECB monthly-benchmark fetch was removed 2026-06-26. */
@@ -2128,14 +2143,18 @@ function assemble(raw) {
         G8DQM.report('CHF_NOM_SNB', { status: 'SYNTHETIC', lastDate: String(raw.CHF.acm[raw.CHF.acm.length - 1].DATE), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'ACM fitted (own K=5, frozen)' });
     }
 
-    /* NZD — manual nominal (RBNZ B2 "10 year") + AUD-anchored TP + manual BE */
+    /* NZD — nominal 10Y LIVE from RBNZ B2 (v2.5.6) with manual fallback; AUD-anchored TP + manual BE */
     if (data.AUD && raw.AUD && raw.AUD.acm) {
         var nzdM = manualGet('NZD');
         var audNomRy = raw.AUD.ry ? raw.AUD.ry.rows.map(function (r) {
             var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
         }) : null;
         var audNomHist = audNomRy || raw.AUD.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        var nzdNom = anchorToManual(audNomHist, nzdM.v, nzdM.date);
+        var b2 = raw.NZD && raw.NZD.b2 && raw.NZD.b2.length > 60 ? raw.NZD.b2 : null;
+        var b2Last = b2 ? b2[b2.length - 1] : null;
+        var b2St = b2Last ? G8DQM.computeStaleness(b2Last.d.replace(/-/g, ''), 5) : 'DEAD';
+        var useLive = b2 && (b2St === 'LIVE' || b2St === 'DEGRADED') && (!nzdM.date || nzdM.date <= b2Last.d);
+        var nzdNom = useLive ? b2 : anchorToManual(audNomHist, nzdM.v, nzdM.date);
         var tpNZD = proxyTP(nzdNom, raw.AUD.acm, audNomRy);
         data.NZD = {
             nom: statsS(nzdNom),
@@ -2143,13 +2162,14 @@ function assemble(raw) {
             rny: statsS(minusSeries(nzdNom, tpNZD)),
             be: statsS(constBE(nzdNom, BE_CONST.NZD.v)),
             real: statsS(minusSeries(nzdNom, constBE(nzdNom, BE_CONST.NZD.v))),
-            quality: 'MANUAL+SYNTH',
-            qkind: 'synth',
-            asOf: nzdM.date + ' · manual (' + (nzdM.src || 'default') + ')',
-            manual: { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
-            formula: 'NOM=manual (RBNZ B2 / TVC:NZ10Y) · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
+            quality: useLive ? 'LIVE (B2) + SYNTH TP' : 'MANUAL+SYNTH',
+            qkind: useLive ? 'proxy' : 'synth',
+            asOf: useLive ? b2Last.d + ' · RBNZ B2 (local fetch)' : nzdM.date + ' · manual (' + (nzdM.src || 'default') + ')' + (b2Last ? ' · B2 ' + b2St + ' ' + b2Last.d : ''),
+            manual: useLive ? null : { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
+            formula: (useLive ? 'NOM=RBNZ B2 10Y daily close' : 'NOM=manual (RBNZ B2 / TVC:NZ10Y)') + ' · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
         };
-        G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' });
+        if (useLive) G8DQM.report('NZD_NOM_RBNZ', { lastDate: b2Last.d.replace(/-/g, ''), value: b2Last.v, via: 'data/NZD_BOND_10Y.csv (B2 local fetch)' });
+        else G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' + (b2Last ? ' (B2 ' + b2St + ')' : ' (B2 unreachable)') });
     }
 
     var ok = CCYS.some(function (c) { return data[c]; });
@@ -2185,7 +2205,12 @@ var PAIRS = [
     { ccy: 'GBP', rfr: 'SONIA.csv', flr: 'GB_POLICY.csv', ref: 'Bank Rate' },
     { ccy: 'JPY', rfr: 'TONA.csv',  flr: 'JP_POLICY.csv', ref: 'Policy Rate' },
     { ccy: 'CAD', rfr: 'CORRA.csv', flr: 'FLOOR_CAD.csv', ref: 'BoC Target' },
-    { ccy: 'AUD', rfr: 'AONIA.csv', flr: 'AU_POLICY.csv', ref: 'Cash Rate' }
+    { ccy: 'AUD', rfr: 'AONIA.csv', flr: 'AU_POLICY.csv', ref: 'Cash Rate' },
+    /* v2.5.6 — NZD (RBNZ B2 via local fetch). RBNZ runs a pure floor: all settlement
+       cash earns OCR, so overnight − OCR ≈ 0 by construction; it only speaks when
+       it decouples. The BKBM 90d − OCR row is TERM funding, not a floor → no badge. */
+    { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · floor puro (overnight cash)' },
+    { ccy: 'NZD', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d − OCR (term)', noBadge: true }
 ];
 
 function getCsv(name) {
@@ -2194,8 +2219,13 @@ function getCsv(name) {
         return r.text();
     }).then(function (t) {
         var p = Papa.parse(t.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
-        return p.data.filter(function (r) { return r.DATE && isFinite(r.CLOSE); })
-            .map(function (r) { return { d: String(r.DATE), v: r.CLOSE }; })
+        /* v2.5.6: accept both OHLCV (DATE,CLOSE compact) and RBNZ B2 (Date,Value ISO) shapes;
+           dates normalised to compact yyyymmdd so ffill ordering is consistent. */
+        return p.data.map(function (r) {
+                var d = r.DATE != null ? r.DATE : r.Date, v = r.CLOSE != null ? r.CLOSE : r.Value;
+                return { d: String(d == null ? '' : d).replace(/-/g, '').slice(0, 8), v: v };
+            })
+            .filter(function (r) { return /^\d{8}$/.test(r.d) && isFinite(r.v); })
             .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     });
 }
@@ -2242,7 +2272,8 @@ function row(p, s) {
         var sd = Math.sqrt(win.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / win.length);
         if (sd > 1e-9) z = (last - mu) / sd;
     }
-    var badge = last > 10 ? '<span class="fls-badge fls-press">PRESSURE</span>'
+    var badge = p.noBadge ? '<span class="fls-badge" style="background:#13202e;color:#5d8aa8">TERM</span>'
+              : last > 10 ? '<span class="fls-badge fls-press">PRESSURE</span>'
               : last > 2  ? '<span class="fls-badge fls-tight">TIGHT</span>'
               :             '<span class="fls-badge fls-amp">AMPLE</span>';
     var zh = z === null ? '' :
@@ -2262,13 +2293,13 @@ function init() {
     var data = {};
     var jobs = PAIRS.map(function (p) {
         return Promise.all([getCsv(p.rfr), getCsv(p.flr)])
-            .then(function (rs) { data[p.ccy] = spreadSeries(rs[0], rs[1]); })
+            .then(function (rs) { data[p.key || p.ccy] = spreadSeries(rs[0], rs[1]); })
             .catch(function (e) { console.warn('[fls]', p.ccy, e.message); });
     });
     Promise.all(jobs).then(function () {
         var rows = '';
         PAIRS.forEach(function (p) {
-            var s = data[p.ccy];
+            var s = data[p.key || p.ccy];
             if (s && s.length > 30) rows += row(p, s);
         });
         var el = document.getElementById('fls-table');
