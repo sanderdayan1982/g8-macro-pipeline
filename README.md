@@ -1,151 +1,77 @@
-markdown# XCCY G8 — Cross-Currency Basis Command Center
+# G8 Macro Pipeline
 
-Institutional-grade cross-currency funding stress dashboard for G8 currencies.
-Built with Python scrapers from official central bank APIs, automated via
-GitHub Actions, deployed as static dashboard on Netlify.
+Pipeline de datos y dashboard de **composición macro** para el Sistema Institucional G8
+(MMT/Mosler, timeframe diario, operador único). Repo `sanderdayan1982/g8-macro-pipeline` ·
+front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netlify.app**.
 
-**Live dashboard:** https://xccy-g8.netlify.app *(coming soon)*
+> Doctrina: el dashboard **no es un paso del embudo**. El embudo 7+1 (RISK-G8 → XCCY/PSI →
+> Curva/RTF10 → POL → IYDT → POS → FFVA → cockpit) vive en TradingView. Aquí se consulta el
+> contexto de composición (long-end, fontanería, metales, walls, COT) al formar tesis de
+> long-end y en la revisión semanal. Ninguna sección es una señal de entrada.
 
-## Overview
+## Estado (2026-09-13)
 
-This project tracks the cross-currency basis (XCCY) proxy across 7 major
-currencies, measuring funding stress in the global USD offshore market.
-The XCCY basis is constructed as a synthetic proxy using overnight
-risk-free rates (RFRs) and short-end sovereign bills, with a rolling
-asset swap spread correction for institutional-grade accuracy.
+| Componente | Estado |
+|---|---|
+| Dashboard `docs/index.html` | **v2.5.5** — §00 brief, una sola fuente para inputs manuales, DQM con fechas efectivas |
+| Alertas Telegram `scripts/dashboard_alerts.py` | **v1.2** — un mensaje/día solo en cambios; genera `data/alerts/brief.json` |
+| Fase 1 (feeds macro) | Sellada |
+| Fase 2 — port FFVA (Databento futuros) | **PAUSADO** (2026-09-12): sin gasto Databento en futuros |
+| Opciones CME (§08 strike walls) | Activo — Databento, ~$0.05/sesión, tope $0.25/sesión en código |
+| COT (§09) | Activo — CFTC SODA, gratis, semanal (vie 21:05 + sáb 09:05 UTC) |
+| XCCY G8 Command Center (proyecto anterior) | **Cancelado** (mayo 2026). Su código sigue en `docs/` como `.legacy-hidden`; el XCCY operativo es el script TradingView v2.6.1 |
 
-For EUR specifically, the European Central Bank Statistical Data Warehouse
-(SDW) is consulted for cross-currency basis indicators as a cross-check
-against the proxy methodology.
+## Secciones del dashboard
 
-## Coverage
+| § | Sección | Fuente en `data/` |
+|---|---|---|
+| 00 | Brief · lectura de 8 segundos (as-of por capa, gates, extremos vigentes, walls) | `alerts/brief.json` |
+| 01 | Long-End Attribution Matrix (NOM = REAL + BE · Y10 = RNY + TP, ACM propio) | `ACM_G8_*.csv`, `RY_G8_*.csv`, `manual/manual_inputs.json` |
+| 02 | Money-market floor spreads (RFR − suelo administrado) | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `FLOOR_*.csv`, `*_POLICY.csv` |
+| 03 | Policy rates | `*_POLICY.csv`, `FLOOR_*.csv`, `NZD_OCR.csv` |
+| 04 | ACM term premium (Adrian-Crump-Moench) | `ACM_G8_*.csv` |
+| 05 | Data Quality Monitor | `sources/registry.csv` (presupuestos) |
+| 06/07 | Oro / plata — MDP (Monetary Disorder Premium, Kalman TVP) | `MFV_G8_*.csv`, `MFV_G8_state.json` |
+| 08 | CME FX strike walls (Gate 0 = permiso, nunca trigger) | `OPTIONS_SURFACE.json`, `options/canonical/<sesión>/` |
+| 09 | COT positioning (TFF + Disagg MM) | `pos_g8_cot.json` |
 
-Seven currencies, each with overnight RFR from official central bank source:
+## Workflows (GitHub Actions)
 
-| Currency | Rate    | Central Bank Source         |
-|----------|---------|------------------------------|
-| EUR      | €STR    | European Central Bank        |
-| GBP      | SONIA   | Bank of England              |
-| CHF      | SARON   | Swiss National Bank          |
-| AUD      | AONIA   | Reserve Bank of Australia    |
-| JPY      | TONA    | Bank of Japan                |
-| NZD      | OCR     | Reserve Bank of New Zealand  |
-| CAD      | CORRA   | Bank of Canada               |
+| Workflow | Cron (UTC) | Qué hace |
+|---|---|---|
+| `daily_update.yml` | 18:00 lun–vie | Scrapers de tasas/RFR/floors/real yields/ACM → alertas → commit |
+| `cme_options.yml` | 13:30 + 17:00 | Colector Databento de opciones (T+1, tope $0.25/sesión) → resumen → alertas → commit |
+| `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. Bloques FFVA comentados (pausa) |
+| `metals_update.yml` | semanal | `metals_fairvalue_g8.py` (MDP) |
+| `acm_validate.yml`, `ry_validate.yml` | manual | Validaciones ACM/real yields |
+| `fx_futures_backfill.yml` | **manual, no lanzar** | Backfill Databento de futuros (proyecto pausado; consume presupuesto) |
 
-Plus short-end sovereign bills (3M / 6M / 1Y) from FRED API and official
-government statistics offices.
+Secrets: `FRED_API_KEY`, `DATABENTO_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 
-## Architecture
-Central Bank APIs (7 RFRs + bills)
-↓
-GitHub Actions (Python scrapers, daily cron 18:00 UTC)
-↓
-Data quality validation + asset swap correction (rolling 60-90d)
-↓
-JSON output (latest + history + meta + config)
-↓
-Netlify static dashboard (Bloomberg dark aesthetic)
-↓
-Plotly + D3 + SVG visualizations
+## Alertas Telegram
 
-## Repository Structure
-xccy-g8/
-├── docs/                       # Netlify deploy root
-│   ├── index.html             # Main dashboard
-│   ├── css/                   # Bloomberg dark styling
-│   ├── js/                    # Chart logic (Plotly + D3)
-│   └── data/                  # JSON output from scrapers
-│       ├── latest.json        # Today's snapshot (~5KB, instant load)
-│       ├── history/           # Per-currency history (lazy-loaded)
-│       │   ├── eur_history.json
-│       │   ├── gbp_history.json
-│       │   └── ... (one per currency)
-│       ├── meta.json          # Timestamps, source status, freshness
-│       └── config.json        # Tunable thresholds and parameters
-├── scripts/                    # Python scrapers
-│   ├── fetch_estr.py          # ECB €STR
-│   ├── fetch_sonia.py         # BoE SONIA
-│   ├── fetch_saron.py         # SNB SARON
-│   ├── fetch_aonia.py         # RBA AONIA
-│   ├── fetch_tona.py          # BoJ TONA
-│   ├── fetch_ocr.py           # RBNZ OCR
-│   ├── fetch_corra.py         # BoC CORRA
-│   ├── fetch_bills.py         # FRED + sovereign bills
-│   ├── compute_basis.py       # Engine: XCCY proxy + asset swap correction
-│   └── validate_quality.py    # Data quality checks before commit
-├── .github/workflows/
-│   └── daily_update.yml       # Cron 18:00 UTC + manual dispatch
-├── data/                       # Raw CSV cache (intermediate, ignored from Netlify deploy)
-└── README.md
+`scripts/dashboard_alerts.py` corre al final de `daily_update` y `cme_options`. Lee solo el repo
+(coste $0), compara contra `data/alerts/state.json` y envía **solo cambios de estado** con
+histéresis (umbrales de nivel = los del dashboard; umbrales de movimiento = percentiles
+rolling 252 d — Regla 8, nada inventado). Cubre §01/§02/§03/§04/§05/§06-07/§08/§09 para todas
+las divisas con dato. En cada sesión nueva de opciones manda la tarjeta completa de walls
+(cadena completa, convención del operador para USD/JPY, USD/CAD, USD/CHF).
 
-## Methodology
+## Inputs manuales (principio 6 — una sola fuente)
 
-### XCCY Basis Proxy Formula
+`data/manual/manual_inputs.json` es la fuente primaria (NZD 10Y: RBNZ B2 bloquea datacenter).
+`index.html` la lee al arrancar; el valor tecleado en el navegador (localStorage) solo manda si
+su fecha es más reciente. Expiry por feed en `sources/registry.csv`.
 
-For each currency `X` vs USD:
-XCCY_basis_proxy(X) = (RFR_X - bill_short_X) - (SOFR - bill_short_US)
-+ asset_swap_correction_rolling_75d
+## Deuda registrada
 
-Where:
-- `RFR_X` = overnight risk-free rate for currency X
-- `bill_short_X` = 3M sovereign bill yield for currency X
-- `SOFR` = US Secured Overnight Financing Rate
-- `bill_short_US` = US 3M T-bill yield
-- `asset_swap_correction` = rolling adjustment for swap-vs-bill spread
+- CHF: ACM congelado 2025-07 (cubo SNB), nominal FRED OECD mensual con rezago; bills CHF manuales. Candidato: SIX Confederation reference yield / portal SNB nuevo.
+- NZD: 1Y/2Y/5Y manuales sin dato; `NZD_BOND_*/NZD_BILL_*` sin refrescar desde 2026-06.
+- Twin-test POS: exige ≥3 fechas-reporte antes de un FAILED válido (el brief lo etiqueta como *muestra insuficiente*).
+- 2027: sincronizar umbrales XCCY copiados en `f_mx_thr` del FFVA (única deuda estructural de la suite).
 
-### Calibration
+## Cómo trabajar en este repo
 
-- Rolling windows: 60d / 90d / 252d (1Y) Z-scores
-- Stress threshold: |Z-score| > 2.0
-- Stale threshold: 3 bars without data update (holiday-robust)
-- All values in basis points (bps)
-
-### Cross-validation
-
-EUR proxy is cross-checked against ECB SDW basis indicators when available.
-Correlation between proxy and SDW reference is tracked over time as a
-quality metric; expected correlation: 0.85-0.92.
-
-## Update Cadence
-
-- **Automated:** Daily at 18:00 UTC via GitHub Actions cron
-- **Manual:** Workflow can be triggered on-demand
-- **Frontend:** Auto-deploys from `docs/` on every push to main
-
-## Data Quality
-
-Every cron run includes validation checks before commit:
-
-- Each basis must be within ±300 bps (sanity bound)
-- Failed sources flagged as `stale: true` in `meta.json`
-- If >2 sources fail simultaneously → no commit, manual review required
-- Dashboard displays freshness banner per currency
-
-## License & Use
-
-Data sourced from public central bank APIs and official government
-statistics. This repository is published for personal macro research.
-Original data ownership and licensing remain with respective central
-banks and statistical authorities. Users are responsible for compliance
-with each source's terms of use.
-
-## Status
-
-- [x] Pine Seeds approach abandoned (TradingView suspended new repos)
-- [x] Architecture redesigned: Netlify static dashboard with Plotly/D3
-- [x] Repository scaffolded with `data/`, `scripts/`, `.github/workflows/`
-- [ ] 7 RFR scrapers implemented
-- [ ] Short-end bills scrapers implemented
-- [ ] XCCY basis engine + asset swap correction
-- [ ] Data quality validation layer
-- [ ] GitHub Actions daily cron
-- [ ] JSON modular structure (latest + history)
-- [ ] Bloomberg dark dashboard frontend
-- [ ] Plotly + D3 visualizations
-- [ ] Netlify deploy live at xccy-g8.netlify.app
-
----
-
-**Maintainer:** Sander
-**Last structural update:** May 2026
-**Repository status:** Active development (Phase 2 — scrapers)
+GitHub web UI únicamente (lápiz / *Upload files*) · Netlify publica `docs/` sin build ·
+calibraciones y pesos congelados no se tocan sin gate nuevo pre-registrado (Regla 32) ·
+todo fallo debe ser ruidoso (Ley 2).
