@@ -374,7 +374,7 @@
 
     let _acmData = null;
     let _acmCcy  = 'usd';
-    const _ACM_ORDER = ['usd', 'eur', 'gbp', 'chf', 'aud', 'cad', 'jpy'];
+    const _ACM_ORDER = ['usd', 'eur', 'gbp', 'chf', 'aud', 'cad', 'jpy', 'nzd'];   // v5.3: + NZD (SYNTH)
 
     function hexToRgba(hex, a) {
         const h = String(hex).replace('#', '');
@@ -591,6 +591,6 @@
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.2' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.3' };
 
 })(window);

@@ -65,7 +65,9 @@
         chf: { file: 'ACM_G8_CHF.csv', ccy: 'CHF', source: 'G8 ACM K=5', label: 'CHF ACM 10Y TP' },
         aud: { file: 'ACM_G8_AUD.csv', ccy: 'AUD', source: 'G8 ACM K=5', label: 'AUD ACM 10Y TP' },
         cad: { file: 'ACM_G8_CAD.csv', ccy: 'CAD', source: 'G8 ACM K=5', label: 'CAD ACM 10Y TP' },
-        jpy: { file: 'ACM_G8_JPY.csv', ccy: 'JPY', source: 'G8 ACM K=5', label: 'JPY ACM 10Y TP' }
+        jpy: { file: 'ACM_G8_JPY.csv', ccy: 'JPY', source: 'G8 ACM K=5', label: 'JPY ACM 10Y TP' },
+        // v5.3: NZD has no zero curve → TP proxy materialised by scripts/nzd_tp_synth.py (AUD-anchored, frozen β=0.4)
+        nzd: { file: 'ACM_G8_NZD.csv', ccy: 'NZD', source: 'SYNTH (AUD anchor)', label: 'NZD 10Y TP (SYNTH)' }
     };
 
     function billFile(ccyKey, tenor) {
