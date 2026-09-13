@@ -184,12 +184,18 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
 
-      # ── 5b-bis. NZD TP proxy (SYNTH, AUD-anchored β=0.4 frozen) — no ACM fit possible for NZ ──
-      - name: NZD TP synth (ACM_G8_NZD.csv)
+      # ── 5b-bis. NZD real ACM (K=3 on RBNZ B2 1985+ spliced by the Mac fetch v1.4).
+      #    Refuses (exit 1, tolerated) while the history splice hasn't landed; the next
+      #    step then writes the AUD-anchored proxy (nzd_tp_synth.py v1.1 = fallback only) ──
+      - name: NZD ACM decomposition (real, B2 history)
+        continue-on-error: true
+        run: python scripts/acm_g8.py NZD || echo "acm NZD not available yet — proxy fallback follows"
+
+      - name: NZD TP synth fallback (ACM_G8_NZD.csv only if no fresh real ACM)
         continue-on-error: true
         run: python scripts/nzd_tp_synth.py
 
-      - name: Real yields G8 (USD GBP CAD AUD)
+      - name: Real yields G8 (USD GBP CAD AUD + NZD when IIB files exist)
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
