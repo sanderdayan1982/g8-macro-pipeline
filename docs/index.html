@@ -304,7 +304,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.8 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.9 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -370,7 +370,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching RFR + floor CSVs from pipeline repo (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF N/A (SARON behind SNB Cloudflare) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch</span>
+                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF: SARON − SNB policy rate (SNB zirepo + RSS via local fetch; tiered remuneration) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch</span>
             </div>
         </div>
     </section>
@@ -941,6 +941,9 @@ var FEED_REGISTRY = {
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
     NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '04'),
+    /* v2.5.9: CHF ACM on the SNB zero curve (Mac local fetch); frozen 2025-07 file until then */
+    CHF_ACM: repo('ACM_G8_CHF.csv', 'CHF ACM 10Y (K=3 on SNB rendeiduebd; frozen K=5 fallback)', 'daily', 7, '04'),
+    CHF_SARON: repo('CHF_SARON.csv', 'CHF SARON (SNB zirepo + RSS, local fetch)', 'daily', 7, '02'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
@@ -982,9 +985,9 @@ var FEED_REGISTRY = {
        replacing the frozen SNB cube. externalReport: the §01 module reports its
        freshness; monthly cadence so the budget spans ~2 months. (audit 2026-08) */
     CHF_NOM_SNB: Object.assign({
-        name: 'CHF Nominal 10Y (FRED OECD IRLTLT01CHM156N)',
-        urls: [], source: 'FRED OECD 10Y govt yield (monthly) — via Netlify proxy; SNB cube frozen fallback',
-        frequency: 'monthly', maxStaleness: 45, section: '01', liveCcy: 'CHF',
+        name: 'CHF Nominal 10Y (SNB spot via Mac local fetch · FRED OECD fallback)',
+        urls: [], source: 'SNB rendeiduebd 10J + RSS R10 → data/CHF_NOM_10Y.csv; fallback FRED OECD monthly / frozen cube',
+        frequency: 'daily', maxStaleness: 5, section: '01', liveCcy: 'CHF',
         manualLink: 'https://fred.stlouisfed.org/series/IRLTLT01CHM156N'
     }, { externalReport: true }),
     /* v2.5.6: NZD 10Y is LIVE from data/NZD_BOND_10Y.csv (RBNZ B2, fetched on the
@@ -2061,6 +2064,17 @@ function init() {
         .then(function (t) { raw.NZD = raw.NZD || {}; raw.NZD.ry = parseRy(t); })
         .catch(function (e) { console.warn('[attr] RY NZD (pending IIB fetch)', e.message); }));
 
+    /* v2.5.9: CHF nominal 10Y spot from the SNB (curve month-end + RSS daily) — local-fetch feed */
+    jobs.push(fetchCsv(RAW + 'CHF_NOM_10Y.csv')
+        .then(function (t) {
+            var p = Papa.parse(t.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
+            var rows = p.data.filter(function (r) { return r.Date && isFinite(r.Value); })
+                .map(function (r) { return { d: String(r.Date).slice(0, 10), v: Number(r.Value), src: r.Source || '' }; })
+                .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+            raw.CHF = raw.CHF || {}; raw.CHF.snb = rows;
+        })
+        .catch(function (e) { console.warn('[attr] CHF SNB 10Y (pending Mac fetch)', e.message); }));
+
     /* v2.5.6: NZD nominal 10Y from RBNZ B2 (Date,Value CSV) — local-fetch feed */
     jobs.push(fetchCsv(RAW + 'NZD_BOND_10Y.csv')
         .then(function (t) {
@@ -2138,7 +2152,37 @@ function assemble(raw) {
        Revives CHF from the frozen SNB cube (2025-07): NOM is the fetched monthly yield,
        TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR), real=NOM−BE_const. Falls back to the frozen
        own-ACM K=5 (flagged FROZEN) if the FRED fetch failed. (audit 2026-08) */
-    if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm) {
+    /* v2.5.9: CHF LIVE from the SNB — NOM = 10Y spot (curve month-end + RSS daily, local fetch),
+       TP/RNY = own ACM K=3 on the rendeiduebd zero curve 1988+ (acm_g8.py CHF; QUALITY column;
+       NOWCAST rows = last curve shifted by the daily 10Y until the SNB publishes the month).
+       BE stays the SNB conditional CPI forecast constant (no CHF linker market). */
+    var chSnb = raw.CHF && raw.CHF.snb && raw.CHF.snb.length >= 20 ? raw.CHF.snb : null;
+    var chSnbLast = chSnb ? chSnb[chSnb.length - 1] : null;
+    var chSnbFresh = chSnbLast && G8DQM.computeStaleness(chSnbLast.d.replace(/-/g, ''), 5) !== 'DEAD';
+    var chAcm = raw.CHF && raw.CHF.acm && raw.CHF.acm.length > 60 ? raw.CHF.acm : null;
+    var chAcmLast = chAcm ? chAcm[chAcm.length - 1] : null;
+    var chAcmReal = !!(chAcmLast && chAcmLast.QUALITY && /ACM_K/i.test(String(chAcmLast.QUALITY)));
+    var chAcmFresh = chAcmReal && G8DQM.computeStaleness(String(chAcmLast.DATE), 7) !== 'DEAD';
+    if (chSnbFresh && chAcmFresh) {
+        var chfNomS = chSnb.map(function (r) { return { d: r.d, v: r.v }; });
+        var chTp = chAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.TP10 }; });
+        var chRny = chAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.RNY10 }; });
+        var chBe = constBE(chfNomS, BE_CONST.CHF.v);
+        var chQ = String(chAcmLast.QUALITY), chNow = /NOWCAST/i.test(chQ);
+        var nowN = chAcm.filter(function (r) { return /NOWCAST/i.test(String(r.QUALITY || '')); }).length;
+        data.CHF = {
+            nom: statsS(chfNomS),
+            tp: statsS(chTp),
+            rny: statsS(chRny),
+            be: statsS(chBe),
+            real: statsS(minusSeries(chfNomS, chBe)),
+            quality: 'LIVE (SNB) + ACM K=3' + (chNow ? ' nowcast' : ''), qkind: 'proxy',
+            asOf: chSnbLast.d + ' · SNB ' + (chSnbLast.src === 'rss' ? 'RSS daily' : 'curve') + (chNow ? ' · curve to ' + (function () { var c = chAcm.filter(function (r) { return !/NOWCAST/i.test(String(r.QUALITY || '')); }); var d = String(c[c.length - 1].DATE); return d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8); })() : ''),
+            formula: 'NOM=SNB 10Y spot (rendeiduebd + RSS R10) · TP=own ACM K=3 (SNB zero curve 1J–10J, 1988+)' + (chNow ? ' · ' + nowN + ' NOWCAST rows (parallel shift on daily 10Y)' : '') + ' · BE=' + BE_CONST.CHF.v + '% (' + BE_CONST.CHF.src + ')'
+        };
+        if (chNow) data.CHF.tpConf = { lo: true, why: 'Last ' + nowN + ' rows are NOWCAST: SNB publishes the daily curve monthly; until then the last fitted curve is shifted in parallel by the daily 10Y spot (RSS). Level factor only — replaced by real curve rows on the 1st.' };
+        G8DQM.report('CHF_NOM_SNB', { lastDate: chSnbLast.d.replace(/-/g, ''), value: chSnbLast.v, via: 'data/CHF_NOM_10Y.csv (SNB local fetch, ' + chSnbLast.src + ')' });
+    } else if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm) {
         var chfNom = raw.chfFred;
         var eurNomRy = raw.EUR.ry ? raw.EUR.ry.rows.map(function (r) {
             var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
@@ -2262,7 +2306,11 @@ var PAIRS = [
        cash earns OCR, so overnight − OCR ≈ 0 by construction; it only speaks when
        it decouples. The BKBM 90d − OCR row is TERM funding, not a floor → no badge. */
     { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · overnight cash (floor)' },
-    { ccy: 'NZD·90d', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d (term, no floor)', noBadge: true }
+    { ccy: 'NZD·90d', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d (term, no floor)', noBadge: true },
+    /* v2.5.9 — CHF: SARON (SNB zirepo weekly + RSS daily fixing, local Mac fetch) vs SNB policy
+       rate (BIS). Tiered remuneration (policy up to the threshold, policy − 25 bp above) makes
+       SARON − policy a reserve-pressure reading; SARON normally prints a few bp BELOW policy. */
+    { ccy: 'CHF', key: 'CHF', rfr: 'CHF_SARON.csv', flr: 'CH_POLICY.csv', ref: 'SNB policy rate' }
 ];
 
 function getCsv(name) {
@@ -2344,7 +2392,7 @@ function row(p, s) {
 /* v2.5.8: one currency at a time (same UX as §04 — selector buttons, single filled
    trace, full history), instead of 8 overlapping lines. Table rows also select. */
 var _flsData = null, _flsKey = 'USD';
-var FLS_LABEL = { USD: 'USD', EUR: 'EUR', GBP: 'GBP', JPY: 'JPY', CAD: 'CAD', AUD: 'AUD', NZD: 'NZD', NZD_BKBM: 'NZD·90d' };
+var FLS_LABEL = { USD: 'USD', EUR: 'EUR', GBP: 'GBP', JPY: 'JPY', CAD: 'CAD', AUD: 'AUD', NZD: 'NZD', NZD_BKBM: 'NZD·90d', CHF: 'CHF' };
 
 function floorSelector(data) {
     var h = '<div class="acm-ccy-selector" id="fls-ccy-selector">';
@@ -2373,7 +2421,7 @@ function floorChart(key) {
     if (!p || !s || s.length < 30) return;
     var G = window.G8Dashboard || {};
     var CC = G.CCY_COLOR || {};
-    var FALLBACK = { USD: '#4c9be8', EUR: '#fdb813', GBP: '#c678dd', JPY: '#ff5c72', CAD: '#ff8c42', AUD: '#2fbf71', NZD: '#5d8aa8', 'NZD·90d': '#8a93a6' };
+    var FALLBACK = { USD: '#4c9be8', EUR: '#fdb813', GBP: '#c678dd', JPY: '#ff5c72', CAD: '#ff8c42', AUD: '#2fbf71', NZD: '#5d8aa8', 'NZD·90d': '#8a93a6', CHF: '#dce0e8' };
     var color = CC[p.ccy] || FALLBACK[p.ccy] || '#8a93a6';
     var rgba = function (hex, a) {
         var h = hex.replace('#', ''); if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
