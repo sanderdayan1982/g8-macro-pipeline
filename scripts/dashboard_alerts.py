@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.4  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.5  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -77,7 +77,7 @@ PAIR = {"EUR": "EUR/USD", "JPY": "USD/JPY", "GBP": "GBP/USD",
         "AUD": "AUD/USD", "CAD": "USD/CAD", "CHF": "USD/CHF"}
 
 TODAY = datetime.now(timezone.utc).date()
-OPTIONAL_FILES = {"NZD_CASH_ON.csv", "NZD_BOND_10Y.csv"}   # escritos por el fetch local del Mac
+OPTIONAL_FILES = {"NZD_CASH_ON.csv", "NZD_BOND_10Y.csv", "ACM_G8_NZD.csv"}   # escritos por el fetch local del Mac
 NOTES = []            # líneas DQM / problemas de lectura
 
 
@@ -266,7 +266,7 @@ def check_policy(st, lines):
 # ═════════════════════════════════════════════════════════════════════════════
 # §04 term premium ACM  +  §01 spread vs USD
 # ═════════════════════════════════════════════════════════════════════════════
-ACM_CCY = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD"]
+ACM_CCY = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "NZD"]   # NZD = SYNTH proxy (ACM_G8_NZD.csv)
 
 
 def check_tp(st, lines):
@@ -733,16 +733,18 @@ def build_book(st):
         else:
             r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
             r["flags"].append("NOM NA (SNB)")
-        tp = read_series("ACM_G8_%s.csv" % c, col="TP10") if c != "NZD" else None
+        tp = read_series("ACM_G8_%s.csv" % c, col="TP10")
         if tp:
             vals = [v for _, v in tp]
             r["tp"], r["tp_z"], r["tp_asof"] = vals[-1], zscore(vals), tp[-1][0].isoformat()
             if c == "CHF":
                 r["flags"].append("TP FROZEN 2025-07")
+            if c == "NZD":
+                r["flags"].append("TP SYNTH (AUD anchor)")
         else:
             r["tp"] = r["tp_z"] = r["tp_asof"] = None
             if c == "NZD":
-                r["flags"].append("TP proxy (AUD-anchor)")
+                r["flags"].append("TP proxy no generado")
         t = (st.get("tp") or {}).get(c) or {}
         if t.get("fiscal"):
             r["flags"].append("TP/NOM ▲60%")
