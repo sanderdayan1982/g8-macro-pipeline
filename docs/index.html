@@ -303,7 +303,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.7 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.8 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -1566,6 +1566,17 @@ var manualReady = (function () {
                 var e = j[MANUAL_REPO_KEYS[ccy]];
                 if (e && isFinite(e.value) && e.date)
                     MANUAL_REPO[ccy] = { v: Number(e.value), date: String(e.date).slice(0, 10), src: 'repo manual_inputs.json' };
+            });
+            /* v2.5.8: BE constants (NZD SoE / CHF SNB fcst) also come from the repo file —
+               the SAME keys dashboard_alerts.py reads for the §00 brief (NZD_BE_MANUAL /
+               CHF_BE_MANUAL), so §00 and §01 can never disagree. Hardcoded BE_CONST and
+               the DQM manualConst entries stay as boot fallback only. */
+            ['NZD', 'CHF'].forEach(function (ccy) {
+                var k = ccy + '_BE_MANUAL', e = j[k];
+                if (!(e && isFinite(e.value) && e.date)) return;
+                BE_CONST[ccy] = { v: Number(e.value), src: (e.source || BE_CONST[ccy].src) + ' · repo manual_inputs.json',
+                                  asOf: String(e.date).slice(0, 7) };
+                if (FEED_REGISTRY[k]) { FEED_REGISTRY[k].value = Number(e.value); FEED_REGISTRY[k].lastDate = String(e.date).slice(0, 10); }
             });
         })
         .catch(function (e) { console.warn('[manual] manual_inputs.json unreachable', e.message); });
