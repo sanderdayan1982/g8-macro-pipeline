@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.1  (2026-09-12)
+G8 Macro Pipeline — dashboard_alerts.py  v1.3  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -28,6 +28,10 @@ v1.1: formato en bloques legibles (varios mensajes si hace falta); walls desde l
       CADENA COMPLETA (data/options/canonical/<sesión>/<root>.csv), no del resumen:
       pin · call wall · put wall · corredor · top-OI · distancias · DTE · Δ vs sesión
       anterior · siguiente mensual cuando el front vence en ≤7 días.
+
+v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
+      del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
+      efectivo del lunes) se recortan a hoy para la frescura.
 
 Secciones cubiertas (todas las divisas con dato en repo)
   §02 floor spreads   USD EUR GBP JPY CAD AUD   badge AMPLE/TIGHT/PRESSURE · |z| 252d
@@ -151,6 +155,8 @@ def ffill_join(a, b):
 
 
 def bdays_between(d0, d1):
+    if d0 >= d1:
+        return 0                                   # fecha futura/hoy (p.ej. IORB efectivo) = fresco
     n, d = 0, d0
     while d < d1:
         d += timedelta(days=1)
@@ -678,6 +684,176 @@ def split_messages(parts, limit=3800):
     return msgs
 
 
+# ═════════════════════════════════════════════════════════════════════════════
+# brief.json — foto del estado para el §00 del dashboard (misma fuente que Telegram)
+# ═════════════════════════════════════════════════════════════════════════════
+BRIEF_PATH = os.path.join(DATA, "alerts", "brief.json")
+MIN_TWIN_DATES = 3        # un veredicto FAILED con < 3 fechas-reporte es muestra insuficiente
+
+
+def _last_date(name, col="CLOSE"):
+    s = read_series(name, col=col)
+    return s[-1][0].isoformat() if s else None
+
+
+
+def build_book(st):
+    """Libro G8: una fila por divisa con lo que un operador lee en 8 segundos.
+    Todo sale de ficheros del repo; flags declaran MANUAL/FROZEN/PROXY/NA."""
+    rows = []
+    js = read_json("pos_g8_cot.json") or {}
+    cot = {c.get("ccy"): c for c in (js.get("currencies") or [])}
+    man = read_json("manual/manual_inputs.json") or {}
+    oj = read_json("OPTIONS_SURFACE.json") or {}
+    gate0 = oj.get("gate0") or {}
+    RFR = {"USD": "SOFR.csv", "EUR": "ESTR.csv", "GBP": "SONIA.csv", "JPY": "TONA.csv",
+           "CAD": "CORRA.csv", "AUD": "AONIA.csv", "NZD": "NZD_OCR.csv", "CHF": "CH_POLICY.csv"}
+    for c in ["USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF"]:
+        r = {"ccy": c, "flags": []}
+        nom = read_series("RY_G8_%s.csv" % c, col="NOM10") if c not in ("NZD", "CHF") else None
+        real = read_series("RY_G8_%s.csv" % c, col="REAL10") if nom else None
+        be = read_series("RY_G8_%s.csv" % c, col="BE10") if nom else None
+        if nom:
+            r["nom"], r["real"], r["be"], r["nom_asof"] = nom[-1][1], (real[-1][1] if real else None), (be[-1][1] if be else None), nom[-1][0].isoformat()
+        elif c == "NZD":
+            e = man.get("NZD_NOM_RBNZ") or {}
+            r["nom"], r["real"], r["be"], r["nom_asof"] = e.get("value"), None, None, e.get("date")
+            r["flags"].append("NOM MANUAL")
+        else:
+            r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
+            r["flags"].append("NOM NA (SNB)")
+        tp = read_series("ACM_G8_%s.csv" % c, col="TP10") if c != "NZD" else None
+        if tp:
+            vals = [v for _, v in tp]
+            r["tp"], r["tp_z"], r["tp_asof"] = vals[-1], zscore(vals), tp[-1][0].isoformat()
+            if c == "CHF":
+                r["flags"].append("TP FROZEN 2025-07")
+        else:
+            r["tp"] = r["tp_z"] = r["tp_asof"] = None
+            if c == "NZD":
+                r["flags"].append("TP proxy (AUD-anchor)")
+        t = (st.get("tp") or {}).get(c) or {}
+        if t.get("fiscal"):
+            r["flags"].append("TP/NOM ▲60%")
+        rf = read_series(RFR[c])
+        r["rfr"] = rf[-1][1] if rf else None
+        if c == "CHF":
+            r["flags"].append("RFR = policy (SARON proxy)")
+        if c == "NZD":
+            r["flags"].append("RFR = OCR")
+        f = (st.get("floors") or {}).get(c) or {}
+        r["floor_bp"], r["floor_badge"] = f.get("last"), f.get("badge")
+        u = (st.get("vs_usd") or {}).get(c) or {}
+        r["vs_usd_bp"] = u.get("spread_bp")
+        if u.get("zband"):
+            r["flags"].append("vs USD z %s" % ("techo" if u["zband"] == "HI" else "suelo"))
+        k = cot.get(c) or (js.get("usd") if c == "USD" and isinstance(js.get("usd"), dict) else None) or {}
+        r["lf_z"], r["cot_state"] = k.get("lf_z"), k.get("state")
+        if k.get("proxy"):
+            r["flags"].append("COT proxy (−mean LF z)")
+        if k.get("divergence"):
+            r["flags"].append("COT DIV LF/AM")
+        if c in PAIR:
+            g = (gate0.get(c) or {}).get("verdict")
+            if g and g != "CLEAN":
+                r["flags"].append("walls %s" % g)
+        rows.append(r)
+    return rows
+
+def build_brief(st, wall_lines):
+    b = {"generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+         "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); "
+                     "el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
+         "as_of": {}, "gates": {}, "bullets": [], "dqm": [], "walls": []}
+    # as-of por capa
+    rates = [d for d in (_last_date("RY_G8_%s.csv" % c, "NOM10") for c in ("USD", "EUR", "GBP", "JPY", "CAD", "AUD")) if d]
+    b["as_of"]["rates"] = max(rates) if rates else None
+    js = read_json("pos_g8_cot.json") or {}
+    b["as_of"]["cot"] = js.get("report_date")
+    oj = read_json("OPTIONS_SURFACE.json") or {}
+    b["as_of"]["options"] = oj.get("latest_session")
+    mx = read_series("MFV_G8_XAU.csv", col="MDP_Z")
+    b["as_of"]["metals"] = mx[-1][0].isoformat() if mx else None
+    # gates
+    b["gates"]["ffva"] = {"status": "PAUSED", "label": "FFVA pausado (sin Databento futuros) — decisión 2026-09-12"}
+    tw = read_json("twin/pos_g8_twin.json") or {}
+    dates = 0
+    try:
+        hist = read_series("twin/pos_g8_py_history.csv", col="lf_z") or []
+        dates = len(set(d for d, _ in hist))
+    except Exception:
+        pass
+    status = tw.get("status")
+    if status == "FAILED" and (tw.get("compared_from") == tw.get("compared_to") or dates < MIN_TWIN_DATES):
+        label = "POS twin-test: muestra insuficiente (%s barras, 1 fecha) — no es un FAILED válido; refrescar export Pine" % tw.get("bars_compared")
+        status = "INSUFFICIENT"
+    else:
+        label = "POS twin-test: %s (%s barras, %.1f sem)" % (status, tw.get("bars_compared"), tw.get("weeks_elapsed") or 0)
+    b["gates"]["pos_twin"] = {"status": status, "label": label, "bars": tw.get("bars_compared"),
+                              "from": tw.get("compared_from"), "to": tw.get("compared_to")}
+    # bullets: estado actual (extremos), no cambios
+    f = st.get("floors", {})
+    fl = ["%s %+.1f bp %s%s" % (k, v["last"], v["badge"], " (z extremo)" if v.get("zband") else "") for k, v in f.items() if v["badge"] != "AMPLE" or v.get("zband")]
+    b["bullets"].append({"sec": "§02 Floor spreads", "text": " · ".join(fl) if fl else "todos AMPLE — sin presión de reservas"})
+    t = st.get("tp", {})
+    tl = ["%s TP %.2f %% (TP/NOM %.0f %% ▲60)" % (k, v["tp"], (v["ratio"] or 0) * 100) for k, v in t.items() if v.get("fiscal")]
+    tl += ["%s ΔTP 1d extremo" % k for k, v in t.items() if v.get("band") == "EXT"]
+    b["bullets"].append({"sec": "§04 Term premium", "text": " · ".join(tl) if tl else "ninguna prima domina (>60 %) ni salto diario extremo"})
+    u = st.get("vs_usd", {})
+    ul = ["%s−USD %+.0f bp (z %s)" % (k, v["spread_bp"], "techo" if v["zband"] == "HI" else "suelo") for k, v in u.items() if v.get("zband")]
+    ul += ["%s Δ1w extremo" % k for k, v in u.items() if v.get("mband") == "EXT"]
+    b["bullets"].append({"sec": "§01 Spread 10Y vs USD", "text": " · ".join(ul) if ul else "ningún diferencial en extremo de su año"})
+    m = st.get("metals", {})
+    ml = ["%s z %+.2f %s%s" % (k, v["z"] or 0, v["regime"], " (|z|≥2)" if v.get("zband") else "") for k, v in m.items()]
+    b["bullets"].append({"sec": "§06/§07 Metales MDP", "text": (" · ".join(ml) if ml else "sin dato") + " — valoración, no timing"})
+    cl = []
+    for c in (js.get("currencies") or []):
+        if c.get("state") and c["state"] != "NEUTRAL":
+            cl.append("%s %s (LF z %+.2f)" % (c["ccy"], c["state"], c.get("lf_z") or 0))
+        elif c.get("divergence"):
+            cl.append("%s divergencia LF/AM" % c["ccy"])
+    b["bullets"].append({"sec": "§09 COT", "text": " · ".join(cl) if cl else "sin crowding — todo NEUTRAL"})
+    # walls: foto por par de la sesión vigente (pin / call / put / proximidad), siempre
+    sess = oj.get("latest_session")
+    if sess:
+        gate0 = oj.get("gate0") or {}
+        sd = date.fromisoformat(sess)
+        for ccy in ["EUR", "JPY", "GBP", "AUD", "CAD", "CHF"]:
+            try:
+                ref, chains = load_chain(sess, ccy)
+                if not chains:
+                    b["walls"].append({"pair": PAIR[ccy], "note": "sin cadena"}); continue
+                exps = sorted(chains)
+                front = exps[0]
+                dte = (date.fromisoformat(front) - sd).days
+                use = front
+                if dte <= NEXT_MONTHLY_DTE and len(exps) > 1:
+                    use = exps[1]                 # mapa operable = siguiente mensual
+                a = analyse_expiry(ccy, ref, chains[use])
+                if not a:
+                    b["walls"].append({"pair": PAIR[ccy], "note": "cadena vacía"}); continue
+                b["walls"].append({"pair": PAIR[ccy], "spot": round(ref, 5), "expiry": use,
+                                   "pin": round(a["pin_k"], 5), "call": None if a["call_k"] is None else round(a["call_k"], 5),
+                                   "put": None if a["put_k"] is None else round(a["put_k"], 5),
+                                   "near_pct": round(a["near_pct"] * 100, 2), "near_k": round(a["near_k"], 5),
+                                   "gate0": (gate0.get(ccy) or {}).get("verdict", "NA")})
+            except Exception as e:
+                b["walls"].append({"pair": PAIR[ccy], "note": "error %s" % e})
+    try:
+        b["book"] = build_book(st)
+    except Exception as e:
+        b["book"] = []; note("book: %s" % e)
+    # dqm
+    for fid, s in (st.get("dqm") or {}).items():
+        if s in ("STALE", "DEAD"):
+            b["dqm"].append({"feed": fid, "status": s})
+    if NOTES:
+        b["notes"] = NOTES[:8]
+    os.makedirs(os.path.dirname(BRIEF_PATH), exist_ok=True)
+    with open(BRIEF_PATH, "w", encoding="utf-8") as fh:
+        json.dump(b, fh, indent=1, ensure_ascii=False)
+
+
 def main(argv):
     dry = "--dry-run" in argv
     baseline = "--baseline" in argv
@@ -735,6 +911,11 @@ def main(argv):
             if not dry:
                 tg_send(text)
     if not dry:
+        try:
+            wl = [l for _, blocks in walls for l in blocks]
+            build_brief(st, wl)
+        except Exception as e:
+            print("brief: error %s" % e)
         save_state(st)
     return 0
 
