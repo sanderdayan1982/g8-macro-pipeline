@@ -127,12 +127,10 @@ jobs:
         id: jpy_bills
 
       # ── NZD scraper deferred pending RBNZ response (2026-06-09) ───────────
-      # RBNZ blocks Azure datacenter IPs at the ASN level. Cloudflare Worker
-      # and Tailscale exit node bypass attempts were not viable. Email sent
-      # to stats-info@rbnz.govt.nz requesting API key / ISP-level whitelist
-      # / alternative machine-readable distribution channel. When RBNZ
-      # responds, reactivate `scripts/fetch_nzd_b2.py` here. Until then NZD
-      # is loaded manually via convert_manual.py (T-15D freshness).
+      # RBNZ (B2) and the SNB data portal reject datacenter IPs / non-browser TLS.
+      # Both are fetched on the operator's Mac (launchd 08:00: fetch_nzd_b2.py +
+      # fetch_chf_snb.py → push_nzd_to_github.py via the GitHub API) and consumed
+      # here as repo CSVs (NZD_*.csv, CHF_*.csv). Never call those endpoints from Actions.
 
       - name: Fetch Floor References (IORB/DFR/BoC Target)
         run: python scripts/fetch_floor_spreads.py
