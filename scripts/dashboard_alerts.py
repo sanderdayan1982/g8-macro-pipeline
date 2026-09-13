@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.3  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.4  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -77,6 +77,7 @@ PAIR = {"EUR": "EUR/USD", "JPY": "USD/JPY", "GBP": "GBP/USD",
         "AUD": "AUD/USD", "CAD": "USD/CAD", "CHF": "USD/CHF"}
 
 TODAY = datetime.now(timezone.utc).date()
+OPTIONAL_FILES = {"NZD_CASH_ON.csv", "NZD_BOND_10Y.csv"}   # escritos por el fetch local del Mac
 NOTES = []            # líneas DQM / problemas de lectura
 
 
@@ -91,15 +92,17 @@ def read_series(name, col="CLOSE", datecol="DATE"):
     """CSV del repo → list[(date, float)] ordenada. Ignora líneas '#'. None si falla."""
     p = os.path.join(DATA, name)
     if not os.path.exists(p):
-        note("DQM · %s ausente" % name)
+        if name not in OPTIONAL_FILES:          # feeds opcionales (p.ej. B2 local) no hacen ruido
+            note("DQM · %s ausente" % name)
         return None
     out = []
     try:
         with open(p, encoding="utf-8", errors="ignore") as fh:
             rows = [l for l in fh if l.strip() and not l.startswith("#")]
         for r in csv.DictReader(rows):
-            d = (r.get(datecol) or "").strip().replace("-", "")[:8]
-            v = r.get(col)
+            # v1.4: RBNZ B2 files are Date,Value (ISO) — accept both shapes
+            d = (r.get(datecol) or r.get("Date") or "").strip().replace("-", "")[:8]
+            v = r.get(col) if r.get(col) not in (None, "") else r.get("Value")
             if len(d) != 8 or v in (None, "", "NA", "nan"):
                 continue
             try:
@@ -203,7 +206,8 @@ FLOORS = [("USD", "SOFR.csv", "FLOOR_USD.csv", "IORB"),
           ("GBP", "SONIA.csv", "GB_POLICY.csv", "Bank Rate"),
           ("JPY", "TONA.csv", "JP_POLICY.csv", "Policy Rate"),
           ("CAD", "CORRA.csv", "FLOOR_CAD.csv", "BoC Target"),
-          ("AUD", "AONIA.csv", "AU_POLICY.csv", "Cash Rate")]
+          ("AUD", "AONIA.csv", "AU_POLICY.csv", "Cash Rate"),
+          ("NZD", "NZD_CASH_ON.csv", "NZD_OCR.csv", "OCR (floor puro)")]
 
 
 def floor_badge(bp):
@@ -304,8 +308,10 @@ def check_vs_usd(st, lines):
     usd = read_series("RY_G8_USD.csv", col="NOM10")
     if not usd:
         return
-    for ccy in ["EUR", "JPY", "GBP", "CAD", "AUD"]:
-        nom = read_series("RY_G8_%s.csv" % ccy, col="NOM10")
+    for ccy in ["EUR", "JPY", "GBP", "CAD", "AUD", "NZD"]:
+        nom = read_series("RY_G8_%s.csv" % ccy, col="NOM10") if ccy != "NZD" else read_series("NZD_BOND_10Y.csv", col="Value", datecol="Date")
+        if ccy == "NZD" and nom and bdays_between(nom[-1][0], TODAY) > 7:
+            nom = None                                  # B2 rancio: no fabricar z sobre dato viejo
         if not nom:
             continue
         sp = [(d, va - vb) for d, va, vb in ffill_join(nom, usd)]          # pp, + = rinde más que USD
@@ -716,9 +722,14 @@ def build_book(st):
         if nom:
             r["nom"], r["real"], r["be"], r["nom_asof"] = nom[-1][1], (real[-1][1] if real else None), (be[-1][1] if be else None), nom[-1][0].isoformat()
         elif c == "NZD":
-            e = man.get("NZD_NOM_RBNZ") or {}
-            r["nom"], r["real"], r["be"], r["nom_asof"] = e.get("value"), None, None, e.get("date")
-            r["flags"].append("NOM MANUAL")
+            b2 = read_series("NZD_BOND_10Y.csv", col="Value", datecol="Date")
+            if b2 and bdays_between(b2[-1][0], TODAY) <= 7:
+                r["nom"], r["real"], r["be"], r["nom_asof"] = b2[-1][1], None, None, b2[-1][0].isoformat()
+                r["flags"].append("NOM B2 live")
+            else:
+                e = man.get("NZD_NOM_RBNZ") or {}
+                r["nom"], r["real"], r["be"], r["nom_asof"] = e.get("value"), None, None, e.get("date")
+                r["flags"].append("NOM MANUAL" + (" (B2 rancio)" if b2 else ""))
         else:
             r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
             r["flags"].append("NOM NA (SNB)")
@@ -736,11 +747,15 @@ def build_book(st):
         if t.get("fiscal"):
             r["flags"].append("TP/NOM ▲60%")
         rf = read_series(RFR[c])
+        if c == "NZD":
+            cash = read_series("NZD_CASH_ON.csv", col="Value", datecol="Date")
+            if cash and bdays_between(cash[-1][0], TODAY) <= 7:
+                rf = cash                                   # overnight interbank cash (B2)
+            else:
+                r["flags"].append("RFR = OCR (sin cash B2)")
         r["rfr"] = rf[-1][1] if rf else None
         if c == "CHF":
             r["flags"].append("RFR = policy (SARON proxy)")
-        if c == "NZD":
-            r["flags"].append("RFR = OCR")
         f = (st.get("floors") or {}).get(c) or {}
         r["floor_bp"], r["floor_badge"] = f.get("last"), f.get("badge")
         u = (st.get("vs_usd") or {}).get(c) or {}
