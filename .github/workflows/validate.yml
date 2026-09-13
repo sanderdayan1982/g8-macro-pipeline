@@ -1,0 +1,108 @@
+# .github/workflows/validate.yml — CI de humo (auditoría institucional 2026-09-13)
+# Corre en cada push/PR que toque código o datos de configuración. Detecta en 1 minuto lo que
+# antes solo salía a las 18:00 UTC por Telegram: sintaxis rota en scripts/, YAML de workflows
+# inválido, JS inline de docs/index.html o docs/js/*.js con errores de sintaxis, registry
+# malformado, y que dashboard_alerts.py construya el brief en --dry-run sin excepciones.
+# No toca datos ni envía nada (sin secrets). Ley 2: un fallo aquí es ruidoso (check rojo).
+name: Validate (smoke)
+
+on:
+  push:
+    paths:
+      - 'scripts/**'
+      - 'docs/**'
+      - 'sources/**'
+      - '.github/workflows/**'
+      - 'requirements.txt'
+      - 'data/manual/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyyaml
+
+      - name: Python syntax (scripts/)
+        run: python -m compileall -q scripts
+
+      - name: Workflow YAML parses
+        run: |
+          python - <<'EOF'
+          import glob, sys, yaml
+          bad = []
+          for f in glob.glob('.github/workflows/*.yml'):
+              try:
+                  yaml.safe_load(open(f))
+              except Exception as e:
+                  bad.append((f, str(e)))
+          for f, e in bad:
+              print('INVALID', f, e)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: sources/registry.csv well-formed
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          rows = list(csv.DictReader(open('sources/registry.csv', encoding='utf-8')))
+          req = {'feed_id', 'primary_access', 'max_staleness_bd'}
+          assert rows and req <= set(rows[0].keys()), 'registry header missing required columns'
+          ids = [r['feed_id'] for r in rows]
+          dup = {i for i in ids if ids.count(i) > 1}
+          assert not dup, 'duplicate feed_id: %s' % sorted(dup)
+          bad = [r['feed_id'] for r in rows if r['max_staleness_bd'] and not r['max_staleness_bd'].replace('.', '', 1).isdigit()]
+          assert not bad, 'non-numeric max_staleness_bd: %s' % bad
+          print(len(rows), 'registry rows OK')
+          EOF
+
+      - name: JS syntax (docs/js/*.js + inline scripts of docs/index.html)
+        run: |
+          node - <<'EOF'
+          const fs = require('fs'), path = require('path');
+          let bad = 0;
+          for (const f of fs.readdirSync('docs/js').filter(x => x.endsWith('.js'))) {
+            try { new Function(fs.readFileSync(path.join('docs/js', f), 'utf8')); console.log('OK', f); }
+            catch (e) { console.log('SYNTAX ERROR', f, e.message); bad++; }
+          }
+          const h = fs.readFileSync('docs/index.html', 'utf8');
+          const re = /<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g; let m, i = 0;
+          while ((m = re.exec(h))) { i++; try { new Function(m[1]); } catch (e) { console.log('SYNTAX ERROR index.html inline script #' + i, e.message); bad++; } }
+          console.log('checked', i, 'inline scripts');
+          process.exit(bad ? 1 : 0);
+          EOF
+
+      - name: dashboard_alerts.py --dry-run (builds brief without sending)
+        run: python scripts/dashboard_alerts.py --dry-run
+
+      - name: nzd_tp_synth.py / acm_g8.py import
+        run: |
+          python - <<'EOF'
+          import importlib.util, sys
+          for name in ('acm_g8', 'real_yields_g8', 'nzd_tp_synth', 'fetch_nzd_b2', 'fetch_chf_snb', 'pos_g8_cot_collector'):
+              spec = importlib.util.spec_from_file_location(name, 'scripts/%s.py' % name)
+              try:
+                  mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+                  print('import OK', name)
+              except SystemExit:
+                  print('import OK (exits at import)', name)
+              except Exception as e:
+                  print('IMPORT FAILED', name, e); sys.exit(1)
+          EOF
