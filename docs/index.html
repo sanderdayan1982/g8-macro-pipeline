@@ -261,10 +261,11 @@
     .brief-list{margin:0;padding:0;list-style:none}
     .brief-list li{padding:3px 0;border-bottom:1px solid #161b26}
     .brief-list .sec{color:#8a93a6;display:inline-block;min-width:170px}
-    .brief-walls{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+    .brief-walls{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
     .brief-wall{background:#0e1219;border:1px solid #161b26;padding:6px 8px;border-radius:2px}
     .brief-wall .pair{color:#e6e9ef;font-weight:600}
     .brief-wall .near{color:#fdb813}
+    .brief-chip{display:inline-block;font-size:10px;font-weight:600;background:#0c1119;border:1px solid #1c2433;border-radius:2px;padding:1px 6px;margin:2px 4px 0 0}
     .brief-doctrine{color:#5d6678;font-size:11px}
     .dqm-lat{color:#5d6678;font-size:10.5px}
     .dqm-age{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
@@ -1576,7 +1577,8 @@ var manualReady = (function () {
                 if (!(e && isFinite(e.value) && e.date)) return;
                 BE_CONST[ccy] = { v: Number(e.value), src: (e.source || BE_CONST[ccy].src) + ' · repo manual_inputs.json',
                                   asOf: String(e.date).slice(0, 7) };
-                if (FEED_REGISTRY[k]) { FEED_REGISTRY[k].value = Number(e.value); FEED_REGISTRY[k].lastDate = String(e.date).slice(0, 10); }
+                var FR = (window.G8DQM && window.G8DQM.FEED_REGISTRY) || {};   /* registry lives in the DQM module scope */
+                if (FR[k]) { FR[k].value = Number(e.value); FR[k].lastDate = String(e.date).slice(0, 10); }
             });
         })
         .catch(function (e) { console.warn('[manual] manual_inputs.json unreachable', e.message); });
@@ -2000,7 +2002,7 @@ function build(data) {
 
     html += '</tbody></table>' +
         '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
-        'JPY/CHF/NZD real = NOM − manual BE constant (BoJ Outlook / SNB CPI fcst / RBNZ SoE) · ' +
+        'CHF real = NOM − manual BE constant (SNB CPI fcst) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv exists (else RBNZ SoE constant) · NZD TP = own ACM K=3 on RBNZ B2 1985+ when ACM_G8_NZD.csv is a real fit (else AUD-anchored proxy) · ' +
         'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
         '<b style="color:#9d7bd8">NZD nominal = manual</b>: type the latest 10Y yield in the input, press Enter — TP/RNY/Real recompute and the value persists in this browser. NZD source RBNZ B2 “10 year” column (datacenter ASN blocked). CHF nominal = FRED OECD 10Y (IRLTLT01CHM156N, monthly) with an EUR anchor-proxy TP — revived from the frozen SNB cube; falls back to the frozen own-ACM K=5 (flagged FROZEN) only if the FRED fetch fails.</div>';
 
@@ -2049,6 +2051,15 @@ function init() {
                 .catch(function (e) { console.warn('[attr] RY', c, e.message); }));
         }
     });
+
+    /* v2.5.8: NZD real ACM (acm_g8.py NZD on B2 1985+) and real linker BE (RY_G8_NZD.csv from
+       NZ inflation-indexed bonds). Both optional: 404 → proxy TP / manual BE as before. */
+    jobs.push(fetchCsv(RAW + 'ACM_G8_NZD.csv')
+        .then(function (t) { raw.NZD = raw.NZD || {}; raw.NZD.acm = parseAcm(t); })
+        .catch(function (e) { console.warn('[attr] ACM NZD', e.message); }));
+    jobs.push(fetchCsv(RAW + 'RY_G8_NZD.csv')
+        .then(function (t) { raw.NZD = raw.NZD || {}; raw.NZD.ry = parseRy(t); })
+        .catch(function (e) { console.warn('[attr] RY NZD (pending IIB fetch)', e.message); }));
 
     /* v2.5.6: NZD nominal 10Y from RBNZ B2 (Date,Value CSV) — local-fetch feed */
     jobs.push(fetchCsv(RAW + 'NZD_BOND_10Y.csv')
@@ -2171,19 +2182,42 @@ function assemble(raw) {
         var b2St = b2Last ? G8DQM.computeStaleness(b2Last.d.replace(/-/g, ''), 5) : 'DEAD';
         var useLive = b2 && (b2St === 'LIVE' || b2St === 'DEGRADED') && (!nzdM.date || nzdM.date <= b2Last.d);
         var nzdNom = useLive ? b2 : anchorToManual(audNomHist, nzdM.v, nzdM.date);
-        var tpNZD = proxyTP(nzdNom, raw.AUD.acm, audNomRy);
+        /* v2.5.8: same formula as the rest when the repo carries it —
+           TP from acm_g8.py NZD (real ACM K=3 on RBNZ B2 1985+; a SYNTH file from
+           nzd_tp_synth.py is recognised by its QUALITY column and treated as proxy) and
+           REAL/BE from RY_G8_NZD.csv (NZ inflation-indexed bonds interpolated to 10Y). */
+        var nzAcm = raw.NZD && raw.NZD.acm && raw.NZD.acm.length > 60 ? raw.NZD.acm : null;
+        var acmReal = !!(nzAcm && !(nzAcm[nzAcm.length - 1].QUALITY && /SYNTH/i.test(String(nzAcm[nzAcm.length - 1].QUALITY))));
+        var acmLast = nzAcm ? String(nzAcm[nzAcm.length - 1].DATE) : null;
+        var acmFresh = acmReal && G8DQM.computeStaleness(acmLast, 7) !== 'DEAD';
+        var nzRy = raw.NZD && raw.NZD.ry && raw.NZD.ry.rows && raw.NZD.ry.rows.length > 60 ? raw.NZD.ry : null;
+        var ryLast = nzRy ? String(nzRy.rows[nzRy.rows.length - 1].DATE) : null;
+        var ryFresh = nzRy && G8DQM.computeStaleness(ryLast, 10) !== 'DEAD';
+        var tpNZD = acmFresh ? nzAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.TP10 }; })
+                             : proxyTP(nzdNom, raw.AUD.acm, audNomRy);
+        var beNZD = ryFresh ? nzRy.rows.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.BE10 }; })
+                            : constBE(nzdNom, BE_CONST.NZD.v);
+        var realNZD = ryFresh ? nzRy.rows.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.REAL10 }; })
+                              : minusSeries(nzdNom, beNZD);
+        var qParts = [useLive ? 'LIVE (B2)' : 'MANUAL', acmFresh ? 'ACM K=3' : 'SYNTH TP', ryFresh ? 'IIB BE' : 'BE const'];
         data.NZD = {
             nom: statsS(nzdNom),
             tp: statsS(tpNZD),
-            rny: statsS(minusSeries(nzdNom, tpNZD)),
-            be: statsS(constBE(nzdNom, BE_CONST.NZD.v)),
-            real: statsS(minusSeries(nzdNom, constBE(nzdNom, BE_CONST.NZD.v))),
-            quality: useLive ? 'LIVE (B2) + SYNTH TP' : 'MANUAL+SYNTH',
-            qkind: useLive ? 'proxy' : 'synth',
+            rny: acmFresh ? statsS(nzAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.RNY10 }; }))
+                          : statsS(minusSeries(nzdNom, tpNZD)),
+            be: statsS(beNZD),
+            real: statsS(realNZD),
+            quality: qParts.join(' + '),
+            qkind: (acmFresh && ryFresh) ? (useLive ? 'clean' : 'proxy') : (useLive ? 'proxy' : 'synth'),
             asOf: useLive ? b2Last.d + ' · RBNZ B2 (local fetch)' : nzdM.date + ' · manual (' + (nzdM.src || 'default') + ')' + (b2Last ? ' · B2 ' + b2St + ' ' + b2Last.d : ''),
             manual: useLive ? null : { ccy: 'NZD', v: nzdM.v, tv: MANUAL_DEFAULTS.NZD.tv, link: MANUAL_DEFAULTS.NZD.link },
-            formula: (useLive ? 'NOM=RBNZ B2 10Y daily close' : 'NOM=manual (RBNZ B2 / TVC:NZ10Y)') + ' · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')'
+            formula: (useLive ? 'NOM=RBNZ B2 10Y daily close' : 'NOM=manual (RBNZ B2 / TVC:NZ10Y)') +
+                     (acmFresh ? ' · TP=own ACM K=3 (B2 90d/1/2/5/10Y, 1985+)' : ' · TP=TP_AUD+0.4·(NOM_NZD−NOM_AUD) [proxy' + (acmReal && !acmFresh ? ', real ACM file stale' : '') + ']') +
+                     (ryFresh ? ' · BE=NOM−REAL (NZ IIB interpolated 10Y, ' + (nzRy.quality || 'PROXY') + ')' : ' · BE=' + BE_CONST.NZD.v + '% (' + BE_CONST.NZD.src + ')')
         };
+        /* badge tier follows the data actually used: IIB linker = tier 1 (thin market), else SoE constant */
+        RY_QUALITY.NZD = ryFresh ? { tier: 1, instr: 'NZ IIB', hz: '10Y' } : { tier: 3, instr: 'RBNZ SoE', hz: '2Y→10Y' };
+        if (acmFresh && nzAcm.length < 150) data.NZD.tpConf = { lo: true, why: 'Short daily sample (n=' + nzAcm.length + ' < 150) — TP shape informative, level not cross-comparable.' };
         if (useLive) G8DQM.report('NZD_NOM_RBNZ', { lastDate: b2Last.d.replace(/-/g, ''), value: b2Last.v, via: 'data/NZD_BOND_10Y.csv (B2 local fetch)' });
         else G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' + (b2Last ? ' (B2 ' + b2St + ')' : ' (B2 unreachable)') });
     }
@@ -2295,7 +2329,7 @@ function row(p, s) {
     var zh = z === null ? '' :
         '<span class="attr-z ' + (Math.abs(z) > 2 ? 'attr-z-hi' : Math.abs(z) > 1 ? 'attr-z-md' : 'attr-z-lo') + '">Z ' +
         (z > 0 ? '+' : '') + z.toFixed(1) + '</span>';
-    return '<tr>' +
+    return '<tr data-fls-ccy="' + (p.key || p.ccy) + '" style="cursor:pointer" title="Click: ver serie en el gráfico">' +
         '<td><span class="attr-ccy">' + p.ccy + '</span><span class="attr-sub">vs ' + p.ref +
             ' · ' + s[n - 1].d + '</span></td>' +
         '<td><span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh + '</td>' +
@@ -2305,38 +2339,105 @@ function row(p, s) {
         '<td>' + badge + '</td></tr>';
 }
 
-function floorChart(data) {
-    if (!window.Plotly) return;
+/* v2.5.8: one currency at a time (same UX as §04 — selector buttons, single filled
+   trace, full history), instead of 8 overlapping lines. Table rows also select. */
+var _flsData = null, _flsKey = 'USD';
+var FLS_LABEL = { USD: 'USD', EUR: 'EUR', GBP: 'GBP', JPY: 'JPY', CAD: 'CAD', AUD: 'AUD', NZD: 'NZD', NZD_BKBM: 'NZD·90d' };
+
+function floorSelector(data) {
+    var h = '<div class="acm-ccy-selector" id="fls-ccy-selector">';
+    PAIRS.forEach(function (p) {
+        var k = p.key || p.ccy, s = data[k];
+        var has = s && s.length >= 30;
+        h += '<button class="acm-ccy-btn" data-fls-ccy="' + k + '"' +
+             (has ? '' : ' style="opacity:.35;pointer-events:none"') +
+             ' title="' + p.ccy + ' vs ' + p.ref + '">' + (FLS_LABEL[k] || p.ccy) + '</button>';
+    });
+    return h + '</div>';
+}
+
+function floorSync() {
+    var sel = document.getElementById('fls-ccy-selector');
+    if (!sel) return;
+    sel.querySelectorAll('[data-fls-ccy]').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-fls-ccy') === _flsKey);
+    });
+}
+
+function floorChart(key) {
+    if (!window.Plotly || !_flsData) return;
+    var p = PAIRS.filter(function (q) { return (q.key || q.ccy) === key; })[0];
+    var s = _flsData[key];
+    if (!p || !s || s.length < 30) return;
     var G = window.G8Dashboard || {};
     var CC = G.CCY_COLOR || {};
-    var FALLBACK = { USD: '#4c9be8', EUR: '#fdb813', GBP: '#c678dd', JPY: '#ff5c72', CAD: '#ff8c42', AUD: '#2fbf71', 'NZD': '#5d8aa8', 'NZD·90d': '#8a93a6' };
-    var traces = [];
-    PAIRS.forEach(function (p) {
-        var s = data[p.key || p.ccy];
-        if (!s || s.length < 30) return;
-        var w = s.slice(-252);
-        traces.push({
-            x: w.map(function (x) { return x.d.slice(0, 4) + '-' + x.d.slice(4, 6) + '-' + x.d.slice(6, 8); }),
-            y: w.map(function (x) { return +x.v.toFixed(2); }),
-            type: 'scatter', mode: 'lines', name: p.ccy,
-            line: { width: p.noBadge ? 1.2 : 1.8, dash: p.noBadge ? 'dot' : 'solid', color: CC[p.ccy] || FALLBACK[p.ccy] || '#8a93a6' },
-            hovertemplate: '<b>' + p.ccy + '</b> %{x|%Y-%m-%d}<br>%{y:+.1f} bp<extra></extra>'
-        });
-    });
-    if (!traces.length) return;
+    var FALLBACK = { USD: '#4c9be8', EUR: '#fdb813', GBP: '#c678dd', JPY: '#ff5c72', CAD: '#ff8c42', AUD: '#2fbf71', NZD: '#5d8aa8', 'NZD·90d': '#8a93a6' };
+    var color = CC[p.ccy] || FALLBACK[p.ccy] || '#8a93a6';
+    var rgba = function (hex, a) {
+        var h = hex.replace('#', ''); if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+        return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+    };
+    var x = s.map(function (r) { return r.d.slice(0, 4) + '-' + r.d.slice(4, 6) + '-' + r.d.slice(6, 8); });
+    var y = s.map(function (r) { return +r.v.toFixed(2); });
+    var traces = [{
+        x: x, y: y, type: 'scatter', mode: 'lines', name: p.ccy,
+        line: { width: 1.8, dash: p.noBadge ? 'dot' : 'solid', color: color },
+        fill: 'tozeroy', fillcolor: rgba(color, 0.08),
+        hovertemplate: '<b>' + p.ccy + '</b> vs ' + p.ref + '<br>%{x|%Y-%m-%d}<br>%{y:+.1f} bp<extra></extra>'
+    }];
+    var shapes = p.noBadge ? [] : [
+        { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 2, y1: 2, line: { color: '#fdb813', width: 0.8, dash: 'dot' } },
+        { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 10, y1: 10, line: { color: '#ff5c72', width: 0.8, dash: 'dot' } }
+    ];
+    var n = y.length, last = y[n - 1];
+    var first = x[0], lastD = x[n - 1];
     var layout = {
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
         font: { family: 'JetBrains Mono, monospace', size: 11, color: '#8a93a6' },
-        margin: { l: 44, r: 12, t: 8, b: 32 }, height: 280,
-        xaxis: { type: 'date', gridcolor: '#161b26', tickformat: '%b %y', zeroline: false },
-        yaxis: { title: { text: 'RFR − floor (bp)', font: { size: 10 } }, gridcolor: '#161b26', zeroline: true, zerolinecolor: '#3a4254', zerolinewidth: 1 },
-        shapes: [
-            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 2, y1: 2, line: { color: '#fdb813', width: 0.8, dash: 'dot' } },
-            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 10, y1: 10, line: { color: '#ff5c72', width: 0.8, dash: 'dot' } }
-        ],
-        legend: { orientation: 'h', y: -0.18, font: { size: 10 } }, hovermode: 'x unified'
+        margin: { l: 48, r: 12, t: 8, b: 40 }, height: 300,
+        xaxis: { type: 'date', gridcolor: '#161b26', zeroline: false,
+                 rangeselector: { bgcolor: '#0f131a', activecolor: '#1c2330', bordercolor: '#1c2330', font: { size: 10, color: '#9ba3b4' },
+                                  buttons: [{ count: 3, label: '3M', step: 'month', stepmode: 'backward' },
+                                            { count: 1, label: '1Y', step: 'year', stepmode: 'backward' },
+                                            { count: 3, label: '3Y', step: 'year', stepmode: 'backward' },
+                                            { step: 'all', label: 'ALL' }] },
+                 range: [new Date(new Date(lastD).getTime() - 365 * 86400000).toISOString().slice(0, 10), lastD] },
+        yaxis: { title: { text: p.ccy + ' · RFR − ' + (p.noBadge ? 'OCR (term)' : 'floor') + ' (bp)', font: { size: 10 } },
+                 gridcolor: '#161b26', zeroline: true, zerolinecolor: '#3a4254', zerolinewidth: 1, tickformat: '+.0f' },
+        shapes: shapes, showlegend: false, hovermode: 'x unified'
     };
-    Plotly.newPlot('fls-chart', traces, layout, { displayModeBar: false, responsive: true });
+    Plotly.react('fls-chart', traces, layout, { displayModeBar: false, responsive: true });
+    var note = document.getElementById('fls-chart-note');
+    if (note) {
+        note.innerHTML = '<b style="color:' + color + '">' + p.ccy + '</b> vs ' + p.ref + ' · último ' +
+            '<b style="color:' + color + '">' + (last > 0 ? '+' : '') + last.toFixed(1) + ' bp</b> (' + lastD + ') · ' +
+            'historia ' + first + ' → ' + lastD + ' (' + n + ' obs)' +
+            (p.noBadge ? ' · funding a plazo, sin umbrales de floor' : ' · umbrales: 2 bp TIGHT · 10 bp PRESSURE') +
+            ' · 3M / 1Y / 3Y / ALL arriba';
+    }
+}
+
+function floorWire() {
+    var sel = document.getElementById('fls-ccy-selector');
+    if (sel && !sel._wired) {
+        sel.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-fls-ccy]');
+            if (!btn) return;
+            _flsKey = btn.getAttribute('data-fls-ccy');
+            floorSync(); floorChart(_flsKey);
+        });
+        sel._wired = true;
+    }
+    var tb = document.querySelector('#fls-table table');
+    if (tb && !tb._wired) {
+        tb.addEventListener('click', function (e) {
+            var tr = e.target.closest('tr[data-fls-ccy]');
+            if (!tr) return;
+            _flsKey = tr.getAttribute('data-fls-ccy');
+            floorSync(); floorChart(_flsKey);
+        });
+        tb._wired = true;
+    }
 }
 
 function init() {
@@ -2357,12 +2458,20 @@ function init() {
             el.innerHTML = '<div class="attr-err">No floor data reachable — run Daily Data Update to generate FLOOR_*.csv</div>';
             return;
         }
-        /* v2.5.7: 1Y Plotly chart of every floor spread (bp) under the table — same style as §04 */
-        setTimeout(function () { try { floorChart(data); } catch (e) { console.warn('[fls] chart', e.message); } }, 0);
-        el.innerHTML = '<div id="fls-chart" class="fls-chart"></div>' +
+        /* v2.5.8: selector + one series at a time (§04 UX); default USD, else first with data */
+        _flsData = data;
+        if (!(data[_flsKey] && data[_flsKey].length >= 30)) {
+            var firstOk = PAIRS.map(function (p) { return p.key || p.ccy; }).filter(function (k) { return data[k] && data[k].length >= 30; })[0];
+            if (firstOk) _flsKey = firstOk;
+        }
+        el.innerHTML = floorSelector(data) +
+            '<div id="fls-chart" class="fls-chart"></div>' +
+            '<div class="attr-note" id="fls-chart-note" style="margin:0 0 10px"></div>' +
             '<table class="attr-table"><thead><tr>' +
             '<th>CCY</th><th>Spread (bps)</th><th>Δ1W</th><th>Δ1M</th><th>90D</th><th>Regime</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table>';
+        floorWire(); floorSync();
+        setTimeout(function () { try { floorChart(_flsKey); } catch (e) { console.warn('[fls] chart', e.message); } }, 0);
     });
 }
 
@@ -2574,13 +2683,13 @@ function render(b) {
     if (b.book && b.book.length) {
         var n2 = function (v, d) { return v == null ? '—' : Number(v).toFixed(d == null ? 2 : d); };
         var zc = function (z) { if (z == null) return ''; var a = Math.abs(z); return a >= 2 ? ' class="z-x"' : a >= 1 ? ' class="z-hi"' : ''; };
-        h += '<table class="book"><thead><tr><th>CCY</th><th>NOM 10Y</th><th>REAL</th><th>BE</th><th>TP</th><th>TP z</th><th>RFR</th><th>floor bp</th><th>vs USD bp</th><th>LF z</th><th>COT</th><th style="text-align:left">flags</th></tr></thead><tbody>';
+        h += '<table class="book"><thead><tr><th>CCY</th><th>NOM 10Y</th><th>REAL</th><th>BE</th><th>TP</th><th>TP z</th><th>RFR</th><th>floor bp</th><th title="Diferencial 10Y nominal vs USD en puntos porcentuales (coma decimal)">vs USD %</th><th>LF z</th><th>COT</th><th style="text-align:left">flags</th></tr></thead><tbody>';
         b.book.forEach(function (r) {
             var fb = r.floor_badge === 'PRESSURE' ? ' class="badge-p"' : r.floor_badge === 'TIGHT' ? ' class="badge-t"' : '';
             h += '<tr><td>' + esc(r.ccy) + '</td><td>' + n2(r.nom) + '</td><td>' + n2(r.real) + '</td><td>' + n2(r.be) + '</td><td>' + n2(r.tp) +
                  '</td><td' + zc(r.tp_z) + '>' + (r.tp_z == null ? '—' : (r.tp_z >= 0 ? '+' : '') + n2(r.tp_z)) + '</td><td>' + n2(r.rfr) +
                  '</td><td' + fb + '>' + (r.floor_bp == null ? '—' : (r.floor_bp >= 0 ? '+' : '') + n2(r.floor_bp, 1)) +
-                 '</td><td>' + (r.vs_usd_bp == null ? '—' : (r.vs_usd_bp >= 0 ? '+' : '') + n2(r.vs_usd_bp, 0)) +
+                 '</td><td>' + (r.vs_usd_bp == null ? '—' : (r.vs_usd_bp >= 0 ? '+' : '−') + Math.abs(r.vs_usd_bp / 100).toFixed(2).replace('.', ',')) +   /* v2.5.8: −1,44 (pp), no −144 bp */
                  '</td><td' + zc(r.lf_z) + '>' + (r.lf_z == null ? '—' : (r.lf_z >= 0 ? '+' : '') + n2(r.lf_z)) + '</td><td>' + esc(r.cot_state || '—') +
                  '</td><td class="flags">' + esc((r.flags || []).join(' · ') || '—') + '</td></tr>';
         });
@@ -2593,10 +2702,21 @@ function render(b) {
         h += '<div class="brief-walls">';
         b.walls.forEach(function (w) {
             if (w.note) { h += '<div class="brief-wall"><span class="pair">' + esc(w.pair) + '</span> · ' + esc(w.note) + '</div>'; return; }
+            /* v2.5.8: misma fila que §08 — strikes C/P (OI≥100), front OI (+Δ1D) y top-3 walls
+               (nivel · lado dominante · OI), todo en convención de usuario (INV ya aplicado en brief.json) */
+            var top = (w.top || []).map(function (t) {
+                var callDom = (t.c || 0) >= (t.p || 0), col = callDom ? '#2fbf71' : '#ff8c42';
+                return '<span class="brief-chip" style="border-left:2px solid ' + col + '" title="C ' + (t.c == null ? '·' : t.c.toLocaleString()) + ' / P ' + (t.p == null ? '·' : t.p.toLocaleString()) + '">' +
+                       fmtK(w.pair, t.level) + ' <span style="color:' + col + '">' + (callDom ? 'C' : 'P') + ' ' + (t.oi == null ? '·' : t.oi.toLocaleString()) + '</span></span>';
+            }).join('');
+            var d1 = w.front_oi_d1 == null ? '' : ' <span style="color:' + (w.front_oi_d1 > 0 ? '#2fbf71' : w.front_oi_d1 < 0 ? '#ff5c72' : '#5d6678') + '">Δ1D ' + (w.front_oi_d1 > 0 ? '+' : '') + w.front_oi_d1.toLocaleString() + '</span>';
             h += '<div class="brief-wall"><span class="pair">' + esc(w.pair) + '</span> ' + fmtK(w.pair, w.spot) +
                  ' <span style="color:#5d6678">· ' + esc(w.expiry) + ' · ' + esc(w.gate0) + '</span><br>' +
                  'pin ' + fmtK(w.pair, w.pin) + ' · call ' + fmtK(w.pair, w.call) + ' · put ' + fmtK(w.pair, w.put) +
                  (w.near_pct != null && w.near_pct < 0.5 ? '<br><span class="near">⚠ spot a ' + w.near_pct.toFixed(2) + ' % de ' + fmtK(w.pair, w.near_k) + '</span>' : '') +
+                 (w.front_oi != null ? '<br><span style="color:#8a93a6">strikes C/P <b style="color:#d7dce6">' + (w.strikes_c == null ? '·' : w.strikes_c) + '/' + (w.strikes_p == null ? '·' : w.strikes_p) +
+                    '</b> · front OI <b style="color:#d7dce6">' + w.front_oi.toLocaleString() + '</b>' + d1 + (w.front && w.front !== w.expiry ? ' <span style="color:#5d6678">(front ' + esc(w.front) + ')</span>' : '') + '</span>' : '') +
+                 (top ? '<br><span style="color:#8a93a6">top walls</span> ' + top : '') +
                  '</div>';
         });
         h += '</div>';
