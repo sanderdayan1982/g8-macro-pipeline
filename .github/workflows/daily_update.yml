@@ -191,6 +191,13 @@ jobs:
         continue-on-error: true
         run: python scripts/acm_g8.py NZD || echo "acm NZD not available yet — proxy fallback follows"
 
+      # ── 5b-ter. CHF real ACM (K=3 on the SNB zero curve 1988+, CHF_SPOT_*.csv from the Mac
+      #    fetch_chf_snb.py). Fails (tolerated) until those files land; the frozen 2025-07
+      #    ACM_G8_CHF.csv then stays in place, flagged FROZEN by the dashboard ──
+      - name: CHF ACM decomposition (real, SNB curve)
+        continue-on-error: true
+        run: python scripts/acm_g8.py CHF || echo "acm CHF not available yet — frozen file stays"
+
       - name: NZD TP synth fallback (ACM_G8_NZD.csv only if no fresh real ACM)
         continue-on-error: true
         run: python scripts/nzd_tp_synth.py
