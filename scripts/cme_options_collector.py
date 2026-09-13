@@ -124,8 +124,13 @@ def notify(msg):
 
 
 def fail(msg):
+    # audit 2026-09-12: name the Databento budget block plainly instead of a raw 402
+    if "402" in str(msg) and ("insufficient" in str(msg).lower() or "budget" in str(msg).lower()):
+        msg = ("Databento HTTP 402 — presupuesto mensual agotado o límite por debajo del gasto del mes. "
+               "Portal → Billing → Usage-based access → Manage: subir el monthly limit por encima del gasto. "
+               "Sesiones pendientes se recuperan solas en el siguiente run. | " + str(msg))
     print(f"[{LOG_TAG}] FAIL: {msg}", file=sys.stderr)
-    notify(f"FAIL: {msg}"[:200])
+    notify(f"FAIL: {msg}"[:400])
     sys.exit(1)
 
 
