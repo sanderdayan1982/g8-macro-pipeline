@@ -385,7 +385,18 @@ HIST_SOURCES = {
         5:    lambda: load_dv("NZD_BOND_5Y.csv"),
         10:   lambda: load_dv("NZD_BOND_10Y.csv"),
     },
-    # Phase 1c: CHF via beta-to-USD-TP proxy (insufficient open tenors)
+    # v2.5 (2026-09-13): CHF — SNB cube rendeiduebd (Confederation zero-coupon spot curve,
+    # Nelson-Siegel-Svensson, DAILY since 1988-01-04, one methodology; the old rendoblid
+    # cube froze 2025-07-31). Fetched on the operator's Mac (fetch_chf_snb.py; data.snb.ch
+    # rejects datacenter IPs) → data/CHF_SPOT_<n>Y.csv. Published monthly: the daily
+    # rows of a month land on the 1st of the next → NOWCAST rows (below) bridge the gap.
+    "CHF": {
+        1: lambda: load_dv("CHF_SPOT_1Y.csv"),   2: lambda: load_dv("CHF_SPOT_2Y.csv"),
+        3: lambda: load_dv("CHF_SPOT_3Y.csv"),   4: lambda: load_dv("CHF_SPOT_4Y.csv"),
+        5: lambda: load_dv("CHF_SPOT_5Y.csv"),   6: lambda: load_dv("CHF_SPOT_6Y.csv"),
+        7: lambda: load_dv("CHF_SPOT_7Y.csv"),   8: lambda: load_dv("CHF_SPOT_8Y.csv"),
+        9: lambda: load_dv("CHF_SPOT_9Y.csv"),   10: lambda: load_dv("CHF_SPOT_10Y.csv"),
+    },
 }
 
 # Daily repo CSVs for APPLICATION (tenor years -> filename)
@@ -401,11 +412,18 @@ DAILY_FILES = {
     "CAD": {0.25: "CAD_BILL_3M.csv", 0.5: "CAD_BILL_6M.csv", 1: "CAD_BILL_1Y.csv"},
     "AUD": {0.25: "AUD_BILL_3M.csv", 0.5: "AUD_BILL_6M.csv"},
     "NZD": {},   # v2.3: daily panel = same B2 CSVs (DAILY_DV_FILES), last 5y slice
+    "CHF": {},   # v2.5: idem, SNB curve CSVs
 }
 DAILY_DV_FILES = {
     "NZD": {0.25: "NZD_BILL_90D.csv", 1: "NZD_BOND_1Y.csv", 2: "NZD_BOND_2Y.csv",
             5: "NZD_BOND_5Y.csv", 10: "NZD_BOND_10Y.csv"},
+    "CHF": {t: f"CHF_SPOT_{t}Y.csv" for t in range(1, 11)},
 }
+# v2.5: daily 10Y nominal published ahead of the full curve (SNB RSS, Date,Value,Source).
+# Rows after the last curve date are NOWCAST: last fitted NS curve shifted in parallel by
+# the observed 10Y change. Level factor only — an explicit, flagged approximation
+# (QUALITY = …_NOWCAST_PARALLEL) that a real curve row replaces as soon as it is published.
+NOWCAST_10Y = {"CHF": "CHF_NOM_10Y.csv"}
 # Long-end daily for currencies whose repo CSVs stop short: fetched from the
 # same primary source (last 5y slice) inside build_daily_panel().
 DAILY_FRED_EXTRA = {
@@ -633,14 +651,33 @@ def run_currency(ccy):
     rny = affine_yields(params, Fd, 120, risk_neutral=True) * 100
     tp = y10 - rny
 
-    out = pd.DataFrame({"DATE": z_d.index.strftime("%Y%m%d"),
-                        "Y10_FIT": np.round(y10, 4),
-                        "RNY10": np.round(rny, 4),
-                        "TP10": np.round(tp, 4)})
     # v2.4: provenance column (same shape the SYNTH proxy uses, so every reader can tell
     # a real fit from the proxy by value: /SYNTH/ = proxy, ACM_K3… = real). SHORT_SAMPLE
     # marks a documented exception (MIN_OBS_OVERRIDE) — level low-confidence.
-    out["QUALITY"] = f"ACM_K{K}" + ("_SHORT_SAMPLE" if n_m < MIN_OBS_MONTHLY else "") + f"_{n_m}m"
+    quality = np.array([f"ACM_K{K}" + ("_SHORT_SAMPLE" if n_m < MIN_OBS_MONTHLY else "") + f"_{n_m}m"] * len(y10), dtype=object)
+    dates_out = z_d.index
+    if ccy in NOWCAST_10Y:                                            # v2.5
+        try:
+            nom = load_dv(NOWCAST_10Y[ccy])
+            extra = nom[nom.index > z_d.index[-1]]
+            if len(extra):
+                base = z_d_dec.iloc[-1].values
+                base10 = base[119]                                     # 120-month node, decimal
+                Zx = np.array([base + (v / 100.0 - base10) for v in extra.values])
+                Fx = factors_from_yields(params, pd.DataFrame(Zx, index=extra.index, columns=GRID_MONTHS))
+                y10 = np.concatenate([y10, affine_yields(params, Fx, 120) * 100])
+                rny = np.concatenate([rny, affine_yields(params, Fx, 120, risk_neutral=True) * 100])
+                tp = y10 - rny
+                quality = np.concatenate([quality, np.array([f"ACM_K{K}_NOWCAST_PARALLEL"] * len(extra), dtype=object)])
+                dates_out = z_d.index.append(extra.index)
+                print(f"  nowcast: {len(extra)} daily rows after {z_d.index[-1].date()} from {NOWCAST_10Y[ccy]} (parallel shift, flagged)")
+        except Exception as e:                                         # noqa: BLE001
+            print(f"  [WARN] nowcast skipped: {e}")
+    out = pd.DataFrame({"DATE": dates_out.strftime("%Y%m%d"),
+                        "Y10_FIT": np.round(y10, 4),
+                        "RNY10": np.round(rny, 4),
+                        "TP10": np.round(tp, 4),
+                        "QUALITY": quality})
     out_path = os.path.join(DATA_DIR, f"ACM_G8_{ccy}.csv")
     out.to_csv(out_path, index=False)
 

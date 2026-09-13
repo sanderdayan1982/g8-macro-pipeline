@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.6  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.7  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -37,12 +37,16 @@ v1.6: libro G8 — NZD/CHF REAL y BE en el brief: BE = constante manual de
       Walls del brief = la fila de §08 (strikes C/P OI≥100, front OI + Δ1D, top-3 walls)
       en convención de usuario, además de pin/call/put del mapa operable.
 
+v1.7: CHF activado como NZD — §02 floor SARON − policy (CHF_SARON.csv), NOM 10Y SNB
+      diario (CHF_NOM_10Y.csv), TP del ACM real (ACM_G8_CHF.csv con QUALITY; NOWCAST =
+      filas puente con el 10Y del RSS hasta que el SNB publique la curva del mes).
+
 v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
       del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
       efectivo del lunes) se recortan a hoy para la frescura.
 
 Secciones cubiertas (todas las divisas con dato en repo)
-  §02 floor spreads   USD EUR GBP JPY CAD AUD   badge AMPLE/TIGHT/PRESSURE · |z| 252d
+  §02 floor spreads   USD EUR GBP JPY CAD AUD NZD CHF   badge AMPLE/TIGHT/PRESSURE · |z| 252d
   §03 policy rates    USD(IORB) EUR(DFR) GBP JPY CHF AUD CAD(BoC) NZD(OCR)   cambio de tasa
   §04 term premium    USD EUR JPY GBP CAD AUD   |ΔTP 1d| > P95 · TP/NOM cruza 60 %
   §01 spread vs USD   EUR JPY GBP CAD AUD (NOM10 − NOM10_USD)   |z| 252d · |Δ1w| > P95
@@ -85,7 +89,7 @@ PAIR = {"EUR": "EUR/USD", "JPY": "USD/JPY", "GBP": "GBP/USD",
         "AUD": "AUD/USD", "CAD": "USD/CAD", "CHF": "USD/CHF"}
 
 TODAY = datetime.now(timezone.utc).date()
-OPTIONAL_FILES = {"NZD_CASH_ON.csv", "NZD_BOND_10Y.csv", "ACM_G8_NZD.csv"}   # escritos por el fetch local del Mac
+OPTIONAL_FILES = {"NZD_CASH_ON.csv", "NZD_BOND_10Y.csv", "ACM_G8_NZD.csv", "CHF_SARON.csv", "CHF_NOM_10Y.csv"}   # escritos por el fetch local del Mac
 NOTES = []            # líneas DQM / problemas de lectura
 
 
@@ -215,7 +219,10 @@ FLOORS = [("USD", "SOFR.csv", "FLOOR_USD.csv", "IORB"),
           ("JPY", "TONA.csv", "JP_POLICY.csv", "Policy Rate"),
           ("CAD", "CORRA.csv", "FLOOR_CAD.csv", "BoC Target"),
           ("AUD", "AONIA.csv", "AU_POLICY.csv", "Cash Rate"),
-          ("NZD", "NZD_CASH_ON.csv", "NZD_OCR.csv", "OCR (floor puro)")]
+          ("NZD", "NZD_CASH_ON.csv", "NZD_OCR.csv", "OCR (floor puro)"),
+          # v1.7: CHF — SARON (SNB zirepo + RSS, fetch local Mac) vs SNB policy rate (BIS).
+          # Remuneración escalonada del SNB (policy hasta el umbral, policy − 25 pb por encima).
+          ("CHF", "CHF_SARON.csv", "CH_POLICY.csv", "SNB policy rate")]
 
 
 def floor_badge(bp):
@@ -274,7 +281,7 @@ def check_policy(st, lines):
 # ═════════════════════════════════════════════════════════════════════════════
 # §04 term premium ACM  +  §01 spread vs USD
 # ═════════════════════════════════════════════════════════════════════════════
-ACM_CCY = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "NZD"]   # NZD = SYNTH proxy (ACM_G8_NZD.csv)
+ACM_CCY = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "NZD", "CHF"]   # NZD real K=3 (o SYNTH), CHF real K=3 (SNB curve) o congelado
 
 
 def check_tp(st, lines):
@@ -722,6 +729,17 @@ def _acm_nzd_is_synth():
         return True
 
 
+def _acm_quality(name):
+    """Last QUALITY value of an ACM file ('' if the file has no such column)."""
+    p = os.path.join(DATA, name)
+    try:
+        with open(p, encoding="utf-8", errors="ignore") as fh:
+            rows = list(csv.DictReader(l for l in fh if l.strip() and not l.startswith("#")))
+        return str((rows[-1] if rows else {}).get("QUALITY") or "")
+    except OSError:
+        return ""
+
+
 def _acm_nzd_quality():
     p = os.path.join(DATA, "ACM_G8_NZD.csv")
     try:
@@ -767,8 +785,14 @@ def build_book(st):
                 r["nom"], r["real"], r["be"], r["nom_asof"] = e.get("value"), None, None, e.get("date")
                 r["flags"].append("NOM MANUAL" + (" (B2 rancio)" if b2 else ""))
         else:
-            r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
-            r["flags"].append("NOM NA (SNB)")
+            # v1.7: CHF nominal 10Y = SNB spot (curve month-end + RSS daily), fetch local Mac
+            chn = read_series("CHF_NOM_10Y.csv", col="Value", datecol="Date")
+            if chn and bdays_between(chn[-1][0], TODAY) <= 7:
+                r["nom"], r["real"], r["be"], r["nom_asof"] = chn[-1][1], None, None, chn[-1][0].isoformat()
+                r["flags"].append("NOM SNB live")
+            else:
+                r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
+                r["flags"].append("NOM NA (SNB)" + (" (rancio)" if chn else ""))
         # v1.6: NZD/CHF no tienen linker → BE = constante manual (misma fuente que §01:
         # manual_inputs.json NZD_BE_MANUAL / CHF_BE_MANUAL) y REAL = NOM − BE (SYNTH).
         # Presupuesto de la constante: registry manual_expiry_days = 95 (trimestral).
@@ -792,7 +816,14 @@ def build_book(st):
             vals = [v for _, v in tp]
             r["tp"], r["tp_z"], r["tp_asof"] = vals[-1], zscore(vals), tp[-1][0].isoformat()
             if c == "CHF":
-                r["flags"].append("TP FROZEN 2025-07")
+                # v1.7: real fit from acm_g8.py CHF carries a QUALITY column; the frozen 2025-07 file has none
+                q = _acm_quality("ACM_G8_CHF.csv")
+                if not q:
+                    r["flags"].append("TP FROZEN 2025-07")
+                elif "NOWCAST" in q.upper():
+                    r["flags"].append("TP ACM K=3 (nowcast 10Y)")
+                else:
+                    r["flags"].append("TP ACM K=3 (SNB curve)")
             if c == "NZD":
                 # v1.6: real ACM (acm_g8.py NZD) has no QUALITY column; the proxy file tags SYNTH
                 q = _acm_nzd_quality()
@@ -814,7 +845,12 @@ def build_book(st):
                 r["flags"].append("RFR = OCR (sin cash B2)")
         r["rfr"] = rf[-1][1] if rf else None
         if c == "CHF":
-            r["flags"].append("RFR = policy (SARON proxy)")
+            sar = read_series("CHF_SARON.csv", col="Value", datecol="Date")
+            if sar and bdays_between(sar[-1][0], TODAY) <= 7:
+                rf = sar
+                r["rfr"] = sar[-1][1]
+            else:
+                r["flags"].append("RFR = policy (SARON proxy)")
         f = (st.get("floors") or {}).get(c) or {}
         r["floor_bp"], r["floor_badge"] = f.get("last"), f.get("badge")
         u = (st.get("vs_usd") or {}).get(c) or {}
