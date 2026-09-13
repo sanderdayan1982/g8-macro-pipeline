@@ -247,6 +247,7 @@
     .book td{text-align:right;padding:4px 6px;border-bottom:1px solid #121620;color:#c9ced8;white-space:nowrap}
     .book td.flags{text-align:left;color:#8a93a6;white-space:normal}
     .book .z-hi{color:#ff8c42}.book .z-x{color:#ff5c72}.book .badge-t{color:#fdb813}.book .badge-p{color:#ff5c72}
+    .fls-chart{margin:4px 0 10px}
     /* v2.5.5 §00 brief */
     .dashboard-section{scroll-margin-top:34px}
     .brief-wrap{display:grid;grid-template-columns:1fr;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px}
@@ -302,7 +303,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.5.6 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.5.7 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -416,6 +417,7 @@
                 <button class="acm-ccy-btn" data-acm-ccy="aud">AUD</button>
                 <button class="acm-ccy-btn" data-acm-ccy="cad">CAD</button>
                 <button class="acm-ccy-btn" data-acm-ccy="jpy">JPY</button>
+                <button class="acm-ccy-btn" data-acm-ccy="nzd" title="Proxy sintético: TP_AUD + 0.4·(NOM_NZD − NOM_AUD). No es un ajuste ACM.">NZD·SYNTH</button>
             </div>
             <div class="chart-container" id="chart-acm"></div>
             <div class="section-footer">
@@ -935,6 +937,9 @@ var FEED_REGISTRY = {
     GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'daily', 5, '01'),
     AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
+       depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
+    NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD 10Y TP — SYNTH proxy (AUD anchor, β=0.4)', 'daily', 7, '04'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Real/BE 10Y (TIPS, FRED)', 'daily', 4, '01'),
@@ -2209,8 +2214,8 @@ var PAIRS = [
     /* v2.5.6 — NZD (RBNZ B2 via local fetch). RBNZ runs a pure floor: all settlement
        cash earns OCR, so overnight − OCR ≈ 0 by construction; it only speaks when
        it decouples. The BKBM 90d − OCR row is TERM funding, not a floor → no badge. */
-    { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · floor puro (overnight cash)' },
-    { ccy: 'NZD', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d − OCR (term)', noBadge: true }
+    { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · overnight cash (floor)' },
+    { ccy: 'NZD·90d', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d (term, no floor)', noBadge: true }
 ];
 
 function getCsv(name) {
@@ -2289,6 +2294,40 @@ function row(p, s) {
         '<td>' + badge + '</td></tr>';
 }
 
+function floorChart(data) {
+    if (!window.Plotly) return;
+    var G = window.G8Dashboard || {};
+    var CC = G.CCY_COLOR || {};
+    var FALLBACK = { USD: '#4c9be8', EUR: '#fdb813', GBP: '#c678dd', JPY: '#ff5c72', CAD: '#ff8c42', AUD: '#2fbf71', 'NZD': '#5d8aa8', 'NZD·90d': '#8a93a6' };
+    var traces = [];
+    PAIRS.forEach(function (p) {
+        var s = data[p.key || p.ccy];
+        if (!s || s.length < 30) return;
+        var w = s.slice(-252);
+        traces.push({
+            x: w.map(function (x) { return x.d.slice(0, 4) + '-' + x.d.slice(4, 6) + '-' + x.d.slice(6, 8); }),
+            y: w.map(function (x) { return +x.v.toFixed(2); }),
+            type: 'scatter', mode: 'lines', name: p.ccy,
+            line: { width: p.noBadge ? 1.2 : 1.8, dash: p.noBadge ? 'dot' : 'solid', color: CC[p.ccy] || FALLBACK[p.ccy] || '#8a93a6' },
+            hovertemplate: '<b>' + p.ccy + '</b> %{x|%Y-%m-%d}<br>%{y:+.1f} bp<extra></extra>'
+        });
+    });
+    if (!traces.length) return;
+    var layout = {
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'JetBrains Mono, monospace', size: 11, color: '#8a93a6' },
+        margin: { l: 44, r: 12, t: 8, b: 32 }, height: 280,
+        xaxis: { type: 'date', gridcolor: '#161b26', tickformat: '%b %y', zeroline: false },
+        yaxis: { title: { text: 'RFR − floor (bp)', font: { size: 10 } }, gridcolor: '#161b26', zeroline: true, zerolinecolor: '#3a4254', zerolinewidth: 1 },
+        shapes: [
+            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 2, y1: 2, line: { color: '#fdb813', width: 0.8, dash: 'dot' } },
+            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 10, y1: 10, line: { color: '#ff5c72', width: 0.8, dash: 'dot' } }
+        ],
+        legend: { orientation: 'h', y: -0.18, font: { size: 10 } }, hovermode: 'x unified'
+    };
+    Plotly.newPlot('fls-chart', traces, layout, { displayModeBar: false, responsive: true });
+}
+
 function init() {
     var data = {};
     var jobs = PAIRS.map(function (p) {
@@ -2307,7 +2346,10 @@ function init() {
             el.innerHTML = '<div class="attr-err">No floor data reachable — run Daily Data Update to generate FLOOR_*.csv</div>';
             return;
         }
-        el.innerHTML = '<table class="attr-table"><thead><tr>' +
+        /* v2.5.7: 1Y Plotly chart of every floor spread (bp) under the table — same style as §04 */
+        setTimeout(function () { try { floorChart(data); } catch (e) { console.warn('[fls] chart', e.message); } }, 0);
+        el.innerHTML = '<div id="fls-chart" class="fls-chart"></div>' +
+            '<table class="attr-table"><thead><tr>' +
             '<th>CCY</th><th>Spread (bps)</th><th>Δ1W</th><th>Δ1M</th><th>90D</th><th>Regime</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table>';
     });
