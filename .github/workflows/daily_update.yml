@@ -184,6 +184,11 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
 
+      # ── 5b-bis. NZD TP proxy (SYNTH, AUD-anchored β=0.4 frozen) — no ACM fit possible for NZ ──
+      - name: NZD TP synth (ACM_G8_NZD.csv)
+        continue-on-error: true
+        run: python scripts/nzd_tp_synth.py
+
       - name: Real yields G8 (USD GBP CAD AUD)
         continue-on-error: true
         env:
