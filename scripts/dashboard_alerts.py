@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.8  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v1.9  (2026-09-13)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -46,6 +46,9 @@ v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER C
       (NZD B2, IIB, SNB curva/SARON/10Y, ACM NZD/CHF, RY NZD) entran en sources/registry.csv
       con presupuesto → un Mac apagado dispara §05 STALE/DEAD por Telegram.
 
+v1.9: §01 diferencial REAL 10Y vs USD (linkers: EUR GBP JPY CAD AUD NZD) — columna en el
+      libro G8, bullet propio y alerta (|z| 252d histéresis, |Δ1w| P95). CHF fuera (BE constante).
+
 v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para el §00
       del dashboard (el navegador solo pinta; no calcula). Fechas futuras (IORB
       efectivo del lunes) se recortan a hoy para la frescura.
@@ -55,6 +58,7 @@ Secciones cubiertas (todas las divisas con dato en repo)
   §03 policy rates    USD(IORB) EUR(DFR) GBP JPY CHF AUD CAD(BoC) NZD(OCR)   cambio de tasa
   §04 term premium    USD EUR JPY GBP CAD AUD   |ΔTP 1d| > P95 · TP/NOM cruza 60 %
   §01 spread vs USD   EUR JPY GBP CAD AUD NZD CHF (NOM10 − NOM10_USD)   |z| 252d · |Δ1w| > P95
+  §01 REAL vs USD     EUR JPY GBP CAD AUD NZD (REAL10 − REAL10_USD, linkers)   |z| 252d · |Δ1w| > P95
   §06/§07 metales     XAU XAG   cambio de régimen · MDP z cruza ±2 · |Δz sem| > P95
   §08 strike walls    EUR JPY GBP AUD CAD CHF   nueva sesión: tarjeta completa + cambios
   §09 COT             7 divisas + USD + XAU/XAG   nuevo reporte: cambios de estado / EXT
@@ -359,6 +363,48 @@ def check_vs_usd(st, lines):
         if chg:
             lines.append("§01 %s−USD 10Y %+.0f bp · %s" % (ccy, vals[-1] * 100, " · ".join(chg)))
         s[ccy] = {"zband": zb, "mband": mb, "spread_bp": round(vals[-1] * 100, 1), "date": sp[-1][0].isoformat()}
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# §01 diferencial REAL 10Y vs USD (v1.9) — el driver limpio de FX: REAL10_ccy − REAL10_USD
+# Solo divisas con linker de mercado (RY_G8_*): EUR GBP JPY CAD AUD NZD. CHF no (BE constante).
+# Misma mecánica que el nominal: |z| 252d con histéresis · |Δ1w| > P95 rolling.
+# ═════════════════════════════════════════════════════════════════════════════
+REAL_CCY = ["EUR", "JPY", "GBP", "CAD", "AUD", "NZD"]
+
+
+def check_real_vs_usd(st, lines):
+    s = st.setdefault("real_vs_usd", {})
+    usd = read_series("RY_G8_USD.csv", col="REAL10")
+    if not usd:
+        return
+    for ccy in REAL_CCY:
+        real = read_series("RY_G8_%s.csv" % ccy, col="REAL10")
+        if ccy == "NZD" and real and bdays_between(real[-1][0], TODAY) > 10:
+            real = None                                 # linkers NZ rancios: sin z sobre dato viejo
+        if not real:
+            continue
+        sp = [(d, va - vb) for d, va, vb in ffill_join(real, usd)]         # pp, + = real más alto que USD
+        if len(sp) < 60:
+            continue
+        vals = [v for _, v in sp]
+        z = zscore(vals)
+        d1w = [(vals[i] - vals[i - 5]) * 100 for i in range(5, len(vals))]  # bp/semana
+        hist = [abs(x) for x in d1w[-WIN:]]
+        prev = s.get(ccy, {})
+        zb = band_z(z, prev.get("zband"))
+        mb, p95 = band_pct(abs(d1w[-1]), hist, prev.get("mband"))
+        chg = []
+        if zb and prev.get("zband", "") != zb:
+            chg.append("z %+.1f — %s de su año" % (z, "techo" if zb == "HI" else "suelo"))
+        elif prev.get("zband") in ("HI", "LO") and not zb:
+            chg.append("z %+.1f normaliza" % (z or 0.0))
+        if mb == "EXT" and prev.get("mband") != "EXT":
+            chg.append("Δ1w %+.0f bp — P%.0f" % (d1w[-1], rank_pct(abs(d1w[-1]), hist) or 0))
+        if chg:
+            lines.append("§01 %s−USD REAL 10Y %+.0f bp · %s" % (ccy, vals[-1] * 100, " · ".join(chg)))
+        s[ccy] = {"zband": zb, "mband": mb, "spread_bp": round(vals[-1] * 100, 1), "z": None if z is None else round(z, 2),
+                  "d1w_bp": round(d1w[-1], 1), "date": sp[-1][0].isoformat()}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -707,6 +753,12 @@ def summary_baseline(st):
         for k, v in u.items():
             out.append("   %s−USD  %+.0f bp%s" % (k, v["spread_bp"], "  · z extremo" if v.get("zband") else ""))
         out.append("")
+    ru = st.get("real_vs_usd", {})
+    if ru:
+        out.append("<b>§01 Spread 10Y REAL vs USD</b> (linkers · + = real más alto que USD)")
+        for k, v in ru.items():
+            out.append("   %s−USD  %+.0f bp  z %s%s" % (k, v["spread_bp"], "—" if v.get("z") is None else "%+.1f" % v["z"], "  · extremo" if v.get("zband") else ""))
+        out.append("")
     m = st.get("metals", {})
     if m:
         out.append("<b>§06/§07 Metales MDP</b> (z vs ancla NFA · régimen)")
@@ -880,6 +932,11 @@ def build_book(st):
         r["floor_bp"], r["floor_badge"] = f.get("last"), f.get("badge")
         u = (st.get("vs_usd") or {}).get(c) or {}
         r["vs_usd_bp"] = u.get("spread_bp")
+        ru = (st.get("real_vs_usd") or {}).get(c) or {}          # v1.9
+        r["real_vs_usd_bp"] = ru.get("spread_bp")
+        r["real_vs_usd_z"] = ru.get("z")
+        if ru.get("zband"):
+            r["flags"].append("REAL vs USD z %s" % ("techo" if ru["zband"] == "HI" else "suelo"))
         if u.get("zband"):
             r["flags"].append("vs USD z %s" % ("techo" if u["zband"] == "HI" else "suelo"))
         k = cot.get(c) or (js.get("usd") if c == "USD" and isinstance(js.get("usd"), dict) else None) or {}
@@ -964,6 +1021,10 @@ def build_brief(st, wall_lines):
     ul = ["%s−USD %+.0f bp (z %s)" % (k, v["spread_bp"], "techo" if v["zband"] == "HI" else "suelo") for k, v in u.items() if v.get("zband")]
     ul += ["%s Δ1w extremo" % k for k, v in u.items() if v.get("mband") == "EXT"]
     b["bullets"].append({"sec": "§01 Spread 10Y vs USD", "text": " · ".join(ul) if ul else "ningún diferencial en extremo de su año"})
+    ru = st.get("real_vs_usd", {})
+    rl = ["%s−USD real %+.0f bp (z %s)" % (k, v["spread_bp"], "techo" if v["zband"] == "HI" else "suelo") for k, v in ru.items() if v.get("zband")]
+    rl += ["%s real Δ1w extremo" % k for k, v in ru.items() if v.get("mband") == "EXT"]
+    b["bullets"].append({"sec": "§01 REAL 10Y vs USD", "text": " · ".join(rl) if rl else "ningún diferencial real en extremo de su año"})
     m = st.get("metals", {})
     ml = ["%s z %+.2f %s%s" % (k, v["z"] or 0, v["regime"], " (|z|≥2)" if v.get("zband") else "") for k, v in m.items()]
     b["bullets"].append({"sec": "§06/§07 Metales MDP", "text": (" · ".join(ml) if ml else "sin dato") + " — valoración, no timing"})
@@ -1023,7 +1084,7 @@ def main(argv):
     st = load_state()
     first = not st
     lines = []
-    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_metals, check_walls, check_cot, check_dqm):
+    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cot, check_dqm):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
