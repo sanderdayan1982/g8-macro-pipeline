@@ -42,14 +42,18 @@
         nzd: { ccy: 'NZD', source: 'RBNZ/NZDM',      label: 'NZ Govt Bonds',     tenors: ['3M', '6M', '1Y']                                }
     };
 
-    // v5: NEW — Policy rates catalog
-    // Note: USD/EUR/CAD policy rates are NOT in pipeline — they live in TradingView native feeds.
-    // Only the 4 BIS-sourced policy rates are wired here.
+    // v5: Policy rates catalog. v5.2 (audit 2026-09): the panel is now G8-complete —
+    // Fed IORB, ECB DFR and BoC target are the same administered rates the pipeline
+    // already fetches for §02 (FLOOR_*.csv); RBNZ OCR from NZD_OCR.csv.
     const POLICY_FEEDS = {
+        us_policy: { file: 'FLOOR_USD.csv', ccy: 'USD', source: 'FRED IORB', label: 'Fed IORB'                 },
+        eu_policy: { file: 'FLOOR_EUR.csv', ccy: 'EUR', source: 'ECB',       label: 'ECB Deposit Facility Rate' },
         gb_policy: { file: 'GB_POLICY.csv', ccy: 'GBP', source: 'BIS/BoE', label: 'BoE Bank Rate'           },
         jp_policy: { file: 'JP_POLICY.csv', ccy: 'JPY', source: 'BIS/BoJ', label: 'BoJ Policy Balance Rate' },
         ch_policy: { file: 'CH_POLICY.csv', ccy: 'CHF', source: 'BIS/SNB', label: 'SNB Policy Rate'         },
-        au_policy: { file: 'AU_POLICY.csv', ccy: 'AUD', source: 'BIS/RBA', label: 'RBA Cash Rate Target'    }
+        au_policy: { file: 'AU_POLICY.csv', ccy: 'AUD', source: 'BIS/RBA', label: 'RBA Cash Rate Target'    },
+        ca_policy: { file: 'FLOOR_CAD.csv', ccy: 'CAD', source: 'BoC Valet', label: 'BoC Target Rate'         },
+        nz_policy: { file: 'NZD_OCR.csv',   ccy: 'NZD', source: 'BIS/RBNZ',  label: 'RBNZ OCR'                }
     };
 
     // v6: ACM Term Premium catalog — own K=5 engine, 7 G8 currencies (monthly).
@@ -61,7 +65,10 @@
         chf: { file: 'ACM_G8_CHF.csv', ccy: 'CHF', source: 'G8 ACM K=5', label: 'CHF ACM 10Y TP' },
         aud: { file: 'ACM_G8_AUD.csv', ccy: 'AUD', source: 'G8 ACM K=5', label: 'AUD ACM 10Y TP' },
         cad: { file: 'ACM_G8_CAD.csv', ccy: 'CAD', source: 'G8 ACM K=5', label: 'CAD ACM 10Y TP' },
-        jpy: { file: 'ACM_G8_JPY.csv', ccy: 'JPY', source: 'G8 ACM K=5', label: 'JPY ACM 10Y TP' }
+        jpy: { file: 'ACM_G8_JPY.csv', ccy: 'JPY', source: 'G8 ACM K=5', label: 'JPY ACM 10Y TP' },
+        // v5.3: NZD has no zero curve → TP proxy materialised by scripts/nzd_tp_synth.py (AUD-anchored, frozen β=0.4)
+        // v5.4: label resolved at load time from the file's QUALITY column (SYNTH proxy vs real ACM K=3)
+        nzd: { file: 'ACM_G8_NZD.csv', ccy: 'NZD', source: 'G8 ACM K=3 (B2) / SYNTH fallback', label: 'NZD 10Y TP' }
     };
 
     function billFile(ccyKey, tenor) {
@@ -101,7 +108,7 @@
     const STALE_BD_DAILY = 12;    // beyond → fail
     const FRESH_BD_EVENT = 45;    // policy rates: ~inter-meeting gap
     const STALE_BD_EVENT = 110;
-    const FRESH_BD_WEEKLY = 12;   // ACM term premium (weekly)
+    const FRESH_BD_WEEKLY = 12;   // weekly feeds (legacy fallback; ACM is DAILY since acm_g8.py)
     const STALE_BD_WEEKLY = 30;
     const FRESH_BD_MONTHLY = 30;  // SNB bills etc.
     const STALE_BD_MONTHLY = 75;
@@ -350,6 +357,15 @@
     // Budget by feed class. `cls` ∈ {'daily','event','weekly','monthly'}.
     // Defaults to 'daily' so existing callers keep working.
     function staleStatus(lastDate, cls) {
+        // v5.2 (audit 2026-09 — one DQM engine): when the page-level G8DQM exists,
+        // delegate to its computeStaleness with the same budgets it uses, so the
+        // loader grid and §05 can never disagree. Future-dated effective rates
+        // (IORB) are handled there (clamped to today).
+        if (global.G8DQM && typeof global.G8DQM.computeStaleness === 'function') {
+            const budget = cls === 'event' ? 45 : cls === 'weekly' ? 10 : cls === 'monthly' ? 30 : 5;
+            const st = global.G8DQM.computeStaleness(String(lastDate).replace(/-/g, ''), budget);
+            return st === 'LIVE' ? 'fresh' : st === 'DEAD' ? 'fail' : 'stale';
+        }
         const bd = businessDaysSince(lastDate);
         let fresh, stale;
         switch (cls) {
@@ -434,6 +450,13 @@
         const promises = Object.entries(ACM_FEED).map(async ([key, cfg]) => {
             const rows = await loadCSV(cfg.file);
             out[key] = { ...cfg, rows, series: rows ? parseACMG8(rows) : null };
+            // v5.4: NZD file may be the SYNTH proxy (QUALITY column) or a real ACM fit — label accordingly
+            if (key === 'nzd' && rows && rows.length) {
+                const q = String(rows[rows.length - 1].quality || '');
+                const synth = /synth/i.test(q);
+                out[key].source = synth ? 'SYNTH (AUD anchor, proxy)' : 'G8 ACM K=3 (RBNZ B2 1985+)';
+                out[key].label  = synth ? 'NZD 10Y TP (SYNTH)' : 'NZD ACM 10Y TP';
+            }
         });
         await Promise.all(promises);
         const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
@@ -453,7 +476,7 @@
         daysSince, businessDaysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
         FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
-        VERSION: 'v5.1'
+        VERSION: 'v5.4'
     };
 
 })(window);

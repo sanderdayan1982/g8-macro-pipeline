@@ -341,7 +341,7 @@
 
     function renderPolicyChart(policyData) {
         const traces = [];
-        const order = ['gb_policy', 'jp_policy', 'ch_policy', 'au_policy'];
+        const order = ['us_policy', 'eu_policy', 'gb_policy', 'jp_policy', 'ch_policy', 'au_policy', 'ca_policy', 'nz_policy'];   // v5.2: G8-complete
         for (const key of order) {
             const feed = policyData[key];
             if (!feed || !feed.series || feed.series.dates.length === 0) continue;
@@ -374,7 +374,7 @@
 
     let _acmData = null;
     let _acmCcy  = 'usd';
-    const _ACM_ORDER = ['usd', 'eur', 'gbp', 'chf', 'aud', 'cad', 'jpy'];
+    const _ACM_ORDER = ['usd', 'eur', 'gbp', 'chf', 'aud', 'cad', 'jpy', 'nzd'];   // v5.3: + NZD (SYNTH)
 
     function hexToRgba(hex, a) {
         const h = String(hex).replace('#', '');
@@ -417,6 +417,12 @@
             const k = b.getAttribute('data-acm-ccy');
             const has = _acmData && _acmData[k] && _acmData[k].series && _acmData[k].series.dates.length;
             b.classList.toggle('active', k === _acmCcy);
+            if (k === 'nzd' && has) {   // v5.4: label follows the file (real ACM fit vs SYNTH proxy)
+                const synth = /synth/i.test(String(_acmData[k].source || ''));
+                b.textContent = synth ? 'NZD·SYNTH' : 'NZD';
+                b.title = synth ? 'Proxy sintético: TP_AUD + 0.4·(NOM_NZD − NOM_AUD). No es un ajuste ACM.'
+                                : 'ACM K=3 propio sobre la curva RBNZ B2 (90d, 1/2/5/10Y) 1985+ — misma fórmula que el resto.';
+            }
             b.style.opacity = has ? '' : '0.35';
             b.style.pointerEvents = has ? '' : 'none';
         });
@@ -504,7 +510,7 @@
             cell.className = 'quality-cell';
             const hasData = f.series && f.series.dates.length > 0;
             const lastDate = hasData ? f.series.dates[f.series.dates.length - 1] : null;
-            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : f.type === 'TermPrem' ? 'monthly' : 'daily';
+            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : 'daily';   /* v5.2: ACM is daily */
             const status = hasData ? global.G8DataLoader.staleStatus(lastDate, cls) : 'fail';
             const days = hasData ? global.G8DataLoader.businessDaysSince(lastDate) : null;
             const obs = hasData ? f.series.dates.length : 0;
@@ -529,13 +535,16 @@
             ...Object.entries(rfrData).filter(([k]) => k !== 'chpol').map(([_, f]) => ({ series: f.series, cls: f.eventDriven ? 'event' : 'daily' })),
             ...Object.values(billsData).map((f) => ({ series: f.curve ? { dates: f.curve.dates } : null, cls: 'daily' })),
             ...(policyData ? Object.values(policyData).map((f) => ({ series: f.series, cls: 'event' })) : []),
-            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series, cls: 'monthly' })) : [])
+            ...(acmData ? Object.values(acmData).map((f) => ({ series: f.series, cls: 'daily' })) : [])   /* v5.2 */
         ];
         for (const f of allFeeds) {
             totalCount++;
             if (!f.series || f.series.dates.length === 0) { failCount++; continue; }
             const ld = f.series.dates[f.series.dates.length - 1];
-            if (!latestDate || ld > latestDate) latestDate = ld;
+            /* v5.2 (audit 2026-09): an effective-dated future row (IORB for Monday) must
+               not become the book's LAST UPDATE. */
+            const todayIso = new Date().toISOString().slice(0, 10);
+            if ((!latestDate || ld > latestDate) && String(ld).slice(0, 10) <= todayIso) latestDate = ld;
             const status = global.G8DataLoader.staleStatus(ld, f.cls);
             if (status === 'fresh') freshCount++;
             else if (status === 'stale') staleCount++;
@@ -588,6 +597,6 @@
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.4' };
 
 })(window);
