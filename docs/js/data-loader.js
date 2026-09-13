@@ -457,6 +457,12 @@
                 out[key].source = synth ? 'SYNTH (AUD anchor, proxy)' : 'G8 ACM K=3 (RBNZ B2 1985+)';
                 out[key].label  = synth ? 'NZD 10Y TP (SYNTH)' : 'NZD ACM 10Y TP';
             }
+            // v5.5: CHF — frozen 2025-07 file (no QUALITY column) vs real fit on the SNB zero curve
+            if (key === 'chf' && rows && rows.length) {
+                const q = String(rows[rows.length - 1].quality || '');
+                if (!q) { out[key].source = 'own ACM K=5 (SNB cube frozen 2025-07)'; out[key].label = 'CHF ACM 10Y TP (FROZEN)'; }
+                else { out[key].source = 'G8 ACM K=3 (SNB rendeiduebd 1988+)' + (/nowcast/i.test(q) ? ' · nowcast tail' : ''); out[key].label = 'CHF ACM 10Y TP'; }
+            }
         });
         await Promise.all(promises);
         const okCount = Object.values(out).filter((f) => f.series && f.series.dates.length > 0).length;
@@ -476,7 +482,7 @@
         daysSince, businessDaysSince, staleStatus, parseDate, tenorToMonths,
         loadStats, REPO_RAW_BASE, XCCY_MIN_OBS,
         FFILL_MAX_DAYS_POLICY, FFILL_MAX_DAYS_MARKET,
-        VERSION: 'v5.4'
+        VERSION: 'v5.5'
     };
 
 })(window);

@@ -417,6 +417,11 @@
             const k = b.getAttribute('data-acm-ccy');
             const has = _acmData && _acmData[k] && _acmData[k].series && _acmData[k].series.dates.length;
             b.classList.toggle('active', k === _acmCcy);
+            if (k === 'chf' && has) {   // v5.5: FROZEN tag until the SNB-curve fit lands
+                const frozen = /frozen/i.test(String(_acmData[k].source || ''));
+                b.textContent = frozen ? 'CHF·FROZEN' : 'CHF';
+                b.title = frozen ? 'ACM K=5 propio sobre el cubo SNB congelado en 2025-07.' : 'ACM K=3 propio sobre la curva cupón cero del SNB (rendeiduebd, 1988+), fetch local en el Mac.';
+            }
             if (k === 'nzd' && has) {   // v5.4: label follows the file (real ACM fit vs SYNTH proxy)
                 const synth = /synth/i.test(String(_acmData[k].source || ''));
                 b.textContent = synth ? 'NZD·SYNTH' : 'NZD';
@@ -597,6 +602,6 @@
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.4' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.5' };
 
 })(window);
