@@ -495,12 +495,12 @@
             <div class="attr-err" style="color:#5d6678">Loading OPTIONS_SURFACE.json from pipeline repo…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor, ~$0.40/mo) — collector v1.1.0 with availability/cost/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session. Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
+            <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor, ~$0.40/mo) — collector v1.1.0 with availability/cost/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session; reference = settle of the next QUARTERLY future, the contract the option exercises into (summary v1.1 [F1] — v1.0 used the nearest future, wrong for monthly serials). Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
         </div>
     </div>
 </section>
 
-<!-- ===== SECTION 08b — CROSS WALLS (v1.0.1 · RESEARCH) ===== -->
+<!-- ===== SECTION 08b — CROSS WALLS (v1.1 · RESEARCH) ===== -->
 <style>
 .cw-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0 12px}
 .cw-card{background:#0c1119;border:1px solid #1c2433;border-radius:3px;padding:8px 10px}
@@ -534,7 +534,7 @@
             <div class="attr-err" style="color:#5d6678">Loading CROSS_WALLS.json from pipeline repo…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">Cross Walls v1.0.1 (16-sep-2026, triangulado con 8 AI; ATM por ajuste lineal en ±0,75σ√T desde v1.0.1, twin-test CVOL 16-sep: EUR 5,37 vs 5,30 · JPY 9,99 vs 10,13). El OI no tiene signo: el conteo call/put y el ΔOI total NUNCA votan, se publican como diagnóstico. Score = mediana{Z(G), Z(RR25), Z(ΔG5)} con ECDF causal propia de cada contrato (LOW_HISTORY &lt; 126 sesiones). Cadena de análisis = primer vencimiento con DTE ≥ 10 (front, o el siguiente mensual en los últimos 9 días del front). Factor USD = −mediana de las CLEAN; dispersión = MAD robusto en percentil; DOLLAR_PURE si &lt; p20 con ≥ 4 CLEAN. Cruce A/B = signo(S_A − S_B); fuerza = percentil causal de |gap| del par; elegible solo CLEAN×CLEAN y DTE ≥ 10. FAIL/NA fuera de score, factor y dispersión; PROXY visible, sin voto. Estado RESEARCH hasta que gate_cross_walls.py (N ≥ 378) emita veredicto: hasta entonces es contexto de posicionamiento, nunca gatillo ni tamaño.</span>
+            <span class="footer-note">Cross Walls v1.1 (16-sep-2026, triangulado con 8 AI). F = futuro TRIMESTRAL en que se ejerce la opción (v1.1 [F1]; el serial mensual era el subyacente equivocado y sesgaba el RR25 con el carry), guardia de paridad put-call (|F − F_parity| > 0,10 % ⇒ F_MISMATCH, sin voto). ATM por ajuste lineal en ±0,75σ√T. Twin-test CVOL 15-sep EOD: ATM EUR 5,17 vs 5,17 · GBP 5,45 vs 5,46 · AUD 7,51 vs 7,28 · JPY 10,05 vs 9,37; signo del skew coincide en las cuatro. El OI no tiene signo: el conteo call/put y el ΔOI total NUNCA votan, se publican como diagnóstico. Score = mediana{Z(G), Z(RR25), Z(ΔG5)} con ECDF causal propia de cada contrato (LOW_HISTORY &lt; 126 sesiones). Cadena de análisis = primer vencimiento con DTE ≥ 10 (front, o el siguiente mensual en los últimos 9 días del front). Factor USD = −mediana de las CLEAN; dispersión = MAD robusto en percentil; DOLLAR_PURE si &lt; p20 con ≥ 4 CLEAN. Cruce A/B = signo(S_A − S_B); fuerza = percentil causal de |gap| del par; elegible solo CLEAN×CLEAN y DTE ≥ 10. FAIL/NA fuera de score, factor y dispersión; PROXY visible, sin voto. Estado RESEARCH hasta que gate_cross_walls.py (N ≥ 378) emita veredicto: hasta entonces es contexto de posicionamiento, nunca gatillo ni tamaño.</span>
         </div>
     </div>
 
@@ -555,8 +555,9 @@ function gateBadge(v) {
 function zcol(z) { return z === null || z === undefined ? '#5d6678' : z > 0.2 ? '#2fbf71' : z < -0.2 ? '#e0485a' : '#d7dce6'; }
 function flagHtml(fl) {
     return (fl || []).map(function (x) {
-        var cls = x === 'NO_VOTE' ? 'cw-nv' : x === 'PIN' ? 'cw-pin' : x === 'FLOW' ? 'cw-flow' : 'cw-next';
-        var t = x === 'NO_VOTE' ? 'una pata no es CLEAN o DTE < 10 — sin voto' :
+        var cls = x === 'NO_VOTE' || x === 'F_MISMATCH' ? 'cw-nv' : x === 'PIN' ? 'cw-pin' : x === 'FLOW' ? 'cw-flow' : 'cw-next';
+        var t = x === 'NO_VOTE' ? 'una pata no es CLEAN, DTE < 10 o F_MISMATCH — sin voto' :
+                x === 'F_MISMATCH' ? 'el forward por paridad put-call difiere > 0,10 % del futuro trimestral usado como F — dato de futuros sospechoso, la pata no vota' :
                 x === 'PIN' ? 'spot a < 0,3σ√T del muro mayor de una pata — imán de gamma, no tendencia' :
                 x === 'FLOW' ? '|ΔOI| > 15 % en una sesión en una pata — reposicionamiento, inspeccionar la cadena' :
                 'cadena de análisis = siguiente mensual (front con DTE < 10)';
@@ -599,7 +600,7 @@ function render(doc) {
         var diag = (d.cp_native || '·') + ' · ' + (d.doi_pct === null ? '·' : sgn(d.doi_pct, 1) + '%') +
             (d.flow ? ' <span class="cw-flag cw-flow">FLOW</span>' : '') + (d.pin ? ' <span class="cw-flag cw-pin">PIN</span>' : '');
         html += '<tr>' +
-            '<td><span class="attr-ccy">' + c + '</span> <span class="attr-sub">' + NATIVE[c] + ' ' + f(d.F_native, c === 'JPY' ? 6 : 4) + (d.inv ? ' · ' + PAIR[c] + ' ' + f(d.display_ref, c === 'JPY' ? 2 : 4) : '') + '</span></td>' +
+            '<td><span class="attr-ccy">' + c + '</span> <span class="attr-sub">' + NATIVE[c] + ' ' + f(d.F_native, c === 'JPY' ? 6 : 4) + (d.F_sym ? ' (' + d.F_sym + ')' : '') + (d.inv ? ' · ' + PAIR[c] + ' ' + f(d.display_ref, c === 'JPY' ? 2 : 4) : '') + (d.f_mismatch ? ' · <b style="color:#e0485a">F_MISMATCH</b>' : '') + '</span></td>' +
             '<td><span class="dqm-src">' + chain + '</span></td>' +
             '<td><span class="attr-val">' + f(d.atm_vol_pct, 2) + '%</span><span class="attr-sub">σ25c ' + f(d.sigma25c_pct, 2) + ' · σ25p ' + f(d.sigma25p_pct, 2) + ' · n=' + d.n_iv + (d.atm_src ? ' · ' + d.atm_src : '') + '</span></td>' +
             '<td><span class="attr-val">' + sgn(d.rr25, 2) + '</span><span class="attr-sub">vol pts · +: paga XXX↑</span></td>' +
@@ -637,7 +638,7 @@ function render(doc) {
     ORDER.forEach(function (c) {
         var d = C[c];
         if (!d || !d.walls_native) return;
-        html += '<details><summary>' + c + ' → ' + NATIVE[c] + ' ' + f(d.F_native, c === 'JPY' ? 6 : 4) + ' · masa ' + sgn(d.mass_pct, 2) + '% · G ' + sgn(d.G, 3) + ' · SOFR ' + f(100 * d.sofr, 2) + '% · r/T Black-76</summary><table>';
+        html += '<details><summary>' + c + ' → ' + NATIVE[c] + ' ' + f(d.F_native, c === 'JPY' ? 6 : 4) + ' · masa ' + sgn(d.mass_pct, 2) + '% · G ' + sgn(d.G, 3) + ' · SOFR ' + f(100 * d.sofr, 2) + '% · paridad ' + (d.f_parity_pct === null || d.f_parity_pct === undefined ? 'n/a' : sgn(d.f_parity_pct, 3) + '%') + ' · r/T Black-76</summary><table>';
         d.walls_native.forEach(function (w) {
             html += '<tr><td>' + (d.inv ? PAIR[c] + ' ' + f(w.display_k, c === 'JPY' ? 2 : 4) + ' ' + w.display_side + ' (display) →' : '') +
                 '</td><td>nativo ' + f(w.k, c === 'JPY' ? 6 : 4) + '</td><td>C ' + w.c.toLocaleString() + ' / P ' + w.p.toLocaleString() + '</td>' +
@@ -655,7 +656,7 @@ function render(doc) {
         'C/P nativo y ΔOI: diagnóstico, no votan.   Cruces: dirección y ranking, nunca niveles.   RESEARCH hasta gate CW-1 (N ≥ 378).</div>';
     el.innerHTML = html;
     if (window.G8DQM && window.G8DQM.report) {
-        try { window.G8DQM.report('CROSS_WALLS', { lastDate: doc.latest_session, via: 'repo (cross walls v1.0.1)' }); } catch (e) {}
+        try { window.G8DQM.report('CROSS_WALLS', { lastDate: doc.latest_session, via: 'repo (cross walls v1.1)' }); } catch (e) {}
     }
 }
 
