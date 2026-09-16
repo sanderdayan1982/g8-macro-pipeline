@@ -48,7 +48,7 @@ v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER C
 
 v2.0: §08b CROSS WALLS (RESEARCH) — dos avisos y nada más: cambio de régimen
       CROSS↔DOLLAR_PURE, y cruce ELEGIBLE que cambia de signo con fuerza ≥ p80.
-      Lee data/CROSS_WALLS.json (cross_walls.py v1.0). Etiqueta RESEARCH en
+      Lee data/CROSS_WALLS.json (cross_walls.py v1.1). Etiqueta RESEARCH en
       cada línea: contexto de posicionamiento, nunca gatillo ni tamaño.
 v1.9: §01 diferencial REAL 10Y vs USD (linkers: EUR GBP JPY CAD AUD NZD) — columna en el
       libro G8, bullet propio y alerta (|z| 252d histéresis, |Δ1w| P95). CHF fuera (BE constante).

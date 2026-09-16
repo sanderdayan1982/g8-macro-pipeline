@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =============================================================================
-# cross_walls.py — v1.0.1 · CROSS WALLS: per-currency options-positioning score
+# cross_walls.py — v1.1 · CROSS WALLS: per-currency options-positioning score
 # (native CME convention) -> USD factor, dispersion regime, direction of the
 # 15 G8 crosses (no levels). Section 08b of the G8 Macro Pipeline.
 #
@@ -70,12 +70,15 @@ LOW_HISTORY = 126       # ECDF resolution warning
 PIN_SIGMA = 0.3         # PIN flag: spot within 0.3 sigma*sqrt(T) of largest wall
 ATM_FIT_X = 0.75        # [A1] ATM fit window: |ln K/F| <= 0.75 * seed_sigma * sqrt(T)
 ATM_FIT_MIN = 4         # [A1] minimum strikes (both sides of F) for the ATM fit
+PARITY_BAND = 0.01      # [F1] strikes within +-1 % of F used for the put-call-parity forward
+PARITY_MAX_PCT = 0.10   # [F1] |F - F_parity| above this (%) => F_MISMATCH, currency does not vote
+QUARTERLY = ("03", "06", "09", "12")
 FLOW_PCT = 15.0         # FLOW flag: |dOI front| > 15 % in one session
 DG_LAG = 5              # movement component lag (sessions)
 DOLLAR_PCT = 20         # dispersion percentile below which regime = DOLLAR_PURE
 MIN_CLEAN_REGIME = 4
 IV_MIN, IV_MAX = 0.005, 3.0
-VERSION = "cross_walls v1.0.1"
+VERSION = "cross_walls v1.1"
 
 
 # ----------------------------------------------------------------- utilities
@@ -89,6 +92,16 @@ def fnum(x):
 def read_rows(p):
     with p.open(newline="") as f:
         return list(csv.DictReader(f))
+
+
+def underlying_future(futs, opt_expiry):
+    """[F1] CME FX options exercise into the next QUARTERLY future (Mar/Jun/Sep/Dec),
+    never the monthly serial. futs sorted by expiry, each with 'expiry' and 'settle'."""
+    q = [r for r in futs if r["expiry"] >= opt_expiry and r["expiry"][5:7] in QUARTERLY]
+    if q:
+        return q[0]
+    later = [r for r in futs if r["expiry"] >= opt_expiry]
+    return later[0] if later else (futs[0] if futs else None)
 
 
 def norm_cdf(x):
@@ -225,7 +238,7 @@ def load_session(day_dir, session):
         futs.sort(key=lambda r: r["expiry"])
         if not futs:
             continue
-        ref = fnum(futs[0]["settle"])            # §08 reference (first future)
+        near = fnum(futs[0]["settle"])           # nearest future (audit only)
         opts = [r for r in read_rows(fo) if r["type"] == "OPT"]
         expiries = sorted({r["expiry"] for r in opts if r["expiry"] > session})
         if not expiries:
@@ -235,9 +248,11 @@ def load_session(day_dir, session):
         sd = date.fromisoformat(session)
         ok = [e for e in expiries if (date.fromisoformat(e) - sd).days >= MIN_DTE]
         front = ok[0] if ok else front_raw
-        # underlying of the option = first future expiring on/after it
-        und = [r for r in futs if r["expiry"] >= front]
-        F = fnum(und[0]["settle"]) if und else ref
+        # [F1] underlying = next QUARTERLY future on/after the option expiry
+        und = underlying_future(futs, front)
+        F = fnum(und["settle"])
+        und_raw = underlying_future(futs, front_raw)
+        ref = fnum(und_raw["settle"])            # §08 reference (same rule, front chain)
         chain, chain_raw = {}, {}
         for r in opts:
             if r["expiry"] == front_raw:
@@ -261,7 +276,8 @@ def load_session(day_dir, session):
                 e["sp"] = st
         if not chain:
             continue
-        out[ccy] = {"ref": ref, "F": F, "front": front, "front_raw": front_raw,
+        out[ccy] = {"ref": ref, "F": F, "F_sym": und["symbol"], "near": near,
+                    "front": front, "front_raw": front_raw,
                     "chain": chain, "chain_raw": chain_raw}
     return out
 
@@ -284,6 +300,13 @@ def analyse(d, session, r):
     F, chain, front = d["F"], d["chain"], d["front"]
     dte = (date.fromisoformat(front) - date.fromisoformat(session)).days
     T = max(dte, 1) / 365.0
+    # --- [F1] put-call-parity forward: C - P = df * (F - K) on strikes near F
+    df = math.exp(-r * T)
+    est = sorted(k + (e["sc"] - e["sp"]) / df for k, e in chain.items()
+                 if e["sc"] and e["sp"] and abs(math.log(k / F)) <= PARITY_BAND)
+    f_parity = est[len(est) // 2] if est else None
+    f_parity_pct = 100.0 * (f_parity / F - 1.0) if f_parity else None
+    f_mismatch = f_parity_pct is not None and abs(f_parity_pct) > PARITY_MAX_PCT
     # --- implied vols on OTM options only (settle must carry time value)
     settles = sorted({v for e in chain.values() for v in (e["sc"], e["sp"]) if v})
     tick = min((b - a for a, b in zip(settles, settles[1:]) if b - a > 0), default=None)
@@ -365,7 +388,8 @@ def analyse(d, session, r):
     g0 = gate0_metrics(d)
     cp_native = f'{g0["n_call"]}/{g0["n_put"]}'
     return {"front": front, "front_raw": d["front_raw"], "next": front != d["front_raw"],
-            "dte": dte, "F": F, "ref": d["ref"], "r": r,
+            "dte": dte, "F": F, "F_sym": d["F_sym"], "near": d["near"], "ref": d["ref"], "r": r,
+            "f_parity": f_parity, "f_parity_pct": f_parity_pct, "f_mismatch": f_mismatch,
             "atm": atm, "atm_src": atm_src, "s25c": s25c, "s25p": s25p, "rr25": rr25, "n_iv": len(vols),
             "G": G, "mass_pct": mass_pct, "conc_pct": conc_pct, "oi_up_pct": oi_up_pct,
             "oi_front": oi_tot, "oi_c": sum(e["c"] for e in chain.values()),
@@ -440,7 +464,7 @@ def main():
                     a["doi_net"] = ((a["oi_c"] - b["oi_c"]) - (a["oi_p"] - b["oi_p"])) / b["oi_front"]
                     a["flow"] = abs(a["doi_pct"]) > FLOW_PCT
             res[c] = a
-            if score is not None and gate0[c] == "CLEAN":
+            if score is not None and gate0[c] == "CLEAN" and not a["f_mismatch"]:
                 scores[c] = score
         # regime (CLEAN only)
         clean_scores = list(scores.values())
@@ -474,10 +498,13 @@ def main():
                 if ra is not None and rb is not None:
                     entry["lead"] = A if abs(ra) >= abs(rb) else B
                 elig = (a["gate"] == "CLEAN" and b["gate"] == "CLEAN"
-                        and a["dte"] >= MIN_DTE and b["dte"] >= MIN_DTE)
+                        and a["dte"] >= MIN_DTE and b["dte"] >= MIN_DTE
+                        and not a["f_mismatch"] and not b["f_mismatch"])
                 entry["eligible"] = elig
                 if not elig:
                     entry["flags"].append("NO_VOTE")
+                if a["f_mismatch"] or b["f_mismatch"]:
+                    entry["flags"].append("F_MISMATCH")
                 if a["pin"] or b["pin"]:
                     entry["flags"].append("PIN")
                 if a.get("flow") or b.get("flow"):
@@ -497,7 +524,8 @@ def main():
             a = res[c]
             for k in ("front", "dte", "F", "atm", "rr25", "G", "dG5", "zG", "zRR", "zDG",
                       "score", "residual", "gate", "conc_pct", "oi_up_pct", "cp_native",
-                      "doi_pct", "doi_net", "pin", "flow", "next", "n_iv", "n_hist"):
+                      "doi_pct", "doi_net", "pin", "flow", "next", "n_iv", "n_hist",
+                      "F_sym", "f_parity_pct", "f_mismatch"):
                 row[f"{c}_{k}"] = (a or {}).get(k)
         for x in CROSSES:
             e = xs[x]
@@ -533,7 +561,9 @@ def main():
         ccy_out[c] = {
             "gate": a["gate"], "front": a["front"], "front_raw": a["front_raw"],
             "next": a["next"], "dte": a["dte"],
-            "F_native": a["F"], "ref_native": a["ref"], "inv": c in INV,
+            "F_native": a["F"], "F_sym": a["F_sym"], "ref_native": a["ref"], "near_native": a["near"],
+            "f_parity_pct": rnd(a["f_parity_pct"], 3) if a["f_parity_pct"] is not None else None,
+            "f_mismatch": a["f_mismatch"], "inv": c in INV,
             "display_ref": (1.0 / a["F"]) if c in INV else a["F"],
             "atm_vol_pct": rnd(100.0 * a["atm"], 2) if a["atm"] else None,
             "atm_src": a.get("atm_src"),

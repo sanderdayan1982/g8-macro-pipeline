@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # =============================================================================
-# build_options_summary.py — v1.0 · Options Surface -> dashboard JSON
+# build_options_summary.py — v1.1 · Options Surface -> dashboard JSON
 # Reads canonical sessions (data/options/canonical/YYYY-MM-DD/{ROOT}.csv),
 # computes per-ccy front-chain metrics per session (same math as
 # viability_study v2.2: front = first expiry STRICTLY after session,
-# ref = front future settle, MIN_OI=100, MIN_STRIKES=5, band ±3%),
+# ref = settle of the next QUARTERLY future on/after the front option expiry
+# (v1.1 [F1]; v1.0 used the nearest future, which is the wrong underlying for
+# monthly serial expiries), MIN_OI=100, MIN_STRIKES=5, band ±3%),
 # aggregates Gate 0 percentages, and writes data/OPTIONS_SURFACE.json.
 # stdlib only.
 # =============================================================================
@@ -28,6 +30,15 @@ def fnum(x):
     try: return float(x)
     except (TypeError, ValueError): return None
 
+QUARTERLY = ("03", "06", "09", "12")
+
+def underlying_future(futs, opt_expiry):
+    """[F1] CME FX options exercise into the next QUARTERLY future (Mar/Jun/Sep/Dec)."""
+    q = [r for r in futs if r["expiry"] >= opt_expiry and r["expiry"][5:7] in QUARTERLY]
+    if q: return q[0]
+    later = [r for r in futs if r["expiry"] >= opt_expiry]
+    return later[0] if later else (futs[0] if futs else None)
+
 def session_metrics(day_dir, session):
     out = {}
     for ccy, (opt_root, fut_root) in CCY.items():
@@ -39,12 +50,13 @@ def session_metrics(day_dir, session):
         futs.sort(key=lambda r: r["expiry"])
         if not futs:
             continue
-        ref = fnum(futs[0]["settle"])
         opts = [r for r in read_rows(fo) if r["type"] == "OPT"]
         expiries = sorted({r["expiry"] for r in opts if r["expiry"] > session})
         if not expiries:
             continue
         front = expiries[0]
+        und = underlying_future(futs, front)       # [F1] quarterly underlying
+        ref = fnum(und["settle"])
         chain = {}
         for r in opts:
             if r["expiry"] != front: continue
@@ -62,7 +74,7 @@ def session_metrics(day_dir, session):
         b_p = sum(1 for e in band.values() if e["p"] >= MIN_OI)
         walls = sorted(chain.items(), key=lambda kv: -(kv[1]["c"]+kv[1]["p"]))[:N_WALLS]
         out[ccy] = {
-            "ref": ref, "front": front,
+            "ref": ref, "ref_sym": und["symbol"], "front": front,
             "n_call": n_call, "n_put": n_put,
             "pata": n_call >= MIN_STRIKES and n_put >= MIN_STRIKES,
             "band": b_c >= 2 and b_p >= 2,
@@ -96,8 +108,8 @@ def main():
     latest = sessions[-1]
     doc = {
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "source": "Databento GLBX.MDP3 (licensed CME) · collector v1.1.0",
-        "semantics": "settle+OI of session T · front = first expiry > session",
+        "source": "Databento GLBX.MDP3 (licensed CME) · collector v1.1.0 · summary v1.1",
+        "semantics": "settle+OI of session T · front = first expiry > session · ref = next quarterly future (v1.1)",
         "latest_session": latest,
         "sessions_total": len(sessions),
         "gate0": gate0,
