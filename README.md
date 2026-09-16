@@ -118,5 +118,5 @@ calibraciones y pesos congelados no se tocan sin gate nuevo pre-registrado (Regl
 todo fallo debe ser ruidoso (Ley 2).
 
 
-## §08b Cross Walls v1.0 (RESEARCH, 16-sep-2026)
+## §08b Cross Walls v1.0.1 (RESEARCH, 16-sep-2026)
 `scripts/cross_walls.py` — score de posicionamiento de opciones por divisa (geometría del OI + skew 25Δ invertido en casa con Black-76), factor dólar, régimen CROSS/DOLLAR_PURE y dirección de los 15 cruces G8 (nunca niveles). Corre en `cme_options.yml` tras `build_options_summary.py`; escribe `data/CROSS_WALLS.json` (dashboard §08b) y `data/cross_walls/canonical.csv` (registro del gate). `scripts/gate_cross_walls.py` = gate CW-1 pre-registrado (`docs/actas/ACTA_CW1.md`): sin veredicto antes de 378 sesiones.
