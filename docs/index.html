@@ -500,7 +500,7 @@
     </div>
 </section>
 
-<!-- ===== SECTION 08b — CROSS WALLS (v1.0 · RESEARCH) ===== -->
+<!-- ===== SECTION 08b — CROSS WALLS (v1.0.1 · RESEARCH) ===== -->
 <style>
 .cw-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0 12px}
 .cw-card{background:#0c1119;border:1px solid #1c2433;border-radius:3px;padding:8px 10px}
@@ -534,7 +534,7 @@
             <div class="attr-err" style="color:#5d6678">Loading CROSS_WALLS.json from pipeline repo…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">Cross Walls v1.0 (16-sep-2026, triangulado con 8 AI). El OI no tiene signo: el conteo call/put y el ΔOI total NUNCA votan, se publican como diagnóstico. Score = mediana{Z(G), Z(RR25), Z(ΔG5)} con ECDF causal propia de cada contrato (LOW_HISTORY &lt; 126 sesiones). Cadena de análisis = primer vencimiento con DTE ≥ 10 (front, o el siguiente mensual en los últimos 9 días del front). Factor USD = −mediana de las CLEAN; dispersión = MAD robusto en percentil; DOLLAR_PURE si &lt; p20 con ≥ 4 CLEAN. Cruce A/B = signo(S_A − S_B); fuerza = percentil causal de |gap| del par; elegible solo CLEAN×CLEAN y DTE ≥ 10. FAIL/NA fuera de score, factor y dispersión; PROXY visible, sin voto. Estado RESEARCH hasta que gate_cross_walls.py (N ≥ 378) emita veredicto: hasta entonces es contexto de posicionamiento, nunca gatillo ni tamaño.</span>
+            <span class="footer-note">Cross Walls v1.0.1 (16-sep-2026, triangulado con 8 AI; ATM por ajuste lineal en ±0,75σ√T desde v1.0.1, twin-test CVOL 16-sep: EUR 5,37 vs 5,30 · JPY 9,99 vs 10,13). El OI no tiene signo: el conteo call/put y el ΔOI total NUNCA votan, se publican como diagnóstico. Score = mediana{Z(G), Z(RR25), Z(ΔG5)} con ECDF causal propia de cada contrato (LOW_HISTORY &lt; 126 sesiones). Cadena de análisis = primer vencimiento con DTE ≥ 10 (front, o el siguiente mensual en los últimos 9 días del front). Factor USD = −mediana de las CLEAN; dispersión = MAD robusto en percentil; DOLLAR_PURE si &lt; p20 con ≥ 4 CLEAN. Cruce A/B = signo(S_A − S_B); fuerza = percentil causal de |gap| del par; elegible solo CLEAN×CLEAN y DTE ≥ 10. FAIL/NA fuera de score, factor y dispersión; PROXY visible, sin voto. Estado RESEARCH hasta que gate_cross_walls.py (N ≥ 378) emita veredicto: hasta entonces es contexto de posicionamiento, nunca gatillo ni tamaño.</span>
         </div>
     </div>
 
@@ -601,7 +601,7 @@ function render(doc) {
         html += '<tr>' +
             '<td><span class="attr-ccy">' + c + '</span> <span class="attr-sub">' + NATIVE[c] + ' ' + f(d.F_native, c === 'JPY' ? 6 : 4) + (d.inv ? ' · ' + PAIR[c] + ' ' + f(d.display_ref, c === 'JPY' ? 2 : 4) : '') + '</span></td>' +
             '<td><span class="dqm-src">' + chain + '</span></td>' +
-            '<td><span class="attr-val">' + f(d.atm_vol_pct, 2) + '%</span><span class="attr-sub">σ25c ' + f(d.sigma25c_pct, 2) + ' · σ25p ' + f(d.sigma25p_pct, 2) + ' · n=' + d.n_iv + '</span></td>' +
+            '<td><span class="attr-val">' + f(d.atm_vol_pct, 2) + '%</span><span class="attr-sub">σ25c ' + f(d.sigma25c_pct, 2) + ' · σ25p ' + f(d.sigma25p_pct, 2) + ' · n=' + d.n_iv + (d.atm_src ? ' · ' + d.atm_src : '') + '</span></td>' +
             '<td><span class="attr-val">' + sgn(d.rr25, 2) + '</span><span class="attr-sub">vol pts · +: paga XXX↑</span></td>' +
             '<td><span class="attr-val">' + sgn(d.G, 3) + '</span><span class="attr-sub">masa ' + sgn(d.mass_pct, 2) + '% del spot</span></td>' +
             '<td><span class="attr-val">' + sgn(d.dG5, 3) + '</span></td>' +
@@ -655,7 +655,7 @@ function render(doc) {
         'C/P nativo y ΔOI: diagnóstico, no votan.   Cruces: dirección y ranking, nunca niveles.   RESEARCH hasta gate CW-1 (N ≥ 378).</div>';
     el.innerHTML = html;
     if (window.G8DQM && window.G8DQM.report) {
-        try { window.G8DQM.report('CROSS_WALLS', { lastDate: doc.latest_session, via: 'repo (cross walls v1.0)' }); } catch (e) {}
+        try { window.G8DQM.report('CROSS_WALLS', { lastDate: doc.latest_session, via: 'repo (cross walls v1.0.1)' }); } catch (e) {}
     }
 }
 
