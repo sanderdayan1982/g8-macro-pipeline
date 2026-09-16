@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =============================================================================
-# cross_walls.py — v1.0 · CROSS WALLS: per-currency options-positioning score
+# cross_walls.py — v1.0.1 · CROSS WALLS: per-currency options-positioning score
 # (native CME convention) -> USD factor, dispersion regime, direction of the
 # 15 G8 crosses (no levels). Section 08b of the G8 Macro Pipeline.
 #
@@ -68,12 +68,14 @@ MIN_OI, MIN_STRIKES, BAND_PCT, COVERAGE = 100, 5, 0.03, 0.80
 MIN_DTE = 10            # eligibility
 LOW_HISTORY = 126       # ECDF resolution warning
 PIN_SIGMA = 0.3         # PIN flag: spot within 0.3 sigma*sqrt(T) of largest wall
+ATM_FIT_X = 0.75        # [A1] ATM fit window: |ln K/F| <= 0.75 * seed_sigma * sqrt(T)
+ATM_FIT_MIN = 4         # [A1] minimum strikes (both sides of F) for the ATM fit
 FLOW_PCT = 15.0         # FLOW flag: |dOI front| > 15 % in one session
 DG_LAG = 5              # movement component lag (sessions)
 DOLLAR_PCT = 20         # dispersion percentile below which regime = DOLLAR_PURE
 MIN_CLEAN_REGIME = 4
 IV_MIN, IV_MAX = 0.005, 3.0
-VERSION = "cross_walls v1.0"
+VERSION = "cross_walls v1.0.1"
 
 
 # ----------------------------------------------------------------- utilities
@@ -296,13 +298,31 @@ def analyse(d, session, r):
         if iv is not None and IV_MIN < iv < IV_MAX - 1e-6:
             vols.append((k, iv, right))
     atm = None
+    atm_src = "NA"
     if vols:
         ks = [v[0] for v in vols]
         ivs = [v[1] for v in vols]
-        atm = interp(ks, ivs, F)
+        atm = interp(ks, ivs, F)               # two-point seed (v1.0 rule)
         if atm is None:                        # F outside the invertible range
             j = min(range(len(ks)), key=lambda i: abs(ks[i] - F))
             atm = ivs[j]
+        atm_src = "2PT"
+        # [A1] v1.0.1 robust ATM: least-squares line sigma(m) over the strikes
+        # with |m| <= ATM_FIT_X * seed * sqrt(T) (m = ln K/F), >= ATM_FIT_MIN
+        # points and both sides of F represented; ATM = fitted value at m = 0.
+        # Kills the one-tick noise of the two-point interpolation.
+        half = ATM_FIT_X * atm * math.sqrt(T)
+        pts = [(math.log(k / F), iv) for k, iv, _ in vols if abs(math.log(k / F)) <= half]
+        if (len(pts) >= ATM_FIT_MIN and any(m < 0 for m, _ in pts)
+                and any(m > 0 for m, _ in pts)):
+            n = len(pts)
+            mx = sum(m for m, _ in pts) / n
+            my = sum(v for _, v in pts) / n
+            sxx = sum((m - mx) ** 2 for m, _ in pts)
+            b = sum((m - mx) * (v - my) for m, v in pts) / sxx if sxx > 0 else 0.0
+            fit = my - b * mx
+            if IV_MIN < fit < IV_MAX:
+                atm, atm_src = fit, f"FIT{n}"
     rr25 = None
     s25c = s25p = None
     if atm and len(vols) >= 8:
@@ -346,7 +366,7 @@ def analyse(d, session, r):
     cp_native = f'{g0["n_call"]}/{g0["n_put"]}'
     return {"front": front, "front_raw": d["front_raw"], "next": front != d["front_raw"],
             "dte": dte, "F": F, "ref": d["ref"], "r": r,
-            "atm": atm, "s25c": s25c, "s25p": s25p, "rr25": rr25, "n_iv": len(vols),
+            "atm": atm, "atm_src": atm_src, "s25c": s25c, "s25p": s25p, "rr25": rr25, "n_iv": len(vols),
             "G": G, "mass_pct": mass_pct, "conc_pct": conc_pct, "oi_up_pct": oi_up_pct,
             "oi_front": oi_tot, "oi_c": sum(e["c"] for e in chain.values()),
             "oi_p": sum(e["p"] for e in chain.values()),
@@ -516,6 +536,7 @@ def main():
             "F_native": a["F"], "ref_native": a["ref"], "inv": c in INV,
             "display_ref": (1.0 / a["F"]) if c in INV else a["F"],
             "atm_vol_pct": rnd(100.0 * a["atm"], 2) if a["atm"] else None,
+            "atm_src": a.get("atm_src"),
             "sigma25c_pct": rnd(100.0 * a["s25c"], 2) if a["s25c"] else None,
             "sigma25p_pct": rnd(100.0 * a["s25p"], 2) if a["s25p"] else None,
             "rr25": rnd(a["rr25"], 2), "n_iv": a["n_iv"], "sofr": rnd(a["r"], 5),
