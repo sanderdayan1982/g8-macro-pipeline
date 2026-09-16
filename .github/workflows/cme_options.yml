@@ -47,6 +47,20 @@ jobs:
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
         run: python scripts/build_options_summary.py
 
+      # §08b Cross Walls v1.0 (RESEARCH): score por divisa (geometría + skew Black-76),
+      # régimen y dirección de los 15 cruces; canonical.csv es el registro del gate CW-1.
+      - name: Cross Walls (score, regime, cross matrix)
+        env:
+          G8_OPT_OUT_DIR: data/options/canonical
+          G8_SOFR_CSV: data/SOFR.csv
+          G8_CW_JSON: data/CROSS_WALLS.json
+          G8_CW_CSV: data/cross_walls/canonical.csv
+        run: python scripts/cross_walls.py
+
+      - name: Gate CW-1 interim report (RESEARCH — no verdict before N >= 378)
+        continue-on-error: true
+        run: python scripts/gate_cross_walls.py
+
       # Dashboard alerts (strike walls card on every new session; $0, repo data only)
       - name: Dashboard alerts (Telegram on change)
         if: always()
@@ -60,7 +74,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/options data/OPTIONS_SURFACE.json data/alerts
+          git add data/options data/OPTIONS_SURFACE.json data/CROSS_WALLS.json data/cross_walls data/alerts
           if git diff --cached --quiet; then
             echo "No new session / no alert-state change — nothing to commit."
           else
