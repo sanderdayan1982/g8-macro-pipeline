@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v1.9  (2026-09-13)
+G8 Macro Pipeline — dashboard_alerts.py  v2.0  (2026-09-16)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -46,6 +46,10 @@ v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER C
       (NZD B2, IIB, SNB curva/SARON/10Y, ACM NZD/CHF, RY NZD) entran en sources/registry.csv
       con presupuesto → un Mac apagado dispara §05 STALE/DEAD por Telegram.
 
+v2.0: §08b CROSS WALLS (RESEARCH) — dos avisos y nada más: cambio de régimen
+      CROSS↔DOLLAR_PURE, y cruce ELEGIBLE que cambia de signo con fuerza ≥ p80.
+      Lee data/CROSS_WALLS.json (cross_walls.py v1.0). Etiqueta RESEARCH en
+      cada línea: contexto de posicionamiento, nunca gatillo ni tamaño.
 v1.9: §01 diferencial REAL 10Y vs USD (linkers: EUR GBP JPY CAD AUD NZD) — columna en el
       libro G8, bullet propio y alerta (|z| 252d histéresis, |Δ1w| P95). CHF fuera (BE constante).
 
@@ -610,6 +614,40 @@ def check_walls(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# §08b CROSS WALLS (v2.0) — régimen y cruces elegibles que giran (RESEARCH)
+# ═════════════════════════════════════════════════════════════════════════════
+CW_STRENGTH_ALERT = 80.0
+
+def check_cross_walls(st, lines):
+    s = st.setdefault("cross_walls", {})
+    js = read_json("CROSS_WALLS.json")
+    if not js:
+        return
+    sess = js.get("latest_session")
+    if not sess or sess == s.get("session"):
+        return
+    reg = (js.get("regime") or {}).get("regime")
+    prev_reg = s.get("regime")
+    if reg and prev_reg and reg != prev_reg:
+        lines.append("§08 RESEARCH · régimen de cruces %s → %s (dispersión p%s, %s CLEAN) — %s" % (
+            prev_reg, reg, (js["regime"].get("dispersion_pct") or 0), js["regime"].get("n_clean"),
+            "hay cruces con lectura" if reg == "CROSS" else "día de dólar puro: solo pares USD"))
+    prev_dirs = s.get("dirs") or {}
+    new_dirs = {}
+    for x, e in (js.get("crosses") or {}).items():
+        d = e.get("dir")
+        new_dirs[x] = d
+        if not e.get("eligible") or d not in ("▲", "▼"):
+            continue
+        pd_ = prev_dirs.get(x)
+        if pd_ in ("▲", "▼") and pd_ != d and (e.get("strength") or 0) >= CW_STRENGTH_ALERT:
+            lines.append("§08 RESEARCH · %s/%s gira %s→%s · gap %+.3f · fuerza p%.0f · manda %s%s" % (
+                x[:3], x[3:], pd_, d, e.get("gap") or 0, e.get("strength") or 0, e.get("lead") or "·",
+                (" · " + "/".join(f for f in e.get("flags", []) if f != "NO_VOTE")) if e.get("flags") else ""))
+    s["session"], s["regime"], s["dirs"] = sess, reg, new_dirs
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # §09 COT — solo cuando entra un reporte nuevo
 # ═════════════════════════════════════════════════════════════════════════════
 def check_cot(st, lines):
@@ -1084,7 +1122,7 @@ def main(argv):
     st = load_state()
     first = not st
     lines = []
-    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cot, check_dqm):
+    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cross_walls, check_cot, check_dqm):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
@@ -1105,7 +1143,7 @@ def main(argv):
         body.append("")
         sec_names = {"§01": "§01 Spread vs USD", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
                      "§04": "§04 Term premium", "§05": "§05 Data quality", "§06": "§06 Oro", "§07": "§07 Plata",
-                     "§09": "§09 COT"}
+                     "§08": "§08b Cross Walls (RESEARCH)", "§09": "§09 COT"}
         last_sec = None
         for l in events:
             sec = l[:3]
