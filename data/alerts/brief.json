@@ -1,11 +1,12 @@
 {
- "generated_utc": "2026-09-17T05:12:49Z",
+ "generated_utc": "2026-09-17T07:51:11Z",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-09-16",
   "cot": "2026-09-08",
   "options": "2026-09-15",
-  "metals": "2026-09-08"
+  "metals": "2026-09-08",
+  "factor": "2026-09-16"
  },
  "gates": {
   "ffva": {
@@ -31,7 +32,7 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "CHF−USD -435 bp (z suelo) · CAD Δ1w extremo"
+   "text": "CHF−USD -439 bp (z suelo) · CAD Δ1w extremo"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
@@ -44,6 +45,10 @@
   {
    "sec": "§09 COT",
    "text": "AUD STRETCH+ (LF z +1.65) · NZD divergencia LF/AM"
+  },
+  {
+   "sec": "§10 Factor USD",
+   "text": "f USD 21 s. +0.14 % (z +0.10) · dispersión DISPERSO UN NOMBRE JPY p99.2 · S 64 %"
   }
  ],
  "dqm": [],
@@ -382,7 +387,7 @@
    "rfr": 2.85,
    "floor_bp": 10.0,
    "floor_badge": "PRESSURE",
-   "vs_usd_bp": 5.0,
+   "vs_usd_bp": 2.0,
    "real_vs_usd_bp": 8.9,
    "real_vs_usd_z": -1.75,
    "lf_z": -1.13,
@@ -419,21 +424,24 @@
     "vs USD z suelo",
     "walls NA"
    ],
-   "nom": 0.653,
-   "real": -0.047,
+   "nom": 0.61,
+   "real": -0.09,
    "be": 0.7,
-   "nom_asof": "2026-09-15",
+   "nom_asof": "2026-09-16",
    "tp": 0.0746,
    "tp_z": 1.70100234393357,
    "tp_asof": "2026-09-15",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -434.7,
+   "vs_usd_bp": -439.0,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
    "lf_z": -1.28,
    "cot_state": "NEUTRAL"
   }
+ ],
+ "notes": [
+  "DQM · USD_FACTOR sin fecha legible"
  ]
 }

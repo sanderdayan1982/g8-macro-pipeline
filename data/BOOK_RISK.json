@@ -1,0 +1,20 @@
+{
+ "schema": "BOOK_RISK/1.0",
+ "version": "1.0",
+ "generated_utc": "2026-09-17T07:51:10Z",
+ "as_of": "2026-09-16",
+ "sigma_psd": true,
+ "book": {
+  "status": "SIN LIBRO"
+ },
+ "candidates": [],
+ "backtest": null,
+ "notes": [
+  "libro = snapshot de exposiciones lineales FX en nominal USD actual; no contabilidad ni margen",
+  "Σ cubos = 0 es identidad de la representación equilibrada, no validación de datos",
+  "VaR/ES son previsiones: backtest PENDIENTE hasta ≥ 250 snapshots",
+  "estrés = sensibilidades declaradas, no probabilidades; sin umbral de alerta",
+  "sin carry: el tipo oficial no es el carry ejecutable (ACTA_UF1 §C.10)"
+ ],
+ "candidates_status": "SIN CANDIDATO"
+}

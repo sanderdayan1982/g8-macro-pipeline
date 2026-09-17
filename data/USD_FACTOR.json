@@ -1,0 +1,620 @@
+{
+ "schema": "USD_FACTOR/1.0",
+ "version": "1.0",
+ "generated_utc": "2026-09-17T07:51:08Z",
+ "as_of": "2026-09-16",
+ "source": "ECB",
+ "source_note": "BCE tipos de referencia (concertación ~14:15 CET, publicación ~16:00 CET), triangulados a USD; no ejecutables",
+ "factor": {
+  "cum5": 1.219,
+  "cum21": 0.139,
+  "cum63": -1.166,
+  "z5": 1.49,
+  "z21": 0.1,
+  "z63": -0.82,
+  "today": 0.045
+ },
+ "dispersion": {
+  "D": 1.501,
+  "D_pct": 99.2,
+  "band": "DISPERSO",
+  "one_name": true,
+  "one_name_ccy": "JPY",
+  "one_name_share": 0.69,
+  "S_pc1": 0.643,
+  "band_since": 6
+ },
+ "currencies": [
+  {
+   "ccy": "EUR",
+   "beta": 0.799,
+   "dbeta21": -0.109,
+   "E5": -0.021,
+   "E21": -0.29,
+   "E63": -0.583,
+   "z21": -0.35,
+   "rank": 4.0,
+   "beta_ols252": 0.903,
+   "beta_loo": 0.749,
+   "vol_ann_pct": 4.34,
+   "pc1": -0.289
+  },
+  {
+   "ccy": "GBP",
+   "beta": 0.765,
+   "dbeta21": -0.269,
+   "E5": 0.153,
+   "E21": -0.593,
+   "E63": 0.239,
+   "z21": -0.81,
+   "rank": 5.0,
+   "beta_ols252": 0.975,
+   "beta_loo": 0.69,
+   "vol_ann_pct": 4.59,
+   "pc1": -0.275
+  },
+  {
+   "ccy": "JPY",
+   "beta": 1.201,
+   "dbeta21": 0.207,
+   "E5": 0.324,
+   "E21": 3.293,
+   "E63": 3.2,
+   "z21": 3.37,
+   "rank": 1.0,
+   "beta_ols252": 0.962,
+   "beta_loo": 0.873,
+   "vol_ann_pct": 8.87,
+   "pc1": -0.459
+  },
+  {
+   "ccy": "CHF",
+   "beta": 1.135,
+   "dbeta21": 0.052,
+   "E5": -0.067,
+   "E21": -0.599,
+   "E63": -2.904,
+   "z21": -0.63,
+   "rank": 6.0,
+   "beta_ols252": 1.107,
+   "beta_loo": 1.089,
+   "vol_ann_pct": 6.3,
+   "pc1": -0.415
+  },
+  {
+   "ccy": "CAD",
+   "beta": 0.764,
+   "dbeta21": 0.215,
+   "E5": -0.307,
+   "E21": -0.212,
+   "E63": 1.123,
+   "z21": -0.22,
+   "rank": 3.0,
+   "beta_ols252": 0.57,
+   "beta_loo": 0.682,
+   "vol_ann_pct": 4.66,
+   "pc1": -0.277
+  },
+  {
+   "ccy": "AUD",
+   "beta": 0.973,
+   "dbeta21": -0.098,
+   "E5": -0.131,
+   "E21": 0.387,
+   "E63": 0.272,
+   "z21": -0.48,
+   "rank": 2.0,
+   "beta_ols252": 1.176,
+   "beta_loo": 0.861,
+   "vol_ann_pct": 6.07,
+   "pc1": -0.354
+  },
+  {
+   "ccy": "NZD",
+   "beta": 1.362,
+   "dbeta21": 0.003,
+   "E5": 0.049,
+   "E21": -1.985,
+   "E63": -1.348,
+   "z21": -2.24,
+   "rank": 7.0,
+   "beta_ols252": 1.307,
+   "beta_loo": 1.304,
+   "vol_ann_pct": 7.76,
+   "pc1": -0.505
+  }
+ ],
+ "pairs": {
+  "EURGBP": {
+   "leak": 0.034,
+   "vol_ann_pct": 2.43,
+   "rho": 0.854,
+   "dE21": 0.303
+  },
+  "EURJPY": {
+   "leak": -0.402,
+   "vol_ann_pct": 7.82,
+   "rho": 0.473,
+   "dE21": -3.583
+  },
+  "EURCHF": {
+   "leak": -0.336,
+   "vol_ann_pct": 3.3,
+   "rho": 0.872,
+   "dE21": 0.309
+  },
+  "EURCAD": {
+   "leak": 0.035,
+   "vol_ann_pct": 3.56,
+   "rho": 0.689,
+   "dE21": -0.078
+  },
+  "EURAUD": {
+   "leak": -0.174,
+   "vol_ann_pct": 4.4,
+   "rho": 0.69,
+   "dE21": -0.677
+  },
+  "EURNZD": {
+   "leak": -0.562,
+   "vol_ann_pct": 5.32,
+   "rho": 0.753,
+   "dE21": 1.695
+  },
+  "GBPEUR": {
+   "leak": -0.034,
+   "vol_ann_pct": 2.43,
+   "rho": 0.854,
+   "dE21": -0.303
+  },
+  "GBPJPY": {
+   "leak": -0.436,
+   "vol_ann_pct": 8.39,
+   "rho": 0.36,
+   "dE21": -3.885
+  },
+  "GBPCHF": {
+   "leak": -0.37,
+   "vol_ann_pct": 4.12,
+   "rho": 0.757,
+   "dE21": 0.007
+  },
+  "GBPCAD": {
+   "leak": 0.001,
+   "vol_ann_pct": 4.1,
+   "rho": 0.607,
+   "dE21": -0.38
+  },
+  "GBPAUD": {
+   "leak": -0.208,
+   "vol_ann_pct": 4.79,
+   "rho": 0.629,
+   "dE21": -0.98
+  },
+  "GBPNZD": {
+   "leak": -0.596,
+   "vol_ann_pct": 5.61,
+   "rho": 0.699,
+   "dE21": 1.393
+  },
+  "JPYEUR": {
+   "leak": 0.402,
+   "vol_ann_pct": 7.82,
+   "rho": 0.473,
+   "dE21": 3.583
+  },
+  "JPYGBP": {
+   "leak": 0.436,
+   "vol_ann_pct": 8.39,
+   "rho": 0.36,
+   "dE21": 3.885
+  },
+  "JPYCHF": {
+   "leak": 0.066,
+   "vol_ann_pct": 7.99,
+   "rho": 0.488,
+   "dE21": 3.892
+  },
+  "JPYCAD": {
+   "leak": 0.437,
+   "vol_ann_pct": 7.77,
+   "rho": 0.484,
+   "dE21": 3.505
+  },
+  "JPYAUD": {
+   "leak": 0.228,
+   "vol_ann_pct": 8.7,
+   "rho": 0.371,
+   "dE21": 2.906
+  },
+  "JPYNZD": {
+   "leak": -0.161,
+   "vol_ann_pct": 9.45,
+   "rho": 0.36,
+   "dE21": 5.278
+  },
+  "CHFEUR": {
+   "leak": 0.336,
+   "vol_ann_pct": 3.3,
+   "rho": 0.872,
+   "dE21": -0.309
+  },
+  "CHFGBP": {
+   "leak": 0.37,
+   "vol_ann_pct": 4.12,
+   "rho": 0.757,
+   "dE21": -0.007
+  },
+  "CHFJPY": {
+   "leak": -0.066,
+   "vol_ann_pct": 7.99,
+   "rho": 0.488,
+   "dE21": -3.892
+  },
+  "CHFCAD": {
+   "leak": 0.371,
+   "vol_ann_pct": 4.39,
+   "rho": 0.719,
+   "dE21": -0.387
+  },
+  "CHFAUD": {
+   "leak": 0.162,
+   "vol_ann_pct": 5.67,
+   "rho": 0.581,
+   "dE21": -0.986
+  },
+  "CHFNZD": {
+   "leak": -0.226,
+   "vol_ann_pct": 5.2,
+   "rho": 0.745,
+   "dE21": 1.386
+  },
+  "CADEUR": {
+   "leak": -0.035,
+   "vol_ann_pct": 3.56,
+   "rho": 0.689,
+   "dE21": 0.078
+  },
+  "CADGBP": {
+   "leak": -0.001,
+   "vol_ann_pct": 4.1,
+   "rho": 0.607,
+   "dE21": 0.38
+  },
+  "CADJPY": {
+   "leak": -0.437,
+   "vol_ann_pct": 7.77,
+   "rho": 0.484,
+   "dE21": -3.505
+  },
+  "CADCHF": {
+   "leak": -0.371,
+   "vol_ann_pct": 4.39,
+   "rho": 0.719,
+   "dE21": 0.387
+  },
+  "CADAUD": {
+   "leak": -0.209,
+   "vol_ann_pct": 5.24,
+   "rho": 0.55,
+   "dE21": -0.599
+  },
+  "CADNZD": {
+   "leak": -0.598,
+   "vol_ann_pct": 5.75,
+   "rho": 0.676,
+   "dE21": 1.773
+  },
+  "AUDEUR": {
+   "leak": 0.174,
+   "vol_ann_pct": 4.4,
+   "rho": 0.69,
+   "dE21": 0.677
+  },
+  "AUDGBP": {
+   "leak": 0.208,
+   "vol_ann_pct": 4.79,
+   "rho": 0.629,
+   "dE21": 0.98
+  },
+  "AUDJPY": {
+   "leak": -0.228,
+   "vol_ann_pct": 8.7,
+   "rho": 0.371,
+   "dE21": -2.906
+  },
+  "AUDCHF": {
+   "leak": -0.162,
+   "vol_ann_pct": 5.67,
+   "rho": 0.581,
+   "dE21": 0.986
+  },
+  "AUDCAD": {
+   "leak": 0.209,
+   "vol_ann_pct": 5.24,
+   "rho": 0.55,
+   "dE21": 0.599
+  },
+  "AUDNZD": {
+   "leak": -0.388,
+   "vol_ann_pct": 5.33,
+   "rho": 0.728,
+   "dE21": 2.372
+  },
+  "NZDEUR": {
+   "leak": 0.562,
+   "vol_ann_pct": 5.32,
+   "rho": 0.753,
+   "dE21": -1.695
+  },
+  "NZDGBP": {
+   "leak": 0.596,
+   "vol_ann_pct": 5.61,
+   "rho": 0.699,
+   "dE21": -1.393
+  },
+  "NZDJPY": {
+   "leak": 0.161,
+   "vol_ann_pct": 9.45,
+   "rho": 0.36,
+   "dE21": -5.278
+  },
+  "NZDCHF": {
+   "leak": 0.226,
+   "vol_ann_pct": 5.2,
+   "rho": 0.745,
+   "dE21": -1.386
+  },
+  "NZDCAD": {
+   "leak": 0.598,
+   "vol_ann_pct": 5.75,
+   "rho": 0.676,
+   "dE21": -1.773
+  },
+  "NZDAUD": {
+   "leak": 0.388,
+   "vol_ann_pct": 5.33,
+   "rho": 0.728,
+   "dE21": -2.372
+  }
+ },
+ "pca": {
+  "S_pc1": 0.643,
+  "loadings_pc1": {
+   "EUR": -0.289,
+   "GBP": -0.275,
+   "JPY": -0.459,
+   "CHF": -0.415,
+   "CAD": -0.277,
+   "AUD": -0.354,
+   "NZD": -0.505
+  },
+  "rotation_cos21": 0.984,
+  "rotation_flag": false,
+  "eig_gap": 4.946e-05
+ },
+ "sigma": {
+  "ccys": [
+   "EUR",
+   "GBP",
+   "JPY",
+   "CHF",
+   "CAD",
+   "AUD",
+   "NZD"
+  ],
+  "lambda": 0.97,
+  "daily_cov": [
+   [
+    7.4792e-06,
+    6.756e-06,
+    7.2239e-06,
+    9.467e-06,
+    5.5296e-06,
+    7.2192e-06,
+    1.00667e-05
+   ],
+   [
+    6.756e-06,
+    8.3704e-06,
+    5.8176e-06,
+    8.7006e-06,
+    5.1578e-06,
+    6.9557e-06,
+    9.8858e-06
+   ],
+   [
+    7.2239e-06,
+    5.8176e-06,
+    3.12202e-05,
+    1.08165e-05,
+    7.9337e-06,
+    7.9215e-06,
+    9.8285e-06
+   ],
+   [
+    9.467e-06,
+    8.7006e-06,
+    1.08165e-05,
+    1.57644e-05,
+    8.3766e-06,
+    8.8183e-06,
+    1.44539e-05
+   ],
+   [
+    5.5296e-06,
+    5.1578e-06,
+    7.9337e-06,
+    8.3766e-06,
+    8.6191e-06,
+    6.178e-06,
+    9.6989e-06
+   ],
+   [
+    7.2192e-06,
+    6.9557e-06,
+    7.9215e-06,
+    8.8183e-06,
+    6.178e-06,
+    1.46289e-05,
+    1.36189e-05
+   ],
+   [
+    1.00667e-05,
+    9.8858e-06,
+    9.8285e-06,
+    1.44539e-05,
+    9.6989e-06,
+    1.36189e-05,
+    2.38915e-05
+   ]
+  ],
+  "w": [
+   0.142857,
+   0.142857,
+   0.142857,
+   0.142857,
+   0.142857,
+   0.142857,
+   0.142857
+  ]
+ },
+ "diag": {
+  "fix": "14:15 CET",
+  "calendar": "TARGET (BCE)",
+  "age_calendar_days": 1,
+  "desfase_us_today": false,
+  "n_sessions": 7093,
+  "first": "1999-01-05",
+  "ingestion": {
+   "dates_sorted_unique": true,
+   "all_positive": true,
+   "triangulation_max_abs_err": 2.220446049250313e-16,
+   "triangulation_ok": true,
+   "jumps_gt_10pct": [
+    "2015-01-15"
+   ],
+   "carried_rows_dropped": 0,
+   "n_common_dates": 7094,
+   "first_date": "1999-01-04",
+   "last_date": "2026-09-16"
+  },
+  "loo_corr_min": 0.947,
+  "corr63_f_invvol": 0.998,
+  "beta_ewma_vs_ols252": {
+   "EUR": {
+    "ewma": 0.799,
+    "ols252": 0.903
+   },
+   "GBP": {
+    "ewma": 0.765,
+    "ols252": 0.975
+   },
+   "JPY": {
+    "ewma": 1.201,
+    "ols252": 0.962
+   },
+   "CHF": {
+    "ewma": 1.135,
+    "ols252": 1.107
+   },
+   "CAD": {
+    "ewma": 0.764,
+    "ols252": 0.57
+   },
+   "AUD": {
+    "ewma": 0.973,
+    "ols252": 1.176
+   },
+   "NZD": {
+    "ewma": 1.362,
+    "ols252": 1.307
+   }
+  },
+  "twins": {
+   "futures": {
+    "available": true,
+    "window": 252,
+    "by_ccy": {
+     "EUR": {
+      "n": 252,
+      "corr": 0.466,
+      "corr_ex_us": 0.476,
+      "last_session": "2026-09-03"
+     },
+     "GBP": {
+      "n": 252,
+      "corr": 0.505,
+      "corr_ex_us": 0.517,
+      "last_session": "2026-09-03"
+     },
+     "JPY": {
+      "n": 252,
+      "corr": 0.696,
+      "corr_ex_us": 0.703,
+      "last_session": "2026-09-03"
+     },
+     "CHF": {
+      "n": 252,
+      "corr": 0.49,
+      "corr_ex_us": 0.503,
+      "last_session": "2026-09-03"
+     },
+     "CAD": {
+      "n": 252,
+      "corr": 0.41,
+      "corr_ex_us": 0.442,
+      "last_session": "2026-09-03"
+     },
+     "AUD": {
+      "n": 252,
+      "corr": 0.509,
+      "corr_ex_us": 0.527,
+      "last_session": "2026-09-03"
+     },
+     "NZD": {
+      "n": 252,
+      "corr": 0.621,
+      "corr_ex_us": 0.639,
+      "last_session": "2026-09-03"
+     }
+    },
+    "note": "retornos diarios BCE(14:15 CET) vs settle CME(21:00 CET) — relojes distintos; número, no veredicto"
+   },
+   "afe": {
+    "available": false,
+    "note": "DTWEXAFEGS no accesible: Length mismatch: Expected 5188 rows, received array of length 5400"
+   }
+  },
+  "frozen": {
+   "written": true,
+   "source": "ECB",
+   "window": [
+    "2000-01-03",
+    "2023-12-31"
+   ],
+   "computed_utc": "2026-09-17T07:51:08Z",
+   "max_abs_f_1d": 0.03879219864389547,
+   "max_abs_f_1d_date": "2009-03-19",
+   "f_1d_std": 0.004855204172539384,
+   "median_corr63_f_invvol": 0.9970138443081665,
+   "median_S_pc1": 0.6329548699951136,
+   "median_D": 0.015030119901375094,
+   "band_days": {
+    "MIXTO": 2246,
+    "COMUN": 2005,
+    "DISPERSO": 1877
+   },
+   "one_name_freq": 0.3734331759726518,
+   "note": "calculado UNA vez; nunca se recomputa (ACTA_UF1)"
+  }
+ },
+ "footer": [
+  "Σβ_i = 7 por construcción (factor completo con pesos 1/7): identidad, no sesgo individual",
+  "los siete residuales NO son siete confirmaciones independientes: promediar cruces devuelve la ordenación de las patas",
+  "z = distancia descriptiva sobre ventanas solapadas, no probabilidad gaussiana",
+  "|β_A − β_B| = carga de retorno por unidad de factor, no riesgo en dólares (eso exige nominal y Σ)",
+  "proyección sobre la cesta definida ≠ componente dólar causal; los componentes no se bautizan",
+  "CONTEXT permanente: no vota, no entra en confluencia ni en ranking jefe"
+ ]
+}
