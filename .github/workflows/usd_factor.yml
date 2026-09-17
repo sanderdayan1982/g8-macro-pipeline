@@ -1,0 +1,71 @@
+# ============================================================================
+# §10 Factor USD · Residuales · Libro — daily (ACTA_UF1, 17-sep-2026)
+# BCE reference rates publish ~16:00 CET on TARGET days → 15:30 UTC is after
+# the summer publication (14:00 UTC) and the winter one (15:00 UTC); a second
+# window at 17:30 UTC catches a late publication. Idempotent: no new BCE date
+# → NO_NEW_DATA, nothing to commit. TARGET holidays are not failures (Ley 2:
+# only a real error is loud).
+# $0: BCE SDMX (free), FRED csv (free, optional twin), repo files only.
+# ============================================================================
+name: USD Factor
+
+on:
+  schedule:
+    - cron: '30 15 * * 1-5'
+    - cron: '30 17 * * 1-5'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usd-factor
+  cancel-in-progress: false
+
+jobs:
+  factor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests numpy pandas
+
+      - name: Factor USD (BCE triangulado → USD_FACTOR.json + canonical.csv)
+        run: python scripts/usd_factor.py
+
+      - name: Book risk (book.csv / candidate.csv → BOOK_RISK.json)
+        run: python scripts/book_risk.py
+
+      - name: Dashboard alerts (Telegram on change)
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/dashboard_alerts.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/usd_factor data/USD_FACTOR.json data/BOOK_RISK.json data/book_snapshots data/alerts
+          if git diff --cached --quiet; then
+            echo "No new BCE date / no change — nothing to commit."
+          else
+            git commit -m "chore: usd factor update $(date -u +%F)"
+            git pull --rebase
+            git push
+          fi
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=usd_factor run=${{ github.run_number }} — ver Actions"
