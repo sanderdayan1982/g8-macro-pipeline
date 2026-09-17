@@ -1,51 +1,59 @@
 #!/usr/bin/env python3
 # =============================================================================
-# gate_cross_walls.py — v1.0 · Pre-registered gate for CROSS WALLS (§08b)
+# gate_cross_walls.py — v2.0 · Pre-registered gate CW-2 for CROSS WALLS v2
 #
-# PRE-REGISTRATION (frozen 16-sep-2026, before any evaluation; ACTA_CW1.md):
-#   H1 (primary): on session t, sign(S_A - S_B) of an ELIGIBLE cross is
-#      associated out-of-sample with the sign of the cross log-return over the
-#      next 5 sessions. Secondary: 21 sessions (veto only).
-#   Universe: the 15 G8 crosses, a cross counts only when eligible on t
-#      (both legs CLEAN and DTE >= 10, from canonical.csv).
-#   Forecast: gap_t = S_A - S_B. Target: ln(F_A,t+h / F_A,t) - ln(F_B,t+h / F_B,t)
-#      using the SAME futures contract at t and t+h (no roll contamination).
-#   Metric: daily cross-sectional Spearman IC between gap_t and the forward
-#      return over the eligible crosses (>= 4 needed on the day); mean IC.
-#   Dependence: block bootstrap over DATES (blocks of 21 sessions), the whole
-#      matrix of one date resampled together (15 crosses of 6 legs are NOT
-#      independent observations). 2000 resamples.
-#   Strong-signal diagnostic: hit rate of sign on crosses with strength >= 66.7
-#      (top tercile of |gap| for that pair, causal percentile).
-#   Sample: history for the causal ECDF = 126 sessions (warm-up, excluded);
-#      evaluation = the next >= 252 sessions => first verdict at N >= 378.
-#   PASS (5D) iff mean IC_5 >= 0.05 AND bootstrap CI95 lower bound > 0 AND
-#      strong hit rate >= 54 % with CI95 lower bound > 50 %.
-#   VETO iff mean IC_21 < 0 (5D edge that reverses at 21D is not a filter).
-#   Incrementality (needed for FULL PASS): IC of gap residualised on BREADTH
-#      and POS-G8 stays > 0 — requires the TradingView exports; reported as
-#      PENDING when the files are absent.
-#   Before N >= 378 the script prints an interim report tagged RESEARCH and
-#      REFUSES to emit a verdict. A material change of the score formula
-#      restarts the clock (new version, new acta).
-#
+# PRE-REGISTRATION (frozen 17-sep-2026, before any evaluation; ACTA_CW2.md):
+#   Signal: D_c,t = OI-weighted percent distance of the majority-side walls of
+#      currency c on session t (cross_walls.py v2.0, canonical.csv). Known at
+#      t+1 morning (settlement + OI publish T+1), so every target starts at the
+#      settlement of t+1.
+#   H0 (primary, per leg): sign(D_c,t) is associated out-of-sample with the sign
+#      of the native log return of XXX/USD futures from t+1 to t+1+5, using the
+#      SAME quarterly contract (F_sym of session t) at both ends. Legs: the
+#      voting CLEAN currencies of the frozen universe {EUR, GBP, JPY, AUD}.
+#      Metric: sign hit rate pooled by DATE (each date contributes the mean hit
+#      of its legs), block bootstrap over dates (blocks of 21, 2000 resamples).
+#      PASS-H0 iff hit >= 54 % and CI95 lower bound > 50 %.
+#   H1 (crosses): gap_t = D_A - D_B of ELIGIBLE crosses vs the cross log return
+#      t+1 -> t+1+5 (same contracts). Metric: daily cross-sectional Spearman IC
+#      over eligible crosses (>= 3 on the day), mean IC, block bootstrap over
+#      dates. Strong-signal diagnostic: hit rate on crosses with rarity >= 66.7
+#      (bootstrap over dates). PASS-H1 iff mean IC5 >= 0.05 with CI95 lower
+#      bound > 0 and strong hit >= 54 % with CI95 lower bound > 50 %.
+#   VETO: mean IC21 (H1) or hit21 (H0) below the no-information level on the
+#      subset with 21-session coverage.
+#   Zero returns: excluded (neither hit nor miss). Missing contract at either
+#      end: excluded.
+#   Sample: first WARMUP = 126 sessions excluded (rarity history; kept for
+#      comparability with CW-1), then >= 252 evaluable 5D dates. ONE evaluation:
+#      the first run with n_eval5 >= 252 writes data/cross_walls/verdict_cw2.json
+#      and later runs only re-print it. No repeated looks.
+#   Incrementality (needed for FULL PASS): IC of gap residualised on BREADTH and
+#      POS-G8 stays > 0. Files (exported from TradingView, one row per date and
+#      currency): data/cross_walls/breadth_export.csv and pos_export.csv with
+#      columns date,ccy,value. PENDING while absent.
+#   Before eligibility the script prints an interim report tagged RESEARCH and
+#      REFUSES to emit a verdict.
 # USAGE: python3 scripts/gate_cross_walls.py [--warmup 126] [--min-eval 252]
 # stdlib only.
 # =============================================================================
-import csv, math, os, random, sys
+import csv, json, math, os, random, sys
 from pathlib import Path
 
 CANON_CSV = Path(os.environ.get("G8_CW_CSV", "data/cross_walls/canonical.csv"))
 OPT_CANON = Path(os.environ.get("G8_OPT_OUT_DIR", "data/options/canonical"))
+VERDICT = Path("data/cross_walls/verdict_cw2.json")
+BREADTH = Path("data/cross_walls/breadth_export.csv")
+POS = Path("data/cross_walls/pos_export.csv")
 FUT = {"EUR": "6E", "GBP": "6B", "JPY": "6J", "AUD": "6A", "CAD": "6C", "CHF": "6S"}
-CROSSES = ["EURGBP", "EURJPY", "EURAUD", "EURCAD", "EURCHF", "GBPJPY", "GBPAUD",
-           "GBPCAD", "GBPCHF", "AUDJPY", "CADJPY", "CHFJPY", "AUDCAD", "AUDCHF", "CADCHF"]
+UNIVERSE = ["EUR", "GBP", "JPY", "AUD"]
+CROSSES = ["EURGBP", "EURJPY", "EURAUD", "GBPJPY", "GBPAUD", "AUDJPY"]   # universe crosses
 H_PRIMARY, H_SECONDARY = 5, 21
-MIN_CROSSES_DAY = 4
+MIN_CROSSES_DAY = 3
 BLOCK, N_BOOT = 21, 2000
 IC_PASS, HIT_PASS = 0.05, 0.54
 STRONG_PCT = 66.7
-random.seed(20260916)
+random.seed(20260917)
 
 
 def fnum(x):
@@ -55,26 +63,19 @@ def fnum(x):
         return None
 
 
-def load_futures(session):
-    """expiry -> settle for each currency's futures on one session."""
+def load_settles(session):
+    """symbol -> settle for every currency's futures on one session."""
     out = {}
     d = OPT_CANON / session
     for c, root in FUT.items():
         p = d / f"{root}.csv"
         if not p.exists():
             continue
-        m = {}
         with p.open(newline="") as f:
             for r in csv.DictReader(f):
                 if r["type"] == "FUT" and fnum(r["settle"]):
-                    m[r["expiry"]] = fnum(r["settle"])
-        out[c] = m
+                    out[r["symbol"]] = fnum(r["settle"])
     return out
-
-
-def front_contract(fmap, session):
-    exps = sorted(e for e in fmap if e >= session)
-    return exps[0] if exps else None
 
 
 def spearman(x, y):
@@ -103,6 +104,7 @@ def spearman(x, y):
 
 
 def block_bootstrap_mean(series, block=BLOCK, n_boot=N_BOOT):
+    """CI95 of the mean of a DATE-ordered series, resampling blocks of dates."""
     n = len(series)
     if n < block:
         return None
@@ -119,33 +121,77 @@ def block_bootstrap_mean(series, block=BLOCK, n_boot=N_BOOT):
     return means[int(0.025 * n_boot)], means[int(0.975 * n_boot)]
 
 
+def load_export(p):
+    """date,ccy,value -> {date: {ccy: value}}"""
+    if not p.exists():
+        return None
+    out = {}
+    with p.open(newline="") as f:
+        for r in csv.DictReader(f):
+            v = fnum(r.get("value"))
+            if v is not None:
+                out.setdefault(r["date"], {})[r["ccy"]] = v
+    return out
+
+
+def residualise(y, x):
+    """OLS residual of y on x (same length)."""
+    n = len(y)
+    mx, my = sum(x) / n, sum(y) / n
+    sxx = sum((a - mx) ** 2 for a in x)
+    b = sum((a - mx) * (c - my) for a, c in zip(x, y)) / sxx if sxx > 0 else 0.0
+    return [c - (my + b * (a - mx)) for a, c in zip(x, y)]
+
+
 def main(argv):
     warm = int(argv[argv.index("--warmup") + 1]) if "--warmup" in argv else 126
     min_eval = int(argv[argv.index("--min-eval") + 1]) if "--min-eval" in argv else 252
     if not CANON_CSV.exists():
         sys.exit(f"FATAL: {CANON_CSV} missing — run cross_walls.py first")
     rows = list(csv.DictReader(CANON_CSV.open(newline="")))
+    if "EUR_D" not in rows[0]:
+        sys.exit("FATAL: canonical.csv is not v2 (no *_D columns) — run cross_walls.py v2.0")
     sessions = [r["session"] for r in rows]
-    futs = {s: load_futures(s) for s in sessions}
+    settles = {s: load_settles(s) for s in sessions}
     n = len(rows)
+    breadth, pos = load_export(BREADTH), load_export(POS)
 
-    def fwd_ret(i, h, A, B):
-        if i + h >= n:
+    def leg_ret(i, h, c):
+        """native log return of currency c's quarterly future from t+1 to t+1+h."""
+        if i + 1 + h >= n:
             return None
-        s0, s1 = sessions[i], sessions[i + h]
-        out = 0.0
-        for c, sign in ((A, 1.0), (B, -1.0)):
-            m0, m1 = futs[s0].get(c, {}), futs[s1].get(c, {})
-            k = front_contract(m0, s0)
-            if not k or k not in m1 or m0[k] <= 0 or m1[k] <= 0:
-                return None
-            out += sign * math.log(m1[k] / m0[k])
-        return out
+        sym = rows[i].get(f"{c}_F_sym")
+        s0, s1 = settles[sessions[i + 1]].get(sym), settles[sessions[i + 1 + h]].get(sym)
+        if not sym or not s0 or not s1 or s0 <= 0 or s1 <= 0:
+            return None
+        return math.log(s1 / s0)
 
-    ic5, ic21, strong_hits, days_used = [], [], [], []
+    # ---------------- H0 per leg
+    h0_hits5, h0_hits21, h0_dates = [], [], []
+    h0_resid_pairs = []          # (gap-like D, ret) for incrementality on legs
+    # ---------------- H1 crosses
+    ic5, ic21, strong_hits_by_date, dates_used = [], [], [], []
+    inc_pairs = []               # (gap, ret, breadth_gap, pos_gap)
     for i, r in enumerate(rows):
         if i < warm:
             continue
+        hits5, hits21 = [], []
+        for c in UNIVERSE:
+            D = fnum(r.get(f"{c}_D"))
+            if D is None or D == 0 or r.get(f"{c}_votes") != "True":
+                continue
+            f5 = leg_ret(i, H_PRIMARY, c)
+            if f5 is None or f5 == 0:
+                continue
+            hits5.append(1.0 if (D > 0) == (f5 > 0) else 0.0)
+            f21 = leg_ret(i, H_SECONDARY, c)
+            if f21 is not None and f21 != 0:
+                hits21.append(1.0 if (D > 0) == (f21 > 0) else 0.0)
+        if hits5:
+            h0_hits5.append(sum(hits5) / len(hits5))
+            h0_dates.append(r["session"])
+        if hits21:
+            h0_hits21.append(sum(hits21) / len(hits21))
         xs, y5, y21, strong = [], [], [], []
         for x in CROSSES:
             if r.get(f"{x}_eligible") != "1":
@@ -154,63 +200,105 @@ def main(argv):
             if gap is None or gap == 0:
                 continue
             A, B = x[:3], x[3:]
-            f5 = fwd_ret(i, H_PRIMARY, A, B)
-            if f5 is None:
+            ra, rb = leg_ret(i, H_PRIMARY, A), leg_ret(i, H_PRIMARY, B)
+            if ra is None or rb is None:
                 continue
-            f21 = fwd_ret(i, H_SECONDARY, A, B)
+            f5 = ra - rb
+            if f5 == 0:
+                continue
+            ra21, rb21 = leg_ret(i, H_SECONDARY, A), leg_ret(i, H_SECONDARY, B)
+            f21 = (ra21 - rb21) if (ra21 is not None and rb21 is not None) else None
             xs.append(gap)
             y5.append(f5)
             y21.append(f21)
-            st = fnum(r.get(f"{x}_strength"))
-            if st is not None and st >= STRONG_PCT:
+            rar = fnum(r.get(f"{x}_rarity"))
+            if rar is not None and rar >= STRONG_PCT:
                 strong.append(1.0 if (gap > 0) == (f5 > 0) else 0.0)
+            if breadth and pos and r["session"] in breadth and r["session"] in pos:
+                bA, bB = breadth[r["session"]].get(A), breadth[r["session"]].get(B)
+                pA, pB = pos[r["session"]].get(A), pos[r["session"]].get(B)
+                if None not in (bA, bB, pA, pB):
+                    inc_pairs.append((gap, f5, bA - bB, pA - pB))
         if len(xs) >= MIN_CROSSES_DAY:
             ic = spearman(xs, y5)
             if ic is not None:
                 ic5.append(ic)
-                days_used.append(r["session"])
-            if all(v is not None for v in y21):
+                dates_used.append(r["session"])
+            if all(v is not None for v in y21) and len(y21) >= MIN_CROSSES_DAY:
                 ic = spearman(xs, y21)
                 if ic is not None:
                     ic21.append(ic)
-            strong_hits.extend(strong)
+            if strong:
+                strong_hits_by_date.append(sum(strong) / len(strong))
 
-    n_eval = len(ic5)
-    total = n
+    n_eval0, n_eval1 = len(h0_hits5), len(ic5)
+    eligible = (n >= warm + min_eval + H_PRIMARY + 1) and n_eval0 >= min_eval
     print("=" * 78)
-    print(f"CROSS WALLS · GATE CW-1 · sessions={total} · warm-up={warm} · evaluable days (5D)={n_eval}")
+    print(f"CROSS WALLS v2 · GATE CW-2 · sessions={n} · warm-up={warm} · "
+          f"H0 evaluable dates (5D)={n_eval0} · H1 evaluable dates={n_eval1} · target {warm + min_eval + H_PRIMARY + 1}")
     print("=" * 78)
-    status = "ELIGIBLE FOR VERDICT" if (total >= warm + min_eval and n_eval >= min_eval) else \
-        f"RESEARCH · {total}/{warm + min_eval} sessions — no verdict allowed"
+    if VERDICT.exists():
+        print("VERDICT ALREADY RECORDED (single-look rule):")
+        print(VERDICT.read_text())
+        return
+    status = "ELIGIBLE FOR VERDICT" if eligible else \
+        f"RESEARCH · {n}/{warm + min_eval + H_PRIMARY + 1} sessions · {n_eval0}/{min_eval} evaluable dates — no verdict allowed"
     print("STATUS:", status)
-    if n_eval == 0:
-        print("no evaluable days yet (need warm-up + 5 sessions of forward data)")
+    if n_eval0 == 0:
+        print("no evaluable dates yet (need warm-up + 6 sessions of forward data)")
         return
-    m5 = sum(ic5) / n_eval
-    ci5 = block_bootstrap_mean(ic5)
-    print(f"IC_5D  mean {m5:+.4f}  n={n_eval}  block-bootstrap CI95 {ci5 if ci5 else 'n/a (< 21 days)'}")
-    if ic21:
-        m21 = sum(ic21) / len(ic21)
-        print(f"IC_21D mean {m21:+.4f}  n={len(ic21)}  (veto if < 0)")
+    rep = {}
+    hr0 = sum(h0_hits5) / n_eval0
+    ci0 = block_bootstrap_mean(h0_hits5)
+    print(f"H0 hit rate 5D  {100 * hr0:.1f} %  dates={n_eval0}  block-bootstrap CI95 {ci0 if ci0 else 'n/a (< 21 dates)'}")
+    rep["h0_hit5"], rep["h0_ci5"], rep["h0_n"] = hr0, ci0, n_eval0
+    if h0_hits21:
+        hr021 = sum(h0_hits21) / len(h0_hits21)
+        print(f"H0 hit rate 21D {100 * hr021:.1f} %  dates={len(h0_hits21)}  (veto if < 50 %)")
+        rep["h0_hit21"] = hr021
+    if ic5:
+        m5 = sum(ic5) / n_eval1
+        ci5 = block_bootstrap_mean(ic5)
+        print(f"H1 IC_5D  mean {m5:+.4f}  dates={n_eval1}  CI95 {ci5 if ci5 else 'n/a'}")
+        rep["h1_ic5"], rep["h1_ci5"], rep["h1_n"] = m5, ci5, n_eval1
+        if ic21:
+            m21 = sum(ic21) / len(ic21)
+            print(f"H1 IC_21D mean {m21:+.4f}  dates={len(ic21)}  (veto if < 0)")
+            rep["h1_ic21"] = m21
+        if strong_hits_by_date:
+            hr = sum(strong_hits_by_date) / len(strong_hits_by_date)
+            ci_h = block_bootstrap_mean(strong_hits_by_date)
+            print(f"H1 strong hit rate {100 * hr:.1f} %  dates={len(strong_hits_by_date)}  CI95 {ci_h}")
+            rep["h1_strong"], rep["h1_strong_ci"] = hr, ci_h
+    if inc_pairs and len(inc_pairs) >= 30:
+        g = [p[0] for p in inc_pairs]
+        rg = residualise(residualise(g, [p[2] for p in inc_pairs]), [p[3] for p in inc_pairs])
+        inc_ic = spearman(rg, [p[1] for p in inc_pairs])
+        print(f"incrementality: IC of gap residualised on BREADTH+POS = {inc_ic:+.4f} (pooled, n={len(inc_pairs)})")
+        rep["incrementality_ic"] = inc_ic
     else:
-        m21 = None
-    if strong_hits:
-        hr = sum(strong_hits) / len(strong_hits)
-        ci_h = block_bootstrap_mean(strong_hits, block=min(BLOCK, max(2, len(strong_hits) // 4)))
-        print(f"strong hit rate {100 * hr:.1f} %  n={len(strong_hits)}  CI95 {ci_h}")
-    else:
-        hr, ci_h = None, None
-    print("incrementality vs BREADTH/POS: PENDING (needs TradingView exports)")
-    if status.startswith("RESEARCH"):
+        print("incrementality vs BREADTH/POS: PENDING (exports absent or < 30 pairs)")
+    if not eligible:
         print("\n>> interim numbers only. The pre-registration forbids a verdict before "
-              f"{warm + min_eval} sessions. Do not act on them.")
+              f"{min_eval} evaluable dates. Do not act on them.")
         return
-    ok_ic = m5 >= IC_PASS and ci5 and ci5[0] > 0
-    ok_hit = hr is not None and hr >= HIT_PASS and ci_h and ci_h[0] > 0.50
-    veto = m21 is not None and m21 < 0
-    verdict = "PASS (pending incrementality)" if (ok_ic and ok_hit and not veto) else "FAIL"
-    print("\nVERDICT:", verdict, "| IC ok" if ok_ic else "| IC fail", "| hit ok" if ok_hit else "| hit fail",
-          "| VETO 21D" if veto else "")
+    ok_h0 = hr0 >= HIT_PASS and ci0 and ci0[0] > 0.50
+    veto0 = rep.get("h0_hit21") is not None and rep["h0_hit21"] < 0.50
+    ok_h1 = (rep.get("h1_ic5") is not None and rep["h1_ic5"] >= IC_PASS and rep.get("h1_ci5") and rep["h1_ci5"][0] > 0
+             and rep.get("h1_strong") is not None and rep["h1_strong"] >= HIT_PASS
+             and rep.get("h1_strong_ci") and rep["h1_strong_ci"][0] > 0.50)
+    veto1 = rep.get("h1_ic21") is not None and rep["h1_ic21"] < 0
+    verdict = {"H0": "PASS" if (ok_h0 and not veto0) else "FAIL",
+               "H1": "PASS" if (ok_h1 and not veto1) else "FAIL",
+               "incrementality": "PASS" if rep.get("incrementality_ic", 0) > 0 and "incrementality_ic" in rep else "PENDING",
+               "evaluated_on": sessions[-1], "n_sessions": n, "report": rep}
+    if warm != 126 or min_eval != 252:
+        print("\nDRY RUN with non-registered parameters — verdict NOT recorded, output is void:",
+              json.dumps({k: v for k, v in verdict.items() if k != "report"}))
+        return
+    VERDICT.parent.mkdir(parents=True, exist_ok=True)
+    VERDICT.write_text(json.dumps(verdict, indent=1))
+    print("\nVERDICT (recorded once, never re-evaluated):", json.dumps({k: v for k, v in verdict.items() if k != "report"}))
 
 
 if __name__ == "__main__":
