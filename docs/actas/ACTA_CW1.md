@@ -1,6 +1,8 @@
 # ACTA CW-1 · CROSS WALLS v1.0 — PRE-REGISTRO DEL GATE
 16-sep-2026 · Bata, GQ · congelada ANTES de evaluar dato alguno
 
+> **RETIRADA el 17-sep-2026** tras las auditorías de Cursor y ChatGPT/Astra y la medición propia (ECDF cambia el significado del signo; G y RR25 anticorrelados en AUD/GBP; kernel penaliza los muros lejanos). El gate CW-1 nunca llegó a evaluar (74 < 126). Sustituida por **ACTA_CW2.md** (Cross Walls v2.0, la lectura manual escrita), reloj a cero. Se conserva íntegra como registro.
+
 ## 1. Qué se construye
 Sección §08b del G8 Macro Pipeline: un **score de posicionamiento de opciones por divisa** (convención nativa CME XXX/USD) a partir de la cadena de opciones que ya baja la §08 (Databento GLBX.MDP3, settlement + OI por strike), del que se derivan el **factor dólar**, la **dispersión** (régimen CROSS / DOLLAR_PURE) y la **dirección de los 15 cruces G8** (NZD excluido). Los cruces reciben dirección y ranking, **nunca niveles**.
 
