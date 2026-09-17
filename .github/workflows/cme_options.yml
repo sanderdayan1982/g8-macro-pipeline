@@ -47,9 +47,10 @@ jobs:
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
         run: python scripts/build_options_summary.py
 
-      # §08b Cross Walls v1.1 (RESEARCH): score por divisa (geometría + skew Black-76),
-      # régimen y dirección de los 15 cruces; canonical.csv es el registro del gate CW-1.
-      - name: Cross Walls (score, regime, cross matrix)
+      # §08b Cross Walls v2.0 (acta CW-2, RESEARCH): la lectura manual de los muros
+      # escrita como regla (3 muros, % del futuro trimestral, lado del dólar);
+      # canonical.csv es el registro del gate CW-2; walls.csv el diagnóstico PIN/THROUGH.
+      - name: Cross Walls v2 (walls, USD bias, crosses)
         env:
           G8_OPT_OUT_DIR: data/options/canonical
           G8_SOFR_CSV: data/SOFR.csv
@@ -57,7 +58,11 @@ jobs:
           G8_CW_CSV: data/cross_walls/canonical.csv
         run: python scripts/cross_walls.py
 
-      - name: Gate CW-1 interim report (RESEARCH — no verdict before N >= 378)
+      - name: Wall behaviour (PIN/THROUGH diagnostics, no vote)
+        continue-on-error: true
+        run: python scripts/wall_behaviour.py
+
+      - name: Gate CW-2 interim report (RESEARCH — single evaluation at 252 evaluable dates)
         continue-on-error: true
         run: python scripts/gate_cross_walls.py
 
