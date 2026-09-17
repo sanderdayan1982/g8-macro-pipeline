@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # =============================================================================
-# POS-G8 COT collector  [pos_g8_cot_collector v1.0.1]
+# POS-G8 COT collector  [pos_g8_cot_collector v1.1.0]
+# -----------------------------------------------------------------------------
+# v1.1.0 (17-sep-2026) — P3y / EXT (ACTA_UF1 §E). New per-row fields, NO change
+#   to any existing field, window, threshold or state:
+#     x = net / open_interest of the SAME report (LF for currencies, MM for
+#     metals); p3y = empirical percentile of x_t against the PREVIOUS `win`
+#     weekly observations (current excluded; ties count as <=); z3y = z of x_t
+#     over the same previous window; ext = p3y <= 10 or >= 90 (two-tail
+#     descriptive band, convention — not danger, not reversion). NA while the
+#     history is shorter than `win`. Availability follows the CFTC publication
+#     (Friday), the same as every other field here.
 # -----------------------------------------------------------------------------
 # v1.0.1 (02-sep-2026) — CFTC SODA COLUMN RENAME. The TFF dataset dropped the
 #   `_all` suffix on asset_mgr_* and lev_money_* columns (open_interest_all kept).
@@ -205,6 +215,26 @@ def pct_rank(series, win):
     return round(100.0 * below / len(w), 1)
 
 
+def pct_oi_series(net, oi):
+    return [(100.0 * n / o) if (n is not None and o) else None for n, o in zip(net, oi)]
+
+
+def p3y_block(x, win):
+    """P3y: percentile of the last x against the PREVIOUS `win` observations
+    (current excluded), z on the same window, EXT two-tail band (<=10 / >=90).
+    NA unless the previous window is complete (v1.1.0, ACTA_UF1 §E)."""
+    if not x or x[-1] is None:
+        return {"p3y": None, "z3y": None, "ext": None}
+    prev = [v for v in x[-win - 1:-1] if v is not None]
+    if len(prev) < win:
+        return {"p3y": None, "z3y": None, "ext": None}
+    cur = x[-1]
+    p = round(100.0 * sum(1 for v in prev if v <= cur) / win, 1)
+    sd = stdev(prev)
+    z = round((cur - mean(prev)) / sd, 2) if sd else None
+    return {"p3y": p, "z3y": z, "ext": bool(p <= 10.0 or p >= 90.0)}
+
+
 def dprint(series):
     """Change vs the previous DISTINCT print (Pine f_dprint). Constant between
     prints, never decays to 0 on a stalled feed."""
@@ -289,6 +319,7 @@ def build_ccy(name, rows):
     z_lf = z_capped(lf, win)
     z_am = z_capped(am, win)
     z_lf_hist = [z_capped(lf[:i + 1], win) for i in range(len(lf))]
+    p3 = p3y_block(pct_oi_series(lf, oi), win)                           # v1.1.0
     net_lf = lf[-1] if lf else None
     net_am = am[-1] if am else None
     oi_now = oi[-1] if oi else None
@@ -300,6 +331,7 @@ def build_ccy(name, rows):
         "lf_cot_index": cot_index(lf, win),
         "lf_pctile": pct_rank(lf, win),
         "lf_pct_oi": round(100.0 * net_lf / oi_now, 1) if net_lf is not None and oi_now else None,
+        "lf_pctoi_p3y": p3.get("p3y"), "lf_pctoi_z3y": p3.get("z3y"), "lf_ext": p3.get("ext"),   # v1.1.0
         "d_print": dprint(lf),
         "d_4w": delta_n(lf, 4),
         "d_13w": delta_n(lf, 13),
@@ -321,6 +353,7 @@ def build_metal(name, rows):
 
     z = z_capped(mm, win)
     z_hist = [z_capped(mm[:i + 1], win) for i in range(len(mm))]
+    p3 = p3y_block(pct_oi_series(mm, oi), win)                           # v1.1.0
     net = mm[-1] if mm else None
     oi_now = oi[-1] if oi else None
 
@@ -331,6 +364,7 @@ def build_metal(name, rows):
         "mm_cot_index": cot_index(mm, win),
         "mm_pctile": pct_rank(mm, win),
         "mm_pct_oi": round(100.0 * net / oi_now, 1) if net is not None and oi_now else None,
+        "mm_pctoi_p3y": p3.get("p3y"), "mm_pctoi_z3y": p3.get("z3y"), "mm_ext": p3.get("ext"),   # v1.1.0
         "d_print": dprint(mm),
         "d_4w": delta_n(mm, 4),
         "d_13w": delta_n(mm, 13),
@@ -384,7 +418,7 @@ def main():
     status, age = freshness(report_date) if report_date else ("NA", None)
 
     doc = {
-        "schema": "pos_g8_cot/1.0.0",
+        "schema": "pos_g8_cot/1.1.0",
         "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "source": "CFTC SODA (gpe5-46if TFF, 72hh-3qpy Disaggregated), Futures-Only",
         "report_date": report_date,

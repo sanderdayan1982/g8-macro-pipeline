@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v2.2  (2026-09-17)
+G8 Macro Pipeline — dashboard_alerts.py  v2.3  (2026-09-17)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -46,6 +46,10 @@ v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER C
       (NZD B2, IIB, SNB curva/SARON/10Y, ACM NZD/CHF, RY NZD) entran en sources/registry.csv
       con presupuesto → un Mac apagado dispara §05 STALE/DEAD por Telegram.
 
+v2.3: §10 Factor USD (ACTA_UF1): check_factor — cambio de banda de dispersión (COMÚN/MIXTO/
+      DISPERSO, ya con histéresis en usd_factor.py), |z21| del factor cruza 2 (sale en 1.5,
+      Schmitt), libro con cuota sobre la cesta > 0.80 (sale en 0.70), bandera COLA. Todas
+      convenciones pre-registradas en el acta; contexto, no voto. Bullet §10 en el brief.
 v2.2: §08b Cross Walls retirada del dashboard y del pipeline (17-sep-2026, decisión del operador).
 v1.9: §01 diferencial REAL 10Y vs USD (linkers: EUR GBP JPY CAD AUD NZD) — columna en el
       libro G8, bullet propio y alerta (|z| 252d histéresis, |Δ1w| P95). CHF fuera (BE constante).
@@ -656,6 +660,59 @@ def check_cot(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# §10 Factor USD — v2.3 (ACTA_UF1): banda de dispersión · |z21| factor · libro
+# ═════════════════════════════════════════════════════════════════════════════
+def check_factor(st, lines):
+    s = st.setdefault("factor", {})
+    uf = read_json("USD_FACTOR.json")
+    if not uf:
+        return
+    asof = uf.get("as_of")
+    if not asof or asof == s.get("asof"):
+        return
+    out = []
+    d = uf.get("dispersion") or {}
+    band = d.get("band")
+    one = (" (UN NOMBRE %s)" % d.get("one_name_ccy")) if d.get("one_name") else ""
+    prev = s.get("band")
+    if band and prev and band != prev:
+        out.append("dispersión %s → %s%s · p%s" % (prev, band, one, d.get("D_pct")))
+    elif band and not prev:
+        out.append("dispersión %s%s · p%s" % (band, one, d.get("D_pct")))
+    s["band"] = band
+    z = (uf.get("factor") or {}).get("z21")
+    zs = s.get("z_state", "in")
+    if z is not None:
+        if zs == "in" and abs(z) >= 2.0:
+            out.append("factor USD 21 s. %+.2f %% · z %+.2f (cruza ±2)" % ((uf["factor"].get("cum21") or 0.0), z)); zs = "out"
+        elif zs == "out" and abs(z) < 1.5:
+            out.append("factor USD z21 vuelve a %+.2f" % z); zs = "in"
+    s["z_state"] = zs
+    br = read_json("BOOK_RISK.json") or {}
+    bk = br.get("book") or {}
+    if bk.get("status") in ("OK", "STALE"):
+        r = bk.get("risk") or {}
+        sh = r.get("share_on_basket")
+        ss = s.get("share_state", "in")
+        if sh is not None:
+            if ss == "in" and sh > 0.80:
+                out.append("libro: cuota sobre la cesta %.0f %% (> 80 %%) — VaR95 %.0f USD" % (sh * 100, r.get("var95_param") or 0)); ss = "out"
+            elif ss == "out" and sh < 0.70:
+                out.append("libro: cuota sobre la cesta vuelve a %.0f %%" % (sh * 100)); ss = "in"
+        s["share_state"] = ss
+        cola = bool(r.get("cola"))
+        if cola != bool(s.get("cola")):
+            out.append("libro: COLA %s (VaR param %.0f vs hist %.0f)" % ("ON" if cola else "OFF", r.get("var95_param") or 0, r.get("var95_hist") or 0))
+        s["cola"] = cola
+        if bk.get("status") == "STALE" and s.get("stale") != True:
+            out.append("libro DESACTUALIZADO (snapshot %s)" % bk.get("snapshot_date"))
+        s["stale"] = bk.get("status") == "STALE"
+    for l in out:
+        lines.append("§10 " + l)
+    s["asof"] = asof
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # §05 DQM — frescura contra el presupuesto del registry
 # ═════════════════════════════════════════════════════════════════════════════
 def _last_csv_date(path):
@@ -1038,6 +1095,25 @@ def build_brief(st, wall_lines):
         elif c.get("divergence"):
             cl.append("%s divergencia LF/AM" % c["ccy"])
     b["bullets"].append({"sec": "§09 COT", "text": " · ".join(cl) if cl else "sin crowding — todo NEUTRAL"})
+    # v2.3 §10 factor USD — contexto de composición, nunca dirección
+    try:
+        uf = read_json("USD_FACTOR.json") or {}
+        if uf.get("as_of"):
+            f = uf.get("factor") or {}; d = uf.get("dispersion") or {}; p = uf.get("pca") or {}
+            t = "f USD 21 s. %+.2f %% (z %+.2f) · dispersión %s%s p%s · S %.0f %%" % (
+                f.get("cum21") or 0.0, f.get("z21") or 0.0, d.get("band") or "NA",
+                (" UN NOMBRE " + str(d.get("one_name_ccy"))) if d.get("one_name") else "", d.get("D_pct"),
+                (p.get("S_pc1") or 0.0) * 100)
+            br = read_json("BOOK_RISK.json") or {}
+            bk = br.get("book") or {}
+            if bk.get("status") in ("OK", "STALE"):
+                r = bk.get("risk") or {}
+                t += " · libro VaR95 %.0f USD · cuota cesta %.0f %%%s" % (r.get("var95_param") or 0, (r.get("share_on_basket") or 0) * 100,
+                                                                  " · COLA" if r.get("cola") else "")
+            b["as_of"]["factor"] = uf.get("as_of")
+            b["bullets"].append({"sec": "§10 Factor USD", "text": t})
+    except Exception as e:
+        note("factor: %s" % e)
     # walls: foto por par de la sesión vigente (pin / call / put / proximidad), siempre
     sess = oj.get("latest_session")
     if sess:
@@ -1087,7 +1163,7 @@ def main(argv):
     st = load_state()
     first = not st
     lines = []
-    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cot, check_dqm):
+    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cot, check_factor, check_dqm):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
@@ -1108,7 +1184,7 @@ def main(argv):
         body.append("")
         sec_names = {"§01": "§01 Spread vs USD", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
                      "§04": "§04 Term premium", "§05": "§05 Data quality", "§06": "§06 Oro", "§07": "§07 Plata",
-                     "§08": "§08 Walls", "§09": "§09 COT"}
+                     "§08": "§08 Walls", "§09": "§09 COT", "§10": "§10 Factor USD"}
         last_sec = None
         for l in events:
             sec = l[:3]
