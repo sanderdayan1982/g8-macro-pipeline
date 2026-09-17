@@ -647,10 +647,17 @@ function render(doc) {
 async function init() {
     var el = document.getElementById('cross-walls');
     try {
-        var r = await window.G8NET.fetchChain([RAW + 'CROSS_WALLS.json'], { corsOk: true });
+        var r = await window.G8NET.fetchChain([RAW + 'CROSS_WALLS.json'], { corsOk: true, maxAge: 5 * 60 * 1000 });
         if (!r.ok) throw new Error(r.error || 'fetch failed');
         var doc = JSON.parse(r.text);
-        if (!doc.version || doc.version.indexOf('v2') < 0) throw new Error('CROSS_WALLS.json is ' + doc.version + ' — waiting for the v2 workflow run');
+        if (!doc.version || doc.version.indexOf('v2') < 0) {
+            /* stale copy in the G8NET localStorage cache (60 min) — refetch bypassing it */
+            try { localStorage.removeItem('g8net_' + RAW + 'CROSS_WALLS.json'); } catch (e0) {}
+            r = await window.G8NET.fetchChain([RAW + 'CROSS_WALLS.json'], { corsOk: true, noCache: true });
+            if (!r.ok) throw new Error(r.error || 'fetch failed');
+            doc = JSON.parse(r.text);
+            if (!doc.version || doc.version.indexOf('v2') < 0) throw new Error('CROSS_WALLS.json is ' + doc.version + ' — waiting for the v2 workflow run');
+        }
         render(doc);
     } catch (e) {
         el.innerHTML = '<div class="attr-err">CROSS_WALLS.json unreachable — ' + e.message + ' · run the CME Options Surface workflow (cross_walls.py step)</div>';
