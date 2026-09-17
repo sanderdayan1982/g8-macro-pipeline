@@ -331,8 +331,8 @@
     </div>
 </header>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
-    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a>
-    <span class="desk-nav-hint">teclas 0–9</span>
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
+    <span class="desk-nav-hint">teclas 0–9 · u</span>
 </nav>
 <main class="dashboard-main">
 
@@ -534,7 +534,7 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   COT POSITIONING — Section 09 module · v1.0.0
+   COT POSITIONING — Section 09 module · v1.1.0 (P3y/EXT, 17-sep-2026)
    Reads data/pos_g8_cot.json (built by pos_g8_cot_collector.py).
    Same question as the POS-G8 v1.1.3 Pine study, enriched with the metrics the
    Pine environment can't compute: COT index, empirical percentile, % of OI,
@@ -591,6 +591,15 @@ function velCell(x) {
     return '<td style="color:' + c + '">' + k(x) + '</td>';
 }
 
+/* v1.1 (17-sep-2026): P3y = percentile of %OI vs the PREVIOUS window (current
+   excluded), z alongside, EXT badge on the two tails. Descriptive band, no vote. */
+function p3yCell(p, zz, ext) {
+    if (p == null || !isFinite(p)) return '<td class="cot-sub" title="NA: history shorter than the window">·</td>';
+    var c = ext ? GOLD : (p >= 75 || p <= 25) ? AMBER : MUTE;
+    return '<td style="color:' + c + '" title="z ' + z(zz) + ' (same previous window)">' + p.toFixed(0) +
+        (ext ? ' <span class="cot-badge cot-crowd" style="padding:1px 4px">EXT</span>' : '') + '</td>';
+}
+
 function inStateCell(n) {
     if (n == null) return '<td class="cot-sub">·</td>';
     return '<td class="cot-sub">' + n + 'w</td>';
@@ -606,6 +615,7 @@ function ccyRow(r) {
         idxCell(r.lf_cot_index) +
         '<td class="cot-sub">' + pcti(r.lf_pctile) + '</td>' +
         '<td style="color:' + netCol(r.lf_pct_oi) + '">' + pctOI(r.lf_pct_oi) + '</td>' +
+        p3yCell(r.lf_pctoi_p3y, r.lf_pctoi_z3y, r.lf_ext) +
         velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
         '<td style="color:' + netCol(r.am_net) + '">' + k(r.am_net) + '</td>' +
         zCell(r.am_z, warn, ext) +
@@ -623,6 +633,7 @@ function metalRow(r, thr) {
         idxCell(r.mm_cot_index) +
         '<td class="cot-sub">' + pcti(r.mm_pctile) + '</td>' +
         '<td style="color:' + netCol(r.mm_pct_oi) + '">' + pctOI(r.mm_pct_oi) + '</td>' +
+        p3yCell(r.mm_pctoi_p3y, r.mm_pctoi_z3y, r.mm_ext) +
         velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
         '<td class="cot-sub">·</td><td class="cot-sub">·</td>' +
         '<td style="text-align:left">' + stateBadge(r.state) + '</td>' +
@@ -648,6 +659,7 @@ function render(doc) {
         '<th title="COT index 0-100 (Williams: position in own 3y min-max)">COTi</th>' +
         '<th title="Empirical percentile in own window — distribution-free">%ile</th>' +
         '<th title="Net as % of open interest — cross-currency comparable">%OI</th>' +
+        '<th title="v1.1: percentile of %OI against the PREVIOUS 156 weekly reports (current excluded) · z on the same window · EXT = ≤p10 / ≥p90, two-tail descriptive band (convention, ACTA_UF1 §E) — not danger, not reversion">P3y</th>' +
         '<th title="Δ vs previous distinct COT print">Δprt</th>' +
         '<th title="Net change over 4 weeks">Δ4w</th>' +
         '<th title="Net change over 13 weeks">Δ13w</th>' +
@@ -658,7 +670,7 @@ function render(doc) {
     if (doc.usd) html += ccyRow(doc.usd);
 
     if ((doc.metals || []).length) {
-        html += '<tr class="cot-metalhdr"><td colspan="13">── METALS · MM (Managed Money) ──</td></tr>';
+        html += '<tr class="cot-metalhdr"><td colspan="14">── METALS · MM (Managed Money) ──</td></tr>';
         (doc.metals || []).forEach(function (r) {
             var t = (thr[r.ccy]) || { warn: 1.6, ext: 2.25 };
             html += metalRow(r, t);
@@ -674,7 +686,7 @@ function render(doc) {
         'STATE on LF Z: CROWD ≥ ' + fxt.ext + 'σ · STRETCH ≥ ' + fxt.warn + 'σ ' +
         '<span style="color:' + AMBER + '">[fx PROV]</span> · metals <span style="color:' + GREEN + '">[CAL]</span>. ' +
         '<b>COTi</b> 0-100 Williams · <b>%ile</b> empirical percentile (distribution-free, robust for non-normal metals) · ' +
-        '<b>%OI</b> net as % open interest (comparable across currencies) · <b>Δprt</b> vs previous distinct print · ' +
+        '<b>%OI</b> net as % open interest (comparable across currencies) · <b>P3y</b> percentile of %OI vs the previous 156 reports (current excluded; <b>EXT</b> ≤p10/≥p90, two-tail band by convention, no vote) · <b>Δprt</b> vs previous distinct print · ' +
         '<b>Δ4w/Δ13w</b> positioning velocity · <b>DIV</b> = LF and AM on opposite sides · <b>held</b> = weeks in state.<br>' +
         '<b style="color:#d7dce6">Cross-read:</b> a suite signal (IYDT/RTF10) in the SAME direction as a CROWD state = <b style="color:' + AMBER + '">exhausted</b> (everyone already in); ' +
         'in the OPPOSITE direction = <b style="color:' + GREEN + '">squeeze fuel</b>. For metals, cross with the §06/07 MDP residual: MM CROWD + stretched residual = exhausted; MM CROWD against the residual = squeeze fuel.' +
@@ -714,6 +726,272 @@ function boot(tries) {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { boot(0); });
 } else { boot(0); }
+})();
+</script>
+
+
+<!-- ===== SECTION 10 — FACTOR USD · RESIDUALES · LIBRO (added 17-sep-2026, ACTA_UF1) ===== -->
+<style>
+/* §10 — only new CSS; tables/tiles inherit attr-table / mfv-kv */
+.uf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 16px;background:#0c1119;border:1px solid #1a2230;border-radius:4px;padding:12px 16px;margin-bottom:14px}
+@media (max-width:980px){.uf-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.uf-grid{grid-template-columns:repeat(2,1fr)}}
+.uf-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:2px;border:1px solid #1c2433}
+.uf-comun{background:#0e1c22;color:#5d8aa8;border-color:#1c3340}
+.uf-mixto{background:#0c1119;color:#8b93a7}
+.uf-disperso{background:#221a05;color:#fdb813;border-color:#3a2e08}
+.uf-flag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;background:#221608;color:#ff8c42;border:1px solid #3a2410;border-radius:2px;padding:1px 5px;margin-left:4px}
+.uf-flag-mute{background:#0c1119;color:#5d6678;border-color:#1c2433}
+.uf-tabs{display:flex;gap:6px;margin:14px 0 8px}
+.uf-tab{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;background:#0c1119;border:1px solid #1a2230;border-radius:3px;padding:4px 10px;cursor:pointer}
+.uf-tab.is-on{color:#fdb813;border-color:#3a2e08}
+.uf-matrix td{padding:6px 8px !important;font-size:12px;text-align:center !important}
+.uf-matrix td:first-child,.uf-matrix th:first-child{text-align:left !important;color:#fdb813;font-weight:700}
+.uf-matrix th{text-align:center !important}
+.uf-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media (max-width:980px){.uf-two{grid-template-columns:1fr}}
+.uf-box{background:#0c1119;border:1px solid #1a2230;border-radius:4px;padding:12px 14px}
+.uf-box-h{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5d8aa8;border-bottom:1px solid #1c2433;padding-bottom:6px;margin-bottom:10px}
+.uf-kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 14px}
+@media (max-width:640px){.uf-kv{grid-template-columns:repeat(2,1fr)}}
+.uf-pre{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7e879a;white-space:pre-wrap;line-height:1.5;margin-top:12px;border-top:1px solid #131a26;padding-top:8px}
+.uf-diag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7e879a;line-height:1.6;margin-top:10px}
+.uf-sub{color:#5d6678}
+</style>
+
+<section class="dashboard-section" id="section-factor">
+    <div class="section-header">
+        <h2 class="section-title">10 — Factor USD · Residuales · Libro (CONTEXT)</h2>
+        <span class="section-meta">BCE ref. rates 14:15 CET triangulados · f = −media(7 patas) · Σ EWMA λ=0,97 · β factor completo · sin voto · ACTA_UF1</span>
+    </div>
+    <div class="section-body">
+        <div id="uf-panel">
+            <div class="attr-err" style="color:#5d6678">Loading USD_FACTOR.json / BOOK_RISK.json from pipeline repo…</div>
+        </div>
+    </div>
+    <div class="section-footer">
+        <span class="section-meta">composición y riesgo: cuánto dólar hay en cada pata, qué queda sin el dólar, cuánto riesgo común acumula el libro · nunca una señal de entrada</span>
+    </div>
+</section>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   FACTOR USD — Section 10 module · v1.0.0 (17-sep-2026)
+   Reads data/USD_FACTOR.json (usd_factor.py) and data/BOOK_RISK.json
+   (book_risk.py). The browser paints; it computes nothing.
+   Spec: docs/actas/ACTA_UF1.md — factor completo, α=0, un solo reloj (Σ EWMA),
+   residual 21d, bandas 30/40/30 por convención, UN-NOMBRE, PC1 only,
+   proyección sobre la cesta (no "es dólar"), PRE-TRADE, sin carry.
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var GREEN = '#2fbf71', RED = '#e0485a', MUTE = '#5d6678', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#d7dce6';
+var CCYS = ['EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD'];
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function nz(x) { return x != null && isFinite(x); }
+function sg(x, nd) { return nz(x) ? (x >= 0 ? '+' : '') + x.toFixed(nd == null ? 2 : nd) : '·'; }
+function num(x, nd) { return nz(x) ? x.toFixed(nd == null ? 2 : nd) : '·'; }
+function usd(x) { if (!nz(x)) return '·'; var a = Math.abs(x); var s = a >= 1e6 ? (a / 1e6).toFixed(2) + 'M' : a >= 1e3 ? (a / 1e3).toFixed(1) + 'k' : a.toFixed(0); return (x < 0 ? '−' : '') + s; }
+function signCol(x) { return !nz(x) ? MUTE : x > 0 ? GREEN : x < 0 ? RED : WHITE; }
+function zCol(z) { if (!nz(z)) return MUTE; var a = Math.abs(z); return a >= 2 ? GOLD : a >= 1.5 ? AMBER : z > 0 ? GREEN : RED; }
+function tile(lbl, val, sub, col) {
+    return '<div class="mfv-kv"><span class="mfv-kv-lbl">' + lbl + '</span><span class="mfv-kv-val" style="color:' + (col || WHITE) + '">' + val + '</span>' +
+        (sub ? '<span class="mfv-kv-sub">' + sub + '</span>' : '') + '</div>';
+}
+function bandBadge(b) {
+    var cls = b === 'COMUN' ? 'uf-comun' : b === 'DISPERSO' ? 'uf-disperso' : 'uf-mixto';
+    var t = b === 'COMUN' ? 'COMÚN' : (b || 'NA');
+    return '<span class="uf-band ' + cls + '">' + t + '</span>';
+}
+
+function header(uf) {
+    var f = uf.factor || {}, d = uf.dispersion || {}, p = uf.pca || {};
+    var one = d.one_name ? '<span class="uf-flag" title="max(E21²)/ΣE21² = ' + num(d.one_name_share) + ' > 0,5: la dispersión la aporta una sola divisa">UN NOMBRE · ' + esc(d.one_name_ccy) + '</span>' : '';
+    var rot = p.rotation_flag ? '<span class="uf-flag" title="cos(u1_t, u1_t−21) = ' + num(p.rotation_cos21) + ' < 0,8">ROTACIÓN</span>' : '';
+    return '<div class="uf-grid">' +
+        tile('f USD · 5 s.', sg(f.cum5) + ' %', 'z ' + sg(f.z5), zCol(f.z5)) +
+        tile('f USD · 21 s.', sg(f.cum21) + ' %', 'z ' + sg(f.z21) + ' · horizonte de mesa', zCol(f.z21)) +
+        tile('f USD · 63 s.', sg(f.cum63) + ' %', 'z ' + sg(f.z63), zCol(f.z63)) +
+        tile('Dispersión D', bandBadge(d.band) + one, 'p' + num(d.D_pct, 0) + ' · D ' + num(d.D, 2) + ' % · ' + (d.band_since || 0) + ' s. en banda') +
+        tile('Cuota PC1 · S', num(p.S_pc1 * 100, 0) + ' %' + rot, 'varianza en el 1er componente · Σ EWMA') +
+        '</div>';
+}
+
+function tableCcy(uf) {
+    var h = '<div class="attr-wrap"><table class="attr-table"><thead><tr>' +
+        '<th>CCY</th><th title="β = −Cov(r_i,f)/Var(f) desde la MISMA Σ EWMA del libro · factor completo · α=0 · Σβ = 7 por construcción">β</th>' +
+        '<th title="β_t − β_t−21">Δβ 21</th>' +
+        '<th title="Σ residuales 21 sesiones, en % (ε = r + β_t−1·f)">E21 %</th>' +
+        '<th title="z de E21 frente a sus 252 valores ANTERIORES (solapados: descriptivo)">z21</th>' +
+        '<th title="rango transversal de E21 (1 = mayor; empates rango medio)">rk</th>' +
+        '<th title="vol anualizada de la pata, Σ EWMA">σ ann</th>' +
+        '<th title="carga de PC1 (signo anclado: PC1 ↑ = dólar ↑)">PC1</th>' +
+        '<th title="twin: β OLS-252 sin intercepto (canonical) — número, no veredicto">β OLS</th></tr></thead><tbody>';
+    (uf.currencies || []).forEach(function (c) {
+        h += '<tr><td><span class="attr-ccy">' + c.ccy + '</span></td>' +
+            '<td>' + num(c.beta, 2) + '</td>' +
+            '<td style="color:' + signCol(c.dbeta21) + '">' + sg(c.dbeta21, 2) + '</td>' +
+            '<td style="color:' + signCol(c.E21) + '">' + sg(c.E21, 2) + '</td>' +
+            '<td style="color:' + zCol(c.z21) + '">' + sg(c.z21, 2) + '</td>' +
+            '<td>' + num(c.rank, 0) + '</td>' +
+            '<td class="uf-sub">' + num(c.vol_ann_pct, 1) + ' %</td>' +
+            '<td class="uf-sub">' + sg(c.pc1, 2) + '</td>' +
+            '<td class="uf-sub">' + num(c.beta_ols252, 2) + '</td></tr>';
+    });
+    return h + '</tbody></table></div>';
+}
+
+var MODE = 'leak';
+function matrix(uf) {
+    var P = uf.pairs || {};
+    var h = '<div class="uf-tabs">' +
+        ['leak', 'vol'].map(function (m) {
+            var lbl = m === 'leak' ? 'β_A − β_B (dólar escondido en el cruce)' : 'σ del cruce (ann. %)';
+            return '<span class="uf-tab' + (MODE === m ? ' is-on' : '') + '" data-m="' + m + '">' + lbl + '</span>';
+        }).join('') + '</div>';
+    h += '<div class="attr-wrap"><table class="attr-table uf-matrix"><thead><tr><th>A \\ B</th>' +
+        CCYS.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>';
+    CCYS.forEach(function (a) {
+        h += '<tr><td>' + a + '</td>';
+        CCYS.forEach(function (b) {
+            if (a === b) { h += '<td class="uf-sub">—</td>'; return; }
+            var q = P[a + b] || {};
+            var tt = 'largo ' + a + '/' + b + ' · leak ' + sg(q.leak, 2) + ' · σ ' + num(q.vol_ann_pct, 1) + ' % · ρ ' + num(q.rho, 2) + ' · E21_A−E21_B ' + sg(q.dE21, 2) + ' %';
+            if (MODE === 'leak') {
+                /* color = magnitud del dólar escondido, nunca dirección */
+                var v = q.leak; var c = !nz(v) ? MUTE : Math.abs(v) >= 1 ? GOLD : Math.abs(v) >= 0.5 ? AMBER : WHITE;
+                h += '<td style="color:' + c + '" title="' + esc(tt) + '">' + sg(v, 2) + '</td>';
+            } else {
+                h += '<td title="' + esc(tt) + '">' + num(q.vol_ann_pct, 1) + '</td>';
+            }
+        });
+        h += '</tr>';
+    });
+    h += '</tbody></table></div>' +
+        '<div class="attr-note">leak = β_A − β_B: &gt; 0 ⇒ largo A/B se comporta como <b>corto USD</b>; &lt; 0 ⇒ como largo USD; |leak| es carga de retorno por unidad de factor, no riesgo en dólares. ' +
+        'Pasa el ratón por una celda para ρ y E21_A − E21_B. Un cruce sin USD en el nombre no es riesgo USD cero.</div>';
+    return h;
+}
+
+function bookPanel(br) {
+    var b = (br && br.book) || {};
+    var h = '<div class="uf-box"><div class="uf-box-h">Libro · exposiciones lineales FX (snapshot ' + esc(b.snapshot_date || '—') + ')' +
+        (b.status === 'STALE' ? ' <span class="uf-flag">LIBRO DESACTUALIZADO</span>' : '') + '</div>';
+    if (!b.status || b.status === 'SIN LIBRO') {
+        return h + '<div class="uf-sub" style="font-family:\'JetBrains Mono\',monospace;font-size:12px">SIN LIBRO — data/book.csv (id,fecha_snapshot,par,lado,nominal_usd)</div></div>';
+    }
+    if (b.status === 'ERROR') return h + '<div class="attr-err">book.csv: ' + esc(b.error) + '</div></div>';
+    var r = b.risk || {}, st = r.stress || {}, bu = b.buckets_usd || {};
+    h += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' + ['USD'].concat(CCYS).map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody><tr>' +
+        ['USD'].concat(CCYS).map(function (c) { return '<td style="color:' + signCol(bu[c]) + '">' + usd(bu[c]) + '</td>'; }).join('') + '</tr></tbody></table></div>' +
+        '<div class="uf-sub" style="font-size:10px;margin:4px 0 10px">Σ cubos = ' + usd(b.sum_buckets) + ' (identidad de la representación) · ' + b.n_positions + ' posiciones</div>';
+    h += '<div class="uf-kv">' +
+        tile('σ 1d', usd(r.sigma_usd), 'USD · Σ EWMA') +
+        tile('VaR 95 % param', usd(r.var95_param), '1,645·σ') +
+        tile('VaR 95 % hist', usd(r.var95_hist), (r.n_hist || 0) + ' s. · Δ ' + usd(r.var_diff_usd) + (r.cola ? ' · <span class="uf-flag">COLA</span>' : ''), r.cola ? AMBER : WHITE) +
+        tile('Cuota sobre la cesta', nz(r.share_on_basket) ? (r.share_on_basket * 100).toFixed(0) + ' %' : '·', 'proyección de V sobre f · no "es dólar"', nz(r.share_on_basket) && r.share_on_basket > 0.8 ? AMBER : WHITE) +
+        tile('Cesta +1 %', usd(st.basket_up_1pct), 'P&amp;L si f = +1 % (r_i = −β_i·1 %)', signCol(st.basket_up_1pct)) +
+        tile('DOLLAR+', nz(st.dollar_plus) ? usd(st.dollar_plus) : 'sin congelado', nz(st.dollar_plus_shock) ? 'shock ' + (st.dollar_plus_shock * 100).toFixed(2) + ' % (máx 2000-23)' : 'frozen_2000_2023.json pendiente', signCol(st.dollar_plus)) +
+        tile('Cota σ_max', usd(st.sigma_max_bound), 'Σ|q_i|σ_i · dependencia adversa') +
+        tile('Backtest VaR', esc((br.backtest || {}).status || '—'), ((br.backtest || {}).n_forecasts || 0) + ' / ' + ((br.backtest || {}).min || 250) + ' previsiones') +
+        '</div>';
+    h += '<div class="attr-wrap" style="margin-top:10px"><table class="attr-table"><thead><tr><th>pos</th><th>par</th><th>lado</th><th>nominal</th><th title="contribución de Euler q_k\'Σq/V (suman 1; negativa = cobertura)">RC Euler</th></tr></thead><tbody>';
+    (b.euler || []).forEach(function (e) {
+        h += '<tr><td>' + esc(e.id) + '</td><td>' + esc(e.pair) + '</td><td>' + (e.side > 0 ? 'largo' : 'corto') + '</td><td>' + usd(e.nominal_usd) + '</td>' +
+            '<td style="color:' + (nz(e.rc) && e.rc < 0 ? GREEN : nz(e.rc) && e.rc > 0.5 ? AMBER : WHITE) + '">' + (nz(e.rc) ? (e.rc * 100).toFixed(0) + ' %' : '·') + '</td></tr>';
+    });
+    return h + '</tbody></table></div></div>';
+}
+
+function preTrade(br) {
+    var cs = (br && br.candidates) || [];
+    var h = '<div class="uf-box"><div class="uf-box-h">PRE-TRADE · candidato contra el libro</div>';
+    if (!cs.length) return h + '<div class="uf-sub" style="font-family:\'JetBrains Mono\',monospace;font-size:12px">SIN CANDIDATO — data/candidate.csv (mismo formato que book.csv)' + (br && br.candidates_error ? ' · ' + esc(br.candidates_error) : '') + '</div></div>';
+    cs.forEach(function (c) {
+        var s = c.stress_candidate || {};
+        h += '<div style="border-bottom:1px solid #131a26;padding:8px 0 10px;margin-bottom:8px">' +
+            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:12.5px;color:' + GOLD + ';margin-bottom:8px">' + esc(c.id) + ' · ' + (c.side > 0 ? 'largo ' : 'corto ') + esc(c.pair) + ' · ' + usd(c.nominal_usd) + ' <span class="uf-sub">vs ' + esc(c.vs) + '</span></div>' +
+            '<div class="uf-kv">' +
+            tile('ΔVaR 95 %', sg(c.d_var95_param, 0), 'USD · Δσ ' + sg(c.d_sigma_usd, 0), signCol(c.d_var95_param)) +
+            tile('ρ con el libro', nz(c.rho_book) ? sg(c.rho_book, 2) : 'libro vacío', 'q_c\'Σq/√(V_c·V) · ≈1 duplica', nz(c.rho_book) && Math.abs(c.rho_book) > 0.7 ? AMBER : WHITE) +
+            tile('leak β_A − β_B', sg(c.leak_beta, 2), 'dólar escondido (USD: β = 0)', Math.abs(c.leak_beta || 0) >= 1 ? GOLD : Math.abs(c.leak_beta || 0) >= 0.5 ? AMBER : WHITE) +
+            tile('σ cruce', num(c.cross_vol_ann_pct, 1) + ' %', 'anualizada, Σ EWMA') +
+            tile('E21_A − E21_B', sg(c.dE21_pct, 2) + ' %', 'residuales 21 s. · número, no adjetivo', signCol(c.dE21_pct)) +
+            tile('Cuota cesta después', nz(c.share_on_basket_after) ? (c.share_on_basket_after * 100).toFixed(0) + ' %' : '·', 'Δ ' + (nz(c.d_share_on_basket) ? sg(c.d_share_on_basket * 100, 0) + ' pp' : '·')) +
+            tile('Cesta +1 % (cand.)', usd(s.basket_up_1pct), 'DOLLAR+ ' + (nz(s.dollar_plus) ? usd(s.dollar_plus) : '·'), signCol(s.basket_up_1pct)) +
+            tile('Δcubos', ['USD'].concat(CCYS).filter(function (k) { return (c.d_buckets_usd || {})[k]; }).map(function (k) { return k + ' ' + usd(c.d_buckets_usd[k]); }).join(' · ') || '·', 'patas nativas') +
+            '</div></div>';
+    });
+    return h + '</div>';
+}
+
+function diag(uf, br) {
+    var d = uf.diag || {}, tw = d.twins || {}, fu = tw.futures || {}, afe = tw.afe || {}, ing = d.ingestion || {}, fz = d.frozen || {};
+    var futs = fu.available ? CCYS.map(function (c) { var x = (fu.by_ccy || {})[c]; return c + ' ' + (x && nz(x.corr) ? num(x.corr, 2) + '/' + num(x.corr_ex_us, 2) : '·'); }).join(' · ') : (fu.note || 'NA');
+    var bet = CCYS.map(function (c) { var x = (d.beta_ewma_vs_ols252 || {})[c] || {}; return c + ' ' + num(x.ewma, 2) + '/' + num(x.ols252, 2); }).join(' · ');
+    var ingOk = ing.triangulation_ok === undefined ? esc(ing.note || '') : (ing.triangulation_ok && ing.dates_sorted_unique && ing.all_positive ? 'OK (err ' + (ing.triangulation_max_abs_err || 0).toExponential(1) + ')' : 'FALLA');
+    return '<div class="uf-diag"><b style="color:' + GOLD + '">DIAG</b> · as-of ' + esc(uf.as_of) + ' · fuente ' + esc(uf.source) + ' · FIX ' + esc(d.fix) + ' · calendario ' + esc(d.calendar) +
+        ' · antigüedad ' + (d.age_calendar_days != null ? d.age_calendar_days + ' d cal' : '·') + (d.desfase_us_today ? ' · <span class="uf-flag">DESFASE_US</span>' : '') +
+        ' · sesiones ' + (d.n_sessions || '·') + ' desde ' + esc(d.first || '·') + ' · identidades ingestión ' + ingOk +
+        (ing.jumps_gt_10pct && ing.jumps_gt_10pct.length ? ' · saltos &gt;10 %: ' + ing.jumps_gt_10pct.join(', ') : '') +
+        '<br>twins (número, no veredicto) · BCE vs futuros CME corr 252 con/sin días US: ' + futs +
+        '<br>f vs DTWEXAFEGS (semanal): ' + (afe.available ? num(afe.corr_weekly, 2) + ' (' + afe.n_weeks + ' sem., AFE ' + esc(afe.afe_last) + ')' : esc(afe.note || 'NA')) +
+        ' · cesta equi vs inv-vol corr 63: ' + num(d.corr63_f_invvol, 3) + ' · factores LOO corr mín: ' + num(d.loo_corr_min, 3) +
+        '<br>β EWMA / OLS-252: ' + bet +
+        '<br>congelados 2000-2023: ' + (fz.written ? 'máx |f| 1d ' + (fz.max_abs_f_1d * 100).toFixed(2) + ' % (' + esc(fz.max_abs_f_1d_date) + ') · mediana S ' + num(fz.median_S_pc1, 2) + ' · UN-NOMBRE ' + (fz.one_name_freq * 100).toFixed(0) + ' % de los días' : 'PENDIENTE (' + esc(fz.reason || 'se escriben en la primera pasada BCE completa') + ')') +
+        ' · Σ PSD ' + (br && br.sigma_psd === false ? '<span class="uf-flag">FALLA</span>' : 'OK') + ' · usd_factor v' + esc(uf.version) + (br ? ' · book_risk v' + esc(br.version) : '') + '</div>';
+}
+
+function footer(uf) {
+    return '<div class="uf-pre">' + (uf.footer || []).map(function (l) { return '· ' + esc(l); }).join('\n') +
+        '\n· f = −(1/7)Σ r_i · β_i = −Cov(r_i,f)/Var(f) [Σ EWMA λ=0,97, t−1] · ε = r + β·f · E21 = Σ₂₁ ε · D = sd₇(E21) · bandas p30/p70 (convención 30/40/30, histéresis 3 s.)' +
+        '\n· V = q\'Σq · VaR95 = 1,645√V · carga = −q\'Σw/(w\'Σw) · cuota = (q\'Σw)²/(w\'Σw·V) · RC_k = q_k\'Σq/V · ΔV = 2q_c\'Σq + q_c\'Σq_c · σ_max = Σ|q_i|σ_i · sin carry</div>';
+}
+
+function render(uf, br) {
+    var el = document.getElementById('uf-panel');
+    var age = (uf.diag || {}).age_calendar_days;
+    var fc = age == null ? MUTE : age <= 4 ? GREEN : age <= 9 ? AMBER : RED;
+    var html = '<div class="dqm-bar" style="margin-bottom:12px"><span class="dqm-ts">as-of ' + esc(uf.as_of) +
+        ' · <span style="color:' + fc + ';font-weight:700">' + (age == null ? 'NA' : age <= 4 ? 'FRESH' : age <= 9 ? 'AGING' : 'STALE') + '</span>' + (age != null ? ' (' + age + 'd)' : '') +
+        ' · generated ' + esc(uf.generated_utc) + '</span><span class="dqm-ts uf-sub">' + esc(uf.source_note || '') + '</span></div>';
+    html += header(uf) + tableCcy(uf) + '<div id="uf-matrix">' + matrix(uf) + '</div>' +
+        '<div class="uf-two">' + bookPanel(br) + preTrade(br) + '</div>' + diag(uf, br) + footer(uf);
+    el.innerHTML = html;
+    el.querySelectorAll('.uf-tab').forEach(function (t) {
+        t.addEventListener('click', function () { MODE = t.dataset.m; render(uf, br); });
+    });
+    if (window.G8DQM && window.G8DQM.report) {
+        try { window.G8DQM.report('USD_FACTOR', { lastDate: uf.as_of, via: 'repo (factor module v1)' }); } catch (e) {}
+    }
+}
+
+async function init() {
+    var el = document.getElementById('uf-panel');
+    try {
+        var r = await window.G8NET.fetchChain([RAW + 'USD_FACTOR.json'], { corsOk: true });
+        if (!r.ok) throw new Error(r.error || 'fetch failed');
+        var uf = JSON.parse(r.text);
+        var br = null;
+        try {
+            var r2 = await window.G8NET.fetchChain([RAW + 'BOOK_RISK.json'], { corsOk: true });
+            if (r2.ok) br = JSON.parse(r2.text);
+        } catch (e2) { br = null; }
+        render(uf, br);
+    } catch (e) {
+        el.innerHTML = '<div class="attr-err">USD_FACTOR.json unreachable — ' + esc(e.message) +
+            ' · run scripts/usd_factor.py (workflow usd_factor.yml) to publish data/USD_FACTOR.json</div>';
+        if (window.G8DQM && window.G8DQM.report) { try { window.G8DQM.report('USD_FACTOR', { status: 'DEAD', error: e.message }); } catch (e3) {} }
+    }
+}
+function boot(tries) {
+    tries = tries || 0;
+    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) { return setTimeout(function () { boot(tries + 1); }, 120); }
+    init();
+}
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function () { boot(0); }); } else { boot(0); }
 })();
 </script>
 
@@ -1064,6 +1342,13 @@ var FEED_REGISTRY = {
        freshness (extractLastDate can't read a JSON), same as OPTIONS_SURFACE. */
     POS_COT: Object.assign(
         repo('pos_g8_cot.json', 'COT Positioning G8 (TFF + Disagg MM)', 'weekly', 10, '09'),
+        { externalReport: true }),
+
+    /* ── 10 Factor USD — repo (usd_factor.py, BCE ref. rates triangulados) ──
+       Daily on TARGET days (BCE ~16:00 CET); budget 5bd. externalReport: the
+       §10 module reads as_of from the JSON and reports its own freshness. */
+    USD_FACTOR: Object.assign(
+        repo('USD_FACTOR.json', 'Factor USD · residuales · Σ (BCE triangulado)', 'daily', 5, '10'),
         { externalReport: true })
     /* CHF_BILL_3M deregistered 2026-06-26 — orphan feed: no rendered section
        consumed it (§02 has no CHF row: no FLOOR_CHF and no SARON fixing) and no
