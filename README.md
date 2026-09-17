@@ -35,7 +35,8 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 | 05 | Data Quality Monitor | `sources/registry.csv` (presupuestos) |
 | 06/07 | Oro / plata — MDP (Monetary Disorder Premium, Kalman TVP) | `MFV_G8_*.csv`, `MFV_G8_state.json` |
 | 08 | CME FX strike walls (Gate 0 = permiso, nunca trigger) | `OPTIONS_SURFACE.json`, `options/canonical/<sesión>/` |
-| 09 | COT positioning (TFF + Disagg MM) | `pos_g8_cot.json` |
+| 09 | COT positioning (TFF + Disagg MM) · v1.1 columna P3y/EXT (percentil de %OI vs 156 informes anteriores) | `pos_g8_cot.json` |
+| 10 | Factor USD · residuales · matriz de cruces · libro por factores · PRE-TRADE (CONTEXT, sin voto — `docs/actas/ACTA_UF1.md`) | `USD_FACTOR.json`, `BOOK_RISK.json`, `usd_factor/canonical.csv`, `book.csv`, `candidate.csv` |
 
 ## Workflows (GitHub Actions)
 
@@ -45,6 +46,7 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 | `cme_options.yml` | 13:30 + 17:00 | Colector Databento de opciones (T+1, tope $0.25/sesión) → resumen → alertas → commit |
 | `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. Bloques FFVA comentados (pausa) |
 | `metals_update.yml` | semanal | `metals_fairvalue_g8.py` (MDP) |
+| `usd_factor.yml` | 15:30 + 17:30 lun–vie | BCE ref. rates → `usd_factor.py` (factor, β EWMA, residuales, dispersión, PCA, twins) → `book_risk.py` (cubos, VaR, Euler, estrés, PRE-TRADE, snapshots) → alertas → commit. Festivo TARGET = NO_NEW_DATA, no fallo |
 | `acm_validate.yml`, `ry_validate.yml` | manual | Validaciones ACM/real yields |
 | `validate.yml` | push / PR | CI de humo: compila `scripts/`, valida YAML, registry y JS inline, corre `dashboard_alerts.py --dry-run` (sin secrets, sin datos) |
 | `fx_futures_backfill.yml` | **manual, no lanzar** | Backfill Databento de futuros (proyecto pausado; consume presupuesto) |
@@ -57,7 +59,7 @@ Secrets: `FRED_API_KEY`, `DATABENTO_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CH
 (coste $0), compara contra `data/alerts/state.json` y envía **solo cambios de estado** con
 histéresis (umbrales de nivel = los del dashboard; umbrales de movimiento = percentiles
 rolling 252 d — Regla 8, nada inventado). Cubre §01/§02/§03/§04/§05/§06-07/§08/§09 para todas
-las divisas con dato. En cada sesión nueva de opciones manda la tarjeta completa de walls
+las divisas con dato, y §10 (banda de dispersión, |z21| del factor, cuota del libro sobre la cesta, COLA — v2.3). En cada sesión nueva de opciones manda la tarjeta completa de walls
 (cadena completa, convención del operador para USD/JPY, USD/CAD, USD/CHF).
 
 ## Eslabón Mac (NZD y CHF) — arquitectura
