@@ -331,7 +331,7 @@
     </div>
 </header>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
-    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-crosswalls" data-key="8b">8b Cross</a><a href="#section-cot" data-key="9">9 COT</a>
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a>
     <span class="desk-nav-hint">teclas 0–9</span>
 </nav>
 <main class="dashboard-main">
@@ -499,179 +499,6 @@
         </div>
     </div>
 </section>
-
-<!-- ===== SECTION 08b — CROSS WALLS v2 (acta CW-2 · RESEARCH) ===== -->
-<style>
-.cw-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0 12px}
-.cw-card{background:#0c1119;border:1px solid #1c2433;border-radius:3px;padding:8px 10px}
-.cw-card .k{font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;color:#5d6678;letter-spacing:.08em;text-transform:uppercase}
-.cw-card .v{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:#d7dce6;margin-top:2px}
-.cw-card .s{font-size:10px;color:#8b93a7;margin-top:2px}
-.cw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:10px}
-.cw-x{background:#0c1119;border:1px solid #1c2433;border-left:3px solid #2a3240;border-radius:3px;padding:8px 10px;font-family:'JetBrains Mono',monospace}
-.cw-x.up{border-left-color:#2fbf71}.cw-x.dn{border-left-color:#e0485a}.cw-x.off{opacity:.55}
-.cw-x .name{font-size:13px;font-weight:700;color:#d7dce6}
-.cw-x .dir{font-size:18px;float:right}
-.cw-x .meta{font-size:10px;color:#8b93a7;margin-top:4px;clear:both}
-.cw-flag{display:inline-block;font-size:9px;font-weight:700;border-radius:2px;padding:1px 5px;margin-right:3px;letter-spacing:.05em}
-.cw-nv{background:#3a1218;color:#ff6b7a}.cw-pin{background:#2a2410;color:#fdb813}.cw-flow{background:#13202e;color:#5d8aa8}.cw-next{background:#1c2433;color:#8b93a7}.cw-mixed{background:#1c2433;color:#d7dce6}
-.cw-wall{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 6px;margin:1px 3px 1px 0;border-radius:2px;border:1px solid #1c2433;background:#0c1119;color:#d7dce6}
-.cw-wall.usd{border-color:#3a2e08;color:#fdb813}.cw-wall.xxx{border-color:#13202e;color:#5d8aa8}.cw-wall.dead{text-decoration:line-through;opacity:.5}
-.cw-formula{font-family:'JetBrains Mono',monospace;font-size:10px;color:#5d6678;background:#0c1119;border:1px dashed #1c2433;border-radius:3px;padding:6px 10px;margin-top:10px;white-space:pre-wrap}
-.cw-strike{text-decoration:line-through;color:#5d6678}
-</style>
-
-<section class="dashboard-section" id="section-crosswalls">
-    <div class="section-header">
-        <h2 class="section-title">08b — Cross Walls · la lectura de los muros, escrita <span class="fls-badge" style="background:#2a2410;color:#fdb813">RESEARCH · CW-2</span></h2>
-        <span class="section-meta">tres muros mayores por divisa · distancia en % del futuro trimestral · lado del dólar · la más débil = la que más recorrido tiene · sin niveles para los cruces · sin voto hasta el gate</span>
-    </div>
-    <div class="section-body">
-        <div id="cross-walls">
-            <div class="attr-err" style="color:#5d6678">Loading CROSS_WALLS.json from pipeline repo…</div>
-        </div>
-        <div class="section-footer">
-            <span class="footer-note">Cross Walls v2.0 (acta CW-2, 17-sep-2026; tres rondas de triangulación). Es el método manual del operador escrito como regla: por divisa, en convención nativa CME (XXX/USD), los tres strikes con más OI de la cadena de análisis (≥ 100 contratos y ≥ 5 % del OI de la cadena; un strike cuyo OI no cambia en 10 sesiones está MUERTO y no cuenta). Distancia = % del futuro TRIMESTRAL en que se ejerce la opción (verificado por paridad put-call; F_MISMATCH ⇒ sin voto). Una divisa VOTA solo si ≥ ⅔ del OI de sus muros está en un mismo lado; D = distancia media (ponderada por OI) de los muros de ese lado; si no, MIXED. D negativa = muros del lado del dólar = cuanto más lejos, más débil la divisa. Sesgo del dólar = cuota media del OI de muros del lado USD entre las que votan (nunca un percentil). Cruce A/B = signo(D_A − D_B); fuerza en puntos porcentuales; "rareza" = percentil causal, no confianza. Universo congelado EUR/GBP/JPY/AUD; CAD (PROXY) y CHF (NA) se muestran, nunca votan. Skew RR25, D en σ y "agree" son diagnósticos sin voto. Lo que NO puede saber esta sección: si un muro atrae (imán) o frena (barrera): con OI agregado no se identifica la gamma de los dealers; wall_behaviour.py registra PIN/THROUGH desde el día 1 para un futuro CW-3. RESEARCH hasta que gate_cross_walls.py (CW-2, evaluación única a 252 fechas evaluables) emita veredicto: hasta entonces es contexto de posicionamiento, nunca gatillo ni tamaño.</span>
-        </div>
-    </div>
-
-<script>
-(function () {
-'use strict';
-var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
-var ORDER = ['EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF'];
-var PAIR = { EUR: 'EUR/USD', JPY: 'USD/JPY', GBP: 'GBP/USD', AUD: 'AUD/USD', CAD: 'USD/CAD', CHF: 'USD/CHF' };
-var NATIVE = { EUR: 'EUR/USD', JPY: 'JPY/USD', GBP: 'GBP/USD', AUD: 'AUD/USD', CAD: 'CAD/USD', CHF: 'CHF/USD' };
-
-function f(v, n) { return (v === null || v === undefined || !isFinite(v)) ? '·' : Number(v).toFixed(n === undefined ? 2 : n); }
-function sgn(v, n) { if (v === null || v === undefined) return '·'; var s = Number(v).toFixed(n === undefined ? 2 : n); return (v > 0 ? '+' : '') + s; }
-function gateBadge(v) {
-    var cls = v === 'CLEAN' ? 'attr-q-clean' : v === 'PROXY' ? 'attr-q-proxy' : 'attr-q-na';
-    return '<span class="attr-q ' + cls + '">' + v + '</span>';
-}
-function flagHtml(fl) {
-    return (fl || []).map(function (x) {
-        var cls = x === 'NO_VOTE' || x === 'F_MISMATCH' ? 'cw-nv' : x === 'PIN' ? 'cw-pin' : x === 'FLOW' ? 'cw-flow' : x === 'MIXED' ? 'cw-mixed' : 'cw-next';
-        var t = x === 'NO_VOTE' ? 'una pata no vota (no CLEAN, MIXED, DTE < 10, F_MISMATCH o fuera del universo)' :
-                x === 'MIXED' ? 'los muros de una pata están repartidos (menos de 2/3 del OI en un lado): sin tesis' :
-                x === 'F_MISMATCH' ? 'el forward por paridad put-call no cuadra con el futuro trimestral: dato sospechoso, sin voto' :
-                x === 'PIN' ? 'proximidad a concentración de OI: el futuro está a < 0,3 % del muro mayor de una pata (no es gamma medida)' :
-                x === 'FLOW' ? '|ΔOI| > 15 % en una sesión en la cadena de una pata — reposicionamiento, inspeccionar' :
-                'cadena de análisis = siguiente mensual (front con DTE < 10)';
-        return '<span class="cw-flag ' + cls + '" title="' + t + '">' + (x === 'NO_VOTE' ? 'SIN VOTO' : x) + '</span>';
-    }).join('');
-}
-function wallChip(c, w, inv) {
-    var lvl = inv ? f(w.display_k, c === 'JPY' ? 2 : 4) : f(w.k, 4);
-    var dd = inv ? w.display_d_pct : w.d_pct;
-    var cls = 'cw-wall ' + (w.usd_side ? 'usd' : 'xxx');
-    var t = 'nativo ' + NATIVE[c] + ' K ' + w.k + ' · ' + sgn(w.d_pct, 2) + '% del futuro · OI ' + w.oi + ' (C ' + w.c + ' / P ' + w.p + ')' +
-        (w.seat < 1 ? ' · empate: peso ' + f(w.seat, 2) : '') + (w.x_sigma !== null ? ' · ' + sgn(w.x_sigma, 2) + 'σ' : '') +
-        ' · lado ' + (w.usd_side ? 'USD' : c);
-    return '<span class="' + cls + '" title="' + t + '">' + lvl + ' ' + sgn(dd, 2) + '%</span>';
-}
-
-function render(doc) {
-    var el = document.getElementById('cross-walls');
-    var U = doc.usd || {};
-    var C = doc.ccy || {};
-    var X = doc.crosses || {};
-    var html = '<div class="dqm-bar" style="margin-bottom:6px"><span class="dqm-ts">session ' + doc.latest_session +
-        ' · ' + doc.sessions_total + ' sessions · gate CW-2 ' + doc.gate_progress + ' · ' + doc.version +
-        ' · generated ' + (doc.generated_utc || '—') + '</span></div>';
-
-    /* headline cards: what is strongest, what is weakest, where is the dollar */
-    var usdCol = U.label === 'USD alcista' ? '#2fbf71' : U.label === 'USD bajista' ? '#e0485a' : U.label === 'INSUFICIENTE' ? '#5d6678' : '#d7dce6';
-    var rk = doc.ranking_weak_to_strong || [];
-    html += '<div class="cw-cards">' +
-        '<div class="cw-card"><div class="k">Sesgo del dólar</div><div class="v" style="color:' + usdCol + '">' + (U.label || '·') + '</div><div class="s">' + f(100 * (U.share || 0), 0) + ' % del OI de muros del lado USD · ' + (U.n_voters || 0) + ' divisas votan' + ((U.dissent || []).length ? ' · en contra ' + U.dissent.join('/') : '') + '</div></div>' +
-        '<div class="cw-card"><div class="k">Más débil</div><div class="v" style="color:#e0485a">' + (rk[0] || '·') + '</div><div class="s">' + (rk[0] ? 'D ' + sgn(C[rk[0]].D_pct, 2) + ' % · ' + PAIR[rk[0]] + ' muros ' + (C[rk[0]].inv ? 'arriba' : 'abajo') : 'nadie vota') + '</div></div>' +
-        '<div class="cw-card"><div class="k">Más fuerte</div><div class="v" style="color:#2fbf71">' + (rk.length > 1 ? rk[rk.length - 1] : '·') + '</div><div class="s">' + (rk.length > 1 ? 'D ' + sgn(C[rk[rk.length - 1]].D_pct, 2) + ' %' : '—') + '</div></div>' +
-        '<div class="cw-card"><div class="k">Ranking (débil → fuerte)</div><div class="v" style="font-size:12px">' +
-        (rk.length ? rk.join(' ‹ ') : '·') + ((doc.mixed || []).length ? ' <span class="cw-flag cw-mixed">MIXED ' + doc.mixed.join('/') + '</span>' : '') +
-        '</div><div class="s">solo las que votan · CAD/CHF fuera del universo</div></div></div>';
-
-    /* per-currency table: the three walls as the operator draws them */
-    html += '<table class="attr-table"><thead><tr><th>CCY</th><th>GATE</th><th>VOTA</th><th>MUROS (tu convención · % desde el futuro)</th><th>LADO USD</th><th>D</th><th>DIAGNÓSTICO</th></tr></thead><tbody>';
-    ORDER.forEach(function (c) {
-        var d = C[c]; if (!d || d.status) { html += '<tr><td>' + c + '</td><td colspan="6" style="color:#5d6678">sin cadena</td></tr>'; return; }
-        var inv = d.inv;
-        var walls = (d.walls || []).map(function (w) { return wallChip(c, w, inv); }).join('');
-        var side = d.side === 'MIXED' ? '<span class="cw-flag cw-mixed">MIXED</span>' : d.side === 'USD' ? '<span style="color:#fdb813">lado USD</span>' : d.side === 'XXX' ? '<span style="color:#5d8aa8">lado ' + c + '</span>' : '·';
-        var vota = d.votes ? '<span style="color:#2fbf71">sí</span>' : '<span style="color:#5d6678">no' + (!d.in_universe ? ' (fuera)' : d.side === 'MIXED' ? ' (MIXED)' : d.f_mismatch ? ' (F_MISMATCH)' : d.gate !== 'CLEAN' ? ' (' + d.gate + ')' : '') + '</span>';
-        var Dtxt = d.D_pct === null ? '·' : '<span class="attr-val" style="color:' + (d.D_pct < 0 ? '#e0485a' : '#2fbf71') + '">' + sgn(d.D_pct, 2) + ' %</span><span class="attr-sub">' + (inv ? PAIR[c] + ' ' + sgn(d.D_display_pct, 2) + ' % · ' : '') + (d.D_sigma !== null ? sgn(d.D_sigma, 2) + 'σ' : '') + '</span>';
-        var diag = 'ATM ' + f(d.atm_vol_pct, 2) + '% · RR25 ' + sgn(d.rr25, 2) + (d.agree_rr === null ? '' : d.agree_rr ? ' <span title="signo del skew = signo de D">✓</span>' : ' <span title="el skew no coincide con la geometría" style="color:#fdb813">✗</span>') +
-            ' · muros ' + f(100 * (d.c3 || 0), 0) + '% OI' + (d.m34 !== null ? ' · 3º/4º ' + f(100 * d.m34, 0) + '%' : '') +
-            (d.flow ? ' <span class="cw-flag cw-flow">FLOW</span>' : '') + (d.pin ? ' <span class="cw-flag cw-pin">PIN</span>' : '') + (d.next ? ' <span class="cw-flag cw-next">NEXT</span>' : '') +
-            (d.f_mismatch ? ' <span class="cw-flag cw-nv">F_MISMATCH</span>' : '') + ((d.dead_strikes || []).length ? ' · muertos ' + d.dead_strikes.length : '');
-        html += '<tr>' +
-            '<td><span class="attr-ccy">' + c + '</span> <span class="attr-sub">' + PAIR[c] + ' ' + f(d.display_ref, c === 'JPY' ? 2 : 4) + ' (' + d.F_sym + ')' + (inv ? ' · INV' : '') + '</span></td>' +
-            '<td>' + gateBadge(d.gate) + '</td>' +
-            '<td>' + vota + '</td>' +
-            '<td>' + walls + '<span class="attr-sub">' + d.front + ' · DTE ' + d.dte + '</span></td>' +
-            '<td><span class="attr-val">' + f(100 * (d.U || 0), 0) + ' %</span><span class="attr-sub">' + side + (d.A_minus !== null ? ' · ' + (inv ? 'arriba' : 'abajo') + ' ' + f(d.A_minus, 2) + '%' : '') + (d.A_plus !== null ? ' · ' + (inv ? 'abajo' : 'arriba') + ' ' + f(d.A_plus, 2) + '%' : '') + '</span></td>' +
-            '<td>' + Dtxt + '</td>' +
-            '<td><span class="attr-sub">' + diag + '</span></td></tr>';
-    });
-    html += '</tbody></table>';
-
-    /* crosses */
-    var keys = Object.keys(X).sort(function (a, b) {
-        var ea = X[a], eb = X[b];
-        if (ea.eligible !== eb.eligible) return ea.eligible ? -1 : 1;
-        return (eb.strength || 0) - (ea.strength || 0);
-    });
-    html += '<div class="cw-grid">';
-    keys.forEach(function (x) {
-        var e = X[x];
-        var cls = !e.eligible ? 'off' : e.dir === '▲' ? 'up' : e.dir === '▼' ? 'dn' : '';
-        var dirCol = e.dir === '▲' ? '#2fbf71' : e.dir === '▼' ? '#e0485a' : '#5d6678';
-        html += '<div class="cw-x ' + cls + '"><span class="dir" style="color:' + dirCol + '">' + e.dir + '</span>' +
-            '<div class="name">' + x.slice(0, 3) + '/' + x.slice(3) + '</div>' +
-            '<div class="meta">' + (e.gap === null ? 'sin lectura' : 'gap ' + sgn(e.gap, 2) + ' pp · rareza ' + (e.rarity === null ? '·' : 'p' + f(e.rarity, 0)) + ' · manda ' + (e.lead || '·')) + '</div>' +
-            '<div class="meta">' + flagHtml(e.flags) + '</div></div>';
-    });
-    html += '</div>';
-
-    html += '<div class="cw-formula">' +
-        'd_k = 100·(K/F − 1)   (nativo XXX/USD; F = futuro trimestral)     muros = 3 mayores por OI, ≥ 5 % de la cadena, no MUERTOS\n' +
-        'U = OI de muros con K < F / OI de muros     vota si max(U, 1−U) ≥ 2/3     D = Σ w·d sobre el lado mayoritario\n' +
-        'sesgo USD = media de U entre las que votan     A/B = signo(D_A − D_B)     rareza = percentil causal de |gap| (no confianza)\n' +
-        'Lo que no mide: imán o barrera. RR25, D_σ, C/P, ΔOI: diagnóstico, no votan. Cruces: dirección y ranking, nunca niveles. RESEARCH hasta CW-2.</div>';
-    el.innerHTML = html;
-    if (window.G8DQM && window.G8DQM.report) {
-        try { window.G8DQM.report('CROSS_WALLS', { lastDate: doc.latest_session, via: 'repo (cross walls v2.0)' }); } catch (e) {}
-    }
-}
-
-async function init() {
-    var el = document.getElementById('cross-walls');
-    try {
-        var r = await window.G8NET.fetchChain([RAW + 'CROSS_WALLS.json'], { corsOk: true, maxAge: 5 * 60 * 1000 });
-        if (!r.ok) throw new Error(r.error || 'fetch failed');
-        var doc = JSON.parse(r.text);
-        if (!doc.version || doc.version.indexOf('v2') < 0) {
-            /* stale copy in the G8NET localStorage cache (60 min) — refetch bypassing it */
-            try { localStorage.removeItem('g8net_' + RAW + 'CROSS_WALLS.json'); } catch (e0) {}
-            r = await window.G8NET.fetchChain([RAW + 'CROSS_WALLS.json'], { corsOk: true, noCache: true });
-            if (!r.ok) throw new Error(r.error || 'fetch failed');
-            doc = JSON.parse(r.text);
-            if (!doc.version || doc.version.indexOf('v2') < 0) throw new Error('CROSS_WALLS.json is ' + doc.version + ' — waiting for the v2 workflow run');
-        }
-        render(doc);
-    } catch (e) {
-        el.innerHTML = '<div class="attr-err">CROSS_WALLS.json unreachable — ' + e.message + ' · run the CME Options Surface workflow (cross_walls.py step)</div>';
-        if (window.G8DQM && window.G8DQM.report) { try { window.G8DQM.report('CROSS_WALLS', { status: 'DEAD', error: e.message }); } catch (e2) {} }
-    }
-}
-function boot(tries) {
-    tries = tries || 0;
-    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) { return setTimeout(function () { boot(tries + 1); }, 120); }
-    init();
-}
-if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function () { boot(0); }); } else { boot(0); }
-})();
-</script>
 
 <!-- ===== SECTION 09 — COT POSITIONING (added) ===== -->
 <style>
@@ -1229,9 +1056,6 @@ var FEED_REGISTRY = {
 
     OPTIONS_SURFACE: Object.assign(
         repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '08'),
-        { externalReport: true }),
-    CROSS_WALLS: Object.assign(
-        repo('CROSS_WALLS.json', 'Cross Walls — dirección de cruces (§08b, RESEARCH)', 'daily', 4, '08'),
         { externalReport: true }),
 
     /* ── 09 COT positioning — repo (pos_g8_cot_collector.py) ──────────────
