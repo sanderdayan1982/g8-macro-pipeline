@@ -757,6 +757,24 @@ if (document.readyState === 'loading') {
 .uf-pre{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7e879a;white-space:pre-wrap;line-height:1.5;margin-top:12px;border-top:1px solid #131a26;padding-top:8px}
 .uf-diag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7e879a;line-height:1.6;margin-top:10px}
 .uf-sub{color:#5d6678}
+/* v1.0.1 (17-sep-2026, petición del operador): §10 más grande y sin grises sobre negro */
+#section-factor .attr-table{font-size:15px}
+#section-factor .attr-table th{font-size:12.5px;color:#e6eaf0}
+#section-factor .attr-table td{padding:10px 14px;color:#e6eaf0}
+#section-factor .uf-matrix td{font-size:14.5px;padding:8px 10px !important}
+#section-factor .mfv-kv-lbl{font-size:11.5px;color:#d7dce6}
+#section-factor .mfv-kv-val{font-size:19px}
+#section-factor .mfv-kv-sub{font-size:11.5px;color:#c5ccd6}
+#section-factor .uf-sub{color:#dfe4ec}
+#section-factor .uf-diag{font-size:12.5px;color:#e6eaf0}
+#section-factor .uf-pre{font-size:12.5px;color:#e6eaf0}
+#section-factor .attr-note{font-size:12.5px;color:#dfe4ec}
+#section-factor .uf-box-h{font-size:12px;color:#8fb3d1}
+#section-factor .uf-tab{font-size:12px}
+#section-factor .uf-band{font-size:12.5px}
+#section-factor .uf-flag{font-size:11px}
+#section-factor .dqm-ts{font-size:12.5px;color:#e6eaf0}
+#section-factor .section-meta{color:#c5ccd6}
 </style>
 
 <section class="dashboard-section" id="section-factor">
@@ -776,7 +794,7 @@ if (document.readyState === 'loading') {
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   FACTOR USD — Section 10 module · v1.0.0 (17-sep-2026)
+   FACTOR USD — Section 10 module · v1.0.1 (17-sep-2026 · tipografía)
    Reads data/USD_FACTOR.json (usd_factor.py) and data/BOOK_RISK.json
    (book_risk.py). The browser paints; it computes nothing.
    Spec: docs/actas/ACTA_UF1.md — factor completo, α=0, un solo reloj (Σ EWMA),
@@ -786,7 +804,7 @@ if (document.readyState === 'loading') {
 (function () {
 'use strict';
 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
-var GREEN = '#2fbf71', RED = '#e0485a', MUTE = '#5d6678', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#d7dce6';
+var GREEN = '#2fbf71', RED = '#e0485a', MUTE = '#aeb6c6', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#eef1f6';   /* v1.0.1: sin grises */
 var CCYS = ['EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD'];
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
