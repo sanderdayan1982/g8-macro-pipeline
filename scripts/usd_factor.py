@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — usd_factor.py  v1.0  (2026-09-17)
+G8 Macro Pipeline — usd_factor.py  v1.0.1  (2026-09-17 · twin AFE: índice antes de dropna)
 =====================================================
 Sección §10 "FACTOR USD · RESIDUALES · MATRIZ" — capa CONTEXT de composición.
 Especificación: docs/actas/ACTA_UF1.md (v2 consolidada tras triangulación
@@ -67,7 +67,7 @@ import warnings
 
 warnings.simplefilter("ignore", category=pd.errors.PerformanceWarning)
 
-VERSION = "1.0"
+VERSION = "1.0.1"
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 OUT_DIR = DATA / "usd_factor"
@@ -417,7 +417,7 @@ def twin_afe(can: pd.DataFrame, timeout: int = 30) -> dict:
         df = pd.read_csv(io.StringIO(r.text))
         df.columns = ["DATE", "AFE"]
         df["AFE"] = pd.to_numeric(df["AFE"], errors="coerce")
-        df = df.dropna().set_index(pd.to_datetime(df["DATE"]))["AFE"]
+        df = df.set_index(pd.to_datetime(df["DATE"]))["AFE"].dropna()     # v1.0.1: índice antes de dropna
         wk_afe = np.log(df).resample("W-FRI").last().diff()
         wk_f = can["f"].resample("W-FRI").sum()
         j = pd.concat([wk_f.rename("f"), wk_afe.rename("afe")], axis=1).dropna().tail(104)
