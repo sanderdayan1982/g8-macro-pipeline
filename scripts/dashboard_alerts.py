@@ -788,7 +788,7 @@ def check_dqm(st, lines):
                     lines.append("§05 S01B: primera sesión no publicada dentro del plazo previsto")
                 s[fid] = status
                 continue
-            for key in (("as_of",) if fid == "S01B" else ("latest_session", "report_date", "generated")):
+            for key in (("as_of",) if fid in ("S01B", "USD_FACTOR") else ("latest_session", "report_date", "generated")):
                 if js and js.get(key):
                     last = str(js[key])[:10].replace("-", "")
                     break

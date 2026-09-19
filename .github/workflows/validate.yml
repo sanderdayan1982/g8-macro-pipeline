@@ -44,8 +44,8 @@ jobs:
       - name: Python syntax (scripts/)
         run: python -m compileall -q scripts
 
-      - name: S01B regression tests (isolated fixtures, no sending)
-        run: python -m unittest discover -s tests -p 'test_s01b*.py'
+      - name: Regression tests (isolated fixtures, no sending)
+        run: python -m unittest discover -s tests -p 'test_*.py'
 
       - name: Workflow YAML parses
         run: |
