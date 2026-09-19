@@ -781,7 +781,14 @@ def check_dqm(st, lines):
         last = None
         if path.endswith(".json"):
             js = read_json(os.path.relpath(path, DATA))
-            for key in ("latest_session", "report_date", "generated"):
+            if fid == "S01B" and js and js.get("status") == "PENDING_FIRST_SESSION":
+                deadline = datetime.fromisoformat(js["pending_until"].replace("Z", "+00:00"))
+                status = "PENDING" if datetime.now(timezone.utc) <= deadline else "DEAD"
+                if status == "DEAD" and s.get(fid) != "DEAD":
+                    lines.append("§05 S01B: primera sesión no publicada dentro del plazo previsto")
+                s[fid] = status
+                continue
+            for key in (("as_of",) if fid == "S01B" else ("latest_session", "report_date", "generated")):
                 if js and js.get(key):
                     last = str(js[key])[:10].replace("-", "")
                     break
