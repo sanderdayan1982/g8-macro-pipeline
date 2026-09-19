@@ -56,9 +56,11 @@ def _pos_g8(pine):
         z = (pine[col].astype(float) - lane) / 0.3
         recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": [st(v, w, e) for v in z]}))
     long = pd.concat(recs, ignore_index=True)
-    # A COT report dated Tuesday R is released Friday R+3 and reaches the TradingView mirror
-    # the following days; the Pine bar on R+9 (next Thursday) is stable and unambiguous.
-    long["report_date"] = long["data_date"] - pd.Timedelta(days=9)
+    # Amendment ACTA_TWIN_POS_ANCHOR (2026-09-19): TradingView stamps each COT report on its own
+    # report date (Tuesday R) in the exported history, so the Pine bar dated R already carries
+    # report R (anchor R+0). The previous R+9 anchor compared report R with the bar that already
+    # held report R+7. The export must be made from R+4 (Saturday) on, once the mirror has ingested it.
+    long["report_date"] = long["data_date"] - pd.Timedelta(days=0)
     return long
 
 
@@ -87,7 +89,7 @@ def main(script):
     long = ADAPTERS[script](pine) if script in ADAPTERS else _generic(pine)
     py = py.rename(columns={"ccy_or_pair": "key", "state": "state_py"})
     if "report_date" in long.columns:
-        # keep, per (report_date, key), the Pine bar closest to the R+9 anchor
+        # keep, per (report_date, key), the Pine bar closest to the R+0 anchor (ACTA_TWIN_POS_ANCHOR)
         long = long.sort_values("data_date")
         py["report_date"] = py["data_date"]
         m = pd.merge_asof(py.sort_values("report_date"), long.drop(columns=["data_date"]).sort_values("report_date"),
