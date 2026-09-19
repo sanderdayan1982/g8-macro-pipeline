@@ -1273,14 +1273,13 @@ var FEED_REGISTRY = {
     XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'weekly', 10, '07'),
 
     /* ── 01 attribution — in-browser external feeds ────────────────────── */
-    /* lastNObservations=420 reliably 504s on the ECB gateway (this is a freshness
-       ping, not a data pull — extractLastDate() only needs the latest print, so a
-       small window is enough). audit 2026-09-19: 420 times out 3/3; 30-100 succeed. */
-    EUR_NOM_ECB: {
-        name: 'EUR Nominal 10Y (ECB Svensson AAA)',
-        urls: ['https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=30&format=csvdata'],
-        source: 'ECB Data Portal API', corsOk: true, frequency: 'daily', maxStaleness: 4, section: '01'
-    },
+    /* v2.6.3 (19-sep-2026): the browser can no longer reach data-api.ecb.europa.eu
+       (lastNObservations=420 504s on their gateway, smaller windows exceed the 5 s
+       attempt timeout / CORS, and the public proxy cascade fails) so this row sat
+       permanently DEAD. The SAME series (YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y) already
+       arrives daily through the pipeline: fetch_eur_bills.py → data/EUR_BILL_10Y.csv.
+       Dead-feed doctrine (lote 5, as with the FRED rows in v2.6.2): read the repo copy. */
+    EUR_NOM_ECB: repo('EUR_BILL_10Y.csv', 'EUR Nominal 10Y (ECB Svensson AAA, via pipeline)', 'daily', 4, '01'),
     EUR_RY: repo('RY_G8_EUR.csv', 'EUR Real/BE 10Y (DE linkers, Bundesbank)', 'daily', 4, '01'),
     JPY_RY: repo('RY_G8_JPY.csv', 'JPY Real/BE 10Y (JGBi on-the-run, JSDA)', 'daily', 4, '01'),
     /* Migrated 2026-06-26 from the ECB monthly real benchmark to a DAILY true-market
