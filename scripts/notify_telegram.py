@@ -25,15 +25,17 @@ def send(text):
     cid = os.environ.get("TELEGRAM_CHAT_ID")
     if not tok or not cid:
         print("telegram: secrets missing, message not sent:\n" + text)
-        return
+        return False
     body = urllib.parse.urlencode({"chat_id": cid, "text": text, "parse_mode": "HTML",
                                    "disable_web_page_preview": "true"}).encode()
     req = urllib.request.Request("https://api.telegram.org/bot%s/sendMessage" % tok, data=body)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             print("telegram:", r.status)
+            return 200 <= r.status < 300 and bool(json.load(r).get("ok"))
     except Exception as e:  # never fail the pipeline because of the notifier
-        print("telegram error:", e)
+        print("telegram error:", type(e).__name__)
+        return False
 
 
 def fmt_state(st):

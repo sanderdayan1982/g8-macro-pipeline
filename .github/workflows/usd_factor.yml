@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: usd-factor
+  group: g8-shared-data-alerts
   cancel-in-progress: false
 
 jobs:
@@ -42,6 +42,9 @@ jobs:
       - name: Book risk (book.csv / candidate.csv → BOOK_RISK.json)
         run: python scripts/book_risk.py
 
+      - name: S01B (evaluate today's session if the ECB rates are already published)
+        run: python scripts/s01b.py
+
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true
@@ -56,7 +59,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # v1.0.1: book_snapshots solo existe cuando hay data/book.csv → add condicional
           git add data/usd_factor data/USD_FACTOR.json data/BOOK_RISK.json data/alerts
-          [ -d data/book_snapshots ] && git add data/book_snapshots
+          if [ -f data/S01B.json ]; then git add data/S01B.json; fi
+          if [ -d data/s01b ]; then git add data/s01b; fi
+          if [ -d data/book_snapshots ]; then git add data/book_snapshots; fi
           if git diff --cached --quiet; then
             echo "No new BCE date / no change — nothing to commit."
           else

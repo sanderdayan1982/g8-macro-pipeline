@@ -10,6 +10,7 @@ on:
   push:
     paths:
       - 'scripts/**'
+      - 'tests/**'
       - 'docs/**'
       - 'sources/**'
       - '.github/workflows/**'
@@ -43,6 +44,9 @@ jobs:
       - name: Python syntax (scripts/)
         run: python -m compileall -q scripts
 
+      - name: S01B regression tests (isolated fixtures, no sending)
+        run: python -m unittest discover -s tests -p 'test_s01b*.py'
+
       - name: Workflow YAML parses
         run: |
           python - <<'EOF'
@@ -65,6 +69,7 @@ jobs:
           rows = list(csv.DictReader(open('sources/registry.csv', encoding='utf-8')))
           req = {'feed_id', 'primary_access', 'max_staleness_bd'}
           assert rows and req <= set(rows[0].keys()), 'registry header missing required columns'
+          assert all(None not in r and all(v is not None for v in r.values()) for r in rows), 'registry column count mismatch'
           ids = [r['feed_id'] for r in rows]
           dup = {i for i in ids if ids.count(i) > 1}
           assert not dup, 'duplicate feed_id: %s' % sorted(dup)

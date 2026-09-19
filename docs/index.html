@@ -360,6 +360,79 @@
             <div class="attr-wrap" id="attr-matrix">
                 <div class="attr-err" style="color:#5d6678">Fetching attribution feeds — repo ACM/RY CSVs + ECB / SNB / RBNZ external (resolves to data or explained error)…</div>
             </div>
+            <!-- ══ §01-b · lectura a 22 sesiones + CTF (CONTEXT, sin voto) · s01b.py · ACTA_S01B ═══ -->
+            <div id="s01b-panel" style="margin-top:14px">
+                <div class="attr-err" style="color:#5d6678">Loading S01B.json (§01-b · 22-session reading) from pipeline repo…</div>
+            </div>
+            <script>
+            (function () {
+                'use strict';
+                var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+                var GREEN = '#2fbf71', RED = '#e0485a', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#eef1f6', MUTE = '#aeb6c6';
+                function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+                function nz(x) { return x != null && isFinite(x); }
+                function bp(x) { return nz(x) ? (x >= 0 ? '+' : '') + Math.round(x) : '·'; }
+                function pc(x) { return nz(x) ? (x >= 0 ? '+' : '') + x.toFixed(2) + ' %' : '·'; }
+                function render(j) {
+                    var el = document.getElementById('s01b-panel');
+                    var cur = j.currencies || {};
+                    var order = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'];
+                    var h = '<div class="section-meta" style="margin-bottom:6px">' +
+                        '<b style="color:' + GOLD + '">§01-b · 22-SESSION READING · CTF</b> <span style="color:' + MUTE + '">CONTEXT · sin voto · ' +
+                        'ΔRNY + ΔTP = ΔFIT (modelo ACM) · RESID = Δnominal − ΔFIT · θ = p80 expanding a t−1 (ΔTP firmado, ≥ 252 obs.) · ' +
+                        'CTF = ΔTP &gt; 0 y ≥ θ y ΔFX22 ≤ −0,5 % (log; USD vs cesta §10) · histéresis p60 · CHF solo lectura · as-of ' + esc(j.as_of) +
+                        (j.fx_effective && j.fx_effective !== j.as_of ? ' · FX ' + esc(j.fx_effective) + ' (DESFASE)' : '') + '</span></div>';
+                    h += '<div class="attr-wrap"><table class="attr-table"><thead><tr><th>CCY</th><th title="Δ risk-neutral yield 22 s. (bp)">ΔRNY</th>' +
+                        '<th title="Δ term premium ACM 22 s. (bp)">ΔTP</th><th title="ΔRNY+ΔTP">ΔFIT</th><th title="Δnominal observado − ΔFIT">RESID</th>' +
+                        '<th title="contexto, no aditivo">Δ2Y</th><th title="contexto">ΔBE</th><th title="log-retorno 22 s. nativo XXX/USD; USD = cesta §10">ΔFX</th>' +
+                        '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th>As-of</th></tr></thead><tbody>';
+                    order.forEach(function (c) {
+                        var v = cur[c]; if (!v) return;
+                        var col = v.colour === 'red' ? RED : (v.colour === 'amber' ? AMBER : WHITE);
+                        var sig = v.emitter ? v.signal : 'lectura';
+                        var sigCol = sig === 'ON' ? RED : (sig === 'OFF' ? GREEN : MUTE);
+                        var avail = v.avail === 'OK' ? '' : ' <span style="color:' + AMBER + '">' + esc(v.avail) + '</span>';
+                        var flags = (v.flags || []).join(' ');
+                        h += '<tr><td><b>' + c + '</b></td>' +
+                            '<td class="attr-val">' + bp(v.d_rny) + '</td>' +
+                            '<td class="attr-val" style="color:' + col + '"><b>' + bp(v.d_tp) + '</b></td>' +
+                            '<td class="attr-val">' + bp(v.d_fit) + '</td><td class="attr-val" style="color:' + MUTE + '">' + bp(v.resid) + '</td>' +
+                            '<td class="attr-val" style="color:' + MUTE + '">' + bp(v.d_2y) + '</td><td class="attr-val" style="color:' + MUTE + '">' + bp(v.d_be) + '</td>' +
+                            '<td class="attr-val">' + pc(v.d_fx) + '</td><td class="attr-val">' + bp(v.theta) + '</td>' +
+                            '<td style="color:' + sigCol + '"><b>' + esc(sig) + '</b>' + avail + (v.signal_note ? ' <span style="color:' + MUTE + '" title="' + esc(v.signal_note) + '">último</span>' : '') + '</td>' +
+                            '<td class="attr-val">' + (v.emitter && v.avail === 'OK' ? v.persist : '·') + '</td>' +
+                            '<td style="color:' + MUTE + '">' + esc(flags || 'OK') + '</td>' +
+                            '<td style="color:' + MUTE + '">' + esc(v.acm_asof_t || '·') + '</td></tr>';
+                    });
+                    h += '</tbody></table></div>';
+                    var ev = (j.events || []).map(function (e) { return e.ccy + ' ' + (e.baseline ? '(baseline)' : 'ON') + ' ' + e.t; });
+                    h += '<div class="section-meta" style="margin-top:6px;color:' + MUTE + '">eventos de esta sesión: ' + (ev.length ? esc(ev.join(' · ')) : 'ninguno') +
+                        ' · registro reproducible data/s01b/log + snap · ' + esc(j.version) + ' · run ' + esc(j.run_id) + '</div>';
+                    el.innerHTML = h;
+                    if (window.G8DQM && window.G8DQM.report) { try { window.G8DQM.report('S01B', { lastDate: j.as_of, via: 'repo (s01b.py)' }); } catch (e) {} }
+                }
+                async function init() {
+                    var el = document.getElementById('s01b-panel');
+                    try {
+                        var r = await window.G8NET.fetchChain([RAW + 'S01B.json'], { corsOk: true });
+                        if (!r.ok) throw new Error(r.error || 'fetch failed');
+                        render(JSON.parse(r.text));
+                    } catch (e) {
+                        el.innerHTML = '<div class="attr-err">S01B.json unreachable — ' + esc(e.message) + ' · run scripts/s01b.py (workflow daily_update.yml) to publish data/S01B.json</div>';
+                        if (window.G8DQM && window.G8DQM.report) { try { window.G8DQM.report('S01B', { status: 'DEAD', error: e.message }); } catch (e3) {} }
+                    }
+                }
+                function boot(tries) {
+                    tries = tries || 0;
+                    if (window.G8NET && window.G8NET.fetchChain) return init();
+                    if (tries < 60) return setTimeout(function () { boot(tries + 1); }, 250);
+                    var el = document.getElementById('s01b-panel');
+                    if (el) el.innerHTML = '<div class="attr-err">G8NET not ready — reload</div>';
+                }
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { boot(0); }); else boot(0);
+            })();
+            </script>
+
             <div class="section-footer">
                 <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed (USD, corr 0.992) &amp; Bank of Canada (CAD, corr 0.996 — K=4 on the ultra-smooth BJM curve, level-anchored to the BoC official ACM series, 1998+ shown to drop the ACM start-up boundary) · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z = 60M (5Y) window for monthly series, population σ · ⚠ lvl = TP level low-confidence (short sample &lt; 150 obs, or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable</span>
             </div>
@@ -1370,6 +1443,9 @@ var FEED_REGISTRY = {
     /* ── 10 Factor USD — repo (usd_factor.py, BCE ref. rates triangulados) ──
        Daily on TARGET days (BCE ~16:00 CET); budget 5bd. externalReport: the
        §10 module reads as_of from the JSON and reports its own freshness. */
+    S01B: Object.assign(
+        repo('S01B.json', '§01-b lectura 22 s. · CTF (s01b.py)', 'daily', 3, '01'),
+        { externalReport: true }),
     USD_FACTOR: Object.assign(
         repo('USD_FACTOR.json', 'Factor USD · residuales · Σ (BCE triangulado)', 'daily', 5, '10'),
         { externalReport: true })

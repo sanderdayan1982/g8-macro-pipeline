@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v2.3  (2026-09-17)
+G8 Macro Pipeline — dashboard_alerts.py  v2.4  (2026-09-19) — §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -70,6 +70,7 @@ Secciones cubiertas (todas las divisas con dato en repo)
   §05 DQM             frescura de los feeds del repo (presupuesto de sources/registry.csv)
 """
 import csv
+import copy
 import json
 import os
 import sys
@@ -81,6 +82,7 @@ try:
 except Exception:                       # pragma: no cover
     def tg_send(text):
         print("telegram: notify_telegram.py not importable — message:\n" + text)
+        return False
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -90,7 +92,7 @@ REGISTRY = os.path.join(ROOT, "sources", "registry.csv")
 # ── umbrales de NIVEL: los del dashboard (index.html), no inventados ─────────
 FLOOR_TIGHT_BP, FLOOR_PRESS_BP = 2.0, 10.0          # §02 badges
 Z_IN, Z_OUT = 2.0, 1.5                              # |z| histéresis
-TPNOM_IN, TPNOM_OUT = 0.60, 0.55                    # eje fiscal, elemento 0
+TPNOM_IN, TPNOM_OUT = 0.60, 0.55                    # HEURÍSTICO (no validado): TP/NOM supera el umbral configurado (D5 §01-b, 19-sep-2026)
 MDP_IN, MDP_OUT = 2.0, 1.5                          # §06/07 mdp_z
 # ── umbrales de MOVIMIENTO: percentiles rolling, medidos ─────────────────────
 WIN = 252
@@ -324,8 +326,9 @@ def check_tp(st, lines):
             chg.append("ΔTP 1d %+.0f bp — P%.0f (umbral P95 = %.0f bp)"
                        % (last_d1, rank_pct(abs(last_d1), hist) or 0, p95 or 0))
         if ratio is not None and fis != fis_prev:
-            chg.append("TP/NOM %.0f %% %s 60 %% — %s" % (ratio * 100, "cruza ▲" if fis else "vuelve ▼",
-                                                          "revisa RTF10/Curva (eje fiscal)" if fis else "prima deja de dominar"))
+            chg.append("TP/NOM %.0f %% %s el umbral configurado (%.0f/%.0f %%, heurístico)%s" % (
+                ratio * 100, "supera ▲" if fis else "vuelve bajo ▼", TPNOM_IN * 100, TPNOM_OUT * 100,
+                " · nominal negativo o próximo a cero: cociente poco informativo" if y10[-1][1] < 0.5 else ""))
         if chg:
             lines.append("§04 %s TP %.2f %% · %s" % (ccy, vals[-1], " · ".join(chg)))
         s[ccy] = {"band": band, "fiscal": fis, "tp": round(vals[-1], 4),
@@ -713,6 +716,35 @@ def check_factor(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# §01-b CTF — v2.4: s01b.py genera el EVENTO (log + events.jsonl); aquí solo el ENVÍO, con libro propio
+#   de enviados (state["s01b"]["sent"]) → tres horarios de ejecución nunca repiten un encendido.
+# ═════════════════════════════════════════════════════════════════════════════
+def check_s01b(st, lines):
+    s = st.setdefault("s01b", {"sent": []})
+    j = read_json("S01B.json")
+    if not j or not j.get("as_of"):
+        return
+    sent = set(s.get("sent") or [])
+    pending = list(j.get("events") or [])
+    ledger = os.path.join(DATA, "s01b", "events.jsonl")
+    if os.path.exists(ledger):
+        with open(ledger, encoding="utf-8") as fh:
+            pending = [json.loads(line) for line in fh if line.strip()] + pending
+    for ev in pending:
+        key = "%s:%s:%s" % (ev.get("ccy"), ev.get("t"), ev.get("type"))
+        if key in sent:
+            continue
+        c = (j.get("currencies") or {}).get(ev.get("ccy"), {})
+        tag = "baseline · estado inicial, no encendido nuevo" if ev.get("baseline") else "ENCENDIDO"
+        lines.append("§1b %s %s · estado %s — ΔTP22 %+.0f bp · θ %+.0f · ΔFX22 %+.2f %% · sesión %s · as-of %s · calidad %s — CTF: compatible con tensión fiscal · CONTEXT, sin voto"
+                     % (ev.get("ccy"), tag, ev.get("signal", "ON"), ev.get("d_tp") or 0, ev.get("theta") or 0, ev.get("d_fx") or 0,
+                        ev.get("t"), ev.get("acm_asof_t", ev.get("t")), " ".join(ev.get("flags", [])) or "OK"))
+        sent.add(key)
+    s["sent"] = sorted(sent)
+    s["as_of"] = j.get("as_of")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # §05 DQM — frescura contra el presupuesto del registry
 # ═════════════════════════════════════════════════════════════════════════════
 def _last_csv_date(path):
@@ -781,8 +813,9 @@ def load_state():
 def save_state(st):
     os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
     st["_updated_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
-    with open(STATE_PATH, "w", encoding="utf-8") as fh:
+    with open(STATE_PATH + ".tmp", "w", encoding="utf-8") as fh:
         json.dump(st, fh, indent=1, ensure_ascii=False)
+    os.replace(STATE_PATH + ".tmp", STATE_PATH)
 
 
 def summary_baseline(st):
@@ -802,13 +835,22 @@ def summary_baseline(st):
         out.append("")
     t = st.get("tp", {})
     if t:
-        out.append("<b>§04 Term premium ACM 10Y</b> (TP · TP/NOM; >60 % = prima domina, eje fiscal)")
+        out.append("<b>§04 Term premium ACM 10Y</b> (TP · TP/NOM; ▲ = supera el umbral configurado 60 %, heurístico)")
         for k, v in t.items():
             out.append("   %s  TP %.2f %%  TP/NOM %s%s" % (k, v["tp"], "—" if v["ratio"] is None else "%.0f %%" % (v["ratio"] * 100),
                                                         "  ▲ >60 %" if v.get("fiscal") else ""))
         out.append("")
     u = st.get("vs_usd", {})
     if u:
+        sj = read_json("S01B.json") or {}
+        if sj.get("as_of"):
+            out.append("<b>§01-b Lectura 22 s. · CTF</b> (CONTEXT, sin voto · ΔTP22 vs θ expanding p80 · ΔFX22 log · as-of %s)" % sj["as_of"])
+            for c, v in (sj.get("currencies") or {}).items():
+                out.append("   %-4s ΔRNY %+5.0f ΔTP %+5.0f θ %5s ΔFX %6s  %s%s" % (
+                    c, v.get("d_rny") or 0, v.get("d_tp") or 0, "·" if v.get("theta") is None else "%+.0f" % v["theta"],
+                    "·" if v.get("d_fx") is None else "%+.2f%%" % v["d_fx"],
+                    v.get("signal") if v.get("emitter") else "lectura", ("" if v.get("avail") == "OK" else " · " + v.get("avail"))))
+            out.append("")
         out.append("<b>§01 Spread 10Y nominal vs USD</b> (+ = rinde más que USD)")
         for k, v in u.items():
             out.append("   %s−USD  %+.0f bp%s" % (k, v["spread_bp"], "  · z extremo" if v.get("zband") else ""))
@@ -1076,7 +1118,7 @@ def build_brief(st, wall_lines):
     t = st.get("tp", {})
     tl = ["%s TP %.2f %% (TP/NOM %.0f %% ▲60)" % (k, v["tp"], (v["ratio"] or 0) * 100) for k, v in t.items() if v.get("fiscal")]
     tl += ["%s ΔTP 1d extremo" % k for k, v in t.items() if v.get("band") == "EXT"]
-    b["bullets"].append({"sec": "§04 Term premium", "text": " · ".join(tl) if tl else "ninguna prima domina (>60 %) ni salto diario extremo"})
+    b["bullets"].append({"sec": "§04 Term premium", "text": " · ".join(tl) if tl else "TP/NOM bajo el umbral configurado (60 %, heurístico) y sin salto diario extremo"})
     u = st.get("vs_usd", {})
     ul = ["%s−USD %+.0f bp (z %s)" % (k, v["spread_bp"], "techo" if v["zband"] == "HI" else "suelo") for k, v in u.items() if v.get("zband")]
     ul += ["%s Δ1w extremo" % k for k, v in u.items() if v.get("mband") == "EXT"]
@@ -1095,6 +1137,21 @@ def build_brief(st, wall_lines):
         elif c.get("divergence"):
             cl.append("%s divergencia LF/AM" % c["ccy"])
     b["bullets"].append({"sec": "§09 COT", "text": " · ".join(cl) if cl else "sin crowding — todo NEUTRAL"})
+    # v2.4 §01-b — lectura 22 s. y CTF (CONTEXT, sin voto)
+    try:
+        sj = read_json("S01B.json") or {}
+        if sj.get("as_of"):
+            cur = sj.get("currencies") or {}
+            on = [c for c, v in cur.items() if v.get("signal") == "ON"]
+            na = [c for c, v in cur.items() if v.get("avail") not in ("OK",) and v.get("emitter")]
+            t = "CTF ON: %s" % (", ".join(on) if on else "ninguna")
+            t += " · ΔTP22 " + " ".join("%s %+.0f" % (c, (v.get("d_tp") or 0)) for c, v in cur.items() if v.get("d_tp") is not None)
+            if na:
+                t += " · sin evaluar: " + ", ".join("%s(%s)" % (c, cur[c].get("avail")) for c in na)
+            b["as_of"]["s01b"] = sj.get("as_of")
+            b["bullets"].append({"sec": "§01-b CTF", "text": t})
+    except Exception as e:
+        note("s01b: %s" % e)
     # v2.3 §10 factor USD — contexto de composición, nunca dirección
     try:
         uf = read_json("USD_FACTOR.json") or {}
@@ -1161,9 +1218,11 @@ def main(argv):
     dry = "--dry-run" in argv
     baseline = "--baseline" in argv
     st = load_state()
+    s01b_before = copy.deepcopy(st.get("s01b", {"sent": []}))
+    delivery_ok = True
     first = not st
     lines = []
-    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_metals, check_walls, check_cot, check_factor, check_dqm):
+    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_s01b, check_metals, check_walls, check_cot, check_factor, check_dqm):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
@@ -1182,7 +1241,7 @@ def main(argv):
     elif events:
         body.append("<b>CAMBIOS DETECTADOS</b>")
         body.append("")
-        sec_names = {"§01": "§01 Spread vs USD", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
+        sec_names = {"§01": "§01 Spread vs USD", "§1b": "§01-b Lectura 22 s. · CTF (CONTEXT)", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
                      "§04": "§04 Term premium", "§05": "§05 Data quality", "§06": "§06 Oro", "§07": "§07 Plata",
                      "§08": "§08 Walls", "§09": "§09 COT", "§10": "§10 Factor USD"}
         last_sec = None
@@ -1212,15 +1271,17 @@ def main(argv):
             print(text)
             print("-" * 60)
             if not dry:
-                tg_send(text)
+                delivery_ok = tg_send(text) is True and delivery_ok
     if not dry:
+        if not delivery_ok:
+            st["s01b"] = s01b_before
         try:
             wl = [l for _, blocks in walls for l in blocks]
             build_brief(st, wl)
         except Exception as e:
             print("brief: error %s" % e)
         save_state(st)
-    return 0
+    return 0 if dry or delivery_ok else 1
 
 
 if __name__ == "__main__":

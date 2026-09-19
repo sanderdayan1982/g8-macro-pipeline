@@ -10,7 +10,7 @@ on:
 
 # Prevent concurrent runs of this workflow to eliminate push race conditions
 concurrency:
-  group: daily-update
+  group: g8-shared-data-alerts
   cancel-in-progress: false
 
 permissions:
@@ -219,6 +219,10 @@ jobs:
       # ── 5c. Dashboard alerts (Telegram, one message/day only on change) ───
       # v1.0 2026-09-12: reads repo data only (no downloads, $0). State lives in
       # data/alerts/state.json and is committed by the step below (git add data/).
+      # ── §01-b · lectura 22 s. + CTF (CONTEXT) — después de los ACM, antes de las alertas
+      - name: S01B (22-session reading + CTF, one evaluation per session)
+        if: always()
+        run: python scripts/s01b.py --final
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true
