@@ -47,6 +47,13 @@ jobs:
       - name: Regression tests (isolated fixtures, no sending)
         run: python -m unittest discover -s tests -p 'test_*.py'
 
+      # E1 (2026-09-21): §01-b amendment must leave every detector field of the published 21-sep session
+      # identical when re-run on its frozen snapshot with only the repaired context legs swapped in.
+      - name: S01B E1 equivalence (frozen 2026-09-21 snapshot, detector fields identical)
+        run: |
+          python tests/equiv_s01b_e1.py 2026-09-21
+          python tests/equiv_s01b_e1.py 2026-09-21 --synthetic
+
       - name: Workflow YAML parses
         run: |
           python - <<'EOF'
