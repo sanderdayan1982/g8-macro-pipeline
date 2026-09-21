@@ -38,7 +38,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.1"
+VERSION = "s01b v1.2"   # E1 (2026-09-21): patas de contexto AUD/CAD 2Y, NZD BE; context_last · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -59,8 +59,17 @@ MIN_QUALITY_MONTHS = 240    # acm_g8 MIN_OBS_MONTHLY
 NOM_FILES = {c: "RY_G8_%s.csv" % c for c in CCY8 if c != "CHF"}
 NOM_FILES["CHF"] = "CHF_SPOT_10Y.csv"
 Y2_FILES = {"USD": "US_BILL_2Y.csv", "EUR": "EUR_BILL_2Y.csv", "GBP": "GBP_BILL_2Y.csv", "JPY": "JPY_BILL_2Y.csv",
-            "NZD": "NZD_BOND_2Y.csv", "CHF": "CHF_SPOT_2Y.csv"}          # AUD/CAD: no daily 2Y in the repo → "·"
-BE_FILES = {c: "RY_G8_%s.csv" % c for c in ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"]}   # NZD/CHF constants → "·"
+            "NZD": "NZD_BOND_2Y.csv", "CHF": "CHF_SPOT_2Y.csv",
+            # E1: same connectors acm_g8.py already uses in its daily panel (DAILY_SOURCE_EXTRA), now persisted
+            # by acm_g8.py v2.6 as Date,Value,Source — no second download mechanism.
+            "AUD": "AUD_NOM_2Y.csv",          # RBA F2 daily table, series FCMYGBAG2D
+            "CAD": "CAD_NOM_2Y.csv"}          # BoC Valet BD.CDN.2YR.DQ.YLD
+BE_FILES = {c: "RY_G8_%s.csv" % c for c in ["USD", "EUR", "GBP", "JPY", "AUD", "CAD",
+                                             "NZD"]}   # E1: NZD BE10 = NOM10 − REAL10 from NZ IIB (real_yields_g8.py); CHF constant → "·"
+# E1: provenance label per context leg (never gates; shown next to the value / in the log).
+CONTEXT_QUALITY = {("AUD", "y2"): "RBA_F2_DAILY_TABLE", ("CAD", "y2"): "BOC_VALET",
+                   ("NZD", "be"): "IIB_PROXY_THIN_MARKET", ("NZD", "y2"): "RBNZ_B2",
+                   ("CHF", "y2"): "SNB_CURVE_MONTHLY", ("CHF", "nominal"): "SNB_CURVE_MONTHLY", ("CHF", "be"): "NO_MARKET"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -255,6 +264,25 @@ def dtp_population(acm, calendar, upto_excl):
     return pop
 
 
+def context_status(ccy, name, ser, t, t0, end, start, dval):
+    """E1 — describe a context leg without touching the Δ (which stays subject to MAX_LAG_BD at both ends)."""
+    q = CONTEXT_QUALITY.get((ccy, name))
+    last = asof(ser, t, max_lag_bd=10 ** 6) if ser else None          # last observation dated ≤ t, any lag
+    if last is None:
+        return {"status": "NONE", "quality": q, "n_obs": len(ser)}
+    out = {"date": last[0].isoformat(), "value": round(last[1], 4), "lag_bd": bdays(last[0], t), "quality": q}
+    if dval is not None:
+        out["status"] = "OK"
+    elif end is None:
+        out["status"] = "STALE"                                       # window end beyond tolerance
+    else:
+        out["status"] = "SHORT"                                       # end fine, t0 end missing or not older than the end
+        first = ser[0][0]
+        out["first"] = first.isoformat()
+        out["t0_needed"] = t0.isoformat()
+    return out
+
+
 def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx_effective, state_prev):
     """One currency, one session. Returns (row, event) — pure function of its inputs."""
     row = {"ccy": ccy, "t": t.isoformat(), "avail": "OK", "flags": [], "signal": state_prev.get("signal", "OFF"),
@@ -289,6 +317,13 @@ def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx
     row["context_asof"] = {name: {"t": end[0].isoformat() if end else None,
                                        "t0": start[0].isoformat() if start else None}
                            for name, end, start in (("nominal", n1, n0), ("y2", q1, q0), ("be", e1, e0))}
+    # E1: separate the window change (above, subject to MAX_LAG_BD at both ends) from what each leg actually holds.
+    # status: OK = Δ computed · STALE = last obs ≤ t exists but lags > MAX_LAG_BD (dato atrasado) ·
+    # SHORT = end obs fine but no valid obs at t0 (historia insuficiente; a series that starts today is SHORT, not STALE) ·
+    # NONE = no observation ≤ t (leg not connected / no market / series starts after t). Never used by the signal.
+    row["context_last"] = {}
+    for name, ser, end, start, dval in (("nominal", nom, n1, n0, row["d_nom"]), ("y2", y2, q1, q0, row["d_2y"]), ("be", be, e1, e0, row["d_be"])):
+        row["context_last"][name] = context_status(ccy, name, ser, t, t0, end, start, dval)
     # ── FX over the same window (t0, t]: sum of daily log returns on the TARGET calendar
     if fx_effective < t:
         row["flags"].append("DESFASE")

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-acm_g8.py v2.4 — ACM Term Premium decomposition, multi-currency
+acm_g8.py v2.6 — ACM Term Premium decomposition, multi-currency
+(v2.6, 2026-09-21, E1 §01-b: persists the AUD/CAD 2Y daily series it already fetches for the daily
+ panel to data/<CCY>_NOM_2Y.csv — consumer s01b.py context leg Δ2Y. Model, inputs and outputs unchanged.)
 ===============================================================
 Adrian-Crump-Moench (2013) three-step OLS estimator.
 
@@ -439,6 +441,59 @@ DAILY_SOURCE_EXTRA = {
             10: lambda: fetch_rba_xls(RBA_F2_DAILY, "FCMYGBAG10D")},
 }
 
+# v2.6 (E1 §01-b, 2026-09-21): the daily 2Y that the panel already fetches for AUD/CAD is written out
+# as Date,Value,Source so s01b.py can read Δ2Y from the SAME connector (no second downloader).
+# Full fetched history (not the 5y slice). Never raises: a persistence problem must not touch the ACM.
+PERSIST_EXTRA = {
+    "CAD": {2: ("CAD_NOM_2Y.csv", "BoC Valet BD.CDN.2YR.DQ.YLD")},
+    "AUD": {2: ("AUD_NOM_2Y.csv", "RBA F2 daily FCMYGBAG2D")},
+}
+
+
+def persist_extra(ccy, tenor, s, data_dir=None):
+    """Side-write of an already-fetched daily series. Rules (E1 review, 2026-09-21):
+    - validates BEFORE touching disk: ≥ 1 row, parseable dates, finite values, no all-NaN;
+    - MERGES with the existing CSV (union of dates, fresh download wins on overlap) so a truncated or
+      partial response never shortens the stored history;
+    - an empty/invalid response leaves the last valid file intact and prints the failure;
+    - never raises. Returns the number of rows written, 0 if nothing was written."""
+    spec = PERSIST_EXTRA.get(ccy, {}).get(tenor)
+    if spec is None:
+        return 0
+    fname, src = spec
+    path = os.path.join(data_dir or DATA_DIR, fname)
+    try:
+        if s is None or len(s) == 0:
+            raise ValueError("empty response")
+        ser = pd.Series(pd.to_numeric(pd.Series(s.values, index=pd.to_datetime(s.index, errors="coerce")), errors="coerce"))
+        ser = ser[ser.index.notna()]
+        ser = ser[np.isfinite(ser.values.astype(float))]
+        if len(ser) == 0:
+            raise ValueError("no finite values")
+        ser = ser.sort_index()
+        ser = ser[~ser.index.duplicated(keep="last")]
+        old = pd.Series(dtype=float)
+        if os.path.isfile(path):
+            try:
+                df0 = pd.read_csv(path, comment="#")
+                old = pd.Series(pd.to_numeric(df0["Value"], errors="coerce").values, index=pd.to_datetime(df0["Date"], errors="coerce"))
+                old = old[old.index.notna() & np.isfinite(old.values.astype(float))]
+            except Exception as e:                                         # noqa: BLE001
+                print(f"  [persist] {fname}: existing file unreadable ({e}) — rebuilt from the download")
+                old = pd.Series(dtype=float)
+        merged = pd.concat([old, ser])
+        merged = merged[~merged.index.duplicated(keep="last")].sort_index()
+        out = pd.DataFrame({"Date": merged.index.strftime("%Y-%m-%d"),
+                            "Value": np.round(merged.values.astype(float), 4), "Source": src})
+        tmp = path + ".tmp"
+        out.to_csv(tmp, index=False)
+        os.replace(tmp, path)
+        print(f"  [persist] {fname}: {len(out)} rows (+{len(ser)} downloaded, last {out['Date'].iloc[-1]}) ({src})")
+        return len(out)
+    except Exception as e:                                                 # noqa: BLE001
+        print(f"  [persist] {fname}: NOT written — {e}; last valid file kept")
+        return 0
+
 
 # ============================================================== Nelson-Siegel
 def ns_basis(taus, lam):
@@ -598,6 +653,7 @@ def build_daily_panel(ccy):
     for tenor, fn in DAILY_SOURCE_EXTRA.get(ccy, {}).items():
         s = fn()
         cols[tenor] = s[s.index >= cutoff]
+        persist_extra(ccy, tenor, s)                                     # v2.6 (E1): side-write only
     panel = pd.DataFrame(cols).sort_index().ffill(limit=5).dropna()
     print(f"  daily panel  : tenors {list(panel.columns)}  "
           f"{panel.index[0].date()} → {panel.index[-1].date()}  ({len(panel)} obs)")
