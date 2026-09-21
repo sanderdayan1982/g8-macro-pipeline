@@ -84,3 +84,45 @@ y no son una nueva validación del motor corregido. C empieza con el primer log 
 
 Ensayo aislado con los CSV del clon (18-sep): replay exacto de todas las filas y eventos, sin publicación
 ni Telegram. Snapshot completo: 992.528 bytes; orden de magnitud 63 MB por 63 sesiones, variable.
+
+## Enmienda E1 — patas de contexto completadas · 21-sep-2026 (sesión 1 de C) · lote v2 tras revisión
+
+**Alcance.** Solo columnas de CONTEXTO (Δ2Y, ΔBE, RESID) y sus metadatos. No cambia ninguna entrada, umbral, horario,
+regla ni salida del detector (D1–D4 intactas). **C no se reinicia**; el BASELINE del 21-sep y su log no se tocan. La enmienda
+rige desde la primera sesión publicada con `s01b v1.2` (campo `version` del S01B.json y del log). Sin reconstrucción retrospectiva.
+Las sesiones publicadas con v1.1 se reproducen con el motor archivado en su snap (`--replay` lo exige por SHA); las de v1.2 con el actual.
+
+**Diagnóstico revisado contra el repo.**
+| Campo | Causa del hueco | Reparación | Fuente | Fecha disponible | Limitación restante |
+|---|---|---|---|---|---|
+| AUD Δ2Y | `acm_g8.py` ya descargaba el 2Y (DAILY_SOURCE_EXTRA, RBA F2 daily `FCMYGBAG2D`) sin persistirlo; §01-b no lo tenía en `Y2_FILES` | `acm_g8.py` v2.6 `persist_extra()` → `data/AUD_NOM_2Y.csv` (Date,Value,Source) desde el MISMO conector; `s01b.py` v1.2 lo lee | RBA tabla F2 daily | primera pasada de `daily_update.yml` con v2.6 (o `--live` en el Mac) | cadencia de refresco de la tabla F2 por confirmar; los días fuera de la tolerancia (3 d.h.) la celda dice «atrasado <fecha>»: se muestra, no se rellena |
+| CAD Δ2Y | ídem: Valet `BD.CDN.2YR.DQ.YLD` descargado, no persistido, no conectado | `data/CAD_NOM_2Y.csv` por v2.6; `s01b.py` v1.2 lo lee | Banco de Canadá, Valet | ídem | T+1 |
+| NZD ΔBE | `RY_G8_NZD.csv` (BE10 = NOM10 − REAL10, IIB interpolados a 10Y, `real_yields_g8.py`) existía; §01-b lo excluía de `BE_FILES` | NZD en `BE_FILES` (col. BE10); etiqueta `IIB_PROXY_THIN_MARKET` | RBNZ B2 (fetch local Mac) | **ya**: 2.180 obs., último 17-sep; congelado 21-sep → **+18,88 pb** | proxy de mercado fino, etiquetado |
+| CHF Δ2Y, RESID | `CHF_SPOT_2Y/10Y.csv` conectados; terminan 31-08-2026 (curva SNB mensual) → 15 d.h. de atraso > tolerancia | ninguna sobre el dato: se muestra «atrasado 2026-08-31» con el último valor y `SNB_CURVE_MONTHLY`. No se fabrica un 2Y diario desplazándolo con el 10Y | SNB cubo rendeiduebd | publicación SNB de septiembre (1-oct) | mensual por construcción; CHF sin emisión CTF (D3) |
+| CHF ΔBE, ΔFX | exclusión deliberada (sin mercado de linkers; D3) | etiqueta `NO_MARKET` / «sin feed», distinguible de un atraso | — | — | por diseño |
+
+**Cambios de código (lote v2, con las cuatro correcciones de la revisión).**
+- `scripts/acm_g8.py` v2.6 `persist_extra()`: valida ANTES de tocar disco (≥ 1 fila, fechas parseables, valores finitos); FUSIONA con el CSV
+  existente (unión de fechas, la descarga fresca gana en el solape) para que una respuesta parcial o truncada nunca acorte la historia; ante
+  respuesta vacía/inválida conserva intacto el último archivo válido y lo registra; nunca lanza excepción. ACM (panel, estimación, `ACM_G8_*.csv`) idéntico.
+- `scripts/s01b.py` v1.2: `Y2_FILES` += AUD, CAD; `BE_FILES` += NZD; `context_status()` elige la última observación con fecha ≤ sesión (no `ser[-1]`) y
+  distingue **OK** (Δ calculado) / **STALE** (dato atrasado: extremo final fuera de la tolerancia) / **SHORT** (historia insuficiente: extremo final
+  bien, sin dato válido en t₀ — un dato de hoy sin historia es SHORT, nunca «atrasado hoy») / **NONE** (sin observación ≤ sesión, sin feed o sin mercado).
+  `context_asof` conserva su forma; el Δ sigue sujeto a MAX_LAG_BD en ambos extremos. `evaluate_ccy` no cambia fuera del bloque de contexto.
+- `docs/index.html` §01-b: Δ2Y/ΔBE en blanco → «atrasado <fecha>» (ámbar) / «sin historia» / «sin feed», con tooltip de procedencia y último dato;
+  RESID en blanco por falta de ΔFIT → «sin ACM» (no se atribuye al nominal); DQM filas `AUD_NOM_2Y`, `CAD_NOM_2Y`. `sources/registry.csv`: dos filas.
+- `tests/test_s01b_e1.py` (12 pruebas; entra en el discover de Validate) y `tests/equiv_s01b_e1.py` (+ modo `--synthetic`), ambos en `validate.yml`.
+
+**Qué queda comprobado y con qué.**
+| Nivel | Qué | Resultado |
+|---|---|---|
+| Datos reales (snapshot congelado del 21-sep + `RY_G8_NZD.csv` del repo) | equivalencia motor v1.2 vs log v1.1 | EQUIVALENT: todas las filas y eventos idénticos salvo `NZD.d_be` None → +18,88 y su `context_asof[be]`; `context_last` nuevo en las 8 |
+| Datos reales (repo) | CHF nominal/2Y `context_last` | STALE 2026-08-31, 15 d.h., 2Y 0,078 % / 10Y 0,469 %, `SNB_CURVE_MONTHLY`; BE NONE `NO_MARKET` |
+| Datos de prueba | P1–P4 `persist_extra` (vacío / NaN / parcial-fusión / primera escritura) | 4/4: el CSV válido no se toca ante respuesta vacía o inválida; la fusión conserva la historia |
+| Datos de prueba | C1–C4 `context_last` (STALE / SHORT hoy sin historia / NONE vacío y serie posterior a t / OK y RESID sin ACM) | 4/4 |
+| Datos de prueba | X1 AUD/CAD sintéticos: `persist_extra` → `read_series` → `evaluate_ccy` → Δ2Y = (v_t − v_t₀)·100; X2 la conexión no mueve ningún campo del detector | 2/2 |
+| Datos de prueba (snapshot real + AUD/CAD sintéticos) | `equiv_s01b_e1.py --synthetic` | EQUIVALENT (AUD/CAD Δ2Y +6,4 sintético, resto idéntico) |
+| Suite previa | `tests/test_s01b.py` | 8/8 · discover CI: 20 pruebas, 0 fallos, 2 saltadas (`--live`) |
+| Datos reales (revisión externa de Sander, 21-sep) | CAD Valet: descarga real → CSV → Δ2Y | pasa. AUD: comprobado con el archivo F2 oficial; la descarga por Python falló por certificados en el entorno de revisión (no se desactiva TLS: usar un Python con bundle CA/certifi, no `verify=False`) |
+| **Pendiente de la primera ejecución** | AUD/CAD 2Y publicados por Actions, fechas y columnas visibles en la §01-b | primera pasada de `daily_update.yml` con v2.6; verificación posterior por Claude sobre el remoto (CSV, fechas, S01B.json v1.2, columnas). `--live [--session]` da dos veredictos separados: «descarga y cálculo correctos» y «vigente / vigencia pendiente para esa sesión TARGET» |
+| **Pendiente de publicación externa** | CHF 2Y/10Y septiembre | SNB, 1-oct |
