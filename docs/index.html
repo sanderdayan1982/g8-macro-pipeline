@@ -373,6 +373,24 @@
                 function nz(x) { return x != null && isFinite(x); }
                 function bp(x) { return nz(x) ? (x >= 0 ? '+' : '') + Math.round(x) : '·'; }
                 function pc(x) { return nz(x) ? (x >= 0 ? '+' : '') + x.toFixed(2) + ' %' : '·'; }
+                /* E1: a blank context cell says WHY. context_last.status: STALE = last observation held but beyond the 3 bd
+                   tolerance («atrasado <fecha>»), SHORT = data at the end but no valid observation at t0 («sin historia»),
+                   NONE = leg not connected / no market («sin feed»). Tooltip = provenance + last observation. */
+                function ctx(v, leg, x) {
+                    var cl = v.context_last && v.context_last[leg];
+                    if (nz(x)) { return cl && cl.quality ? '<span title="' + esc(cl.quality) + '">' + bp(x) + '</span>' : bp(x); }
+                    if (!cl) return '·';
+                    var tip = (cl.quality ? cl.quality + ' · ' : '') + (cl.date ? 'último ' + cl.date + ' = ' + cl.value + (cl.lag_bd != null ? ' (' + cl.lag_bd + ' d.h.)' : '') : 'sin observación ≤ sesión');
+                    if (cl.status === 'STALE') return '<span title="' + esc(tip) + '" style="color:' + AMBER + '">atrasado ' + esc(cl.date) + '</span>';
+                    if (cl.status === 'SHORT') return '<span title="' + esc(tip + (cl.first ? ' · serie desde ' + cl.first + ', t0 ' + cl.t0_needed : '')) + '">sin historia</span>';
+                    return '<span title="' + esc(tip) + '">sin feed</span>';
+                }
+                /* RESID = Δnominal − ΔFIT: blank because the ACM leg is missing (no ΔFIT) is NOT a nominal problem. */
+                function ctxResid(v) {
+                    if (nz(v.resid)) return bp(v.resid);
+                    if (!nz(v.d_fit)) return '<span title="sin ΔFIT: ACM ' + esc(v.avail || 'NO_DATA') + '">sin ACM</span>';
+                    return ctx(v, 'nominal', null);
+                }
                 function render(j) {
                     var el = document.getElementById('s01b-panel');
                     if (j.status === 'PENDING_FIRST_SESSION') {
@@ -404,8 +422,8 @@
                         h += '<tr><td><b>' + c + '</b></td>' +
                             '<td class="attr-val">' + bp(v.d_rny) + '</td>' +
                             '<td class="attr-val" style="color:' + col + '"><b>' + bp(v.d_tp) + '</b></td>' +
-                            '<td class="attr-val">' + bp(v.d_fit) + '</td><td class="attr-val" style="color:' + MUTE + '">' + bp(v.resid) + '</td>' +
-                            '<td class="attr-val" style="color:' + MUTE + '">' + bp(v.d_2y) + '</td><td class="attr-val" style="color:' + MUTE + '">' + bp(v.d_be) + '</td>' +
+                            '<td class="attr-val">' + bp(v.d_fit) + '</td><td class="attr-val" style="color:' + MUTE + '">' + ctxResid(v) + '</td>' +
+                            '<td class="attr-val" style="color:' + MUTE + '">' + ctx(v, 'y2', v.d_2y) + '</td><td class="attr-val" style="color:' + MUTE + '">' + ctx(v, 'be', v.d_be) + '</td>' +
                             '<td class="attr-val">' + pc(v.d_fx) + '</td><td class="attr-val">' + bp(v.theta) + '</td>' +
                             '<td style="color:' + sigCol + '"><b>' + esc(sig) + '</b>' + avail + (v.signal_note ? ' <span style="color:' + MUTE + '" title="' + esc(v.signal_note) + '">último</span>' : '') + '</td>' +
                             '<td class="attr-val">' + (v.emitter && v.avail === 'OK' ? v.persist : '·') + '</td>' +
@@ -1323,6 +1341,9 @@ var FEED_REGISTRY = {
     GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'daily', 5, '01'),
     AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
+    /* E1 (2026-09-21): 2Y daily legs persisted by acm_g8.py v2.6 from the connectors it already uses; consumer §01-b Δ2Y. */
+    AUD_NOM_2Y: repo('AUD_NOM_2Y.csv', 'AUD Nominal 2Y (RBA F2 daily table, via acm_g8)', 'daily', 5, '01'),
+    CAD_NOM_2Y: repo('CAD_NOM_2Y.csv', 'CAD Nominal 2Y (BoC Valet, via acm_g8)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
     NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '04'),
