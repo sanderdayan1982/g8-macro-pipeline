@@ -371,7 +371,7 @@
                 var GREEN = '#2fbf71', RED = '#e0485a', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#eef1f6', MUTE = '#aeb6c6';
                 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
                 function nz(x) { return x != null && isFinite(x); }
-                function bp(x) { return nz(x) ? (x >= 0 ? '+' : '') + Math.round(x) : '·'; }
+                function bp(x) { if (!nz(x)) return '·'; var r = Math.round(x); return r === 0 ? '0' : (r > 0 ? '+' : '') + r; }   /* E2: sign after rounding */
                 function pc(x) { return nz(x) ? (x >= 0 ? '+' : '') + x.toFixed(2) + ' %' : '·'; }
                 /* E1: a blank context cell says WHY. context_last.status: STALE = last observation held but beyond the 3 bd
                    tolerance («atrasado <fecha>»), SHORT = data at the end but no valid observation at t0 («sin historia»),
@@ -407,11 +407,12 @@
                         '<b style="color:' + GOLD + '">§01-b · 22-SESSION READING · CTF</b> <span style="color:' + MUTE + '">CONTEXT · sin voto · ' +
                         'ΔRNY + ΔTP = ΔFIT (modelo ACM) · RESID = Δnominal − ΔFIT · θ = p80 expanding a t−1 (ΔTP firmado, ≥ 252 obs.) · ' +
                         'CTF = ΔTP &gt; 0 y ≥ θ y ΔFX22 ≤ −0,5 % (log; USD vs cesta §10) · histéresis p60 · CHF solo lectura · as-of ' + esc(j.as_of) +
-                        (j.fx_effective && j.fx_effective !== j.as_of ? ' · FX ' + esc(j.fx_effective) + ' (DESFASE)' : '') + '</span></div>';
+                        (j.fx_effective && j.fx_effective !== j.as_of ? ' · FX ' + esc(j.fx_effective) + ' (DESFASE)' : '') + '</span>' +
+                        (j.provisional ? ' <span style="color:' + AMBER + '" title="Run de mediodía (usd_factor.yml): componentes en vivo, señal/persist del último run --final. La sesión se evalúa una sola vez en el --final de daily_update.yml, tras recalcular el ACM.">· PROVISIONAL — sesión sin evaluar (estado del último --final)</span>' : '') + '</div>';
                     h += '<div class="attr-wrap"><table class="attr-table"><thead><tr><th>CCY</th><th title="Δ risk-neutral yield 22 s. (bp)">ΔRNY</th>' +
                         '<th title="Δ term premium ACM 22 s. (bp)">ΔTP</th><th title="ΔRNY+ΔTP">ΔFIT</th><th title="Δnominal observado − ΔFIT">RESID</th>' +
                         '<th title="contexto, no aditivo">Δ2Y</th><th title="contexto">ΔBE</th><th title="log-retorno 22 s. nativo XXX/USD; USD = cesta §10">ΔFX</th>' +
-                        '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th>As-of</th></tr></thead><tbody>';
+                        '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th title="fecha de la última fila ACM usada (acm_g8.py va ~1 sesión detrás de los insumos); «curva» = fecha real del insumo largo cuando acm_g8 lo arrastra (ffill ≤ 5 s., bandera ACM_FFILL)">ACM as-of</th></tr></thead><tbody>';
                     order.forEach(function (c) {
                         var v = cur[c]; if (!v) return;
                         var col = v.colour === 'red' ? RED : (v.colour === 'amber' ? AMBER : WHITE);
@@ -427,8 +428,9 @@
                             '<td class="attr-val">' + pc(v.d_fx) + '</td><td class="attr-val">' + bp(v.theta) + '</td>' +
                             '<td style="color:' + sigCol + '"><b>' + esc(sig) + '</b>' + avail + (v.signal_note ? ' <span style="color:' + MUTE + '" title="' + esc(v.signal_note) + '">último</span>' : '') + '</td>' +
                             '<td class="attr-val">' + (v.emitter && v.avail === 'OK' ? v.persist : '·') + '</td>' +
-                            '<td style="color:' + MUTE + '">' + esc(flags || 'OK') + '</td>' +
-                            '<td style="color:' + MUTE + '">' + esc(v.acm_asof_t || '·') + '</td></tr>';
+                            '<td style="color:' + ((v.flags || []).indexOf('ACM_FFILL') >= 0 ? AMBER : MUTE) + '">' + esc(flags || 'OK') + '</td>' +
+                            '<td style="color:' + MUTE + '">' + esc(v.acm_asof_t || '·') +
+                            ((v.flags || []).indexOf('ACM_FFILL') >= 0 && v.acm_input_asof_t ? ' <span style="color:' + AMBER + '" title="ACM_FFILL: la curva larga (' + esc(v.acm_input_asof_t) + ') va detrás de la fila ACM (' + esc(v.acm_asof_t) + '); acm_g8.py arrastra hasta 5 sesiones. Solo lectura, no gatea.">· curva ' + esc(v.acm_input_asof_t) + '</span>' : '') + '</td></tr>';
                     });
                     h += '</tbody></table></div>';
                     var ev = (j.events || []).map(function (e) { return e.ccy + ' ' + (e.baseline ? '(baseline)' : 'ON') + ' ' + e.t; });
