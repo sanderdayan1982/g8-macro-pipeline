@@ -126,3 +126,41 @@ Las sesiones publicadas con v1.1 se reproducen con el motor archivado en su snap
 | Datos reales (revisión externa de Sander, 21-sep) | CAD Valet: descarga real → CSV → Δ2Y | pasa. AUD: comprobado con el archivo F2 oficial; la descarga por Python falló por certificados en el entorno de revisión (no se desactiva TLS: usar un Python con bundle CA/certifi, no `verify=False`) |
 | **Pendiente de la primera ejecución** | AUD/CAD 2Y publicados por Actions, fechas y columnas visibles en la §01-b | primera pasada de `daily_update.yml` con v2.6; verificación posterior por Claude sobre el remoto (CSV, fechas, S01B.json v1.2, columnas). `--live [--session]` da dos veredictos separados: «descarga y cálculo correctos» y «vigente / vigencia pendiente para esa sesión TARGET» |
 | **Pendiente de publicación externa** | CHF 2Y/10Y septiembre | SNB, 1-oct |
+
+## Enmienda E2 — evaluación write-once en el run --final · as-of real del insumo largo del ACM · 22/23-sep-2026 (sesión 2 de C)
+
+**Origen.** Revisión de la §01-b en vivo (sesión 22-sep, s01b v1.2) pedida por Sander («chequea y arregla los datos»). La aritmética
+de todas las celdas cuadra con los CSV de origen y con el snapshot (ΔRNY+ΔTP=ΔFIT, RESID, Δ2Y, ΔBE, ΔFX e identidad de la cesta f).
+Los defectos encontrados no son de cálculo sino de **momento de evaluación** y de **as-of declarado**:
+
+| # | Hecho comprobado (datos reales del remoto, 22-sep) | Causa | Reparación E2 |
+|---|---|---|---|
+| 1 | `data/s01b/log/2026-09-22.json`: `final_run: false`, run 19:01 UTC, ACM hasta el 18-sep (t−2) en el snapshot. La misma tarde `daily_update.yml` recalculó el ACM con el 21-sep (t−1: USD/EUR/GBP/AUD/CAD) y `--final` solo republicó (write-once). AS-OF 18-sep cuando el 21-sep existía. | La sesión la bloqueaba el run de mediodía de `usd_factor.yml` (s01b.py sin `--final`), que corre ANTES de `acm_g8.py`; el cron de `daily_update` (18:00 UTC) además precede a la publicación del H.15 de FRED (~20:15 UTC). | `s01b.py` v1.3: la evaluación write-once (log + snap + state + events) pertenece **solo** a `--final`. Sin `--final` (o con `--provisional`) se publica S01B.json con `provisional: true`, `events: []`, señal/persist del último `--final` (no se avanza ningún contador; una vista previa no puede encender nada), `run_id` con sufijo `P`; no escribe log, snap, state ni eventos. Con log existente, un run provisional solo republica desde el log (nunca degrada). `daily_update.yml` cron 18:00 → **21:30 UTC** (23:30 Bata). `usd_factor.yml` paso `s01b.py --provisional`. |
+| 2 | ACM AUD: filas 17/18/21-sep con Y10_FIT 5,2988 / 5,2985 / 5,2989 = curva del 16-sep; `AUD_NOM_2Y.csv` y `RY_G8_AUD.csv` (mismo conector RBA F2 daily) terminan el 16-sep; solo mueven los bills 3M/6M. El AS-OF 18-sep de AUD era falso: el ΔTP +17 era a 16-sep. | `acm_g8.py build_daily_panel` hace `ffill(limit=5)` sobre el panel diario; los tenores largos de AUD (RBA F2 daily 2/3/5/10) y CAD (Valet 2/5/10) pueden ir detrás de los bills. El ACM no informa de la fecha real de su insumo largo. | `s01b.py` v1.3 (`ACM_INPUT_PROBE`): fecha real del insumo largo = última observación ≤ fecha de la fila ACM de la serie persistida del MISMO conector (`AUD_NOM_2Y.csv` / `CAD_NOM_2Y.csv`, E1) → campos `acm_input_asof_t` / `acm_input_asof_t0`; si va detrás, bandera **ACM_FFILL** (solo lectura: no toca avail, población, θ ni señal). Dashboard: «ACM as-of 2026-09-18 · curva 2026-09-16» en ámbar y ACM_FFILL en Calidad. Gatear AUD por ffill sería un cambio del motor y **no** se hace en C (se anota como opción para D). |
+| 3 | RESID USD «+0» y EUR «0» | `bp()` ponía el signo antes de redondear | signo después de redondear; 0 siempre «0». Cabecera «As-of» → «ACM as-of» con tooltip. |
+
+**Alcance y C.** D1–D5 intactas. El motor (`evaluate_ccy` fuera del bloque de lectura E2) no cambia: `tests/equiv_s01b_e2.py` re-ejecuta las
+sesiones publicadas del 21-sep (v1.1) y del 22-sep (v1.2) sobre sus snapshots congelados con el motor v1.3 y todos los campos del detector
+son idénticos (solo cambian las patas E1 permitidas y los campos de lectura E2: `acm_input_asof_*`, bandera ACM_FFILL en fila y evento).
+**C no se reinicia**; los logs del 21 y 22-sep no se tocan (la sesión del 22-sep queda publicada con ACM t−2, como está: write-once).
+E2 rige desde la primera sesión publicada con `s01b v1.3` (23-sep si el lote entra antes de las 21:30 UTC). Sin reconstrucción retrospectiva.
+Cadencia de la RBA F2 daily (¿4 d.h. de atraso reales o descarga cacheada?): **pendiente de comprobar por Sander en la web de la RBA**
+(no alcanzable desde el sandbox). CHF 2Y/10Y siguen «atrasado 2026-08-31» hasta la publicación del SNB (1-oct).
+
+**Cambios de código (lote_s01b_e2).**
+- `scripts/s01b.py` v1.3: `publish_provisional()`, `provisional = not final` en `main()`, `ACM_INPUT_PROBE` + bloque de lectura en `evaluate_ccy`, docstring.
+- `scripts/dashboard_alerts.py` v2.5: el brief y el bloque §01-b marcan «PROVISIONAL» cuando S01B.json lo es (los eventos siguen viniendo del log/ledger; un provisional no genera ninguno).
+- `docs/index.html` §01-b: banner PROVISIONAL, columna «ACM as-of» con «· curva <fecha>», Calidad ACM_FFILL en ámbar, signo del RESID.
+- `.github/workflows/daily_update.yml` cron `30 21 * * 1-5`; `usd_factor.yml` paso `--provisional`; `validate.yml` ejecuta `equiv_s01b_e2.py` (21-sep y 22-sep, normal y `--synthetic`) en lugar de `equiv_s01b_e1.py` (que se conserva como prueba histórica de E1).
+- `tests/test_s01b_e2.py` (5 pruebas: F1–F4 sonda/bandera sin efecto sobre el detector; V1–V4 provisional → final → republicación → idempotencia, en un directorio de datos aislado) · `tests/test_s01b_e1.py` X2: excluye los dos campos de lectura E2 · `tests/equiv_s01b_e2.py`.
+
+**Qué queda comprobado y con qué.**
+| Nivel | Qué | Resultado |
+|---|---|---|
+| Datos reales (snapshots congelados 21-sep y 22-sep) | `equiv_s01b_e2.py` 21-sep, 21-sep `--synthetic`, 22-sep, 22-sep `--synthetic` | EQUIVALENT ×4 (detector idéntico; AUD ACM_FFILL con curva 16-sep en ambas; CAD sin bandera) |
+| Datos reales (repo, `--dry-run --final --date 2026-09-22` con el ACM ya recalculado) | qué habría publicado un `--final` posterior al ACM | ACM as-of 21-sep en USD/EUR/GBP/AUD/CAD; AUD «curva 2026-09-16» ACM_FFILL; NZD ON (histéresis); ninguna señal cambia |
+| Datos de prueba | `test_s01b_e2.py` F1–F4, V1–V4 | 5/5 · discover CI: 25 pruebas, 0 fallos, 2 saltadas (`--live`) |
+| Suite previa | `test_s01b.py` 8/8 · `test_s01b_e1.py` 12 (X2 con exclusión E2) | pasa |
+| Render | `docs/index.html` con un S01B.json simulado (provisional + AUD ACM_FFILL) en Chromium sin cabeza | banner PROVISIONAL, «2026-09-18 · curva 2026-09-16», RESID «0» |
+| **Pendiente de la primera ejecución** | 23-sep: run de 15:30/17:30 UTC → S01B.json `provisional: true`, sin log; run 21:30 UTC → log `final_run: true`, ACM as-of 22-sep en USD (FRED 22-sep publicado ~20:15 UTC) | verificación por Claude sobre el remoto |
+| **Pendiente de Sander** | cadencia real de la tabla F2 daily de la RBA | web RBA |
