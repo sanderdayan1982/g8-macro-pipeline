@@ -6,8 +6,10 @@ G8 Macro Pipeline · 19-Sep-2026 · spec: docs/actas/ESPEC_S01B_v1.md (v1.1) · 
 State: CONTEXT — never votes. Stdlib only (same policy as dashboard_alerts.py).
 
 USAGE
-  python3 scripts/s01b.py                 # evaluate today's session if its FX is published (else PENDING)
-  python3 scripts/s01b.py --final         # end-of-day run: evaluate even if FX is missing (DESFASE)
+  python3 scripts/s01b.py                 # E2: PROVISIONAL preview of today's session (S01B.json only, no log/state/events)
+  python3 scripts/s01b.py --provisional   # same, explicit
+  python3 scripts/s01b.py --final         # end-of-day run: the ONE evaluation of the session (log + snap + state + events);
+                                          # evaluates even if FX is missing (DESFASE). Runs after acm_g8.py in daily_update.yml
   python3 scripts/s01b.py --replay 2026-09-18       # recompute that session from its snapshot and diff vs log
   python3 scripts/s01b.py --annex         # retrospective replay of the 9 validate episodes (label RETROSPECTIVO)
   python3 scripts/s01b.py --dry-run       # compute and print, write nothing
@@ -16,7 +18,15 @@ Nonzero exit on replay mismatch or unrecoverable errors.
 ONE EVALUATION PER SESSION · EVENT ≠ DELIVERY · ATOMIC PUBLICATION
   Session key t = today's UTC date if it is a TARGET business day. The session is evaluated exactly once:
   if data/s01b/log/<t>.json exists, nothing is recomputed (later runs the same day only re-publish
-  S01B.json from that log). Events (OFF→ON) are recorded in the log and in data/s01b/events.jsonl;
+  S01B.json from that log).
+  E2 (2026-09-22): the write-once evaluation belongs to --final ONLY (daily_update.yml, after acm_g8.py has
+  refreshed the ACM with t−1 inputs). Runs without --final (usd_factor.yml, 15:30/17:30 UTC) publish a
+  PROVISIONAL S01B.json (provisional: true, events []) and write NO log, snap, state or event — before E2
+  the midday run locked the session with the ACM of t−2 while the evening pass computed t−1 unused.
+  If the session log already exists, a provisional run only re-publishes from the log (never downgrades).
+  E2 also reports, for AUD/CAD, the true as-of of the ACM long-end input (acm_input_asof_t/_t0): acm_g8.py
+  forward-fills the daily panel up to 5 sessions, so ACM rows can be newer than the curve behind them.
+  When it lags, flag ACM_FFILL (reading only — never gates avail, threshold or signal). Events (OFF→ON) are recorded in the log and in data/s01b/events.jsonl;
   dashboard_alerts.py owns delivery and its own "sent" ledger. Publication order: snapshot → log →
   state → S01B.json, each via write-to-temp + os.replace; S01B.json carries the run_id of the log it
   reflects, so a partial run is detectable and self-heals on the next run.
@@ -38,7 +48,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.2"   # E1 (2026-09-21): patas de contexto AUD/CAD 2Y, NZD BE; context_last · motor CTF intacto
+VERSION = "s01b v1.3"   # E2 (2026-09-22): evaluación write-once solo en --final; runs de mediodía PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -70,6 +80,11 @@ BE_FILES = {c: "RY_G8_%s.csv" % c for c in ["USD", "EUR", "GBP", "JPY", "AUD", "
 CONTEXT_QUALITY = {("AUD", "y2"): "RBA_F2_DAILY_TABLE", ("CAD", "y2"): "BOC_VALET",
                    ("NZD", "be"): "IIB_PROXY_THIN_MARKET", ("NZD", "y2"): "RBNZ_B2",
                    ("CHF", "y2"): "SNB_CURVE_MONTHLY", ("CHF", "nominal"): "SNB_CURVE_MONTHLY", ("CHF", "be"): "NO_MARKET"}
+# E2: probe of the ACM long-end input date. acm_g8.py builds the daily panel from bills (fresh daily) plus the long-end
+# tenors of ONE connector (AUD: RBA F2 daily 2/3/5/10; CAD: BoC Valet 2/5/10) and forward-fills up to 5 sessions —
+# an ACM row dated t can therefore carry the curve of an older day. The persisted 2Y of that same connector
+# (AUD_NOM_2Y.csv / CAD_NOM_2Y.csv, E1) tells the true input date. Reading only: never gates anything.
+ACM_INPUT_PROBE = {"AUD": "y2", "CAD": "y2"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -324,6 +339,15 @@ def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx
     row["context_last"] = {}
     for name, ser, end, start, dval in (("nominal", nom, n1, n0, row["d_nom"]), ("y2", y2, q1, q0, row["d_2y"]), ("be", be, e1, e0, row["d_be"])):
         row["context_last"][name] = context_status(ccy, name, ser, t, t0, end, start, dval)
+    # E2: true as-of of the ACM long-end input (reading only). Probe = the persisted series of the same connector.
+    probe = {"y2": y2, "be": be, "nominal": nom}.get(ACM_INPUT_PROBE.get(ccy, ""), None)
+    if probe and row.get("acm_asof_t"):
+        p1 = asof(probe, date.fromisoformat(row["acm_asof_t"]), max_lag_bd=10 ** 6)
+        p0 = asof(probe, date.fromisoformat(row["acm_asof_t0"]), max_lag_bd=10 ** 6)
+        row["acm_input_asof_t"] = p1[0].isoformat() if p1 else None
+        row["acm_input_asof_t0"] = p0[0].isoformat() if p0 else None
+        if p1 and p1[0] < date.fromisoformat(row["acm_asof_t"]) and "ACM_FFILL" not in row["flags"]:
+            row["flags"].append("ACM_FFILL")                        # curve behind the ACM row date (acm_g8 ffill ≤ 5)
     # ── FX over the same window (t0, t]: sum of daily log returns on the TARGET calendar
     if fx_effective < t:
         row["flags"].append("DESFASE")
@@ -524,6 +548,27 @@ def publish(t, logrec, out, new_state, inp, data_dir, dry):
     log("published %s · run %s · events %d" % (t.isoformat(), run_id, len(logrec["events"])))
 
 
+def publish_provisional(t, out, rows, dry):
+    """E2 — midday preview: S01B.json only. No log, no snap, no state, no events (the session is not evaluated).
+    Components (ΔRNY/ΔTP/ΔFIT/θ/ΔFX/context) are the live reading; signal/persist/streak are NOT advanced: they stay
+    as the last --final run left them, so a preview can never turn a currency ON or move a counter."""
+    out = dict(out, provisional=True, events=[], baseline=False,
+               note=out["note"] + " · PROVISIONAL: vista previa de mediodía, la sesión se evalúa en el run --final (write-once)")
+    for r in rows:
+        c = out["currencies"][r["ccy"]]
+        sb = r.get("state_before") or {}
+        if r["ccy"] in EMITTERS:
+            c["signal"] = sb.get("signal", "OFF")
+            c["persist"] = sb.get("persist", 0)
+            c["fx_fail_streak"] = sb.get("fx_fail_streak", 0)
+        c["signal_note"] = "provisional · estado del último run --final (%s), sin evaluar" % (sb.get("last_eval") or "—")
+    if dry:
+        print(json.dumps(out, indent=1, ensure_ascii=False))
+        return
+    atomic_write(OUT_JSON, json.dumps(out, indent=1, ensure_ascii=False))
+    log("PROVISIONAL S01B.json published for %s · run %s · no log/state/events written" % (t.isoformat(), out["run_id"]))
+
+
 def republish_from_log(t):
     """S01B.json out of sync with the session log (partial run) → rebuild it from the log."""
     lg = load_json(os.path.join(LOG_DIR, t.isoformat() + ".json"), None)
@@ -637,8 +682,9 @@ def main(argv):
         return 0
     fx_effective = max(d for d in inp["calendar"] if d <= t)
     if fx_effective < t and not final:
-        log("PENDING_FX: last FX %s < session %s — waiting for the ECB reference rates (use --final at end of day)" % (fx_effective, t))
+        log("PENDING_FX: last FX %s < session %s — waiting for the ECB reference rates (the --final run evaluates)" % (fx_effective, t))
         return 0
+    provisional = not final                                  # E2: only --final evaluates and writes the session
     if fx_effective < t and bdays(fx_effective, t) > MAX_LAG_BD:
         log("FX too old (%s) — evaluating with NO_DATA rows" % fx_effective)
     previous = {}
@@ -652,11 +698,15 @@ def main(argv):
     if err:
         log("error: " + err)
         return 0
-    run_id = t.isoformat() + "T" + datetime.now(timezone.utc).strftime("%H%M%SZ")
+    run_id = t.isoformat() + "T" + datetime.now(timezone.utc).strftime("%H%M%SZ") + ("P" if provisional else "")
     logrec, out, new_state, _ = build_outputs(t, rows, events, inp, fx_effective, final, run_id)
-    publish(t, logrec, out, new_state, inp, DATA, dry)
+    if provisional:
+        publish_provisional(t, out, rows, dry)
+    else:
+        publish(t, logrec, out, new_state, inp, DATA, dry)
     for r in rows:
-        log("%s avail %-8s signal %-3s dTP %s θ %s dFX %s%%" % (r["ccy"], r["avail"], r["signal"], r.get("d_tp"), r.get("theta"), r.get("d_fx")))
+        log("%s avail %-8s signal %-3s dTP %s θ %s dFX %s%% %s" % (r["ccy"], r["avail"], out["currencies"][r["ccy"]]["signal"], r.get("d_tp"), r.get("theta"), r.get("d_fx"),
+                                                            "acm %s%s" % (r.get("acm_asof_t"), " (curva %s)" % r["acm_input_asof_t"] if "ACM_FFILL" in r["flags"] else "")))
     return 0
 
 
