@@ -3,8 +3,10 @@ name: Daily Data Update
 
 on:
   schedule:
-    # 18:00 UTC Mon-Fri — captures all G8 central bank publications for the day
-    - cron: '0 18 * * 1-5'
+    # 21:30 UTC Mon-Fri (23:30 Bata) — E2 §01-b (2026-09-22): after the FRED H.15 release (~20:15 UTC EDT /
+    # ~21:15 UTC EST) so acm_g8.py carries t−1 for USD and the --final S01B evaluation reads it the same day.
+    # Was 18:00 UTC: the ACM then ended at t−2 and the session was locked with it.
+    - cron: '30 21 * * 1-5'
   workflow_dispatch:
     # Allows manual trigger from the Actions tab
 
@@ -220,7 +222,9 @@ jobs:
       # v1.0 2026-09-12: reads repo data only (no downloads, $0). State lives in
       # data/alerts/state.json and is committed by the step below (git add data/).
       # ── §01-b · lectura 22 s. + CTF (CONTEXT) — después de los ACM, antes de las alertas
-      - name: S01B (22-session reading + CTF, one evaluation per session)
+      # E2: this --final run is the ONLY evaluation of the session (log + snap + state + events, write-once).
+      # The midday runs in usd_factor.yml publish a PROVISIONAL S01B.json and write nothing else.
+      - name: S01B (22-session reading + CTF — the one evaluation per session, after acm_g8)
         if: always()
         run: python scripts/s01b.py --final
       - name: Dashboard alerts (Telegram on change)
