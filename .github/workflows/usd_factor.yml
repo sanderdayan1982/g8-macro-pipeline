@@ -42,8 +42,10 @@ jobs:
       - name: Book risk (book.csv / candidate.csv → BOOK_RISK.json)
         run: python scripts/book_risk.py
 
-      - name: S01B (evaluate today's session if the ECB rates are already published)
-        run: python scripts/s01b.py
+      # E2 §01-b (2026-09-22): PROVISIONAL preview only (S01B.json; no log/state/events). The session is
+      # evaluated once, in daily_update.yml --final, after acm_g8.py has refreshed the ACM.
+      - name: S01B (provisional preview if the ECB rates are already published)
+        run: python scripts/s01b.py --provisional
 
       - name: Dashboard alerts (Telegram on change)
         if: always()
