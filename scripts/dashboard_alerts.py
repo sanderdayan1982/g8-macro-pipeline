@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v2.4  (2026-09-19) — §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
+G8 Macro Pipeline — dashboard_alerts.py  v2.5  (2026-09-22) — §01-b E2: S01B.json PROVISIONAL etiquetado (sin eventos) · v2.4 §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -851,7 +851,8 @@ def summary_baseline(st):
     if u:
         sj = read_json("S01B.json") or {}
         if sj.get("as_of"):
-            out.append("<b>§01-b Lectura 22 s. · CTF</b> (CONTEXT, sin voto · ΔTP22 vs θ expanding p80 · ΔFX22 log · as-of %s)" % sj["as_of"])
+            out.append("<b>§01-b Lectura 22 s. · CTF</b> (CONTEXT, sin voto · ΔTP22 vs θ expanding p80 · ΔFX22 log · as-of %s%s)"
+                       % (sj["as_of"], " · PROVISIONAL, sesión sin evaluar" if sj.get("provisional") else ""))
             for c, v in (sj.get("currencies") or {}).items():
                 out.append("   %-4s ΔRNY %+5.0f ΔTP %+5.0f θ %5s ΔFX %6s  %s%s" % (
                     c, v.get("d_rny") or 0, v.get("d_tp") or 0, "·" if v.get("theta") is None else "%+.0f" % v["theta"],
@@ -1152,6 +1153,8 @@ def build_brief(st, wall_lines):
             on = [c for c, v in cur.items() if v.get("signal") == "ON"]
             na = [c for c, v in cur.items() if v.get("avail") not in ("OK",) and v.get("emitter")]
             t = "CTF ON: %s" % (", ".join(on) if on else "ninguna")
+            if sj.get("provisional"):                                   # E2: vista previa de mediodía, estado del último --final
+                t += " (PROVISIONAL)"
             t += " · ΔTP22 " + " ".join("%s %+.0f" % (c, (v.get("d_tp") or 0)) for c, v in cur.items() if v.get("d_tp") is not None)
             if na:
                 t += " · sin evaluar: " + ", ".join("%s(%s)" % (c, cur[c].get("avail")) for c in na)
