@@ -232,7 +232,8 @@ class ConnectionAudCad(unittest.TestCase):
         b, eb = s01b.evaluate_ccy("CAD", cal[pos], pos, cal, acm, [], y2, [], r, f, cal[pos], {"initialized": True})
         self.assertEqual(ea, eb)
         for k in set(a) | set(b):
-            if k in ("d_2y", "context_asof", "context_last"):
+            if k in ("d_2y", "context_asof", "context_last",
+                     "acm_input_asof_t", "acm_input_asof_t0"):     # E2: probe of the ACM long-end input (reading only)
                 continue
             self.assertEqual(a.get(k), b.get(k), k)
 
