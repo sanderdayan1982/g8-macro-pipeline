@@ -1,12 +1,12 @@
 {
- "generated_utc": "2026-09-22T20:58:55Z",
+ "generated_utc": "2026-09-23T00:01:23Z",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-09-22",
   "cot": "2026-09-15",
   "options": "2026-09-21",
   "metals": "2026-09-15",
-  "s01b": "2026-09-22",
+  "s01b": "2026-09-23",
   "factor": "2026-09-22"
  },
  "gates": {
@@ -49,14 +49,19 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: NZD · ΔTP22 USD -1 EUR -12 GBP -20 JPY +5 AUD +17 NZD +22 CAD -11 CHF +3"
+   "text": "CTF ON: AUD, NZD · ΔTP22 USD -1 EUR -10 GBP -20 AUD +20 CAD -3 · sin evaluar: JPY(NO_DATA), NZD(NO_DATA)"
   },
   {
    "sec": "§10 Factor USD",
    "text": "f USD 21 s. +1.52 % (z +0.97) · dispersión DISPERSO UN NOMBRE JPY p96.8 · S 64 %"
   }
  ],
- "dqm": [],
+ "dqm": [
+  {
+   "feed": "NZD_CASH_ON",
+   "status": "STALE"
+  }
+ ],
  "walls": [
   {
    "pair": "EUR/USD",
@@ -365,9 +370,9 @@
    "real": 2.951,
    "be": 2.397,
    "nom_asof": "2026-09-16",
-   "tp": 1.3467,
-   "tp_z": 2.20713646757949,
-   "tp_asof": "2026-09-21",
+   "tp": 1.3456,
+   "tp_z": 2.1765510494805618,
+   "tp_asof": "2026-09-22",
    "rfr": 4.35,
    "floor_bp": 0.0,
    "floor_badge": "AMPLE",
@@ -382,6 +387,7 @@
    "flags": [
     "REAL IIB (B2)",
     "TP ACM K=3 short sample",
+    "RFR = OCR (sin cash B2)",
     "REAL vs USD z suelo"
    ],
    "nom": 5.0,
@@ -391,7 +397,7 @@
    "tp": 1.9513,
    "tp_z": 2.5461594847514535,
    "tp_asof": "2026-09-17",
-   "rfr": 2.85,
+   "rfr": 2.75,
    "floor_bp": 10.0,
    "floor_badge": "PRESSURE",
    "vs_usd_bp": 6.0,
