@@ -9,7 +9,9 @@ USAGE
   python3 scripts/s01b.py                 # E2: PROVISIONAL preview of today's session (S01B.json only, no log/state/events)
   python3 scripts/s01b.py --provisional   # same, explicit
   python3 scripts/s01b.py --final         # end-of-day run: the ONE evaluation of the session (log + snap + state + events);
-                                          # evaluates even if FX is missing (DESFASE). Runs after acm_g8.py in daily_update.yml
+                                          # evaluates even if FX is missing (DESFASE). Runs after acm_g8.py in daily_update.yml.
+                                          # E2.1: before FINAL_EARLIEST_UTC (20:00 UTC) it publishes PROVISIONAL instead
+                                          # (a manual dispatch cannot consume the session); --force-final overrides.
   python3 scripts/s01b.py --replay 2026-09-18       # recompute that session from its snapshot and diff vs log
   python3 scripts/s01b.py --annex         # retrospective replay of the 9 validate episodes (label RETROSPECTIVO)
   python3 scripts/s01b.py --dry-run       # compute and print, write nothing
@@ -48,7 +50,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.3"   # E2 (2026-09-22): evaluación write-once solo en --final; runs de mediodía PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
+VERSION = "s01b v1.3.1" # E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -65,6 +67,8 @@ FX_THR = -0.005             # D2: log return over the common window
 FX_FAIL_STREAK = 3          # ON→OFF when FX condition fails 3 OK sessions in a row
 MAX_LAG_BD = 3              # as-of lag allowed at each window end
 MIN_QUALITY_MONTHS = 240    # acm_g8 MIN_OBS_MONTHLY
+FINAL_EARLIEST_UTC = 20     # E2.1 (2026-09-23): --final evaluates the session only from this UTC hour (after FRED H.15 ~20:15 UTC);
+                            # earlier (a manual dispatch) it behaves as provisional. --force-final overrides; --date (tests) is exempt.
 
 NOM_FILES = {c: "RY_G8_%s.csv" % c for c in CCY8 if c != "CHF"}
 NOM_FILES["CHF"] = "CHF_SPOT_10Y.csv"
@@ -685,6 +689,12 @@ def main(argv):
         log("PENDING_FX: last FX %s < session %s — waiting for the ECB reference rates (the --final run evaluates)" % (fx_effective, t))
         return 0
     provisional = not final                                  # E2: only --final evaluates and writes the session
+    if final and "--date" not in argv and "--force-final" not in argv and datetime.now(timezone.utc).hour < FINAL_EARLIEST_UTC:
+        # E2.1: a --final launched by hand before the data of the day exists (FRED, ACM t−1) must not consume the
+        # write-once slot — on 2026-09-23 a 00:01 UTC dispatch locked the session with DESFASE and the ACM of t−2.
+        log("EARLY_FINAL: %s UTC < %02d:00 — the session is evaluated only by the scheduled --final; publishing PROVISIONAL (use --force-final to override)"
+            % (datetime.now(timezone.utc).strftime("%H:%M"), FINAL_EARLIEST_UTC))
+        provisional = True
     if fx_effective < t and bdays(fx_effective, t) > MAX_LAG_BD:
         log("FX too old (%s) — evaluating with NO_DATA rows" % fx_effective)
     previous = {}
