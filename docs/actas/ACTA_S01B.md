@@ -164,3 +164,18 @@ Cadencia de la RBA F2 daily (¿4 d.h. de atraso reales o descarga cacheada?): **
 | Render | `docs/index.html` con un S01B.json simulado (provisional + AUD ACM_FFILL) en Chromium sin cabeza | banner PROVISIONAL, «2026-09-18 · curva 2026-09-16», RESID «0» |
 | **Pendiente de la primera ejecución** | 23-sep: run de 15:30/17:30 UTC → S01B.json `provisional: true`, sin log; run 21:30 UTC → log `final_run: true`, ACM as-of 22-sep en USD (FRED 22-sep publicado ~20:15 UTC) | verificación por Claude sobre el remoto |
 | **Pendiente de Sander** | cadencia real de la tabla F2 daily de la RBA | web RBA |
+
+### E2.1 — sesión del 23-sep-2026 ANULADA por evaluación prematura · guard horario de `--final`
+**Hecho.** Un `Daily Data Update` lanzado a mano a las 00:01 UTC del 23-sep ejecutó `s01b.py --final` (v1.3) y evaluó la sesión
+del 23-sep con FX del 22-sep (DESFASE), ACM as-of 21-sep (FRED aún sin publicar), JPY/NZD/CHF NO_DATA (ACM > 3 d.h.) y **AUD ON**
+(ΔTP +19,78 ≥ θ 18,59; ΔFX −0,72 %; curva RBA 16-sep, ACM_FFILL). Log `2026-09-23.json` run `2026-09-23T000122Z`, evento AUD ON en
+`events.jsonl` y en el libro de enviados de Telegram. Causa: E2 protegía el run de mediodía pero no un `--final` fuera de hora.
+**Decisión (con «procede» de Sander).** La sesión se ANULA: no es una evaluación de fin de día sino una ejecución accidental sin los
+datos del día. El log anulado se conserva íntegro en `data/s01b/annulled/2026-09-23_2026-09-23T000122Z.json`; se borran log y snap
+del 23-sep; `state.json` vuelve al estado tras el 22-sep; el evento AUD ON se retira de `events.jsonl` y del libro de enviados
+(si el `--final` real del 23-sep enciende AUD, debe poder anunciarlo); `S01B.json` vuelve a la salida del 22-sep hasta ese run.
+Script: `anular_sesion_20260923.py` (dry-run por defecto, `--yes` aplica; idempotente). **C no se reinicia**: la sesión 2 de C es
+la del 22-sep y la 3 será el `--final` del 23-sep a las 21:30 UTC. El ON de AUD del run anulado NO cuenta como encendido de C.
+**Guard.** `s01b.py` v1.3.1: `--final` evalúa la sesión solo desde `FINAL_EARLIEST_UTC = 20` (20:00 UTC, tras FRED H.15); antes se
+comporta como provisional y lo dice en el log (`EARLY_FINAL`). `--force-final` lo anula a propósito; `--date` (pruebas) está exento.
+Motor intacto: suite 25/25, `equiv_s01b_e2.py` 21/22-sep EQUIVALENT.
