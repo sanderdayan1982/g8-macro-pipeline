@@ -1,12 +1,12 @@
 {
- "generated_utc": "2026-09-23T00:01:23Z",
+ "generated_utc": "2026-09-23T17:58:13Z",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-09-22",
   "cot": "2026-09-15",
-  "options": "2026-09-21",
+  "options": "2026-09-22",
   "metals": "2026-09-15",
-  "s01b": "2026-09-23",
+  "s01b": "2026-09-22",
   "factor": "2026-09-22"
  },
  "gates": {
@@ -33,7 +33,7 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "CAD−USD -80 bp (z suelo) · CHF−USD -436 bp (z suelo) · CAD Δ1w extremo"
+   "text": "CAD−USD -80 bp (z suelo) · CHF−USD -440 bp (z suelo) · CAD Δ1w extremo"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
@@ -49,7 +49,7 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: AUD, NZD · ΔTP22 USD -1 EUR -10 GBP -20 AUD +20 CAD -3 · sin evaluar: JPY(NO_DATA), NZD(NO_DATA)"
+   "text": "CTF ON: NZD · ΔTP22 USD -1 EUR -12 GBP -20 JPY +5 AUD +17 NZD +22 CAD -11 CHF +3"
   },
   {
    "sec": "§10 Factor USD",
@@ -65,55 +65,55 @@
  "walls": [
   {
    "pair": "EUR/USD",
-   "spot": 1.1477,
+   "spot": 1.14545,
    "expiry": "2026-10-09",
    "pin": 1.145,
    "call": 1.17,
    "put": 1.145,
-   "near_pct": 0.02,
-   "near_k": 1.1475,
+   "near_pct": 0.04,
+   "near_k": 1.145,
    "gate0": "CLEAN",
    "front": "2026-10-09",
-   "strikes_c": 26,
-   "strikes_p": 15,
-   "front_oi": 96117,
-   "front_oi_d1": -178,
+   "strikes_c": 27,
+   "strikes_p": 14,
+   "front_oi": 97152,
+   "front_oi_d1": 1035,
    "top": [
     {
      "level": 1.145,
-     "oi": 12312,
-     "c": 1559,
-     "p": 10753
+     "oi": 12322,
+     "c": 1589,
+     "p": 10733
     },
     {
      "level": 1.15,
-     "oi": 12006,
-     "c": 2276,
-     "p": 9730
+     "oi": 12093,
+     "c": 2320,
+     "p": 9773
     },
     {
      "level": 1.165,
-     "oi": 9142,
-     "c": 1324,
-     "p": 7818
+     "oi": 9081,
+     "c": 1322,
+     "p": 7759
     }
    ]
   },
   {
    "pair": "USD/JPY",
-   "spot": 157.12153,
+   "spot": 157.18328,
    "expiry": "2026-10-09",
    "pin": 161.29032,
    "call": 163.93443,
    "put": 153.84615,
-   "near_pct": 0.16,
-   "near_k": 156.86275,
+   "near_pct": 0.19,
+   "near_k": 157.48031,
    "gate0": "CLEAN",
    "front": "2026-10-09",
    "strikes_c": 11,
-   "strikes_p": 17,
-   "front_oi": 44694,
-   "front_oi_d1": 1060,
+   "strikes_p": 19,
+   "front_oi": 45131,
+   "front_oi_d1": 437,
    "top": [
     {
      "level": 161.29,
@@ -123,33 +123,33 @@
     },
     {
      "level": 156.25,
-     "oi": 5006,
-     "c": 3177,
+     "oi": 5007,
+     "c": 3178,
      "p": 1829
     },
     {
      "level": 158.73,
-     "oi": 4182,
-     "c": 3014,
-     "p": 1168
+     "oi": 4063,
+     "c": 2894,
+     "p": 1169
     }
    ]
   },
   {
    "pair": "GBP/USD",
-   "spot": 1.337,
+   "spot": 1.3335,
    "expiry": "2026-10-09",
    "pin": 1.36,
    "call": 1.36,
-   "put": 1.335,
-   "near_pct": 0.04,
-   "near_k": 1.3375,
+   "put": 1.33,
+   "near_pct": 0.07,
+   "near_k": 1.3325,
    "gate0": "CLEAN",
    "front": "2026-10-09",
-   "strikes_c": 14,
-   "strikes_p": 9,
-   "front_oi": 37996,
-   "front_oi_d1": 677,
+   "strikes_c": 15,
+   "strikes_p": 8,
+   "front_oi": 39446,
+   "front_oi_d1": 1450,
    "top": [
     {
      "level": 1.36,
@@ -165,27 +165,27 @@
     },
     {
      "level": 1.355,
-     "oi": 3517,
-     "c": 1346,
-     "p": 2171
+     "oi": 3513,
+     "c": 1345,
+     "p": 2168
     }
    ]
   },
   {
    "pair": "AUD/USD",
-   "spot": 0.7119,
+   "spot": 0.7109,
    "expiry": "2026-10-09",
    "pin": 0.7,
    "call": 0.72,
    "put": 0.7,
-   "near_pct": 0.08,
-   "near_k": 0.7125,
+   "near_pct": 0.13,
+   "near_k": 0.71,
    "gate0": "CLEAN",
    "front": "2026-10-09",
    "strikes_c": 9,
    "strikes_p": 10,
-   "front_oi": 21636,
-   "front_oi_d1": -192,
+   "front_oi": 21677,
+   "front_oi_d1": 41,
    "top": [
     {
      "level": 0.7,
@@ -195,69 +195,69 @@
     },
     {
      "level": 0.72,
-     "oi": 2798,
-     "c": 2731,
-     "p": 67
+     "oi": 2808,
+     "c": 2743,
+     "p": 65
     },
     {
      "level": 0.715,
-     "oi": 2423,
-     "c": 1254,
-     "p": 1169
+     "oi": 2424,
+     "c": 1253,
+     "p": 1171
     }
    ]
   },
   {
    "pair": "USD/CAD",
-   "spot": 1.40184,
+   "spot": 1.40499,
    "expiry": "2026-10-09",
    "pin": 1.38889,
    "call": 1.40845,
    "put": 1.31579,
-   "near_pct": 0.23,
-   "near_k": 1.3986,
+   "near_pct": 0.25,
+   "near_k": 1.40845,
    "gate0": "PROXY",
    "front": "2026-10-09",
-   "strikes_c": 6,
-   "strikes_p": 11,
-   "front_oi": 9476,
-   "front_oi_d1": 277,
+   "strikes_c": 5,
+   "strikes_p": 12,
+   "front_oi": 9486,
+   "front_oi_d1": 10,
    "top": [
     {
      "level": 1.3889,
-     "oi": 1029,
+     "oi": 1030,
      "c": 987,
-     "p": 42
+     "p": 43
     },
     {
      "level": 1.4085,
-     "oi": 989,
-     "c": 719,
+     "oi": 984,
+     "c": 714,
      "p": 270
     },
     {
      "level": 1.3986,
-     "oi": 913,
-     "c": 316,
-     "p": 597
+     "oi": 914,
+     "c": 315,
+     "p": 599
     }
    ]
   },
   {
    "pair": "USD/CHF",
-   "spot": 0.81327,
+   "spot": 0.81334,
    "expiry": "2026-10-09",
    "pin": 0.79681,
    "call": 0.81967,
    "put": 0.79681,
-   "near_pct": 0.03,
+   "near_pct": 0.04,
    "near_k": 0.81301,
    "gate0": "NA",
    "front": "2026-10-09",
    "strikes_c": 2,
    "strikes_p": 5,
    "front_oi": 5398,
-   "front_oi_d1": -1,
+   "front_oi_d1": 0,
    "top": [
     {
      "level": 0.7968,
@@ -438,17 +438,17 @@
     "vs USD z suelo",
     "walls NA"
    ],
-   "nom": 0.579,
-   "real": -0.121,
+   "nom": 0.564,
+   "real": -0.136,
    "be": 0.7,
-   "nom_asof": "2026-09-17",
+   "nom_asof": "2026-09-22",
    "tp": 0.0521,
    "tp_z": 1.443938852341214,
    "tp_asof": "2026-09-17",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -436.1,
+   "vs_usd_bp": -439.6,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
    "lf_z": -1.5,
