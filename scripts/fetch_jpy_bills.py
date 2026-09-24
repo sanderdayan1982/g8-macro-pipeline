@@ -64,7 +64,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import requests
+import io as _io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP con reintentos + publicación segura)
+
+_ctx = None       # contexto de ingestión (lo crea main())
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # Constants
@@ -236,6 +242,7 @@ def fetch_jpy_bills(
         print(f"  Historical parsed: {hist_count} (tenor,date) points")
     except (requests.RequestException, ValueError) as e:
         print(f"  WARNING: historical fetch/parse failed: {e}", file=sys.stderr)
+        _ctx.degraded("MOF histórico (jgbcme_all) no disponible: %s" % e)   # lote 3B: registrado y avisado
 
     # 2. Current month (fresh tail) — cache-bust ON
     try:
@@ -246,6 +253,7 @@ def fetch_jpy_bills(
         print(f"  Current-month parsed: {curr_count} (tenor,date) points")
     except (requests.RequestException, ValueError) as e:
         print(f"  WARNING: current-month fetch/parse failed: {e}", file=sys.stderr)
+        _ctx.degraded("MOF mes en curso (jgbcme) no disponible: %s — la cola reciente no se actualiza" % e)
 
     if not hist_ok and not curr_ok:
         raise ValueError("Both MOF endpoints failed — no JPY data available")
@@ -276,7 +284,21 @@ def write_csv(rows: List[Tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3B)."""
+    f = _io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 def main() -> int:
+    global requests, _ctx
+    _ctx = _ingest.Ingest('fetch_jpy_bills')
+    requests = _ctx.requests(provider='mof')
     today = datetime.now(timezone.utc).replace(tzinfo=None)
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -289,13 +311,13 @@ def main() -> int:
         results = fetch_jpy_bills(date_from, today)
     except requests.HTTPError as exc:
         print(f"ERROR: MOF HTTP error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except requests.RequestException as exc:
         print(f"ERROR: MOF network error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except Exception as exc:
         print(f"ERROR: JPY bills fetch failed: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
     print()
     successes = 0
@@ -310,14 +332,14 @@ def main() -> int:
             failures += 1
             continue
 
-        write_csv(rows, output_path)
-        print(f"[{tenor}] OK: Wrote {len(rows)} rows to {filename}")
+        _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+        print(f"[{tenor}] {_rep['status']}: {len(rows)} filas descargadas para {filename} — {_rep.get('detail', '')}")
         print(f"        Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
         print(f"        Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
 
     print()
     print(f"Summary: {successes} OK, {failures} failed (of {len(TENORS)} total)")
-    return 0 if failures == 0 else 1
+    return _ctx.finish(0 if failures == 0 else 1)
 
 
 if __name__ == "__main__":

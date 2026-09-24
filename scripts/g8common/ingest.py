@@ -143,6 +143,18 @@ class Ingest(object):
             raise HTTPError("%s: %s (%s)" % (res.cls, res.detail, res.url), g8cls=res.cls, not_before=res.not_before)
         return Response(res)
 
+    def degraded(self, msg):
+        """Una fuente COMPLEMENTARIA falló aunque el descargador pudo seguir con otra (p. ej. histórico sí, mes en
+        curso no): no cambia el código de salida del script, pero queda en el registro y ingest_watch avisa
+        (clave actions:<job>:degraded) hasta que una ejecución posterior termine sin degradación (lote 3B)."""
+        self.errors.append({"kind": "DEGRADED", "detail": str(msg)[:300]})
+        print("[ingest] DEGRADADO: %s" % msg)
+
+    def fail(self, msg):
+        """Fallo detectado por el propio descargador tras una descarga correcta (p. ej. fuente sin actualizar:
+        compuerta de frescura). Queda en el registro con su motivo; el aviso lo emite ingest_watch."""
+        self.errors.append({"kind": "FAIL", "detail": str(msg)[:300]})
+
     # ── publicación ──────────────────────────────────────────────────────────
     def registry(self):
         if self._registry is None:

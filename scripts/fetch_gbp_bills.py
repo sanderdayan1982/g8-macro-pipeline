@@ -91,7 +91,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import openpyxl
-import requests
+import io as _io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP con reintentos + publicación segura)
+
+_ctx = None       # contexto de ingestión (lo crea main())
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # Constants
@@ -364,6 +370,7 @@ def fetch_gbp_bills(
         print(f"    Archive parsed: {ac} (tenor,date) points")
     except (requests.RequestException, ValueError, zipfile.BadZipFile) as e:
         print(f"  WARNING: archive fetch/parse failed: {e}", file=sys.stderr)
+        _ctx.degraded("BoE archivo histórico (glcnominalddata) no disponible: %s" % e)   # lote 3B
 
     # 2. Latest (fresh tail) — cache-bust ON, descends into nested ZIP if needed
     try:
@@ -377,6 +384,7 @@ def fetch_gbp_bills(
         print(f"    Latest parsed: {lc} (tenor,date) points")
     except (requests.RequestException, ValueError, zipfile.BadZipFile) as e:
         print(f"  WARNING: latest fetch/parse failed: {e}", file=sys.stderr)
+        _ctx.degraded("BoE mes en curso (latest-yield-curve-data) no disponible: %s" % e)
 
     if not archive_ok and not latest_ok:
         raise ValueError("Both BoE endpoints failed — no GBP data available")
@@ -406,7 +414,21 @@ def write_csv(rows: List[Tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3B)."""
+    f = _io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 def main() -> int:
+    global requests, _ctx
+    _ctx = _ingest.Ingest('fetch_gbp_bills')
+    requests = _ctx.requests(provider='boe')
     today = datetime.now(timezone.utc).replace(tzinfo=None)
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -419,13 +441,13 @@ def main() -> int:
         results = fetch_gbp_bills(date_from, today)
     except requests.HTTPError as exc:
         print(f"ERROR: BoE HTTP error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except requests.RequestException as exc:
         print(f"ERROR: BoE network error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except Exception as exc:
         print(f"ERROR: GBP bills fetch failed: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
     print()
     successes = 0
@@ -441,8 +463,8 @@ def main() -> int:
             failures += 1
             continue
 
-        write_csv(rows, output_path)
-        print(f"[{label}] OK: Wrote {len(rows)} rows to {filename}")
+        _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+        print(f"[{label}] {_rep['status']}: {len(rows)} filas descargadas para {filename} — {_rep.get('detail', '')}")
         print(f"        Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
         print(f"        Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
         successes += 1
@@ -466,6 +488,8 @@ def main() -> int:
             print(f"FRESHNESS WARN: could not parse newest 10Y date '{newest}'.", file=sys.stderr)
         elif age_days > STALENESS_LIMIT_DAYS:
             stale = True
+            _ctx.fail("fuente sin actualizar: el 10Y más reciente es %s (%d días, límite %d)"
+                      % (newest, age_days, STALENESS_LIMIT_DAYS))   # lote 3B: motivo en el registro y el aviso
             print(
                 f"FRESHNESS FAIL: newest 10Y gilt is {newest} ({age_days}d old, "
                 f"limit {STALENESS_LIMIT_DAYS}d). The LATEST current-month source did "
@@ -477,7 +501,7 @@ def main() -> int:
         else:
             print(f"Freshness OK: newest 10Y gilt {newest} ({age_days}d old, limit {STALENESS_LIMIT_DAYS}d).")
 
-    return 0 if (failures == 0 and not stale) else 1
+    return _ctx.finish(0 if (failures == 0 and not stale) else 1)
 
 
 if __name__ == "__main__":

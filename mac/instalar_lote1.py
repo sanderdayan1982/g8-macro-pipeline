@@ -32,7 +32,8 @@ import time
 from datetime import datetime
 
 LABEL = "com.g8.nzd-b2"
-FILES = ["push_nzd_to_github.py", "check_credentials.py", "nzd_local_run.sh", "com.g8.nzd-b2.plist"]
+FILES = ["push_nzd_to_github.py", "check_credentials.py", "nzd_local_run.sh", "com.g8.nzd-b2.plist",
+         "fetch_nzd_b2.py", "fetch_chf_snb.py", "fetch_tona_mac.py"]     # lote 3B: descargadores en el conjunto
 DIRS = ["g8common"]
 SCHEDULE = [(8, 0), (17, 0)]
 WINDOW_MIN = 10

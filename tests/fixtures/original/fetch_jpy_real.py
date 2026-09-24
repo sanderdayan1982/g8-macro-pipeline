@@ -63,9 +63,6 @@ import urllib.request
 import urllib.error
 import socket
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP común + publicación segura)
-
 # Forzar IPv4: en redes con IPv6 roto (p.ej. Starlink->Japón) urllib se cuelga probando
 # IPv6 primero. Esto resuelve solo IPv4, como hace el navegador en la práctica. Inofensivo
 # en GitHub Actions (runners IPv4-only). Desactivable con FORCE_IPV4=0.
@@ -106,45 +103,18 @@ JGBI_NAME_RE = re.compile(r"I/L\s*(\d+)", re.I)
 
 
 # --------------------------------------------------------------------------- #
-# HTTP — lote 3B: g8http a través del contexto de ingestión (reintentos 1+3 con presupuesto, Retry-After,
-# TLS verificado; sin verificación solo con G8_ALLOW_INSECURE_TLS=1 en ejecución manual). Un 404 en el
-# fichero de un día es «sin publicación» (no se reintenta ni cuenta como fallo).
+# HTTP con fallback SSL relajado (red Bata con proxy de certificado self-signed)
 # --------------------------------------------------------------------------- #
-_ctx = None
-
-
-def _context():
-    global _ctx
-    if _ctx is None:
-        _ctx = _ingest.Ingest("fetch_jpy_real")
-    return _ctx
-
-
-class _Resp(object):
-    def __init__(self, data):
-        self._data, self.status = data, 200
-
-    def read(self):
-        return self._data
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *a):
-        return False
-
-
 def _open(url, timeout=60):
-    """Compatibilidad con backfill_jpy_real.py (ejecución manual larga): g8http con presupuesto propio de 6 h
-    (reintentos, Retry-After persistido, TLS verificado). Un 404 se entrega como urllib.error.HTTPError, que es
-    lo que el backfill interpreta como «día sin fichero»."""
-    from g8common import legacy as _legacy
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     try:
-        data = _legacy.http_get_bytes(url, timeout=timeout, headers={"User-Agent": UA, "Accept": "*/*"},
-                                      budget_obj=_legacy.budget("backfill_jpy_real", 6 * 3600), log=None)
-    except _legacy.LegacyHTTPError as e:
-        raise urllib.error.HTTPError(url, e.result.status or 599, "%s: %s" % (e.cls, e.result.detail), {}, None)
-    return _Resp(data)
+        return urllib.request.urlopen(req, timeout=timeout)
+    except urllib.error.URLError as e:
+        reason = getattr(e, "reason", "")
+        if "CERTIFICATE_VERIFY_FAILED" in str(reason) or isinstance(reason, ssl.SSLError):
+            sys.stderr.write("[ssl] verify fallo -> reintento sin verificacion (red local)\n")
+            return urllib.request.urlopen(req, timeout=timeout, context=ssl._create_unverified_context())
+        raise
 
 
 def _url_for(d):
@@ -162,11 +132,14 @@ def fetch_latest_csv():
             continue
         url = _url_for(d)
         try:
-            r = _context().requests(provider="jsda", not_found_is_no_publication=True).get(
-                url, headers={"User-Agent": UA, "Accept": "*/*"}, timeout=60)
-            data = r.content
-            if data and len(data) > 1000:
-                return d, data.decode(ENCODING, "replace")
+            with _open(url) as r:
+                if getattr(r, "status", 200) == 200:
+                    data = r.read()
+                    if data and len(data) > 1000:
+                        return d, data.decode(ENCODING, "replace")
+        except urllib.error.HTTPError as e:
+            last_err = e
+            continue
         except Exception as e:
             last_err = e
             continue
@@ -329,39 +302,6 @@ def write_csv(result, path=OUT_CSV):
     return datestr
 
 
-def render_csv(result, path):
-    """Mismo contenido byte a byte que el escritor write_csv (result, path), en memoria (lote 3B)."""
-    import io
-    datestr = result["date"].strftime("%Y%m%d")
-    rows = {}
-    if os.path.exists(path):
-        with open(path, "r", newline="") as f:
-            for parts in csv.reader(f):
-                if not parts:
-                    continue
-                h = parts[0].strip()
-                if h.startswith("#") or h == "DATE":
-                    continue
-                if len(parts) >= 4 and h.isdigit():
-                    rows[h] = [p.strip() for p in parts[:4]]
-    rows[datestr] = [datestr, "%g" % result["NOM10"], "%g" % result["REAL10"], "%g" % result["BE10"]]
-    f = io.StringIO(newline="")
-    f.write(HEADER_COMMENT + "\n")
-    w = csv.writer(f, lineterminator="\n")
-    w.writerow(COLS)
-    for k in sorted(rows):
-        w.writerow(rows[k])
-    return datestr, f.getvalue().encode("utf-8")
-
-
-def publish_result(result):
-    """Lote 3B: fusión monótona + validación de la serie + escritura atómica (ver fetch_eur_real)."""
-    ctx = _context()
-    name = os.path.basename(OUT_CSV)
-    datestr, data = render_csv(result, os.path.join(ctx.root, "data", name))
-    return datestr, ctx.publish(name, data, revision_window=1)
-
-
 def freshness_gate(result):
     age = (dt.date.today() - result["date"]).days
     if age > STALENESS_LIMIT_DAYS:
@@ -397,29 +337,19 @@ def main():
         print("\n[--test] OK (no se escribió CSV).")
         return 0
 
-    try:
-        fd, text = fetch_latest_csv()
-        sys.stderr.write("[jpy] usando ES de %s\n" % fd.isoformat())
-        fd2, jgbi, noms = parse_csv(text)
-        res = compute(fd2, jgbi, noms)
-    except Exception as e:                          # lote 3B: el fallo queda registrado (antes: traza sin registro)
-        sys.stderr.write("ERROR: %s\n" % e)
-        if args.dry_run:
-            raise
-        return _context().finish(1)
+    fd, text = fetch_latest_csv()
+    sys.stderr.write("[jpy] usando ES de %s\n" % fd.isoformat())
+    fd2, jgbi, noms = parse_csv(text)
+    res = compute(fd2, jgbi, noms)
     _summary(res)
     if not freshness_gate(res):
-        if args.dry_run:
-            return 1
-        _context().fail("fuente sin actualizar: el último ES*.csv del JSDA es de %s (límite %d días)"
-                        % (res["date"].isoformat(), STALENESS_LIMIT_DAYS))
-        return _context().finish(1)
+        return 1
     if args.dry_run:
         print("\n[--dry-run] OK (no se escribió CSV).")
         return 0
-    ds, rep = publish_result(res)
-    print("\nPublicación %s -> fila %s: %s %s" % (OUT_CSV, ds, rep["status"], rep.get("detail", "")))
-    return _context().finish(0)
+    ds = write_csv(res)
+    print("\nEscrito %s -> fila %s" % (OUT_CSV, ds))
+    return 0
 
 
 if __name__ == "__main__":

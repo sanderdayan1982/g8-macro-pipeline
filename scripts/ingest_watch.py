@@ -133,7 +133,9 @@ def check_executors(root, now_utc, alerts, info):
                     ex, fam, len(held), ", ".join("%s %s=%s" % (h.get("file"), h.get("date"), h.get("value")) for h in held[:4]))
         for k, v in sorted((hb.get("fetch_status") or {}).items()):
             if str(v) != "0":
-                alerts["%s:fetch:%s" % (key, k)] = "%s: la descarga %s terminó con código %s" % (ex, k, v)
+                why = "; ".join(((hb.get("fetch_detail") or {}).get(k) or {}).get("errors") or [])[:240]
+                alerts["%s:fetch:%s" % (key, k)] = "%s: la descarga %s terminó con código %s%s" % (
+                    ex, k, v, (" — " + why) if why else "")
         cred = hb.get("credentials") or {}
         if cred.get("days_left") is not None and cred["days_left"] <= 7:
             alerts["%s:token" % key] = "%s: el token de GitHub caduca en %.1f días (%s)" % (ex, cred["days_left"], cred.get("expires_utc"))
@@ -171,6 +173,9 @@ def _failure_text(rec):
     files = rec.get("files") or {}
     if any(v.get("status") in ("INVALID", "REGRESSION_BLOCKED") for v in files.values()):
         return None                                   # ya tiene su propio aviso (fichero rechazado)
+    declared = [e.get("detail", "") for e in rec.get("errors") or [] if isinstance(e, dict) and e.get("kind") == "FAIL"]
+    if declared:
+        return "fallo declarado por el descargador — %s" % "; ".join(d[:160] for d in declared[:3])
     reqs = rec.get("requests") or []
     last_bad = next((r for r in reversed(reqs) if r.get("cls") not in QUIET_CLS), None)
     if last_bad is None and reqs and all(r.get("cls") in ("DEFERRED", "NO_PUBLICATION") for r in reqs) and not files:
@@ -255,6 +260,11 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
                 alerts["actions:%s:no_success" % job] = (
                     "Actions %s: sin descarga correcta %s; límite %.0f h. El job se ejecuta pero falla o el proveedor "
                     "le hace esperar una y otra vez." % (job, desde, cfg["max_silence_h"]))
+        deg = [e for e in (rec.get("errors") or []) if isinstance(e, dict) and e.get("kind") == "DEGRADED"]
+        if deg:
+            alerts["actions:%s:degraded" % job] = (
+                "Actions %s: ejecución DEGRADADA — %s. Se publicó lo disponible; la parte afectada puede no estar al "
+                "día." % (job, "; ".join(e.get("detail", "")[:160] for e in deg[:3])))
         why = _failure_text(rec)
         if why:
             # texto estable (sin la hora) para que fallos idénticos consecutivos no se reenvíen: recordatorio diario
@@ -310,7 +320,7 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
 
 # Claves cuya resolución exige EVIDENCIA de una descarga correcta posterior (R3-2): que la última ejecución no
 # vuelva a generar la misma alerta (p. ej. porque quedó aplazada) no demuestra que el feed se haya recuperado.
-_NEEDS_SUCCESS = (":fail", ":no_success", ":invalid", ":regression_blocked")
+_NEEDS_SUCCESS = (":fail", ":no_success", ":invalid", ":regression_blocked", ":degraded")
 
 
 def _still_open(k, pointer, ledger):

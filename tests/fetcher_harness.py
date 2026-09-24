@@ -107,18 +107,41 @@ def make_root(files):
     return root
 
 
-def run_original(script, serve, root, argv=(), now=NOW, output_attr="OUTPUT_PATH"):
-    mod = _load(os.path.join(ROOT, "tests", "fixtures", "original", script + ".py"), script + "_orig")
-    mod.requests = _FakeReqMod(serve)
-    mod.datetime = fixed_dt(now)
-    mod.__file__ = os.path.join(root, "scripts", script + ".py")
+def fixed_dt_module(now):
+    """Sustituto del módulo `datetime as dt` (descargadores de reales): date.today() fijo."""
+    import datetime as _real
+    import types
+
+    class FixedDate(_real.date):
+        @classmethod
+        def today(cls):
+            return cls(now.year, now.month, now.day)
+    return types.SimpleNamespace(date=FixedDate, datetime=fixed_dt(now), timedelta=_real.timedelta,
+                                 timezone=_real.timezone)
+
+
+def _prepare(mod, root, now, patch):
     from pathlib import Path
+    if hasattr(mod, "datetime") and isinstance(mod.datetime, type):
+        mod.datetime = fixed_dt(now)
+    if hasattr(mod, "dt"):
+        mod.dt = fixed_dt_module(now)
     if hasattr(mod, "OUTPUT_PATH"):
         mod.OUTPUT_PATH = Path(root) / "data" / Path(mod.OUTPUT_PATH).name
-    if hasattr(mod, "OUTPUT_DIR"):
+    if hasattr(mod, "OUTPUT_DIR") and not isinstance(mod.OUTPUT_DIR, str):
         mod.OUTPUT_DIR = Path(root) / "data"
-    old = sys.argv
+    if hasattr(mod, "DATA_DIR"):
+        mod.DATA_DIR = Path(root) / "data"
+    if hasattr(mod, "OUT_DIR"):
+        mod.OUT_DIR = os.path.join(root, "data")
+    if patch:
+        patch(mod)
+
+
+def _run(mod, script, root, argv):
+    old, cwd = sys.argv, os.getcwd()
     sys.argv = [script + ".py"] + list(argv)
+    os.chdir(root)                                  # los escritores con rutas relativas («data/…») escriben en root
     try:
         with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             rc = mod.main()
@@ -126,10 +149,66 @@ def run_original(script, serve, root, argv=(), now=NOW, output_attr="OUTPUT_PATH
         rc = e.code
     finally:
         sys.argv = old
-    return rc, mod
+        os.chdir(cwd)
+    return rc
 
 
-def run_new(script, serve, root, argv=(), now=NOW, clock=None):
+def run_original(script, serve, root, argv=(), now=NOW, output_attr="OUTPUT_PATH", patch=None):
+    path = os.path.join(ROOT, "tests", "fixtures", "original", script + ".py")
+    mod = _load(path, script + "_orig")
+    fake = _FakeReqMod(serve)
+    mod.requests = fake
+    if hasattr(mod, "urllib"):                      # descargadores con urllib (reales EUR/JPY, suelos v1.0)
+        mod.urllib = _fake_urllib(serve, mod.urllib)
+    mod.__file__ = os.path.join(root, "scripts", script + ".py")
+    if hasattr(mod, "time"):                        # sin esperas reales en los reintentos del original
+        mod.time = _NoSleep(mod.time)
+    _prepare(mod, root, now, patch)
+    return _run(mod, script, root, argv), mod
+
+
+class _NoSleep(object):
+    def __init__(self, real):
+        self._real = real
+
+    def sleep(self, s):
+        return None
+
+    def __getattr__(self, k):
+        return getattr(self._real, k)
+
+
+def _fake_urllib(serve, real):
+    """urllib.request.urlopen servido por `serve` (mismo contrato que _FakeReqMod)."""
+    import types
+    import urllib.error
+
+    class Resp(io.BytesIO):
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            self.close()
+
+    def urlopen(req, timeout=None, context=None):
+        url = req.full_url if hasattr(req, "full_url") else req
+        status, body = serve(url)
+        if isinstance(body, tuple):
+            body = body[0]
+        if status == "RAISE":
+            raise urllib.error.URLError("timeout simulado")
+        if status >= 400:
+            raise urllib.error.HTTPError(url, status, "HTTP %s" % status, {}, io.BytesIO(body))
+        r = Resp(body)
+        r.status = status
+        return r
+    req_ns = types.SimpleNamespace(Request=real.request.Request, urlopen=urlopen)
+    return types.SimpleNamespace(request=req_ns, error=real.error, parse=real.parse)
+
+
+def run_new(script, serve, root, argv=(), now=NOW, clock=None, patch=None, path=None):
     clock = clock or clock_at_now()
     calls = []
 
@@ -146,17 +225,11 @@ def run_new(script, serve, root, argv=(), now=NOW, clock=None):
     ING.ROOT = root
     ING.TEST_TRANSPORT = transport
     ING.TEST_CLOCK = clock
-    mod = _load(os.path.join(ROOT, "scripts", script + ".py"), script + "_new")
-    mod.datetime = fixed_dt(now)
-    old = sys.argv
-    sys.argv = [script + ".py"] + list(argv)
+    mod = _load(path or os.path.join(ROOT, "scripts", script + ".py"), script + "_new")
+    _prepare(mod, root, now, patch)
     try:
-        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-            rc = mod.main()
-    except SystemExit as e:
-        rc = e.code
+        rc = _run(mod, script, root, argv)
     finally:
-        sys.argv = old
         ING.TEST_TRANSPORT = None
         ING.TEST_CLOCK = None
     return rc, calls, clock

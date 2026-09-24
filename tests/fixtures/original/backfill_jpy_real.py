@@ -69,16 +69,12 @@ def _load_existing(path):
 
 def _flush(rows, path):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    tmp = "%s.%d.tmp" % (path, os.getpid())       # lote 3B: escritura atómica (mismos bytes)
-    with open(tmp, "w", newline="") as f:
+    with open(path, "w", newline="") as f:
         f.write(fjr.HEADER_COMMENT + "\n")
         w = csv.writer(f, lineterminator="\n")
         w.writerow(fjr.COLS)
         for k in sorted(rows):
             w.writerow(rows[k])
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
 
 
 def main():

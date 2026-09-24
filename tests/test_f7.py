@@ -88,23 +88,33 @@ class LegacyHttp(unittest.TestCase):
         self.assertNotIn("BADKEY", buf.getvalue())
 
     def test_floor_usd_fallback(self):
+        # lote 3B: fetch_floor_spreads usa el contexto de ingestión (g8http + publicación segura) en vez de legacy
         import fetch_floor_spreads as F
-        legacy.TEST_TRANSPORT, _ = serve([("api.stlouisfed", (403, {}, b'{"error_message":"api_key invalid"}')),
-                                          ("fredgraph", (200, {}, FRED_CSV * 1))])
+        from g8common import ingest
         d = tempfile.mkdtemp()
-        F.OUT_DIR, F.FRED_KEY = d, "BAD"
+        os.makedirs(os.path.join(d, "data"))
+        shutil.copytree(os.path.join(ROOT, "sources"), os.path.join(d, "sources"))
+        F.FRED_KEY = "BAD"
         try:
+            ingest.TEST_TRANSPORT, _ = serve([("api.stlouisfed", (403, {}, b'{"error_message":"api_key invalid"}')),
+                                              ("fredgraph", (200, {}, FRED_CSV * 1))])
+            F._ctx = ingest.Ingest("fetch_floor_spreads", root=d, now=self.clock, env={})
             with redirect_stdout(io.StringIO()):
                 with self.assertRaises(RuntimeError):     # 2 observaciones < 500: la guardia del script sigue activa
                     F.fetch_usd()
-            legacy.TEST_TRANSPORT, calls = serve([("api.stlouisfed", (403, {}, b'{"error_message":"api_key invalid"}')),
+            ingest.TEST_TRANSPORT, calls = serve([("api.stlouisfed", (403, {}, b'{"error_message":"api_key invalid"}')),
                                                   ("fredgraph", (200, {}, b"observation_date,IORB\n" + b"".join(
                                                       b"%d-%02d-%02d,4.40\n" % (y, m, dd) for y in (2024, 2025) for m in range(1, 13) for dd in range(1, 29))))])
-            with redirect_stdout(io.StringIO()):
+            F._ctx = ingest.Ingest("fetch_floor_spreads", root=d, now=self.clock, env={})
+            with redirect_stdout(io.StringIO()) as out:
                 F.fetch_usd()
-            self.assertTrue(os.path.exists(os.path.join(d, "FLOOR_USD.csv")))
+            self.assertIn("::error title=FRED_API_KEY::", out.getvalue())          # clave rechazada: visible
+            self.assertTrue(os.path.exists(os.path.join(d, "data", "FLOOR_USD.csv")))
             self.assertEqual(sum("fredgraph" in c for c in calls), 1)
+            self.assertEqual(sum("api.stlouisfed" in c for c in calls), 1)          # 4xx: sin reintentos
         finally:
+            ingest.TEST_TRANSPORT = None
+            F._ctx = None
             shutil.rmtree(d)
 
 
@@ -161,24 +171,13 @@ class Static(unittest.TestCase):
             self.assertNotIn("G8_ALLOW_INSECURE_TLS", open(f, encoding="utf-8").read(), f)
 
     def test_real_yield_fetchers_no_silent_insecure_fallback(self):
-        import fetch_eur_real as E
-
-        def boom(req, timeout=None, context=None):
-            if context is None:
-                raise urllib.error.URLError(ssl.SSLCertVerificationError("CERTIFICATE_VERIFY_FAILED"))
-            return "OPENED_INSECURE"
-        orig = E.urllib.request.urlopen
-        E.urllib.request.urlopen = boom
-        try:
-            os.environ.pop("G8_ALLOW_INSECURE_TLS", None)
-            with self.assertRaises(urllib.error.URLError):
-                E._open("https://x/")
-            os.environ["G8_ALLOW_INSECURE_TLS"] = "1"
-            with redirect_stdout(io.StringIO()):
-                self.assertEqual(E._open("https://x/"), "OPENED_INSECURE")
-        finally:
-            E.urllib.request.urlopen = orig
-            os.environ.pop("G8_ALLOW_INSECURE_TLS", None)
+        # lote 3B: los reales ya no abren conexiones propias; todo pasa por g8http, cuyo transporte solo desactiva
+        # la verificación con G8_ALLOW_INSECURE_TLS=1 (probado en TlsStrict) y nunca en los workflows.
+        for f in ("fetch_eur_real.py", "fetch_jpy_real.py"):
+            src = open(os.path.join(ROOT, "scripts", f), encoding="utf-8").read()
+            self.assertNotIn("urlopen(", src, f)
+            self.assertNotIn("_create_unverified_context", src, f)
+            self.assertIn("_context().requests(", src, f)
 
     def test_boj_credit_line(self):
         html = open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8").read()

@@ -1,0 +1,34 @@
+script,executor,workflow,outputs,estado,p4_http,p6_publicacion,registro_avisos,nota
+scripts/fetch_sofr.py,actions,daily_update.yml,SOFR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_sofr.json + ingest_watch,
+scripts/fetch_estr.py,actions,daily_update.yml,ESTR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_estr.json + ingest_watch,
+scripts/fetch_sonia.py,actions,daily_update.yml,SONIA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_sonia.json + ingest_watch,
+scripts/fetch_tona.py,actions,daily_update.yml,TONA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_tona.json + ingest_watch,El BoJ rechaza IP de centro de datos desde el 16-sep: TONA se publica desde el Mac (fetch_tona_mac); decisión D-C (un solo escritor) pendiente
+scripts/fetch_corra.py,actions,daily_update.yml,CORRA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_corra.json + ingest_watch,
+scripts/fetch_aonia.py,actions,daily_update.yml,AONIA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_aonia.json + ingest_watch,
+scripts/fetch_bis_ocr.py,actions,daily_update.yml,NZD_OCR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_bis_ocr.json + ingest_watch,
+scripts/fetch_bis_policy.py,actions,daily_update.yml,GB/JP/CH/AU_POLICY.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_bis_policy_<país>.json + ingest_watch,
+scripts/fetch_us_bills.py,actions,daily_update.yml,US_BILL_3M/6M/1Y/2Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_us_bills.json + ingest_watch,
+scripts/fetch_cad_bills.py,actions,daily_update.yml,CAD_BILL_3M/6M/1Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_cad_bills.json + ingest_watch,Una sola respuesta para las 3 series (sin fallo parcial por serie posible)
+scripts/fetch_aud_bills.py,actions,daily_update.yml,AUD_BILL_1M/3M/6M.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_aud_bills.json + ingest_watch,Una sola respuesta (tabla F1 del RBA)
+scripts/fetch_eur_bills.py,actions,daily_update.yml,EUR_BILL_3M/6M/1Y/2Y/5Y/10Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_eur_bills.json + ingest_watch,
+scripts/fetch_gbp_bills.py,actions,daily_update.yml,GBP_BILL_6M/1Y/2Y/5Y/10Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_gbp_bills.json + ingest_watch (+ degraded / compuerta de frescura),
+scripts/fetch_jpy_bills.py,actions,daily_update.yml,JPY_BILL_1Y/2Y/3Y/5Y/10Y/20Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_jpy_bills.json + ingest_watch (+ degraded),
+scripts/fetch_floor_spreads.py,actions,daily_update.yml,FLOOR_USD/EUR/CAD.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish por serie,actions__fetch_floor_spreads.json + ingest_watch,
+scripts/fetch_acm.py,actions,daily_update.yml,ACM_TP_10Y.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish (toda la historia revisable: medido),actions__fetch_acm.json + ingest_watch,
+scripts/fetch_eur_real.py,actions,daily_update.yml,RY_G8_EUR.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_eur_real.json + ingest_watch (+ compuerta de frescura),
+scripts/fetch_jpy_real.py,actions,daily_update.yml,RY_G8_JPY.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_jpy_real.json + ingest_watch (+ compuerta de frescura),
+scripts/fetch_nzd_b2.py,mac,launchd nzd_local_run.sh,NZD_BILL_*/NZD_BOND_*/NZD_CASH_ON/NZD_IIB_*.csv,CUBIERTO_3B,g8http + curl_cffi (macfetch),escritura atómica validada local + publicador por familias,state/fetch_nzd.json → latido → ingest_watch,
+scripts/fetch_chf_snb.py,mac,launchd nzd_local_run.sh,CHF_SPOT_*/CHF_NOM_10Y/CHF_SARON.csv,CUBIERTO_3B,g8http + curl_cffi (macfetch),escritura atómica validada local + publicador por familias,state/fetch_chf.json → latido → ingest_watch,
+mac/fetch_tona_mac.py,mac,launchd nzd_local_run.sh,TONA.csv,CUBIERTO_3B,g8http + curl_cffi (macfetch),escritura atómica validada local + publicador por familias,state/fetch_tona.json → latido → ingest_watch,
+mac/push_nzd_to_github.py,mac,launchd nzd_local_run.sh,familias NZ-B2/CH-CURVA/CH-DIARIO/JP-TONA en la rama,CUBIERTO_L1,g8http (GitHub API),fusión monótona + cuarentena + commit por familia,latido + avisos locales + ingest_watch,Publicador (no descarga de proveedores)
+scripts/backfill_eur_real.py,actions (manual),backfill-eur-real.yml,RY_G8_EUR.csv,CUBIERTO_3B_MANUAL,g8http (motor de fetch_eur_real; presupuesto 6 h),escritura atómica (sin fusión: relleno histórico revisado a mano),sin registro propio (ejecución manual),
+scripts/backfill_jpy_real.py,actions (manual),backfill-jpy-real.yml,RY_G8_JPY.csv,CUBIERTO_3B_MANUAL,g8http (fetch_jpy_real._open; presupuesto 6 h),escritura atómica (sin fusión: relleno histórico revisado a mano),sin registro propio (ejecución manual),
+scripts/acm_g8.py,actions,daily_update.yml + acm_validate.yml,ACM_G8_*.csv,PARCIAL,g8http (legacy F7),solo guarda de salidas de g8step (no fusión por serie),registro de pasos del job + ingest_watch,Modelo que descarga insumos: su publicación por serie queda PENDIENTE (fuera de la lista de 3B)
+scripts/real_yields_g8.py,actions,daily_update.yml + ry_validate.yml,RY_G8_USD/GBP/CAD/AUD/NZD.csv,PARCIAL,g8http (legacy F7),solo guarda de salidas de g8step,registro de pasos del job + ingest_watch,Publicación por serie PENDIENTE
+scripts/metals_fairvalue_g8.py,actions,metals_update.yml,MFV_G8_*,PARCIAL,g8http (legacy F7) salvo precios por yfinance (HTTP propio de la librería),solo guarda de salidas de g8step,sin ingest_watch (workflow semanal propio),yfinance sin reintentos comunes: PENDIENTE
+scripts/usd_factor.py,actions,usd_factor.yml,USD_FACTOR.json + data/usd_factor/,PENDIENTE,requests propio,escritura propia,alerta de fallo del workflow,Congelado junto con S01B (F6); no está en la lista de 3B
+scripts/pos_g8_cot_collector.py,actions,g8_port_run.yml,pos_g8_cot.json,PENDIENTE,urllib propio,escritura propia,alerta de fallo del workflow,CFTC COT (POS_COT/CFTC_TFF): no está en la lista de 3B
+scripts/cme_options_collector.py,actions,cme_options.yml,OPTIONS_SURFACE.json,EXCLUIDO,,,,Opciones FX de CME / Databento: exclusión acordada
+scripts/fx_futures_collector.py,actions,fx_futures_backfill.yml + g8_port_run.yml,data/futures/,EXCLUIDO,,,,Databento: exclusión acordada
+scripts/fetch_saron.py,ninguno,ninguno,SARON*.csv (no existen),INACTIVO,requests propio,escritura propia,,Ningún workflow lo ejecuta y data/ no tiene sus salidas: SARON llega por fetch_chf_snb (Mac)
+scripts/notify_telegram.py,actions,varios,mensaje Telegram,NO_ES_DESCARGADOR,,,,Notificador

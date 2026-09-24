@@ -17,6 +17,8 @@ Qué cambia frente a v1.3 (PUT fichero a fichero con la API de contenidos):
   5. Avisos locales por Telegram (g8common.notify) independientes de GitHub: token inválido, familia no
      publicada, valores en confirmación, caducidad próxima. G8_NO_SEND=1 → no envía.
 
+v2.2 (lote 3B): adjunta al latido el registro de cada descargador (state/fetch_<clave>.json): el aviso de
+  Actions incluye el motivo del fallo.
 v2.1 (revisión 24-sep): la confirmación de un candidato exige otra DESCARGA CORRECTA identificable
   (--fetch-started + código 0 + ficheros reescritos); una relectura o un fetch fallido nunca confirma.
   Horizonte temporal por serie (sources/date_horizon.csv) y fechas reales del calendario.
@@ -40,7 +42,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from g8common import g8http, ghpublish as G, series as S, runlog, notify  # noqa: E402
 
-VERSION = "push_nzd_to_github v2.1"
+VERSION = "push_nzd_to_github v2.2"
 OWNER, REPO, BRANCH = "sanderdayan1982", "g8-macro-pipeline", "main"
 JOB = "nzchf-tona"
 LOCAL_DATA = os.path.join(HERE, "data")
@@ -255,9 +257,20 @@ def main(argv=None, repo_factory=None, now=time.time, cfg_dir="~/.g8"):
     rec = {"run_id": run_id, "executor": ex, "job": JOB, "version": VERSION,
            "started_utc": started.strftime("%Y-%m-%dT%H:%M:%SZ"), "fetch_status": fetch_status,
            "env": env_check(), "families": {}, "credentials": None}
+    rec["fetch_detail"] = {}
+    for k in fetch_status:
+        det = load_json_file(os.path.join(STATE_DIR, "fetch_%s.json" % k), None)
+        if det:                                   # lote 3B: registro del descargador (motivo del fallo, ficheros)
+            rec["fetch_detail"][k] = {"rc": det.get("rc"), "finished_utc": det.get("finished_utc"),
+                                      "errors": (det.get("errors") or [])[:5], "files": det.get("files") or {},
+                                      "requests": [{"cls": r.get("cls"), "status": r.get("status"),
+                                                    "detail": (r.get("detail") or "")[:120]}
+                                                   for r in (det.get("requests") or [])[-6:]]}
     for k, v in fetch_status.items():
         if v != "0":
-            alerts["fetch:" + k] = "Mac: la descarga %s terminó con código %s (ver logs)" % (k, v)
+            why = "; ".join((rec["fetch_detail"].get(k) or {}).get("errors") or [])[:240]
+            alerts["fetch:" + k] = "Mac: la descarga %s terminó con código %s%s" % (
+                k, v, (" — " + why) if why else " (ver logs)")
     token = read_token()
     if not token and not a.dry_run:
         alerts["token:missing"] = "Mac: no hay token de GitHub (~/.g8/github_token) — no se puede publicar"

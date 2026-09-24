@@ -55,7 +55,13 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
-import requests
+import io as _io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP con reintentos + publicación segura)
+
+_ctx = None       # contexto de ingestión (lo crea main())
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # Constants
@@ -72,6 +78,7 @@ TENOR_MAP = {
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 60
+ACM_REVISION_WINDOW = 10 ** 6   # lote 3B: toda la historia es revisable (re-estimación del modelo)
 USER_AGENT = "g8-macro-pipeline/1.0 (https://github.com/sanderdayan1982/g8-macro-pipeline)"
 
 
@@ -158,7 +165,21 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3B)."""
+    f = _io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 def main() -> int:
+    global requests, _ctx
+    _ctx = _ingest.Ingest('fetch_acm')
+    requests = _ctx.requests(provider='nyfed')
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -169,13 +190,13 @@ def main() -> int:
         xls_bytes = fetch_acm_xls(ACM_URL)
     except requests.HTTPError as exc:
         print(f"ERROR: NY Fed HTTP error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except requests.RequestException as exc:
         print(f"ERROR: NY Fed network error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except Exception as exc:
         print(f"ERROR: ACM download failed: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
     print(f"Downloaded {len(xls_bytes):,} bytes from NY Fed")
     print()
@@ -196,15 +217,19 @@ def main() -> int:
             continue
 
         output_path = DATA_DIR / filename
-        write_csv(rows, output_path)
-        print(f"[{column}] OK: Wrote {len(rows)} rows to {filename}")
+        # Ventana revisable = TODA la serie: la NY Fed re-estima el modelo ACM y reescribe la historia completa
+        # (MEDIDO en el historial git de data/ACM_TP_10Y.csv, jun–sep 2026: 7.467 valores revisados, hasta la
+        # primera fecha del fichero). Las revisiones se aceptan si superan la plausibilidad del registro.
+        _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"),
+                            revision_window=ACM_REVISION_WINDOW)
+        print(f"[{column}] {_rep['status']}: {len(rows)} filas descargadas para {filename} — {_rep.get('detail', '')}")
         print(f"          Latest:   {rows[-1][0]} = {rows[-1][1]:+.4f}%")
         print(f"          Earliest: {rows[0][0]} = {rows[0][1]:+.4f}%")
         successes += 1
 
     print()
     print(f"Summary: {successes} OK, {failures} failed (of {len(TENOR_MAP)} total)")
-    return 0 if failures == 0 else 1
+    return _ctx.finish(0 if failures == 0 else 1)
 
 
 if __name__ == "__main__":

@@ -56,15 +56,20 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import requests
+import io as _io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP con reintentos + publicación segura)
+
+_ctx = None       # contexto de ingestión (lo crea main())
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # Constants
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 90
-RETRY_ATTEMPTS = 3
-RETRY_BACKOFF_SECONDS = (0, 5, 15)  # delay before attempts 1, 2, 3
+RETRY_ATTEMPTS = 4  # lote 3B: política de g8http (intento + 3 reintentos); solo aparece en mensajes
 USER_AGENT = "g8-macro-pipeline/1.0 (https://github.com/sanderdayan1982/g8-macro-pipeline)"
 
 # Tenor -> FRED series ID mapping
@@ -86,41 +91,7 @@ OUTPUT_NAMES = {
 }
 
 
-def _request_with_retry(
-    url: str,
-    params: dict,
-    headers: dict,
-    timeout: int,
-) -> requests.Response:
-    """
-    GET with retry on transient network errors.
-
-    Retries up to RETRY_ATTEMPTS times on Timeout / ConnectionError, with
-    exponential backoff between attempts. Does NOT retry HTTPError — that
-    indicates a permanent issue (bad query, endpoint moved) which should
-    surface immediately.
-    """
-    last_exc: Exception | None = None
-    for attempt_idx in range(RETRY_ATTEMPTS):
-        delay = RETRY_BACKOFF_SECONDS[attempt_idx]
-        if delay > 0:
-            print(
-                f"    Retry attempt {attempt_idx + 1}/{RETRY_ATTEMPTS} "
-                f"after {delay}s backoff",
-                file=sys.stderr,
-            )
-            time.sleep(delay)
-        try:
-            return requests.get(url, params=params, headers=headers, timeout=timeout)
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
-            last_exc = exc
-            print(
-                f"    Transient network error on attempt {attempt_idx + 1}: {exc}",
-                file=sys.stderr,
-            )
-            continue
-    assert last_exc is not None
-    raise last_exc
+# lote 3B: _request_with_retry eliminado — g8http reintenta (1+3, 10/40/90 s, Retry-After).
 
 
 def fetch_fred_series(
@@ -144,7 +115,7 @@ def fetch_fred_series(
         "Accept": "text/csv",
     }
 
-    response = _request_with_retry(
+    response = requests.get(
         FRED_URL,
         params=params,
         headers=headers,
@@ -202,7 +173,21 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3B)."""
+    f = _io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 def main() -> int:
+    global requests, _ctx
+    _ctx = _ingest.Ingest('fetch_us_bills')
+    requests = _ctx.requests(provider='fred')
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -238,8 +223,8 @@ def main() -> int:
             failures += 1
             continue
 
-        write_csv(rows, output_path)
-        print(f"[{tenor}] OK: Wrote {len(rows)} rows to {output_path.name}")
+        _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+        print(f"[{tenor}] {_rep['status']}: {len(rows)} filas descargadas para {output_path.name} — {_rep.get('detail', '')}")
         print(f"        Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
         print(f"        Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
         print()
@@ -249,7 +234,7 @@ def main() -> int:
 
     # Exit code: 0 if all succeeded, 1 if any failed
     # This semantic allows partial-success runs to be visible in Actions
-    return 0 if failures == 0 else 1
+    return _ctx.finish(0 if failures == 0 else 1)
 
 
 if __name__ == "__main__":

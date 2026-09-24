@@ -1,9 +1,5 @@
 """
-fetch_nzd_b2.py — RBNZ Table B2 (Wholesale interest rates) daily close  — v1.5 (2026-09-24, lote 3B)
-
-v1.5: HTTP por g8common (reintentos 1+3 con presupuesto, Retry-After persistido, 403 sin reintento; mismo
-transporte curl_cffi→requests), escritura atómica y validada por fichero (una serie vacía o ilegible no
-sustituye a la anterior ni frena a las demás), registro en state/fetch_nzd.json. Fuentes y frecuencias: sin cambios.
+fetch_nzd_b2.py — RBNZ Table B2 (Wholesale interest rates) daily close  — v1.4 (2026-09-13)
 
 Sources NZD short-end and government bond yields from a single RBNZ XLSX:
   - BKBM 30/60/90D bank bill yields (NZD analogue of BBSW/SOFR-bills)
@@ -43,8 +39,13 @@ import time
 from io import BytesIO
 from openpyxl import load_workbook
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from g8common import macfetch, series as _S  # noqa: E402  (lote 3B: HTTP común + escritura atómica validada)
+try:
+    from curl_cffi import requests as crequests      # TLS impersonation
+    _IMPERSONATE = True
+except Exception:                                    # pragma: no cover
+    crequests = None
+    _IMPERSONATE = False
+import requests
 
 URL = (
     "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/"
@@ -66,16 +67,7 @@ HEADERS = {
 
 OUTPUT_DIR = "data"
 TIMEOUT_SECONDS = 90
-# v1.5 (lote 3B): reintentos, Retry-After y presupuesto los aplica g8common (g8http); el transporte sigue siendo
-# curl_cffi imitando Safari/Chrome con requests como alternativa; un 403 del WAF no se reintenta (como antes).
-_F = None
-
-
-def _fetch():
-    global _F
-    if _F is None:
-        _F = macfetch.Fetch("nzd", os.getcwd())
-    return _F
+RETRY_DELAYS = [0, 5, 15]
 
 SERIES_MAP = {
     "INM.DB01.NZZV":   "NZD_BILL_30D.csv",
@@ -118,14 +110,40 @@ DATA_START_ROW = 6
 DATE_COL = 1
 
 
+def _get(url):
+    """One HTTP GET: curl_cffi (Safari TLS) first, plain requests as fallback."""
+    if _IMPERSONATE:
+        for imp in ("safari17_0", "chrome124", "chrome"):
+            try:
+                r = crequests.get(url, headers=HEADERS, timeout=TIMEOUT_SECONDS, impersonate=imp)
+                print(f"[fetch_nzd_b2] curl_cffi impersonate={imp} → HTTP {r.status_code}")
+                if r.status_code == 200:
+                    return r.content
+            except Exception as e:
+                print(f"[fetch_nzd_b2] curl_cffi {imp} error: {e}")
+    r = requests.get(url, timeout=TIMEOUT_SECONDS, headers=HEADERS)
+    print(f"[fetch_nzd_b2] requests → HTTP {r.status_code}")
+    r.raise_for_status()
+    return r.content
+
+
 def download_xlsx(url: str) -> bytes:
-    try:
-        print(f"[fetch_nzd_b2] GET {url}")
-        content = _fetch().get(url, headers=HEADERS, timeout=TIMEOUT_SECONDS)
-    except macfetch.FetchError as e:
-        raise RuntimeError(f"[fetch_nzd_b2] download failed: {e}")
-    print(f"[fetch_nzd_b2] downloaded {len(content):,} bytes")
-    return content
+    last_exc = None
+    for attempt, delay in enumerate(RETRY_DELAYS, start=1):
+        if delay:
+            print(f"[fetch_nzd_b2] retry in {delay}s...")
+            time.sleep(delay)
+        try:
+            print(f"[fetch_nzd_b2] attempt {attempt}/{len(RETRY_DELAYS)} GET {url}")
+            content = _get(url)
+            print(f"[fetch_nzd_b2] downloaded {len(content):,} bytes")
+            return content
+        except Exception as e:
+            last_exc = e
+            print(f"[fetch_nzd_b2] error: {e}")
+            if "403" in str(e):
+                break                       # WAF verdict: retrying won't help
+    raise RuntimeError(f"[fetch_nzd_b2] download failed: {last_exc}")
 
 
 def locate_series_columns(ws) -> dict:
@@ -215,14 +233,12 @@ def extract_series(ws, col_map: dict) -> dict:
     return out
 
 
-def render_csv(rows) -> bytes:
-    """Mismo contenido byte a byte que el escritor v1.4, en memoria."""
-    return ("Date,Value\n" + "".join(f"{date_str},{round(value, 6)}\n" for date_str, value in rows)).encode("utf-8")
-
-
-def write_csv(path: str, rows) -> bool:
-    """v1.5: escritura atómica y validada (vacía/ilegible → no se escribe y queda registrada)."""
-    return _fetch().write(path, render_csv(rows), expect_header=["Date", "Value"])
+def write_csv(path: str, rows) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("Date,Value\n")
+        for date_str, value in rows:
+            f.write(f"{date_str},{round(value, 6)}\n")
 
 
 def hist_workbook():
@@ -234,7 +250,8 @@ def hist_workbook():
         content = open(cp, "rb").read()
     else:
         content = download_xlsx(HIST_URL)
-        _S.write_atomic(cp, content)
+        with open(cp, "wb") as f:
+            f.write(content)
         print(f"[fetch_nzd_b2] hist: cached → {cp}")
     wb = load_workbook(BytesIO(content), data_only=True)
     ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb[wb.sheetnames[0]]
@@ -295,8 +312,7 @@ def main() -> int:
         content = download_xlsx(URL)
     except Exception as e:
         print(f"[fetch_nzd_b2] FATAL download: {e}", file=sys.stderr)
-        _fetch().error("descarga B2: %s" % e)
-        return _fetch().finish(1)
+        return 1
     try:
         wb = load_workbook(BytesIO(content), data_only=True)
         if SHEET_NAME not in wb.sheetnames:
@@ -310,8 +326,7 @@ def main() -> int:
         data = extract_series(ws, col_map)
     except Exception as e:
         print(f"[fetch_nzd_b2] FATAL parse: {e}", file=sys.stderr)
-        _fetch().error("formato B2: %s" % e)
-        return _fetch().finish(2)
+        return 2
     # v1.4: splice 1985-2017 history (cached workbook) — never fatal
     hist = {}
     if "--no-hist" not in sys.argv:
@@ -320,19 +335,17 @@ def main() -> int:
             print(f"[fetch_nzd_b2] hist: {len(hist)} series, "
                   + ", ".join(f"{k} {len(v):,}" for k, v in hist.items()))
         except Exception as e:
-            print(f"[fetch_nzd_b2] WARN hist splice skipped: {e}")    # la copia local conserva la historia
+            print(f"[fetch_nzd_b2] WARN hist splice skipped: {e}")
     total = 0
-    written = 0
     for sid, rows in data.items():
         filename = SERIES_MAP[sid]
         rows = splice(rows, hist.get(filename))
-        ok = write_csv(os.path.join(OUTPUT_DIR, filename), rows)   # una serie inválida no frena a las demás
-        written += bool(ok)
+        write_csv(os.path.join(OUTPUT_DIR, filename), rows)
         ld, lv = rows[-1] if rows else ("NONE", float("nan"))
-        print(f"[fetch_nzd_b2] {filename}: {len(rows):,} rows, latest {ld} = {lv}{'' if ok else ' — NO ESCRITO'}")
+        print(f"[fetch_nzd_b2] {filename}: {len(rows):,} rows, latest {ld} = {lv}")
         total += len(rows)
-    print(f"[fetch_nzd_b2] {'OK' if written == len(data) else 'PARCIAL'} — {written}/{len(data)} files, {total:,} total rows")
-    return _fetch().finish(0)
+    print(f"[fetch_nzd_b2] OK — {len(data)} files, {total:,} total rows")
+    return 0
 
 
 if __name__ == "__main__":

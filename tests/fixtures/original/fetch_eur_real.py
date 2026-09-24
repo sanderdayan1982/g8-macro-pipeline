@@ -61,9 +61,6 @@ import datetime as dt
 import urllib.request
 import urllib.error
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP común + publicación segura)
-
 try:
     from openpyxl import load_workbook
 except ImportError:
@@ -100,32 +97,29 @@ DATE_RE = re.compile(r"^\s*(\d{2})\.(\d{2})\.(\d{4})\s*$")   # DD.MM.YYYY
 
 
 # --------------------------------------------------------------------------- #
-# HTTP — lote 3B: g8http a través del contexto de ingestión (reintentos 1+3 con presupuesto, Retry-After,
-# TLS verificado; el reintento sin verificación solo existe con G8_ALLOW_INSECURE_TLS=1 en una ejecución
-# manual, y lo aplica g8http). Cada petición queda en el registro del descargador.
+# HTTP con fallback SSL relajado (red Bata con proxy de certificado self-signed)
 # --------------------------------------------------------------------------- #
-_ctx = None
-BUDGET_S = 360          # presupuesto HTTP de una ejecución diaria; backfill_eur_real.py lo amplía (manual, 6 h)
-
-
-def _context():
-    global _ctx
-    if _ctx is None:
-        _ctx = _ingest.Ingest("fetch_eur_real", budget_s=BUDGET_S)
-    return _ctx
-
-
-def _get(url, timeout=60):
-    return _context().requests(provider="bundesbank").get(url, headers={"User-Agent": UA, "Accept": "*/*"},
-                                                          timeout=timeout)
+def _open(url, timeout=60):
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
+    try:
+        return urllib.request.urlopen(req, timeout=timeout)
+    except urllib.error.URLError as e:
+        reason = getattr(e, "reason", "")
+        if "CERTIFICATE_VERIFY_FAILED" in str(reason) or isinstance(reason, ssl.SSLError):
+            sys.stderr.write("[ssl] verify fallo -> reintento sin verificacion (red local)\n")
+            ctx = ssl._create_unverified_context()
+            return urllib.request.urlopen(req, timeout=timeout, context=ctx)
+        raise
 
 
 def http_text(url):
-    return _get(url).content.decode("utf-8", "replace")
+    with _open(url) as r:
+        return r.read().decode("utf-8", "replace")
 
 
 def http_bytes(url):
-    return _get(url).content
+    with _open(url) as r:
+        return r.read()
 
 
 # --------------------------------------------------------------------------- #
@@ -450,17 +444,12 @@ def _upsert(new_rows, path=OUT_CSV):
                     rows[head] = [p.strip() for p in parts[:4]]
     rows.update(new_rows)
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    # lote 3B: escritura atómica (temporal + os.replace): un corte nunca deja el CSV a medias (mismos bytes)
-    tmp = "%s.%d.tmp" % (path, os.getpid())
-    with open(tmp, "w", newline="") as f:
+    with open(path, "w", newline="") as f:
         f.write(HEADER_COMMENT + "\n")
         w = csv.writer(f, lineterminator="\n")
         w.writerow(COLS)
         for k in sorted(rows.keys()):
             w.writerow(rows[k])
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
     return len(rows)
 
 
@@ -468,41 +457,6 @@ def write_csv(result, path=OUT_CSV):
     d, row = _result_row(result)
     _upsert({d: row}, path)
     return d
-
-
-def render_upsert(new_rows, path):
-    """Mismo contenido byte a byte que _upsert(new_rows, path), en memoria (lote 3B)."""
-    import io
-    rows = {}
-    if os.path.exists(path):
-        with open(path, "r", newline="") as f:
-            for parts in csv.reader(f):
-                if not parts:
-                    continue
-                head = parts[0].strip()
-                if head.startswith("#") or head == "DATE":
-                    continue
-                if len(parts) >= 4 and head.isdigit():
-                    rows[head] = [p.strip() for p in parts[:4]]
-    rows.update(new_rows)
-    f = io.StringIO(newline="")
-    f.write(HEADER_COMMENT + "\n")
-    w = csv.writer(f, lineterminator="\n")
-    w.writerow(COLS)
-    for k in sorted(rows.keys()):
-        w.writerow(rows[k])
-    return f.getvalue().encode("utf-8")
-
-
-def publish_result(result):
-    """Lote 3B: publicación segura — fusión monótona, validación de la serie (NOM10 con la plausibilidad del
-    registro, fechas reales, horizonte) y escritura atómica. Ventana revisable: la última observación
-    (el escritor solo toca el día de la hoja; recalcular ese día no es una corrección histórica)."""
-    ctx = _context()
-    name = os.path.basename(OUT_CSV)
-    d, row = _result_row(result)
-    rep = ctx.publish(name, render_upsert({d: row}, os.path.join(ctx.root, "data", name)), revision_window=1)
-    return d, rep
 
 
 def write_rows(results, path=OUT_CSV):
@@ -603,33 +557,23 @@ def main():
         return 0
 
     # Produccion / dry-run
-    try:
-        url, ym = discover_xlsx_url()
-        sys.stderr.write("[discover] XLSX %04d-%02d -> %s\n" % (ym[0], ym[1], url))
-        data = http_bytes(url)
-        import io
-        result = parse_workbook(io.BytesIO(data))
-    except Exception as e:                          # lote 3B: el fallo queda registrado (antes: traza sin registro)
-        sys.stderr.write("ERROR: %s\n" % e)
-        if args.dry_run:
-            raise
-        return _context().finish(1)
+    url, ym = discover_xlsx_url()
+    sys.stderr.write("[discover] XLSX %04d-%02d -> %s\n" % (ym[0], ym[1], url))
+    data = http_bytes(url)
+    import io
+    result = parse_workbook(io.BytesIO(data))
     _print_summary(result)
 
     if not freshness_gate(result):
-        if args.dry_run:
-            return 1
-        _context().fail("fuente sin actualizar: la hoja más reciente del Bundesbank es %s (límite %d días)"
-                        % (result["date"].isoformat(), STALENESS_LIMIT_DAYS))
-        return _context().finish(1)
+        return 1
 
     if args.dry_run:
         print("\n[--dry-run] OK (no se escribio CSV).")
         return 0
 
-    datestr, rep = publish_result(result)
-    print("\nPublicación %s -> fila %s: %s %s" % (OUT_CSV, datestr, rep["status"], rep.get("detail", "")))
-    return _context().finish(0)
+    datestr = write_csv(result)
+    print("\nEscrito %s -> fila %s" % (OUT_CSV, datestr))
+    return 0
 
 
 if __name__ == "__main__":

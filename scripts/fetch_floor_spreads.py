@@ -18,6 +18,10 @@ Output format: repo-standard OHLCV
 
 Tolerant per source: failures reported in summary; exit 1 if any source failed
 (workflow runs this step with continue-on-error: true).
+
+Lote 3B (2026-09-24): HTTP y publicación por g8common.ingest — reintentos con presupuesto, Retry-After,
+validación por serie, escritura atómica y conservación del último dato válido; registro en
+data/_ingest/latest/actions__fetch_floor_spreads.json (avisos de ingest_watch).
 """
 
 import csv
@@ -30,7 +34,9 @@ import urllib.request
 import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from g8common import legacy as _g8legacy  # noqa: E402  (F7: HTTP común)
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP común + publicación segura por fichero)
+
+_ctx = None       # contexto de ingestión (lo crea main())
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 START = "2021-06-01"
@@ -40,20 +46,31 @@ UA = {"User-Agent": "Mozilla/5.0 (g8-macro-pipeline floor-spreads)"}
 
 
 def http_get(url, retries=3, timeout=60):
-    """F7 (2026-09-24): g8http debajo (sin reintentos de 4xx, Retry-After, TLS verificado, presupuesto)."""
-    return _g8legacy.http_get_text(url, timeout=timeout, headers=UA, budget_obj=_g8legacy.budget("fetch_floor_spreads", 6 * 60))
+    """Lote 3B: g8http con el registro del descargador (reintentos 1+3, Retry-After por ámbito, presupuesto,
+    TLS verificado, redirecciones). La API de FRED se clasifica aparte para reconocer la clave rechazada."""
+    provider = "fred_api" if "api.stlouisfed.org" in url else "generic"
+    return _ctx.requests(provider=provider).get(url, headers=UA, timeout=timeout).text
+
+
+def render_ohlcv(series):
+    """Mismo formato byte a byte que el escritor original (CRLF, V=0), en memoria."""
+    f = io.StringIO(newline="")
+    w = csv.writer(f, lineterminator="\r\n")
+    w.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for d, v in series:
+        ymd = d.replace("-", "")
+        w.writerow([ymd, f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", 0])
+    return f.getvalue().encode("utf-8")
 
 
 def write_ohlcv(name, series):
-    """series: list of (date_iso, value) sorted ascending."""
-    path = os.path.join(OUT_DIR, name)
-    with open(path, "w", newline="") as f:
-        w = csv.writer(f, lineterminator="\r\n")
-        w.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
-        for d, v in series:
-            ymd = d.replace("-", "")
-            w.writerow([ymd, f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", 0])
-    print(f"  wrote  : {path} ({len(series)} rows, last {series[-1][0]} = {series[-1][1]:.4f})")
+    """series: list of (date_iso, value) sorted ascending. Lote 3B: fusión monótona + escritura atómica; una
+    respuesta corta, retrocedida o implausible no sustituye al último dato válido."""
+    rep = _ctx.publish(name, render_ohlcv(series), retain_from=START.replace("-", ""))
+    print(f"  {rep['status']}: {name} ({len(series)} filas descargadas, última {series[-1][0]} = "
+          f"{series[-1][1]:.4f}) {rep.get('detail', '')}")
+    if rep["status"] in ("INVALID", "REGRESSION_BLOCKED"):
+        raise RuntimeError(f"{name}: {rep['status']} — {rep.get('detail', '')}")
 
 
 # ── USD: FRED IORB ──────────────────────────────────────────────────────────
@@ -68,8 +85,8 @@ def fetch_usd():
             data = json.loads(http_get(url))
             out = [(o["date"], float(o["value"]))
                    for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
-        except _g8legacy.LegacyHTTPError as e:              # F7: clave rechazada → endpoint sin clave, visible
-            if e.cls != "FAIL_AUTH":
+        except _ingest.HTTPError as e:                      # F7: clave rechazada → endpoint sin clave, visible
+            if e.g8cls != "FAIL_AUTH":
                 raise
             print("::error title=FRED_API_KEY::FRED rechaza la clave (FAIL_AUTH) en IORB; se usa fredgraph sin clave")
     else:
@@ -139,6 +156,8 @@ def fetch_cad():
 # ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
+    global _ctx
+    _ctx = _ingest.Ingest("fetch_floor_spreads")
     jobs = [("USD", fetch_usd), ("EUR", fetch_eur), ("CAD", fetch_cad)]
     failed = []
     for tag, fn in jobs:
@@ -149,7 +168,7 @@ def main():
             print(f"[{tag}] FAILED: {e}")
             failed.append(tag)
     print(f"Summary: {len(jobs) - len(failed)} OK, {len(failed)} failed of {len(jobs)}")
-    sys.exit(1 if failed else 0)
+    sys.exit(_ctx.finish(1 if failed else 0))
 
 
 if __name__ == "__main__":
