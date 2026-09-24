@@ -226,6 +226,12 @@
         letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;text-align:left;
         padding:7px 12px;border-bottom:1px solid #1c2433;white-space:nowrap}
     .dqm-table td{padding:7px 12px;border-bottom:1px solid #131a26;color:#d7dce6;white-space:nowrap}
+    /* v2.7.0 (audit 2026-09-24): Source carried full URLs with nowrap → table 2000 px wide in a
+       1330 px panel; LAST DATE / STATUS / § sat off-screen. Status moves next to the name and
+       long text columns wrap. */
+    .dqm-table td.dqm-wrap{white-space:normal;word-break:break-word;min-width:160px;max-width:380px}
+    .dqm-table td.dqm-name{white-space:normal;min-width:220px;max-width:420px}
+    .brief-scroll{overflow-x:auto}
     .dqm-table tr:hover td{background:#0d1320}
     .dqm-src{color:#8b93a7;font-size:10.5px}
     .dqm-status{display:inline-block;font-family:'IBM Plex Sans Condensed',sans-serif;
@@ -312,7 +318,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.6.2 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.7.0 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -333,6 +339,7 @@
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
     <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
     <span class="desk-nav-hint">teclas 0–9 · u</span>
+    <button type="button" id="nav-refresh" style="background:none;border:1px solid #1c2330;color:#8a93a6;font:inherit;padding:2px 8px;border-radius:2px;cursor:pointer;margin-left:8px" title="Borra la caché local (15 min) de CSV/JSON y recarga con los datos que el pipeline acaba de publicar" onclick="if(window.G8NET&&G8NET.clearCache)G8NET.clearCache();location.reload();">↻ datos</button>
 </nav>
 <main class="dashboard-main">
 
@@ -462,7 +469,7 @@
             </script>
 
             <div class="section-footer">
-                <span class="footer-note">ACM K=5 own engine (Adrian-Crump-Moench), 7 G8 currencies, validated vs NY Fed (USD, corr 0.992) &amp; Bank of Canada (CAD, corr 0.996 — K=4 on the ultra-smooth BJM curve, level-anchored to the BoC official ACM series, 1998+ shown to drop the ACM start-up boundary) · Real yields: market linkers (TIPS / ILG / RRB / iAGS) + ECB real benchmark (EUR) · NZD nominal fetched manual (RBNZ B2) · NZD TP = anchor-proxy formula; CHF = own ACM K=5 (SNB cube frozen 2025-07) · BE = manual constant (sources linked) · Δ in bps · Z = 60M (5Y) window for monthly series, population σ · ⚠ lvl = TP level low-confidence (short sample &lt; 150 obs, or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable</span>
+                <span class="footer-note">Own ACM engine (Adrian-Crump-Moench), all 8 G8 currencies, daily rows; the model order and estimation sample are read from each file's QUALITY column (today ACM_K3 for all eight — NZD short sample 2009+, CHF with a NOWCAST tail until the SNB publishes the month). Earlier validation: USD vs NY Fed ACM (corr 0.992), CAD vs BoC ACM (corr 0.996) · Real yields: market linkers TIPS / ILG / RRB / iAGS / NZ IIB + DE linkers (EUR, Bundesbank) + JGBi OTR (JPY) · NZD and CHF inputs arrive through the operator Mac (RBNZ B2 / SNB) · CHF BE = SNB CPI-forecast constant (manual_inputs.json) · Δ in bps · Z = 252 business days on daily legs (60M on monthly), population σ · ⚠ lvl = TP level low-confidence (short sample, NOWCAST tail or JPY ZLB/YCC misspecification): shape informative, level not cross-comparable · ⧗ = leg more than 15 days old</span>
             </div>
         </div>
     </section>
@@ -488,12 +495,12 @@
     <section class="dashboard-section" id="section-policy">
         <div class="section-header">
             <h2 class="section-title">03 — Policy Rates G8 (MFLUX MFS)</h2>
-            <span class="section-meta">4 policy rates · 90D lookback · BIS WS_CBPOL</span>
+            <span class="section-meta">8 policy rates · 90D lookback · last value held to today (step) · BIS WS_CBPOL + FRED/ECB/BoC</span>
         </div>
         <div class="section-body">
             <div class="chart-container" id="chart-policy"></div>
             <div class="section-footer">
-                <span class="footer-note">BoE Bank Rate (GB) · BoJ Policy Balance Rate (JP) · SNB Policy Rate (CH) · RBA Cash Rate Target (AU) — USD/EUR/CAD via TradingView native feeds (out of scope here)</span>
+                <span class="footer-note">Fed IORB (FLOOR_USD) · ECB Deposit Facility Rate (FLOOR_EUR) · BoC Target (FLOOR_CAD) · BoE Bank Rate · BoJ Policy Balance Rate · SNB Policy Rate · RBA Cash Rate Target (BIS WS_CBPOL) · RBNZ OCR. Event-driven series only print on change/fixing days, so each line is extended to today with its last value (the rate still in force). Lines that coincide (e.g. ECB DFR and BoC 2.25 % Jun–Sep 2026) overlap — use the unified hover.</span>
             </div>
         </div>
     </section>
@@ -516,7 +523,7 @@
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
             <h2 class="section-title">04 — Term Premium ACM 10Y G8 (time series)</h2>
-            <span class="section-meta">7 currencies · zero-coupon · Adrian-Crump-Moench K=5 · own engine</span>
+            <span class="section-meta">8 currencies · zero-coupon · Adrian-Crump-Moench · K per file (QUALITY) · own engine · daily</span>
         </div>
         <div class="section-body">
             <div class="acm-ccy-selector" id="acm-ccy-selector">
@@ -527,11 +534,11 @@
                 <button class="acm-ccy-btn" data-acm-ccy="aud">AUD</button>
                 <button class="acm-ccy-btn" data-acm-ccy="cad">CAD</button>
                 <button class="acm-ccy-btn" data-acm-ccy="jpy">JPY</button>
-                <button class="acm-ccy-btn" data-acm-ccy="nzd" title="Proxy sintético: TP_AUD + 0.4·(NOM_NZD − NOM_AUD). No es un ajuste ACM.">NZD·SYNTH</button>
+                <button class="acm-ccy-btn" data-acm-ccy="nzd">NZD</button>
             </div>
             <div class="chart-container" id="chart-acm"></div>
             <div class="section-footer">
-                <span class="footer-note" id="acm-footer-note">Five-factor no-arbitrage term structure model · monthly</span>
+                <span class="footer-note" id="acm-footer-note">Own ACM no-arbitrage term-structure model · daily rows · K per file</span>
             </div>
         </div>
     </section>
@@ -549,7 +556,7 @@
             <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5.2 — RFR · Bills · Policy · ACM) · mismo motor de frescura que la tabla superior (G8DQM.computeStaleness)</div>
             <div class="quality-grid" id="quality-grid"></div>
             <div class="section-footer">
-                <span class="footer-note">Registry-based monitor · single canonical health score drives the header. LIVE = within the feed's own expected publication lag (daily feeds stay LIVE across weekends/G8 holidays; policy rates are event-driven so a flat inter-meeting series is LIVE) · DEGRADED = late, inside grace band (1.0–1.5× lag) · STALE = 1.5–2.5× lag · DEAD = beyond 2.5× lag or unreachable · SYNTHETIC = computed proxy · MANUAL = hand-set constant; a ⚠ age badge appears once a manual input exceeds its lag. Business-day counting skips weekends + a G8 holiday union (extend yearly). RUN ALL re-checks every registered source live and appends to a 90-entry localStorage audit log. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy. Cache 60 min · auto re-check every 4 h.</span>
+                <span class="footer-note">Registry-based monitor · single canonical health score drives the header. LIVE = within the feed's own expected publication lag (daily feeds stay LIVE across weekends/G8 holidays; policy rates are event-driven so a flat inter-meeting series is LIVE) · DEGRADED = late, inside grace band (1.0–1.5× lag) · STALE = 1.5–2.5× lag · DEAD = beyond 2.5× lag or unreachable · SYNTHETIC = computed proxy · MANUAL = hand-set constant; a ⚠ age badge appears once a manual input exceeds its lag. Business-day counting skips weekends + a G8 holiday union (extend yearly). RUN ALL re-checks every registered source live and appends to a 90-entry localStorage audit log. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy. Cache 15 min (↻ datos in the nav clears it) · auto re-check every 4 h.</span>
             </div>
         </div>
     </section>
@@ -627,9 +634,9 @@
         <div id="cot-panel">
             <div class="attr-err" style="color:#5d6678">Loading COT positioning — pos_g8_cot.json (repo)…</div>
         </div>
-    </div>
-    <div class="section-footer">
-        <span class="section-meta">who is already inside the trade · positioning flow (weeks/months), context filter never a trigger</span>
+        <div class="section-footer">
+            <span class="section-meta">who is already inside the trade · positioning flow (weeks/months), context filter never a trigger</span>
+        </div>
     </div>
 </section>
 
@@ -744,14 +751,22 @@ function metalRow(r, thr) {
 
 function render(doc) {
     var el = document.getElementById('cot-panel');
-    var f = doc.freshness || {};
+    /* v2.7.0 (audit 2026-09-24): freshness.age_days was frozen at generation time ("FRESH (4d)"
+       nine days after the report). Recomputed here from report_date: the CFTC publishes Tuesday's
+       positions on Friday, so a report is current until ~10 calendar days old. */
+    var f = Object.assign({}, doc.freshness || {});
+    var rdt = Date.parse(String(doc.report_date || '') + 'T00:00:00Z');
+    if (isFinite(rdt)) {
+        f.age_days = Math.floor((Date.now() - rdt) / 86400000);
+        f.status = f.age_days <= 10 ? 'FRESH' : f.age_days <= 14 ? 'AGING' : 'STALE';
+    }
     var fc = f.status === 'FRESH' ? GREEN : f.status === 'AGING' ? AMBER : RED;
     var thr = doc.thresholds || {};
 
     var html = '<div class="dqm-bar" style="margin-bottom:12px">' +
         '<span class="dqm-ts">report ' + (doc.report_date || '—') +
         ' · <span style="color:' + fc + ';font-weight:700">' + (f.status || 'NA') + '</span>' +
-        (f.age_days != null ? ' (' + f.age_days + 'd)' : '') +
+        (f.age_days != null ? ' (' + f.age_days + ' d desde el informe)' : '') +
         ' · generated ' + (doc.generated_utc || '—') + '</span>' +
         '<span class="dqm-ts cot-sub">' + (doc.source || '') + '</span></div>';
 
@@ -887,9 +902,9 @@ if (document.readyState === 'loading') {
         <div id="uf-panel">
             <div class="attr-err" style="color:#5d6678">Loading USD_FACTOR.json / BOOK_RISK.json from pipeline repo…</div>
         </div>
-    </div>
-    <div class="section-footer">
-        <span class="section-meta">composición y riesgo: cuánto dólar hay en cada pata, qué queda sin el dólar, cuánto riesgo común acumula el libro · nunca una señal de entrada</span>
+        <div class="section-footer">
+            <span class="section-meta">composición y riesgo: cuánto dólar hay en cada pata, qué queda sin el dólar, cuánto riesgo común acumula el libro · nunca una señal de entrada</span>
+        </div>
     </div>
 </section>
 
@@ -1181,7 +1196,10 @@ function localProxy(url) {
     return null;
 }
 
-var CACHE_MS = 60 * 60 * 1000;   /* 60 min */
+/* v2.7.0 (audit 2026-09-24): 60 → 15 min. The pipeline republishes several times a day and a
+   60-min localStorage copy already caused a false "JSON is v1.1" incident (17-sep). raw.github
+   caches ~5 min on its side anyway. The "↻ datos" button in the nav clears the cache on demand. */
+var CACHE_MS = 15 * 60 * 1000;
 var TIMEOUT_MS = 5000;   /* per-attempt; trimmed from 8000 so a fully-dead
                             3-tier cascade resolves in ~15s, not ~24s (audit v2.4 — B2) */
 
@@ -1308,7 +1326,15 @@ function deltaBps(series, lb) {
     return (series[n - 1] - series[n - 1 - lb]) * 100;
 }
 
-window.G8NET = { fetchAny: fetchAny, fetchChain: fetchChain, b64ToArrayBuffer: b64ToArrayBuffer,
+function clearCache() {
+    try {
+        var ks = [];
+        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('g8net_') === 0) ks.push(k); }
+        ks.forEach(function (k) { localStorage.removeItem(k); });
+        return ks.length;
+    } catch (e) { return 0; }
+}
+window.G8NET = { clearCache: clearCache, fetchAny: fetchAny, fetchChain: fetchChain, b64ToArrayBuffer: b64ToArrayBuffer,
                  zScore: zScore, deltaBps: deltaBps, PROXIES: PROXIES };
 })();
 </script>
@@ -1341,10 +1367,13 @@ var FEED_REGISTRY = {
     EUR_ACM: repo('ACM_G8_EUR.csv', 'EUR ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     JPY_ACM: repo('ACM_G8_JPY.csv', 'JPY ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     GBP_ACM: repo('ACM_G8_GBP.csv', 'GBP ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
-    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (K=4, BoC-anchored)', 'daily', 5, '01'),
+    CAD_ACM: repo('ACM_G8_CAD.csv', 'CAD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     AUD_ACM: repo('ACM_G8_AUD.csv', 'AUD ACM 10Y (Y10/RNY/TP)', 'daily', 5, '01'),
     /* E1 (2026-09-21): 2Y daily legs persisted by acm_g8.py v2.6 from the connectors it already uses; consumer §01-b Δ2Y. */
-    AUD_NOM_2Y: repo('AUD_NOM_2Y.csv', 'AUD Nominal 2Y (RBA F2 daily table, via acm_g8)', 'daily', 5, '01'),
+    /* v2.7.0 (audit 2026-09-24): the RBA publishes table F2 (daily yields) ONCE A WEEK (Friday, data to
+       Wednesday — git history Jun–Sep 2026). A 5-bd budget flagged it DEGRADED every Thursday by design.
+       8 bd = weekly publication + lag, same budget as AUD_RY (iAGS, same table family). */
+    AUD_NOM_2Y: repo('AUD_NOM_2Y.csv', 'AUD Nominal 2Y (RBA F2 — weekly publication, via acm_g8)', 'weekly', 8, '01'),
     CAD_NOM_2Y: repo('CAD_NOM_2Y.csv', 'CAD Nominal 2Y (BoC Valet, via acm_g8)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
@@ -1416,6 +1445,10 @@ var FEED_REGISTRY = {
         name: 'USD ACM TP10 (NY Fed mirror — fallback)',
         urls: ['https://eco3min.fr/dataset/us-term-premium.csv'],
         source: 'eco3min.fr (NY Fed ACMTP10 mirror, weekly)', corsOk: false, frequency: 'weekly', maxStaleness: 45, section: '01',
+        /* v2.7.0: no section consumes this mirror (§01 reads ACM_G8_USD.csv). As an always-on row it
+           counted ×2 (section 01) in the header and put "1 DEAD" on a green board whenever
+           eco3min/the proxy hiccuped. On-demand = checked only by RUN ALL. */
+        onDemand: true,
         manualLink: 'https://www.newyorkfed.org/research/data_indicators/term-premia-tabs'
     },
 
@@ -1443,6 +1476,11 @@ var FEED_REGISTRY = {
     FLOOR_USD: repo('FLOOR_USD.csv', 'USD floor (IORB)', 'daily', 5, '02'),
     FLOOR_EUR: repo('FLOOR_EUR.csv', 'EUR floor (DFR)', 'daily', 5, '02'),
     FLOOR_CAD: repo('FLOOR_CAD.csv', 'CAD floor (BoC target)', 'daily', 5, '02'),
+    /* v2.7.0 (audit 2026-09-24): §02 paints both NZD rows from these two Mac-fed files but §05 did
+       not monitor them — the §00 brief (server DQM) showed NZD_CASH_ON STALE while §05 was silent. */
+    NZD_CASH_ON: repo('NZD_CASH_ON.csv', 'NZD overnight interbank cash (RBNZ B2, Mac fetch)', 'daily', 5, '02'),
+    NZD_BKBM_90D: repo('NZD_BILL_90D.csv', 'NZD BKBM 90d (RBNZ B2, Mac fetch)', 'daily', 5, '02'),
+    NZD_BOND_10Y: repo('NZD_BOND_10Y.csv', 'NZD 10Y bond file (RBNZ B2, Mac fetch)', 'daily', 5, '01'),
 
     /* ── 03 policy rates — repo (BIS WS_CBPOL) ─────────────────────────────
        EVENT-DRIVEN, NOT DAILY. BIS WS_CBPOL only emits a new observation on a
@@ -1518,7 +1556,13 @@ var G8_HOLIDAYS = {
     '2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1,'2027-03-29':1,
     '2027-05-03':1,'2027-05-31':1,'2027-06-18':1,'2027-07-05':1,'2027-08-02':1,
     '2027-08-30':1,'2027-09-06':1,'2027-10-11':1,'2027-11-11':1,'2027-11-25':1,
-    '2027-12-27':1,'2027-12-28':1
+    '2027-12-27':1,'2027-12-28':1,
+        /* v2.7.0 (audit 2026-09-24): Japan was missing from the "G8 union" — the Sep-2026 Silver Week
+           (21-22-23) flipped TONA/JGB to DEGRADED although the BoJ was closed. JP 2026-27 national holidays. */
+        '2026-01-12':1,'2026-02-11':1,'2026-02-23':1,'2026-03-20':1,'2026-04-29':1,'2026-05-05':1,'2026-05-06':1,
+        '2026-07-20':1,'2026-09-21':1,'2026-09-22':1,'2026-09-23':1,'2026-11-03':1,'2026-11-23':1,
+        '2027-01-11':1,'2027-02-11':1,'2027-02-23':1,'2027-03-22':1,'2027-04-29':1,'2027-05-04':1,'2027-05-05':1,
+        '2027-07-19':1,'2027-09-20':1,'2027-09-23':1,'2027-11-03':1,'2027-11-23':1
 };
 function isG8Holiday(dt) {
     return !!G8_HOLIDAYS[dt.toISOString().slice(0, 10)];
@@ -1730,8 +1774,10 @@ function syncHeader() {
         dotsEl.title = h.healthy + '/' + h.total + ' feeds healthy · dots weighted by criticality (' +
             h.wBroken + '/' + h.wTotal + ' weighted broken · valuation feeds ×2)';
     }
-    /* freshest monitored last-date drives "LAST UPDATE" */
-    if (upEl) {
+    /* v2.7.0: LAST UPDATE = last pipeline publish (brief.json generated_utc, set by §00).
+       The freshest feed date was usually an effective-dated IORB/DFR row = "today" even when
+       the pipeline had not run. Fallback only if the brief never loads. */
+    if (upEl && !upEl.dataset.fromBrief) {
         var best = null;
         Object.keys(state).forEach(function (id) {
             var ld = state[id] && state[id].lastDate;
@@ -1884,14 +1930,14 @@ function render() {
             }
         }
         rows += '<tr title="' + title.replace(/"/g, '&quot;') + '">' +
-            '<td>' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') +
+            '<td class="dqm-name">' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') +
                 (f.eventDriven ? ' <span class="dqm-lat" title="publishes only on rate-change events; a flat series is correct">(event-driven)</span>' : '') + '</td>' +
-            '<td class="dqm-src">' + f.source + '</td>' +
-            '<td class="dqm-src">' + f.frequency + '</td>' +
-            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + ageFlag + '</td>' +
-            '<td class="dqm-lat">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
             '<td><span class="dqm-status dqm-' + s.status + '" title="' + (STATUS_DEF[s.status] || '').replace(/"/g, '&quot;') + '">' + s.status + '</span></td>' +
-            '<td class="dqm-src">' + f.section + '</td></tr>';
+            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + ageFlag + '</td>' +
+            '<td class="dqm-src">' + f.section + '</td>' +
+            '<td class="dqm-src">' + f.frequency + '</td>' +
+            '<td class="dqm-lat dqm-wrap">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
+            '<td class="dqm-src dqm-wrap">' + f.source + '</td></tr>';
     });
     var chips = ['LIVE', 'DEGRADED', 'STALE', 'DEAD', 'SYNTHETIC', 'MANUAL', 'UNKNOWN', 'PENDING'].map(function (k) {
         if (!counts[k]) return '';
@@ -1906,7 +1952,7 @@ function render() {
         attentionStrip() +
         auditStrip() +
         '<div class="attr-wrap"><table class="dqm-table"><thead><tr>' +
-        '<th>Feed</th><th>Source</th><th>Freq</th><th>Last date</th><th>Latency · via</th><th>Status</th><th>§</th>' +
+        '<th>Feed</th><th>Status</th><th>Last date</th><th>§</th><th>Freq</th><th>Latency · via</th><th>Source</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     var btn = document.getElementById('dqm-run');
     if (btn) btn.onclick = function () { runAll(true); };
@@ -2362,7 +2408,7 @@ function build(data) {
             nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom), staleTag(d.nom));
         }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
-            '<span class="attr-sub">' + (d.asOf || '') + '</span>' +
+            '<span class="attr-sub">' + (/^\d{8}$/.test(String(d.asOf || '')) ? isoNorm(d.asOf) : (d.asOf || '')) + '</span>' +
             (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
             nomCell +
             cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
@@ -2406,6 +2452,20 @@ function build(data) {
             var amark = aligned ? '' : '<span class="attr-na" title="last-of-each — no date overlap to align">~</span>';
             return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '</span>' + amark + ztag;
         }
+        /* v2.7.0 (audit 2026-09-24): the BREAKEVEN spread column was hard-wired to "—".
+           BE_x − BE_USD = inflation-expectation differential (the piece of the nominal spread
+           that is NOT real-rate). CHF BE is a constant → level only, no z (a z of a constant
+           minus USD BE would just be −z(USD BE)). GBP is RPI-based (≈ +0.8–1.0 pp vs CPI). */
+        function beSpread(ccy, dd, u) {
+            if (!dd.be || !u.be) return '<span class="attr-na">—</span>';
+            if (ccy === 'CHF') {
+                var v0 = dd.be.last - u.be.last;
+                return '<span class="' + (v0 > 0 ? 'attr-up' : 'attr-dn') + '" title="CHF BE = constante SNB (sin linker): nivel indicativo, sin z">' +
+                    (v0 > 0 ? '+' : '') + v0.toFixed(2) + '</span><span class="attr-z attr-z-lo">const</span>';
+            }
+            var out = sp(dd.be, u.be);
+            return ccy === 'GBP' ? '<span title="GBP BE en base RPI (≈ +0,8–1,0 pp sobre IPC): el nivel del diferencial no es comparable; usar z y Δ">' + out + ' <span class="attr-z attr-z-lo">RPI</span></span>' : out;
+        }
         /* mixed as-of detection: if this row's legs were sampled on different
            dates, Nominal−Real=BE arithmetic mixes vintages → flag it */
         var dates = [d.nom, d.tp, d.rny, d.real, d.be]
@@ -2428,13 +2488,14 @@ function build(data) {
             '<td>' + sp(d.tp, usd.tp) + '</td>' +
             '<td>' + sp(d.rny, usd.rny) + '</td>' +
             '<td>' + sp(d.real, usd.real) + '</td>' +
-            '<td><span class="attr-na">—</span></td><td></td></tr>';
+            '<td>' + beSpread(c, d, usd) + '</td><td></td></tr>';
     });
 
     html += '</tbody></table>' +
-        '<div class="attr-note">EUR real = ECB real benchmark bond yield (FM.M…R_U2_10Y, FR/DE linker basket, monthly) — Bund€i discontinued Nov-2023, hence PROXY · ' +
-        'CHF real = NOM − manual BE constant (SNB CPI fcst) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv exists (else RBNZ SoE constant) · NZD TP = own ACM K=3 on RBNZ B2 1985+ when ACM_G8_NZD.csv is a real fit (else AUD-anchored proxy) · ' +
-        'NZD/CHF TP = anchor proxy (AUD / EUR formula in row sub) · GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · ' +
+        '<div class="attr-note">EUR real/BE = German inflation-linked Bunds (Bundesbank, daily) interpolated to 10Y — DE-only, hence PROXY · JPY real/BE = on-the-run 10Y JGBi (JSDA) · ' +
+        'CHF real = NOM − manual BE constant (SNB CPI fcst; no CHF linker market) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv is fresh (else RBNZ SoE constant) · ' +
+        'TP = own ACM K=3 for all eight (model order read from each file\'s QUALITY column; NZD short sample 2009+, CHF with NOWCAST tail) — the AUD/EUR anchor-proxy formula is only a fallback when a file is stale · ' +
+        'GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · BE spread vs USD: CHF = constant (no z) · ' +
         '<b style="color:#9d7bd8">NZD / CHF live via the operator Mac</b>: RBNZ B2 and the SNB data portal reject datacenter IPs, so a launchd job on the Mac fetches them daily (fetch_nzd_b2.py / fetch_chf_snb.py) and pushes the CSVs through the GitHub API; Actions then runs the ACM and real-yield builds. NZD nominal = RBNZ B2 10Y daily close (manual_inputs.json only as fallback when the file exceeds its budget). CHF nominal = SNB 10Y spot (curve month-end + official RSS daily); CHF TP = own ACM K=3 on the SNB zero curve, NOWCAST rows flagged until the SNB publishes the month; frozen 2025-07 cube only as last resort (FROZEN).</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
@@ -2740,19 +2801,21 @@ var PAIRS = [
     /* v2.5.6 — NZD (RBNZ B2 via local fetch). RBNZ runs a pure floor: all settlement
        cash earns OCR, so overnight − OCR ≈ 0 by construction; it only speaks when
        it decouples. The BKBM 90d − OCR row is TERM funding, not a floor → no badge. */
-    { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · overnight cash (floor)' },
-    { ccy: 'NZD·90d', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d (term, no floor)', noBadge: true },
+    { ccy: 'NZD', key: 'NZD', rfr: 'NZD_CASH_ON.csv', flr: 'NZD_OCR.csv', ref: 'OCR · overnight cash (floor)', budget: 5 },
+    { ccy: 'NZD·90d', key: 'NZD_BKBM', rfr: 'NZD_BILL_90D.csv', flr: 'NZD_OCR.csv', ref: 'OCR · BKBM 90d (term, no floor)', noBadge: true, budget: 5 },
     /* v2.5.9 — CHF: SARON (SNB zirepo weekly + RSS daily fixing, local Mac fetch) vs SNB policy
        rate (BIS). Tiered remuneration (policy up to the threshold, policy − 25 bp above) makes
        SARON − policy a reserve-pressure reading; SARON normally prints a few bp BELOW policy. */
-    { ccy: 'CHF', key: 'CHF', rfr: 'CHF_SARON.csv', flr: 'CH_POLICY.csv', ref: 'SNB policy rate' }
+    { ccy: 'CHF', key: 'CHF', rfr: 'CHF_SARON.csv', flr: 'CH_POLICY.csv', ref: 'SNB policy rate', budget: 7 }
 ];
 
 function getCsv(name) {
-    return fetch(RAW + name, { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error(name + ' HTTP ' + r.status);
-        return r.text();
-    }).then(function (t) {
+    /* v2.7.0: through G8NET (per-attempt timeout + cache) like every other module —
+       the raw fetch had no timeout, the failure class already fixed in §01 and metals. */
+    var p = (window.G8NET && window.G8NET.fetchChain)
+        ? window.G8NET.fetchChain([RAW + name], { corsOk: true }).then(function (r) { if (!r.ok) throw new Error(name + ' ' + (r.error || 'unreachable')); return r.text; })
+        : fetch(RAW + name, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(name + ' HTTP ' + r.status); return r.text(); });
+    return p.then(function (t) {
         var p = Papa.parse(t.trim(), { header: true, dynamicTyping: true, skipEmptyLines: true });
         /* v2.5.6: accept both OHLCV (DATE,CLOSE compact) and RBNZ B2 (Date,Value ISO) shapes;
            dates normalised to compact yyyymmdd so ffill ordering is consistent. */
@@ -2807,6 +2870,11 @@ function row(p, s) {
         var sd = Math.sqrt(win.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / win.length);
         if (sd > 1e-9) z = (last - mu) / sd;
     }
+    /* v2.7.0 (audit 2026-09-24): a row whose RFR fixing stopped updating kept a live-looking
+       regime badge (NZD overnight 11-sep painted PRESSURE on 24-sep; TONA 16-sep). Same
+       business-day engine as §05; the regime is still shown but marked as an old reading. */
+    var lastD = s[n - 1].d, st = (window.G8DQM && window.G8DQM.computeStaleness) ? window.G8DQM.computeStaleness(lastD, p.budget || 4) : 'LIVE';
+    var staleTag = st === 'LIVE' ? '' : ' <span class="attr-z attr-z-md" title="fixing ' + lastD + ' · ' + st + ' (presupuesto ' + (p.budget || 4) + ' d.h.) — el régimen describe esa fecha, no hoy">⧗ ' + st + '</span>';
     var badge = p.noBadge ? '<span class="fls-badge" style="background:#13202e;color:#5d8aa8">TERM</span>'
               : last > 10 ? '<span class="fls-badge fls-press">PRESSURE</span>'
               : last > 2  ? '<span class="fls-badge fls-tight">TIGHT</span>'
@@ -2816,12 +2884,12 @@ function row(p, s) {
         (z > 0 ? '+' : '') + z.toFixed(1) + '</span>';
     return '<tr data-fls-ccy="' + (p.key || p.ccy) + '" style="cursor:pointer" title="Click: ver serie en el gráfico">' +
         '<td><span class="attr-ccy">' + p.ccy + '</span><span class="attr-sub">vs ' + p.ref +
-            ' · ' + s[n - 1].d + '</span></td>' +
+            ' · ' + lastD.slice(0, 4) + '-' + lastD.slice(4, 6) + '-' + lastD.slice(6, 8) + '</span></td>' +
         '<td><span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh + '</td>' +
         '<td>' + fmtD(d1w) + '</td>' +
         '<td>' + fmtD(d1m) + '</td>' +
         '<td>' + spark(v.slice(-90)) + '</td>' +
-        '<td>' + badge + '</td></tr>';
+        '<td' + (st === 'LIVE' ? '' : ' style="opacity:.55"') + '>' + badge + staleTag + '</td></tr>';
 }
 
 /* v2.5.8: one currency at a time (same UX as §04 — selector buttons, single filled
@@ -3147,15 +3215,36 @@ if (document.readyState === 'loading') {
 var RAW_B = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/alerts/brief.json';
 function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 function fmtK(p, v) { if (v == null) return '—'; return (p === 'USD/JPY' ? Number(v).toFixed(2) : Number(v).toFixed(4)); }
+/* v2.7.0 (audit 2026-09-24): the brief had no age check — a pipeline that stopped publishing
+   left yesterday's (or last week's) reading on screen with no warning. Age vs the daily publish
+   (--final ~21:30 UTC): > 30 h on a weekday / > 78 h across a weekend = ATRASADO. */
+function briefAge(b) {
+    var t = Date.parse(b.generated_utc || '');
+    if (!isFinite(t)) return { h: null, late: true };
+    var h = (Date.now() - t) / 3600000, dow = new Date().getUTCDay();
+    var lim = (dow === 0 || dow === 1) ? 78 : 30;
+    return { h: h, late: h > lim, lim: lim };
+}
 function render(b) {
     var el = document.getElementById('brief-body');
     var a = b.as_of || {}, g = b.gates || {};
+    var age = briefAge(b);
+    var up = document.getElementById('last-update');
+    if (up) {
+        up.dataset.fromBrief = '1';
+        up.textContent = (b.generated_utc || '—').replace('T', ' ').slice(0, 16) + ' UTC';
+        up.style.color = age.late ? '#ff5c72' : '';
+        up.title = 'Última publicación del pipeline (brief.json)' + (age.h != null ? ' · hace ' + age.h.toFixed(1) + ' h' : '') + (age.late ? ' · ATRASADO' : '');
+    }
     var h = '<div class="brief-asof">' +
         '<span>Rates <b>' + esc(a.rates || '—') + '</b></span>' +
         '<span>COT <b>' + esc(a.cot || '—') + '</b></span>' +
         '<span>Options <b>' + esc(a.options || '—') + '</b></span>' +
         '<span>Metals <b>' + esc(a.metals || '—') + '</b></span>' +
-        '<span>Brief <b>' + esc((b.generated_utc || '').replace('T', ' ').slice(0, 16)) + ' UTC</b></span></div>';
+        '<span>Brief <b' + (age.late ? ' style="color:#ff5c72"' : '') + '>' + esc((b.generated_utc || '').replace('T', ' ').slice(0, 16)) + ' UTC</b>' +
+        (age.h != null ? ' <span style="color:' + (age.late ? '#ff5c72' : '#5d6678') + '">(hace ' + age.h.toFixed(0) + ' h' + (age.late ? ' · ATRASADO' : '') + ')</span>' : '') + '</span></div>';
+    if (age.late) h += '<div class="brief-gate g-bad">⚠ BRIEF ATRASADO — el pipeline no ha publicado en ' + (age.h != null ? age.h.toFixed(0) + ' h' : '—') +
+        ' (límite ' + age.lim + ' h). Las cifras de §00 son de la última publicación, no de hoy. Revisar Actions (Daily Data Update).</div>';
     h += '<div class="brief-gates">';
     if (g.pos_twin) {
         var st = g.pos_twin.status, cls = st === 'PASSED' ? '' : st === 'FAILED' ? 'g-bad' : 'g-warn';
@@ -3168,7 +3257,7 @@ function render(b) {
     if (b.book && b.book.length) {
         var n2 = function (v, d) { return v == null ? '—' : Number(v).toFixed(d == null ? 2 : d); };
         var zc = function (z) { if (z == null) return ''; var a = Math.abs(z); return a >= 2 ? ' class="z-x"' : a >= 1 ? ' class="z-hi"' : ''; };
-        h += '<table class="book"><thead><tr><th>CCY</th><th>NOM 10Y</th><th>REAL</th><th>BE</th><th>TP</th><th>TP z</th><th>RFR</th><th>floor bp</th><th title="Diferencial 10Y nominal vs USD en puntos porcentuales (coma decimal)">vs USD %</th><th title="Diferencial 10Y REAL vs USD (linkers de mercado; CHF sin linker) en puntos porcentuales · z 252d">REAL vs USD %</th><th>LF z</th><th>COT</th><th style="text-align:left">flags</th></tr></thead><tbody>';
+        h += '<div class="brief-scroll"><table class="book"><thead><tr><th>CCY</th><th>NOM 10Y</th><th>REAL</th><th>BE</th><th>TP</th><th>TP z</th><th>RFR</th><th>floor bp</th><th title="Diferencial 10Y nominal vs USD en puntos porcentuales (coma decimal)">vs USD %</th><th title="Diferencial 10Y REAL vs USD (linkers de mercado; CHF sin linker) en puntos porcentuales · z 252d">REAL vs USD %</th><th>LF z</th><th>COT</th><th style="text-align:left">flags</th></tr></thead><tbody>';
         b.book.forEach(function (r) {
             var fb = r.floor_badge === 'PRESSURE' ? ' class="badge-p"' : r.floor_badge === 'TIGHT' ? ' class="badge-t"' : '';
             h += '<tr><td>' + esc(r.ccy) + '</td><td>' + n2(r.nom) + '</td><td>' + n2(r.real) + '</td><td>' + n2(r.be) + '</td><td>' + n2(r.tp) +
@@ -3179,7 +3268,7 @@ function render(b) {
                  '</td><td' + zc(r.lf_z) + '>' + (r.lf_z == null ? '—' : (r.lf_z >= 0 ? '+' : '') + n2(r.lf_z)) + '</td><td>' + esc(r.cot_state || '—') +
                  '</td><td class="flags">' + esc((r.flags || []).join(' · ') || '—') + '</td></tr>';
         });
-        h += '</tbody></table>';
+        h += '</tbody></table></div>';
     }
     h += '<ul class="brief-list">';
     (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(x.sec) + '</span>' + esc(x.text) + '</li>'; });
@@ -3215,7 +3304,9 @@ function render(b) {
         var pt = g.pos_twin || {}, cls = pt.status === 'PASSED' ? '' : pt.status === 'FAILED' ? 'g-bad' : 'g-warn';
         chips.innerHTML = '<span>rates <b>' + esc(a.rates || '—') + '</b></span><span>COT <b>' + esc(a.cot || '—') + '</b></span>' +
             '<span>options <b>' + esc(a.options || '—') + '</b></span><span>metals <b>' + esc(a.metals || '—') + '</b></span>' +
-            '<span class="' + cls + '">twin POS ' + esc(pt.status || '—') + '</span><span class="g-off">FFVA PAUSED</span>' +
+            '<span class="' + cls + '">twin POS ' + esc(pt.status || '—') + '</span>' +
+            (g.ffva ? '<span class="g-off">FFVA ' + esc(g.ffva.status || '') + '</span>' : '') +
+            (age.late ? '<span class="g-bad">BRIEF ATRASADO</span>' : '') +
             ((b.dqm || []).length ? '<span class="g-bad">DQM ' + b.dqm.length + ' feed(s) STALE/DEAD</span>' : '');
     }
 }
@@ -3241,7 +3332,8 @@ function render(b) {
     }
 })();
 function init() {
-    fetch(RAW_B, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    var sig = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(10000) : undefined;   /* v2.7.0: no timeout = §00 could hang forever */
+    fetch(RAW_B, { cache: 'no-store', signal: sig }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(render)
         .catch(function (e) {
             document.getElementById('brief-body').innerHTML =
@@ -3493,7 +3585,8 @@ function paint(metal, ids, st, rows) {
           mkStat('PRICE', fmt(px, 2), C.text) +
           mkStat('FAIR VALUE', fmt(fair, 2), C.blue) +
           mkStat('DEV.', devpct === null ? '—' : (devpct > 0 ? '+' : '') + pct(devpct, 1),
-                 devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.green)) +
+                 /* v2.7.0: +14.5 % painted green read as "good"; deviation carries no good/bad sign */
+                 devpct === null ? C.mute : (Math.abs(devpct) > 0.15 ? C.gold : C.text)) +
           mkStat('REGIME', (reg || '—') + (reg && !regTradeable ? ' ⚠' : ''),
                  !regTradeable ? C.mute : (reg === 'REVERSION' ? C.green : reg === 'MOMENTUM' ? C.amber : C.mute)) +
         '</div>' +
@@ -3569,7 +3662,17 @@ function paint(metal, ids, st, rows) {
         drawMdp(ids.cMdp, rows);
         drawBetas(ids.cBeta, rows, metal);
     }
-    drawMatrix(ids.cCot, st);
+    drawMatrix(ids.cCot, st, null);
+    /* v2.7.0 (audit 2026-09-24): the COT column never lit up although §09 publishes the metals
+       Managed-Money state. Read the same pos_g8_cot.json (G8NET cache → no extra download). */
+    if (window.G8NET && window.G8NET.fetchChain) {
+        window.G8NET.fetchChain([RAW + 'pos_g8_cot.json'], { corsOk: true }).then(function (r) {
+            if (!r || !r.ok) return;
+            var doc = JSON.parse(r.text);
+            var m = (doc.metals || []).filter(function (x) { return x.ccy === metal; })[0];
+            if (m) drawMatrix(ids.cCot, st, { row: m, thr: (doc.thresholds || {})[metal] || { ext: 2.25 }, date: doc.report_date });
+        }).catch(function () {});
+    }
 }
 
 /* ── UI components ──────────────────────────────────────────────────────── */
@@ -3670,9 +3773,14 @@ function drawFair(id, rows) {
     ];
     var dp = lastDot(x, px, C.gold);   if (dp) data.push(dp);
     var df = lastDot(x, fair, C.steel); if (df) data.push(df);
+    /* v2.7.0: Plotly's default log ticks printed "1000, 2, 3, 4, 5, 6" — explicit round levels. */
+    var allv = px.concat(fair).filter(function (v) { return isFinite(v) && v > 0; });
+    var vmin = Math.min.apply(null, allv), vmax = Math.max.apply(null, allv), tv = [];
+    for (var e = Math.floor(Math.log10(vmin)) - 1; e <= Math.ceil(Math.log10(vmax)); e++)
+        [1, 2, 5].forEach(function (m) { var t = m * Math.pow(10, e); if (t >= vmin * 0.8 && t <= vmax * 1.25) tv.push(t); });
     Plotly.newPlot(id, data, plotlyBase({
         margin: { l: 50, r: 18, t: 14, b: 30 },
-        yaxis: { type: 'log', gridcolor: C.gridln, linecolor: C.axisln, showline: true,
+        yaxis: { type: 'log', tickvals: tv, ticktext: tv.map(function (t) { return t >= 1000 ? t.toLocaleString('en-US') : String(t); }), gridcolor: C.gridln, linecolor: C.axisln, showline: true,
             ticks: 'outside', ticklen: 3, tickcolor: C.axisln,
             tickfont: { size: 9, color: C.tick }, color: C.tick }
     }), PCFG);
@@ -3758,11 +3866,17 @@ function drawBetas(id, rows, metal) {
 }
 
 /* 3×3 MDP × COT matrix (lightweight HTML) — active cell highlighted */
-function drawMatrix(id, st) {
+function drawMatrix(id, st, cot) {
     var el = document.getElementById(id);
     if (!el) return;
     var z = st ? st.mdp_z : null;
     var rowI = (z === null || isNaN(z)) ? 1 : (z >= 1 ? 0 : (z <= -1 ? 2 : 1));
+    /* COT column: MM state from §09 (CROWD = |z| ≥ calibrated ext threshold) */
+    var colI = -1;
+    if (cot && cot.row) {
+        var mz = cot.row.mm_z, ext = cot.thr.ext, stt = String(cot.row.state || '');
+        colI = (/CROWD LONG/.test(stt) || (isFinite(mz) && mz >= ext)) ? 0 : (/CROWD SHORT/.test(stt) || (isFinite(mz) && mz <= -ext)) ? 2 : 1;
+    }
     var rl = ['MDP HIGH · rich', 'MDP NEUTRAL', 'MDP LOW · cheap'];
     var cl = ['COT long extreme', 'COT neutral', 'COT short extreme'];
     var cell = [
@@ -3781,15 +3895,18 @@ function drawMatrix(id, st) {
     for (var i = 0; i < 3; i++) {
         h += '<tr><th>' + rl[i] + '</th>';
         for (var j = 0; j < 3; j++) {
-            var on = (i === rowI) ? ' mfv-mtx-on' : '';
-            h += '<td class="' + on + '" style="color:' + ccol[i][j] + '">' + cell[i][j] + '</td>';
+            var on = (i === rowI && (colI < 0 || j === colI)) ? ' mfv-mtx-on' : '';
+            var hit = (i === rowI && j === colI) ? ';outline:1px solid ' + C.gold + ';font-weight:700' : '';
+            h += '<td class="' + on + '" style="color:' + ccol[i][j] + hit + '">' + cell[i][j] + '</td>';
         }
         h += '</tr>';
     }
     h += '</tbody></table>' +
-        '<div class="mfv-mtx-note">Active row set by current MDP. The COT column lights up from the ' +
-        'POS-G8 Managed-Money overlay once that feed is present. ★ signal = fundamental and ' +
-        'positioning aligned in favor of the reversion.</div>';
+        '<div class="mfv-mtx-note">' + (cot && cot.row
+            ? 'Active cell = MDP row × COT column. COT: Managed Money ' + cot.row.ccy + ' z ' + (cot.row.mm_z >= 0 ? '+' : '') + Number(cot.row.mm_z).toFixed(2) +
+              ' · ' + (cot.row.state || '—') + ' (extreme ≥ ' + cot.thr.ext + 'σ) · report ' + (cot.date || '—') + ' (§09). '
+            : 'Active row set by current MDP; COT column pending pos_g8_cot.json (§09). ') +
+        '★ signal = fundamental and positioning aligned in favor of the reversion. Not a trigger while QUALITY = REVIEW.</div>';
     el.innerHTML = h;
 }
 
