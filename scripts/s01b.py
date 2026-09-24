@@ -50,7 +50,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.3.1" # E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
+VERSION = "s01b v1.3.2" # E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -71,7 +71,10 @@ FINAL_EARLIEST_UTC = 20     # E2.1 (2026-09-23): --final evaluates the session o
                             # earlier (a manual dispatch) it behaves as provisional. --force-final overrides; --date (tests) is exempt.
 
 NOM_FILES = {c: "RY_G8_%s.csv" % c for c in CCY8 if c != "CHF"}
-NOM_FILES["CHF"] = "CHF_SPOT_10Y.csv"
+NOM_FILES["CHF"] = "CHF_NOM_10Y.csv"   # E3 (2026-09-24): SNB 10Y DAILY (curve month-end + official RSS R10), not the
+                                      # monthly curve file — the curve stops at the last published month-end
+                                      # (31-08 until ~1-oct) and left CHF nominal "atrasado" for a month. Same
+                                      # series the §01 matrix and the CHF ACM NOWCAST shift already use. CHF = solo lectura.
 Y2_FILES = {"USD": "US_BILL_2Y.csv", "EUR": "EUR_BILL_2Y.csv", "GBP": "GBP_BILL_2Y.csv", "JPY": "JPY_BILL_2Y.csv",
             "NZD": "NZD_BOND_2Y.csv", "CHF": "CHF_SPOT_2Y.csv",
             # E1: same connectors acm_g8.py already uses in its daily panel (DAILY_SOURCE_EXTRA), now persisted
@@ -83,7 +86,7 @@ BE_FILES = {c: "RY_G8_%s.csv" % c for c in ["USD", "EUR", "GBP", "JPY", "AUD", "
 # E1: provenance label per context leg (never gates; shown next to the value / in the log).
 CONTEXT_QUALITY = {("AUD", "y2"): "RBA_F2_DAILY_TABLE", ("CAD", "y2"): "BOC_VALET",
                    ("NZD", "be"): "IIB_PROXY_THIN_MARKET", ("NZD", "y2"): "RBNZ_B2",
-                   ("CHF", "y2"): "SNB_CURVE_MONTHLY", ("CHF", "nominal"): "SNB_CURVE_MONTHLY", ("CHF", "be"): "NO_MARKET"}
+                   ("CHF", "y2"): "SNB_CURVE_MONTHLY", ("CHF", "nominal"): "SNB_10Y_DAILY_RSS", ("CHF", "be"): "NO_MARKET"}
 # E2: probe of the ACM long-end input date. acm_g8.py builds the daily panel from bills (fresh daily) plus the long-end
 # tenors of ONE connector (AUD: RBA F2 daily 2/3/5/10; CAD: BoC Valet 2/5/10) and forward-fills up to 5 sessions —
 # an ACM row dated t can therefore carry the curve of an older day. The persisted 2Y of that same connector
