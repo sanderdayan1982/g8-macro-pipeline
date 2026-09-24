@@ -17,12 +17,17 @@ Qué cambia frente a v1.3 (PUT fichero a fichero con la API de contenidos):
   5. Avisos locales por Telegram (g8common.notify) independientes de GitHub: token inválido, familia no
      publicada, valores en confirmación, caducidad próxima. G8_NO_SEND=1 → no envía.
 
-Uso:  /usr/bin/python3 push_nzd_to_github.py --fetch-status nzd=0,chf=0,tona=0
+v2.1 (revisión 24-sep): la confirmación de un candidato exige otra DESCARGA CORRECTA identificable
+  (--fetch-started + código 0 + ficheros reescritos); una relectura o un fetch fallido nunca confirma.
+  Horizonte temporal por serie (sources/date_horizon.csv) y fechas reales del calendario.
+
+Uso:  /usr/bin/python3 push_nzd_to_github.py --fetch-status nzd=0,chf=0,tona=0 --fetch-started <epoch>
       /usr/bin/python3 push_nzd_to_github.py --dry-run          (lee la rama; no escribe nada)
 Salida: 0 = todo publicado o sin novedad; 1 = algún fallo (detallado en el log y en el latido).
 """
 import argparse
 import glob
+import hashlib
 import importlib.util
 import json
 import os
@@ -35,7 +40,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from g8common import g8http, ghpublish as G, series as S, runlog, notify  # noqa: E402
 
-VERSION = "push_nzd_to_github v2.0"
+VERSION = "push_nzd_to_github v2.1"
 OWNER, REPO, BRANCH = "sanderdayan1982", "g8-macro-pipeline", "main"
 JOB = "nzchf-tona"
 LOCAL_DATA = os.path.join(HERE, "data")
@@ -44,6 +49,8 @@ LOG_DIR = os.path.join(HERE, "logs")
 QUAR = "data/_ingest/quarantine/%s.json"
 DECIDE = "data/_ingest/decisions/%s/"
 REGISTRY = "sources/registry.csv"
+HORIZON = "sources/date_horizon.csv"
+DOWNLOADS_STATE = "downloads.json"      # en STATE_DIR: identidad de la última descarga correcta por familia
 
 FAMILIES = [
     # id, patrones locales, ficheros obligatorios, cabecera exigida, clave de fetch
@@ -128,12 +135,51 @@ def local_files(patterns):
     return sorted(out)
 
 
-def make_build(fam, files, header, local, run_id, now_utc, report):
+def _sha_files(files):
+    h = hashlib.sha256()
+    for f in sorted(files):
+        with open(os.path.join(LOCAL_DATA, f), "rb") as fh:
+            h.update(f.encode() + b"\0" + fh.read() + b"\0")
+    return h.hexdigest()
+
+
+def download_identity(fam, files, fetch_rc, fetch_started, run_id, state):
+    """Identidad de la descarga que produjo los CSV locales de una familia (hallazgo #1).
+    FRESH: el descargador terminó con 0 y TODOS los ficheros de la familia se escribieron después del inicio
+           de esta tanda (--fetch-started) → identidad nueva, puede confirmar candidatos de otra descarga.
+    RETRY_PREVIOUS: los ficheros son byte a byte los de la última descarga correcta registrada → se reintenta
+           su publicación CONSERVANDO su identidad original (no cuenta como confirmación nueva).
+    UNVERIFIED: cualquier otro caso (fetch fallido con ficheros cambiados, ejecución manual sin marca de
+           tiempo…) → None: se puede publicar lo que no requiere confirmación, pero no confirma nada."""
+    sha = _sha_files(files)
+    mtimes = [os.path.getmtime(os.path.join(LOCAL_DATA, f)) for f in files]
+    if fetch_rc == "0" and fetch_started is not None and mtimes and min(mtimes) >= fetch_started:
+        did = "%s:%s:%s" % (run_id, fam, sha[:12])
+        state[fam] = {"download_id": did, "sha256": sha, "run_id": run_id}
+        return did, "FRESH"
+    prev = state.get(fam)
+    if prev and prev.get("sha256") == sha:
+        return prev.get("download_id"), "RETRY_PREVIOUS"
+    return None, "UNVERIFIED"
+
+
+def load_json_file(path, default):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return default
+
+
+def make_build(fam, files, header, local, run_id, now_utc, report, download_id=None):
     qpath, dprefix = QUAR % fam, DECIDE % fam
-    paths = ["data/" + f for f in files] + [qpath, REGISTRY]
+    paths = ["data/" + f for f in files] + [qpath, REGISTRY, HORIZON]
 
     def fn(cur, head):
         reg = parse_registry(cur.get(REGISTRY))
+        horizon = S.load_horizons(cur.get(HORIZON))
+        if cur.get(HORIZON) is None:
+            report.setdefault("warnings", []).append("sin %s en la rama: no se aplica horizonte temporal" % HORIZON)
         qdoc = json.loads(cur[qpath].decode("utf-8")) if cur.get(qpath) else {"family": fam, "candidates": {}}
         decisions = []
         for p, v in sorted(cur.items()):
@@ -157,7 +203,8 @@ def make_build(fam, files, header, local, run_id, now_utc, report):
 
         def run(hold):
             return {f: S.merge(f, repo_series[f], local[f], plaus_for(f, reg), REVISION_WINDOW.get(f), q,
-                               run_id, now_utc, hold_new_from=hold) for f in files}
+                               run_id, now_utc, hold_new_from=hold, download_id=download_id,
+                               max_future_days=horizon(f)) for f in files}
         res = run(None)
         bad = {f: r for f, r in res.items() if r.status in (S.INVALID, S.REGRESSION_BLOCKED)}
         if bad:
@@ -194,8 +241,12 @@ def env_check():
 def main(argv=None, repo_factory=None, now=time.time, cfg_dir="~/.g8"):
     ap = argparse.ArgumentParser()
     ap.add_argument("--fetch-status", default="")
+    ap.add_argument("--fetch-started", type=float, default=None,
+                    help="epoch en que empezó la tanda de descargas (lo pasa nzd_local_run.sh)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
+    dl_state_path = os.path.join(STATE_DIR, DOWNLOADS_STATE)
+    dl_state = load_json_file(dl_state_path, {})
     started = datetime.fromtimestamp(now(), tz=timezone.utc)
     ex = executor_id()
     run_id = runlog.new_run_id(ex, JOB, started)
@@ -243,9 +294,13 @@ def main(argv=None, repo_factory=None, now=time.time, cfg_dir="~/.g8"):
             frep["detail"] = "copia local ilegible: %s" % e
             alerts["fam:%s" % fam] = "Mac %s: no publicada — %s" % (fam, frep["detail"])
             continue
+        did, dkind = download_identity(fam, files, fetch_status.get(fkey), a.fetch_started, run_id, dl_state)
+        frep.update(download_id=did, download_kind=dkind)
+        if not a.dry_run:
+            S.write_atomic(dl_state_path, runlog.dumps(dl_state))
         report = {}
         try:
-            out = repo.publish(make_build(fam, files, header, local, run_id, started, report),
+            out = repo.publish(make_build(fam, files, header, local, run_id, started, report, download_id=did),
                                "%s %s %s" % (ex, fam, run_id), dry=a.dry_run)
         except G.GitHubError as e:
             frep.update(status="PUBLISH_FAIL", cls=e.cls, detail=e.detail)

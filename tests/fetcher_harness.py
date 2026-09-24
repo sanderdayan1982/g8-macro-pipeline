@@ -27,6 +27,13 @@ from g8common import ingest as ING  # noqa: E402
 from g8fakes import Clock  # noqa: E402
 
 NOW = datetime(2026, 9, 24, 21, 35, 0)
+# Reloj simulado ALINEADO con la fecha que ve el script (NOW, UTC): la coherencia temporal por serie
+# (hallazgo #7) compara la fecha máxima con el reloj del ejecutor.
+NOW_EPOCH = (NOW - datetime(1970, 1, 1)).total_seconds()
+
+
+def clock_at_now():
+    return Clock(NOW_EPOCH)
 _counter = [0]
 
 
@@ -123,7 +130,7 @@ def run_original(script, serve, root, argv=(), now=NOW, output_attr="OUTPUT_PATH
 
 
 def run_new(script, serve, root, argv=(), now=NOW, clock=None):
-    clock = clock or Clock()
+    clock = clock or clock_at_now()
     calls = []
 
     def transport(method, url, headers, body, ct, rt, tt):

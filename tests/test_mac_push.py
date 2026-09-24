@@ -33,9 +33,13 @@ def repo_files():
         for p in glob.glob(os.path.join(ROOT, "data", pat)):
             with open(p, "rb") as fh:
                 out["data/" + os.path.basename(p)] = fh.read()
-    with open(os.path.join(ROOT, "sources", "registry.csv"), "rb") as fh:
-        out["sources/registry.csv"] = fh.read()
+    for src in ("registry.csv", "date_horizon.csv"):
+        with open(os.path.join(ROOT, "sources", src), "rb") as fh:
+            out["sources/" + src] = fh.read()
     return out
+
+
+T_NOW = 1790280000.0      # 2026-09-24T20:00:00Z: reloj alineado con los datos (horizonte temporal, hallazgo #7)
 
 
 class MacPushTests(unittest.TestCase):
@@ -53,7 +57,7 @@ class MacPushTests(unittest.TestCase):
         P.LOCAL_DATA = os.path.join(self.tmp, "data")
         P.STATE_DIR = os.path.join(self.tmp, "state")
         P.LOG_DIR = os.path.join(self.tmp, "logs")
-        self.clock = Clock()
+        self.clock = Clock(T_NOW)
         self.gh = FakeGitHub(self.files, owner=P.OWNER, repo=P.REPO, clock=self.clock)
         self.gh.scopes = "public_repo"
         self.gh.token_expiration = "2027-01-31 00:00:00 UTC"
@@ -64,14 +68,22 @@ class MacPushTests(unittest.TestCase):
         for k in ("GITHUB_TOKEN", "G8_EXECUTOR_ID"):
             os.environ.pop(k, None)
 
+    def fresh_fetch(self):
+        """Simula una tanda de descargas correcta: todos los CSV locales reescritos tras --fetch-started."""
+        t0 = self.clock.t
+        for f in glob.glob(os.path.join(self.tmp, "data", "*.csv")):
+            os.utime(f, (t0 + 1, t0 + 1))
+        return ["--fetch-status", "nzd=0,chf=0,tona=0", "--fetch-started", "%.0f" % t0]
+
     def run_push(self, args=None):
+        args = args or self.fresh_fetch()
         fac = lambda tok, now: G.Repo(P.OWNER, P.REPO, "main", token=tok, api=self.gh.url,  # noqa: E731
                                       budget=g8http.Budget(10 ** 6, now=self.clock, env={}), sleep=self.clock.sleep, now=self.clock)
         buf = io.StringIO()
         with redirect_stdout(buf):
-            rc = P.main(args or ["--fetch-status", "nzd=0,chf=0,tona=0"], repo_factory=fac, now=self.clock,
+            rc = P.main(args, repo_factory=fac, now=self.clock,
                         cfg_dir=os.path.join(self.tmp, "nocfg"))
-        name = "last_dry_run.json" if "--dry-run" in (args or []) else "last_run.json"
+        name = "last_dry_run.json" if "--dry-run" in args else "last_run.json"
         with open(os.path.join(self.tmp, "state", name)) as fh:
             rec = json.load(fh)
         self.assertNotIn(TOKEN, buf.getvalue())
@@ -175,6 +187,59 @@ class MacPushTests(unittest.TestCase):
         q2 = json.loads(remote["data/_ingest/quarantine/NZ-B2.json"])
         self.assertEqual(q2["candidates"][cid]["status"], "ACCEPTED_CONFIRMED")
         self.assertEqual(q2["candidates"][cid]["confirmed_by_run"], rec2["run_id"])
+
+    # ── hallazgo #1: una descarga fallida (o una relectura) nunca confirma un candidato ─────────────────
+    def _tona_jump(self):
+        last = float(open(os.path.join(self.tmp, "data", "TONA.csv")).read().strip().splitlines()[-1].split(",")[4])
+        v = "%.4f" % (last + 4.0)
+        self.append_local("TONA.csv", "20260924,%s,%s,%s,%s,0\n" % (v, v, v, v))
+        rc, rec, _ = self.run_push()
+        self.assertEqual(rec["families"]["JP-TONA"]["status"], "HELD")
+        self.assertEqual(rec["families"]["JP-TONA"]["download_kind"], "FRESH")
+        return self.gh.files()["data/TONA.csv"]
+
+    def test_r1_failed_fetch_does_not_confirm_old_candidate(self):
+        before = self._tona_jump()
+        self.clock.t += 3600                                       # mismos ficheros; el fetch de TONA falla
+        rc, rec, _ = self.run_push(["--fetch-status", "nzd=0,chf=0,tona=1", "--fetch-started", "%.0f" % self.clock.t])
+        fam = rec["families"]["JP-TONA"]
+        self.assertEqual(fam["status"], "HELD")
+        self.assertEqual(fam["download_kind"], "RETRY_PREVIOUS")   # conserva la identidad de la descarga original
+        self.assertEqual(self.gh.files()["data/TONA.csv"], before)  # publicado intacto
+        self.assertIn("fetch:tona", rec["alerts"])
+        self.assertIn("held:JP-TONA", rec["alerts"])
+        q = json.loads(self.gh.files()["data/_ingest/quarantine/JP-TONA.json"])
+        self.assertEqual({c["status"] for c in q["candidates"].values()}, {"PENDING"})
+        # relectura sin marca de tiempo (ejecución manual) tampoco confirma
+        self.clock.t += 3600
+        rc, rec, _ = self.run_push(["--fetch-status", "tona=0"])
+        self.assertEqual(rec["families"]["JP-TONA"]["status"], "HELD")
+        self.assertEqual(self.gh.files()["data/TONA.csv"], before)
+        # una segunda descarga CORRECTA e independiente que trae el mismo valor sí lo acepta
+        self.clock.t += 3600
+        rc, rec, _ = self.run_push()
+        self.assertEqual(rec["families"]["JP-TONA"]["status"], "PUBLISHED")
+        q = json.loads(self.gh.files()["data/_ingest/quarantine/JP-TONA.json"])
+        (c,) = q["candidates"].values()
+        self.assertEqual(c["status"], "ACCEPTED_CONFIRMED")
+        self.assertEqual(c["confirmed_by_download"], rec["families"]["JP-TONA"]["download_id"])
+        self.assertNotEqual(c["first_download"], c["confirmed_by_download"])
+
+    def test_r1_partial_rewrite_after_failed_fetch_is_unverified(self):
+        self._tona_jump()
+        self.clock.t += 3600
+        self.append_local("NZD_CASH_ON.csv", "2026-09-24,5.5\n")   # el fetcher NZ falló a medias
+        rc, rec, _ = self.run_push(["--fetch-status", "nzd=1,chf=0,tona=0", "--fetch-started", "%.0f" % self.clock.t])
+        self.assertEqual(rec["families"]["NZ-B2"]["download_kind"], "UNVERIFIED")
+        self.assertIsNone(rec["families"]["NZ-B2"]["download_id"])
+
+    def test_r7_future_date_rejected_by_series_horizon(self):
+        self.append_local("NZD_CASH_ON.csv", "2026-12-24,2.25\n")
+        rc, rec, _ = self.run_push()
+        fam = rec["families"]["NZ-B2"]
+        self.assertEqual(fam["status"], "INVALID")
+        self.assertIn("horizonte", fam["detail"])
+        self.assertNotIn(b"2026-12-24", self.gh.files()["data/NZD_CASH_ON.csv"])
 
     def test_manual_reject_keeps_holding(self):
         last = float(open(os.path.join(self.tmp, "data", "NZD_CASH_ON.csv")).read().strip().splitlines()[-1].split(",")[1])

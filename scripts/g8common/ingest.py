@@ -15,13 +15,14 @@ concurrencia g8-shared-data-alerts):
   data/_ingest/decisions/<FICHERO>/*.json                     (decisiones manuales del operador, las crea él)
 """
 import csv
+import hashlib
 import json
 import os
 import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
-from . import g8http, runlog, series as S
+from . import defer, g8http, runlog, series as S
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 EXECUTOR = "actions"
@@ -122,7 +123,11 @@ class Ingest(object):
 
     def _get(self, url, provider, headers, read_t, nf, validate):
         key = provider
-        nb = self.not_before.get(key)
+        if not hasattr(self, "_defer"):
+            self._defer = defer.Store(os.path.join(self.root, defer.REL_DIR), now=self.now)
+        scope = defer.scope_for(url)
+        nbs = [x for x in (self.not_before.get(key), self._defer.get(scope)) if x]
+        nb = max(nbs) if nbs else None                  # el límite compartido del ámbito también cuenta (hallazgo #5)
         res = g8http.fetch(url, provider=provider, headers=headers, budget=self.budget, read_timeout=read_t,
                            connect_timeout=min(10.0, read_t), not_found_is_no_publication=nf, validate=validate,
                            not_before=nb, transport=TEST_TRANSPORT, now=self.now, sleep=_sleep_for(self.now))
@@ -130,6 +135,8 @@ class Ingest(object):
         self.requests_log.append(rec)
         if res.not_before:
             self.not_before[key] = res.not_before
+            if res.attempts:                            # solo plazos recibidos del servidor, no los heredados
+                self._defer.set(scope, res.not_before, source=res.url)
         elif res.ok:
             self.not_before.pop(key, None)
         if not res.ok:
@@ -168,6 +175,15 @@ class Ingest(object):
                 return None
         return {"min": f(row.get("plaus_min")), "max": f(row.get("plaus_max")), "max_jump": f(row.get("plaus_max_jump"))}
 
+    def horizon(self, fname):
+        if not hasattr(self, "_horizon"):
+            try:
+                with open(os.path.join(self.root, "sources", "date_horizon.csv"), "rb") as fh:
+                    self._horizon = S.load_horizons(fh.read())
+            except OSError:
+                self._horizon = S.load_horizons(None)
+        return self._horizon(fname)
+
     def publish(self, fname, data, retain_from=None, revision_window=None, expect_header=None):
         """Fusiona `data` (bytes con el formato exacto del escritor original) sobre data/<fname>.
         No escribe nada si la descarga es inválida, más antigua o incompleta. → informe (dict)."""
@@ -197,8 +213,12 @@ class Ingest(object):
                     if d:
                         decisions.append(d)
         q = S.apply_manual_decisions(qdoc.get("candidates", {}), decisions)
+        # Identidad de la descarga (hallazgo #1): solo si ESTA ejecución obtuvo al menos una respuesta correcta.
+        ok_req = [x for x in self.requests_log if x.get("cls") == g8http.OK]
+        download_id = ("%s:%s" % (self.run_id, hashlib.sha256(data).hexdigest()[:12])) if ok_req else None
+        rep["download_id"] = download_id
         r = S.merge(fname, repo, src, self.plaus(fname), revision_window, q, self.run_id, self.started,
-                    retain_from=retain_from)
+                    retain_from=retain_from, download_id=download_id, max_future_days=self.horizon(fname))
         rep.update(r.report())
         if r.series is not None:
             S.write_atomic(path, r.series.to_bytes())
@@ -227,6 +247,9 @@ class Ingest(object):
         S.write_atomic(self.latest_path, runlog.dumps(rec))
         for f, v in sorted(self.files.items()):
             print("[ingest] %s: %s %s" % (f, v.get("status"), v.get("detail", "")))
+            if v.get("status") == S.HELD:
+                # visible en la interfaz de Actions; el aviso por Telegram lo emite ingest_watch (hallazgo #4)
+                print("::warning title=%s en confirmación::%s" % (f, v.get("detail", "")))
         return rec["rc"]
 
 

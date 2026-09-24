@@ -22,10 +22,25 @@ jobs:
   fetch-data:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Revisión 24-sep (hallazgo #3): plazo global del job y reserva para publicar. Duraciones medidas en los
+    # Daily del 13 al 24-sep: job 2,5–10,7 min; ACM G8 ≤ 326 s; EUR AAA ≤ 225 s; S01B, avisos y commit < 5 s
+    # cada uno. Reserva 540 s = S01B 120 + avisos 60 + vigilancia 90 + registro 15 + commit 180 + rojo 15 +
+    # aviso de fallo 60. La fase de descarga dispone de ~19 min (≈2× el máximo observado). PROVISIONAL:
+    # recalibrar con data/_ingest/latest/actions__job_daily.json tras 2 semanas.
+    env:
+      G8_JOB: daily
+      G8_JOB_RESERVE_S: '540'
 
     steps:
+      # ── 0. Plazo global: todo paso de descarga termina antes de DEADLINE − RESERVE ──
+      - name: Plazo global del job (G8_JOB_DEADLINE_EPOCH)
+        run: |
+          echo "G8_JOB_DEADLINE_EPOCH=$(( $(date +%s) + 30*60 - 90 ))" >> "$GITHUB_ENV"
+          echo "G8_STEP_LOG=$RUNNER_TEMP/g8_steps.jsonl" >> "$GITHUB_ENV"
+
       # ── 1. Checkout repository ─────────────────────────────────────────────
       - name: Checkout repository
+        timeout-minutes: 3
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,6 +48,7 @@ jobs:
 
       # ── 2. Python setup ────────────────────────────────────────────────────
       - name: Set up Python 3.11
+        timeout-minutes: 3
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -40,91 +56,109 @@ jobs:
 
       # ── 3. Install dependencies ────────────────────────────────────────────
       - name: Install dependencies
+        timeout-minutes: 4
         run: pip install -r requirements.txt
 
       # ── 4. Run scrapers — TOLERANT mode (each independent) ────────────────
       - name: Fetch SOFR (USD anchor)
-        run: python scripts/fetch_sofr.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name sofr --cap 240 -- python scripts/fetch_sofr.py
         continue-on-error: true
         id: sofr
 
       - name: Fetch ESTR (EUR RFR)
-        run: python scripts/fetch_estr.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name estr --cap 240 -- python scripts/fetch_estr.py
         continue-on-error: true
         id: estr
 
       - name: Fetch SONIA (GBP RFR)
-        run: python scripts/fetch_sonia.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name sonia --cap 240 -- python scripts/fetch_sonia.py
         continue-on-error: true
         id: sonia
 
       - name: Fetch AONIA (AUD RFR)
-        run: python scripts/fetch_aonia.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name aonia --cap 240 -- python scripts/fetch_aonia.py
         continue-on-error: true
         id: aonia
 
       - name: Fetch TONA (JPY RFR)
-        run: python scripts/fetch_tona.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name tona --cap 240 -- python scripts/fetch_tona.py
         continue-on-error: true
         id: tona
 
       - name: Fetch CORRA (CAD RFR)
-        run: python scripts/fetch_corra.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name corra --cap 240 -- python scripts/fetch_corra.py
         continue-on-error: true
         id: corra
 
       - name: Fetch NZD OCR via BIS (NZD reference)
-        run: python scripts/fetch_bis_ocr.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name bis_ocr --cap 240 -- python scripts/fetch_bis_ocr.py
         continue-on-error: true
         id: ocr
 
       - name: Fetch BoE Bank Rate via BIS (GBP policy)
-        run: python scripts/fetch_bis_policy.py GB
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name bis_gb --cap 240 -- python scripts/fetch_bis_policy.py GB
         continue-on-error: true
         id: gb_policy
 
       - name: Fetch BoJ Policy Rate via BIS (JPY policy)
-        run: python scripts/fetch_bis_policy.py JP
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name bis_jp --cap 240 -- python scripts/fetch_bis_policy.py JP
         continue-on-error: true
         id: jp_policy
 
       - name: Fetch SNB Policy Rate via BIS (CHF policy)
-        run: python scripts/fetch_bis_policy.py CH
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name bis_ch --cap 240 -- python scripts/fetch_bis_policy.py CH
         continue-on-error: true
         id: ch_policy
 
       - name: Fetch RBA Cash Rate via BIS (AUD policy)
-        run: python scripts/fetch_bis_policy.py AU
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name bis_au --cap 240 -- python scripts/fetch_bis_policy.py AU
         continue-on-error: true
         id: au_policy
 
       - name: Fetch US Bills (3M/6M/1Y/2Y)
-        run: python scripts/fetch_us_bills.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name us_bills --cap 240 -- python scripts/fetch_us_bills.py
         continue-on-error: true
         id: us_bills
 
       - name: Fetch CAD Bills (3M/6M/1Y)
-        run: python scripts/fetch_cad_bills.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name cad_bills --cap 240 -- python scripts/fetch_cad_bills.py
         continue-on-error: true
         id: cad_bills
 
       - name: Fetch AUD Bills (1M/3M/6M)
-        run: python scripts/fetch_aud_bills.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name aud_bills --cap 240 -- python scripts/fetch_aud_bills.py
         continue-on-error: true
         id: aud_bills
 
       - name: Fetch EUR AAA Curve (3M/6M/1Y/2Y/5Y/10Y)
-        run: python scripts/fetch_eur_bills.py
+        timeout-minutes: 9
+        run: python scripts/tools/g8step.py --name eur_bills --cap 420 -- python scripts/fetch_eur_bills.py
         continue-on-error: true
         id: eur_bills
 
       - name: Fetch GBP Gilt Curve (6M/1Y/2Y/5Y/10Y)
-        run: python scripts/fetch_gbp_bills.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name gbp_bills --cap 240 -- python scripts/fetch_gbp_bills.py
         continue-on-error: true
         id: gbp_bills
 
       - name: Fetch JPY JGB Curve (1Y/2Y/3Y/5Y/10Y/20Y)
-        run: python scripts/fetch_jpy_bills.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name jpy_bills --cap 240 -- python scripts/fetch_jpy_bills.py
         continue-on-error: true
         id: jpy_bills
 
@@ -135,14 +169,16 @@ jobs:
       # here as repo CSVs (NZD_*.csv, CHF_*.csv). Never call those endpoints from Actions.
 
       - name: Fetch Floor References (IORB/DFR/BoC Target)
-        run: python scripts/fetch_floor_spreads.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name floors --cap 240 -- python scripts/fetch_floor_spreads.py
         continue-on-error: true
         id: floors
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
 
       - name: Fetch ACM 10Y Term Premium (NY Fed)
-        run: python scripts/fetch_acm.py
+        timeout-minutes: 6
+        run: python scripts/tools/g8step.py --name acm_tp --cap 240 -- python scripts/fetch_acm.py
         continue-on-error: true
         id: acm
 
@@ -182,41 +218,48 @@ jobs:
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
+        timeout-minutes: 13
+        run: python scripts/tools/g8step.py --name acm_g8 --cap 660 -- python scripts/acm_g8.py USD EUR JPY GBP CAD AUD
 
       # ── 5b-bis. NZD real ACM (K=3 on RBNZ B2 1985+ spliced by the Mac fetch v1.4).
       #    Refuses (exit 1, tolerated) while the history splice hasn't landed; the next
       #    step then writes the AUD-anchored proxy (nzd_tp_synth.py v1.1 = fallback only) ──
       - name: NZD ACM decomposition (real, B2 history)
         continue-on-error: true
-        run: python scripts/acm_g8.py NZD || echo "acm NZD not available yet — proxy fallback follows"
+        timeout-minutes: 7
+        run: python scripts/tools/g8step.py --name acm_nzd --cap 300 -- python scripts/acm_g8.py NZD || echo "acm NZD not available yet — proxy fallback follows"
 
       # ── 5b-ter. CHF real ACM (K=3 on the SNB zero curve 1988+, CHF_SPOT_*.csv from the Mac
       #    fetch_chf_snb.py). Fails (tolerated) until those files land; the frozen 2025-07
       #    ACM_G8_CHF.csv then stays in place, flagged FROZEN by the dashboard ──
       - name: CHF ACM decomposition (real, SNB curve)
         continue-on-error: true
-        run: python scripts/acm_g8.py CHF || echo "acm CHF not available yet — frozen file stays"
+        timeout-minutes: 7
+        run: python scripts/tools/g8step.py --name acm_chf --cap 300 -- python scripts/acm_g8.py CHF || echo "acm CHF not available yet — frozen file stays"
 
       - name: NZD TP synth fallback (ACM_G8_NZD.csv only if no fresh real ACM)
         continue-on-error: true
-        run: python scripts/nzd_tp_synth.py
+        timeout-minutes: 4
+        run: python scripts/tools/g8step.py --name nzd_tp_synth --cap 120 -- python scripts/nzd_tp_synth.py
 
       - name: Real yields G8 (USD GBP CAD AUD + NZD when IIB files exist)
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: python scripts/real_yields_g8.py
+        timeout-minutes: 7
+        run: python scripts/tools/g8step.py --name real_yields --cap 300 -- python scripts/real_yields_g8.py
 
       - name: Fetch EUR Real 10Y (Bundesbank DE linkers)
         continue-on-error: true
-        run: python scripts/fetch_eur_real.py
+        timeout-minutes: 5
+        run: python scripts/tools/g8step.py --name eur_real --cap 180 -- python scripts/fetch_eur_real.py
 
       - name: Fetch JPY Real 10Y (JGBi on-the-run, JSDA)
         continue-on-error: true
         env:
           JSDA_BASE: ${{ vars.JSDA_BASE }}
-        run: python scripts/fetch_jpy_real.py
+        timeout-minutes: 5
+        run: python scripts/tools/g8step.py --name jpy_real --cap 180 -- python scripts/fetch_jpy_real.py
 
       # ── 5c. Dashboard alerts (Telegram, one message/day only on change) ───
       # v1.0 2026-09-12: reads repo data only (no downloads, $0). State lives in
@@ -224,16 +267,25 @@ jobs:
       # ── §01-b · lectura 22 s. + CTF (CONTEXT) — después de los ACM, antes de las alertas
       # E2: this --final run is the ONLY evaluation of the session (log + snap + state + events, write-once).
       # The midday runs in usd_factor.yml publish a PROVISIONAL S01B.json and write nothing else.
+      # ── Fin de la fase de descarga: registro de pasos (omitidos/cortados por tiempo → ingest_watch avisa) ──
+      - name: Registro de plazos de la fase de descarga
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 1
+        run: python scripts/tools/g8step.py --ledger daily
+
       - name: S01B (22-session reading + CTF — the one evaluation per session, after acm_g8)
         if: always()
-        run: python scripts/s01b.py --final
+        timeout-minutes: 3
+        run: python scripts/tools/g8step.py --name s01b_final --phase post --cap 120 --min 5 -- python scripts/s01b.py --final
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/dashboard_alerts.py
+        timeout-minutes: 2
+        run: python scripts/tools/g8step.py --name dashboard_alerts --phase post --cap 60 --min 5 -- python scripts/dashboard_alerts.py
 
       # ── Lote 1 (2026-09-24): latido del Mac y credenciales — aviso independiente del Mac ──
       - name: Ingest watch (latido del Mac + credenciales)
@@ -242,13 +294,15 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
+        timeout-minutes: 3
+        run: python scripts/tools/g8step.py --name ingest_watch --phase post --cap 90 --min 5 -- python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
 
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
       - name: Commit updated data files
         if: always()
+        timeout-minutes: 3
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -284,6 +338,7 @@ jobs:
 
       - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
         if: always()
+        timeout-minutes: 1
         run: |
           python - <<'PY'
           import json, os, sys
@@ -296,6 +351,7 @@ jobs:
       # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
       - name: Alert on failure
         if: failure()
+        timeout-minutes: 1
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

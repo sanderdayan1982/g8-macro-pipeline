@@ -153,3 +153,122 @@ class HttpTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RedirectTests(unittest.TestCase):
+    """Hallazgo #6: seguir redirecciones válidas con límite de saltos, presupuesto común, sin reenviar
+    credenciales a otro origen y sin degradar https → http."""
+
+    def setUp(self):
+        self.clock = Clock()
+        self.servers = []
+
+    def tearDown(self):
+        for s in self.servers:
+            s.close()
+
+    def srv(self, script):
+        s = ScriptedServer(script)
+        self.servers.append(s)
+        return s
+
+    def budget(self, s=600):
+        return g8http.Budget(s, now=self.clock, env={})
+
+    def test_relative_302_followed_over_real_socket(self):
+        a = self.srv({"/old": [(302, {"Location": "/new?x=1"}, b"")], "/new": [ok()]})
+        r = g8http.fetch(a.url + "/old", budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+        self.assertEqual(r.cls, g8http.OK)
+        self.assertEqual(r.body, ok()[2])
+        self.assertEqual([x["status"] for x in r.redirects], [302])
+        self.assertEqual([p for _, p, _, _ in a.requests], ["/old", "/new?x=1"])
+        self.assertEqual(len(r.attempts), 1)                              # la redirección no es un reintento
+
+    def test_all_redirect_codes(self):
+        for code in (301, 302, 303, 307, 308):
+            a = self.srv({"/o": [(code, {"Location": "/n"}, b"")], "/n": [ok()]})
+            r = g8http.fetch(a.url + "/o", budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+            self.assertEqual(r.cls, g8http.OK, code)
+
+    def test_cross_origin_strips_credentials_same_origin_keeps_them(self):
+        b = self.srv({"/n": [ok()]})
+        a = self.srv({"/o": [(302, {"Location": b.url + "/n"}, b"")], "/same": [(302, {"Location": "/o2"}, b"")],
+                      "/o2": [ok()]})
+        hdr = {"Authorization": "Bearer SECRETO", "X-Api-Key": "K", "Accept": "text/csv"}
+        r = g8http.fetch(a.url + "/o", headers=hdr, budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+        self.assertEqual(r.cls, g8http.OK)
+        sent_a = a.requests[0][2]
+        sent_b = b.requests[0][2]
+        self.assertEqual(sent_a.get("Authorization"), "Bearer SECRETO")
+        self.assertNotIn("Authorization", sent_b)
+        self.assertNotIn("X-Api-Key", sent_b)
+        self.assertEqual(sent_b.get("Accept"), "text/csv")                # cabeceras no sensibles se conservan
+        r2 = g8http.fetch(a.url + "/same", headers=hdr, budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+        self.assertEqual(r2.cls, g8http.OK)
+        self.assertEqual(a.requests[-1][2].get("Authorization"), "Bearer SECRETO")
+
+    def test_loop_is_cut(self):
+        a = self.srv({"/a": [(302, {"Location": "/b"}, b"")], "/b": [(302, {"Location": "/a"}, b"")]})
+        r = g8http.fetch(a.url + "/a", budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+        self.assertEqual(r.cls, g8http.FAIL_INVALID)
+        self.assertIn("bucle", r.detail)
+        self.assertEqual(len(a.requests), 2)
+        self.assertEqual(len(r.attempts), 1)                              # no se reintenta un bucle
+
+    def test_max_hops(self):
+        script = {"/r%d" % i: [(302, {"Location": "/r%d" % (i + 1)}, b"")] for i in range(10)}
+        a = self.srv(script)
+        r = g8http.fetch(a.url + "/r0", budget=self.budget(), sleep=self.clock.sleep, now=self.clock)
+        self.assertEqual(r.cls, g8http.FAIL_INVALID)
+        self.assertIn("más de %d" % g8http.MAX_REDIRECTS, r.detail)
+        self.assertEqual(len(a.requests), g8http.MAX_REDIRECTS + 1)
+
+    def test_https_to_http_downgrade_refused(self):
+        seen = []
+
+        def t(method, url, headers, body, *to):
+            seen.append(url)
+            return (302, {"location": "http://source.invalid/new"}, b"") if url.startswith("https") else ok()
+        r = g8http.fetch("https://source.invalid/old", transport=t, budget=self.budget(), now=self.clock,
+                         sleep=self.clock.sleep)
+        self.assertEqual(r.cls, g8http.FAIL_INVALID)
+        self.assertIn("https a http", r.detail)
+        self.assertEqual(seen, ["https://source.invalid/old"])            # nunca se llama a la URL http
+
+    def test_other_scheme_and_missing_location(self):
+        t = lambda *a: (302, {"location": "ftp://x/y"}, b"")               # noqa: E731
+        self.assertEqual(g8http.fetch("https://s.invalid/o", transport=t, budget=self.budget(), now=self.clock).cls,
+                         g8http.FAIL_INVALID)
+        t2 = lambda *a: (302, {}, b"")                                     # noqa: E731
+        r = g8http.fetch("https://s.invalid/o", transport=t2, budget=self.budget(), now=self.clock)
+        self.assertEqual(r.cls, g8http.FAIL_INVALID)
+
+    def test_write_is_not_redirected(self):
+        a = self.srv({"/w": [(307, {"Location": "/w2"}, b"")], "/w2": [ok()]})
+        r = g8http.fetch(a.url + "/w", method="POST", body=b"{}", budget=self.budget(), now=self.clock,
+                         sleep=self.clock.sleep)
+        self.assertEqual(r.cls, g8http.FAIL_INVALID)
+        self.assertEqual(len(a.requests), 1)
+
+    def test_hops_share_the_budget(self):
+        calls = []
+
+        def t(method, url, headers, body, ct, rt, total):
+            calls.append(total)
+            self.clock.t += 40                                             # cada salto tarda 40 s
+            return (302, {"location": url + "x"}, b"") if len(calls) < 4 else ok()
+        r = g8http.fetch("https://s.invalid/o", transport=t, budget=self.budget(100), now=self.clock,
+                         sleep=self.clock.sleep)
+        self.assertEqual(len(calls), 3)                                    # 100 s: el 4.º salto ya no cabe
+        self.assertNotEqual(r.cls, g8http.OK)
+        self.assertTrue(all(b <= a for a, b in zip(calls, calls[1:])))     # el plazo de cada salto decrece
+
+    def test_reviewer_repro_302_now_followed(self):
+        seq = []
+
+        def t(method, url, *a):
+            seq.append(url)
+            return (302, {"location": "https://source.invalid/new"}, b"") if url.endswith("/old") else ok()
+        r = g8http.fetch("https://source.invalid/old", transport=t, now=self.clock)
+        self.assertEqual((r.cls, len(r.attempts)), (g8http.OK, 1))
+        self.assertEqual(seq, ["https://source.invalid/old", "https://source.invalid/new"])

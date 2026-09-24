@@ -145,7 +145,7 @@ class Base(object):
 
     def test_F5_retry_after_beyond_budget_deferred(self):
         rn = self.root()
-        clock = Clock()
+        clock = H.clock_at_now()
         rc, calls, _ = H.run_new(self.script, lambda url: (503, (b"", {"retry-after": "3600"})), rn, self.argv, clock=clock)
         self.assertEqual((rc, len(calls)), (1, 1))
         latest = json.load(open(os.path.join(rn, "data", "_ingest", "latest", "actions__%s.json" % self.job_name())))
@@ -169,7 +169,7 @@ class Base(object):
         d, v = self.new_row()
         rows = self.rows + [(d, "%.4f" % (float(v) + 5.0))]
         rn = self.root()
-        clock = Clock()
+        clock = H.clock_at_now()
         rc, _, _ = H.run_new(self.script, self.serve_rows(rows), rn, self.argv, clock=clock)
         self.assertEqual(H.read(rn, self.fname), self.orig_bytes)
         q = json.load(open(os.path.join(rn, "data", "_ingest", "quarantine", self.fname + ".json")))

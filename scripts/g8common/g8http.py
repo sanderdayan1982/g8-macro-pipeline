@@ -35,6 +35,10 @@ CONFLICT = "CONFLICT"                  # GitHub 409/422 (p. ej. actualización d
 _RATE = "_RATE"                        # interno: límite de uso con o sin Retry-After
 
 RETRY_DELAYS = (10, 40, 90)
+MAX_REDIRECTS = 5                      # saltos por intento (hallazgo #6)
+REDIRECT_CODES = {301, 302, 303, 307, 308}
+# Cabeceras que NUNCA se reenvían a otro origen (esquema, host o puerto distintos) al seguir una redirección
+SENSITIVE_HEADERS = {"authorization", "proxy-authorization", "cookie", "x-api-key", "api-key", "x-auth-token"}
 MAX_ATTEMPTS = 4
 TRANSIENT_HTTP = {408, 425, 500, 502, 503, 504}
 GITHUB_SECONDARY_DEFAULT_WAIT = 60     # sin cabeceras, GitHub indica esperar al menos un minuto (verificar en su doc)
@@ -75,6 +79,7 @@ class Result(object):
         self.attempts = attempts or []
         self.not_before = not_before
         self.detail = detail
+        self.redirects = []                 # cadena de redirecciones seguidas (URL redactadas)
 
     @property
     def ok(self):
@@ -83,7 +88,7 @@ class Result(object):
     def record(self):
         """Resumen serializable SIN cuerpo ni cabeceras sensibles."""
         return {"cls": self.cls, "url": self.url, "status": self.status, "attempts": self.attempts,
-                "not_before_epoch": self.not_before, "detail": self.detail[:300],
+                "not_before_epoch": self.not_before, "detail": self.detail[:300], "redirects": self.redirects,
                 "date_header": self.headers.get("date"), "last_modified": self.headers.get("last-modified")}
 
 
@@ -169,7 +174,7 @@ def classify(provider, status, headers, body, not_found_is_no_publication=False,
             return _RATE, ra, "%s con Retry-After" % status
         return FAIL_TRANSIENT, None, "HTTP %s" % status
     if 300 <= status < 400:
-        return FAIL_INVALID, None, "redirección %s no seguida" % status
+        return FAIL_INVALID, None, "redirección %s no seguida (sin Location válido, escritura o código no seguible)" % status
     return FAIL_INVALID, None, "HTTP %s" % status
 
 
@@ -231,6 +236,53 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
         conn.close()
 
 
+class _RedirectRefused(Exception):
+    pass
+
+
+def _origin(u):
+    p = urllib.parse.urlsplit(u)
+    port = p.port or {"https": 443, "http": 80}.get(p.scheme)
+    return (p.scheme, (p.hostname or "").lower(), port)
+
+
+def _request_following(transport, method, url, headers, body, connect_timeout, read_timeout, budget, chain):
+    """Una petición + las redirecciones que devuelva (hallazgo #6). Reglas:
+      · solo GET/HEAD siguen redirecciones (una escritura redirigida queda como FAIL_INVALID);
+      · como máximo MAX_REDIRECTS saltos; un bucle (URL repetida) se corta;
+      · nunca de https a http ni a otro esquema;
+      · al cambiar de origen se retiran Authorization, cookies y claves de API de las cabeceras;
+      · cada salto consume el MISMO presupuesto (plazo total del intento = lo que quede del presupuesto)."""
+    seen = {url}
+    hdrs_out = dict(headers or {})
+    cur = url
+    while True:
+        rem = budget.remaining()
+        if rem < 1:
+            raise NetError("timeout", "presupuesto agotado durante las redirecciones")
+        status, hdrs, data = transport(method, cur, hdrs_out, body, min(connect_timeout, rem), min(read_timeout, rem), rem)
+        if status not in REDIRECT_CODES or method not in ("GET", "HEAD"):
+            return status, hdrs, data, cur
+        loc = (hdrs.get("location") or "").strip()
+        if not loc:
+            return status, hdrs, data, cur                          # 3xx sin Location → FAIL_INVALID al clasificar
+        nxt = urllib.parse.urljoin(cur, loc)
+        nscheme = urllib.parse.urlsplit(nxt).scheme
+        if nscheme not in ("http", "https"):
+            raise _RedirectRefused("redirección %s a esquema no permitido (%s)" % (status, nscheme))
+        if urllib.parse.urlsplit(cur).scheme == "https" and nscheme != "https":
+            raise _RedirectRefused("redirección %s de https a http rechazada: %s" % (status, redact(nxt)))
+        if nxt in seen:
+            raise _RedirectRefused("bucle de redirecciones en %s" % redact(nxt))
+        if len(chain) >= MAX_REDIRECTS:
+            raise _RedirectRefused("más de %d redirecciones" % MAX_REDIRECTS)
+        if _origin(nxt) != _origin(cur):
+            hdrs_out = {k: v for k, v in hdrs_out.items() if k.lower() not in SENSITIVE_HEADERS}
+        chain.append({"status": status, "to": redact(nxt)})
+        seen.add(nxt)
+        cur = nxt
+
+
 def fetch(url, provider="generic", method="GET", headers=None, body=None, budget=None,
           connect_timeout=10, read_timeout=60, not_found_is_no_publication=False, validate=None,
           not_before=None, transport=None, sleep=time.sleep, now=time.time, delays=RETRY_DELAYS,
@@ -254,22 +306,30 @@ def fetch(url, provider="generic", method="GET", headers=None, body=None, budget
             return Result(cls, safe, attempts=attempts, detail="presupuesto agotado")
         t0 = now()
         status, hdrs, data, ra = None, {}, None, None
+        chain = []
         try:
-            status, hdrs, data = transport(method, url, headers or {}, body,
-                                           min(connect_timeout, rem), min(read_timeout, rem), rem)
+            status, hdrs, data, final = _request_following(transport, method, url, headers or {}, body,
+                                                           connect_timeout, read_timeout, budget, chain)
             cls, ra, detail = classify(provider, status, hdrs, data, not_found_is_no_publication, now)
             if cls == OK and validate is not None:
                 v = validate(data, hdrs)
                 if v:
                     cls, detail = v[0], v[1]
+        except _RedirectRefused as e:
+            cls, detail = FAIL_INVALID, str(e)[:200]
         except NetError as e:
             cls = FAIL_TLS if e.kind == "tls_verify" else FAIL_TRANSIENT
             detail = str(e)[:200]
-        attempts.append({"n": n, "status": status, "cls": cls, "secs": round(now() - t0, 2), "detail": detail[:160]})
+        att = {"n": n, "status": status, "cls": cls, "secs": round(now() - t0, 2), "detail": detail[:160]}
+        if chain:
+            att["redirects"] = chain
+        attempts.append(att)
         if log:
-            log("[g8http] %s intento %d → %s %s" % (safe, n, status, cls))
+            log("[g8http] %s intento %d → %s %s%s" % (safe, n, status, cls, " (tras %d redirección/es)" % len(chain) if chain else ""))
         if cls not in (FAIL_TRANSIENT, _RATE):
-            return Result(cls, safe, status, hdrs, data, attempts, detail=detail)
+            res = Result(cls, safe, status, hdrs, data, attempts, detail=detail)
+            res.redirects = chain
+            return res
         if n >= max_attempts:
             if cls == _RATE and ra is not None:
                 return Result(DEFERRED, safe, status, hdrs, None, attempts, not_before=now() + ra,

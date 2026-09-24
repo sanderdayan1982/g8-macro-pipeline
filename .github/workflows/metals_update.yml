@@ -23,6 +23,8 @@ jobs:
   metals:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      G8_JOB: metals        # revisión 24-sep (#5): aplazamientos Retry-After en data/_ingest/not_before/metals.json
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,16 +45,19 @@ jobs:
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}   # optional; keyless FRED CSV fallback if unset
-        run: python scripts/metals_fairvalue_g8.py
+        timeout-minutes: 20
+        run: python scripts/tools/g8step.py --name metals_fairvalue --cap 1080 -- python scripts/metals_fairvalue_g8.py
 
       - name: Commit updated metals data
         if: always()
+        timeout-minutes: 3
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # only the metals outputs — never touch other pipelines' files
           git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json 2>/dev/null || true
           git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv 2>/dev/null || true
+          git add data/_ingest/not_before/metals.json 2>/dev/null || true
 
           if git diff --staged --quiet; then
             echo "No metals changes — skipping commit"

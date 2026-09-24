@@ -18,7 +18,7 @@ import bisect
 import hashlib
 import math
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 # ── estados ───────────────────────────────────────────────────────────────────
 PUBLISH = "PUBLISH"                    # hay cambios válidos que publicar
@@ -35,6 +35,7 @@ Q_SUPERSEDED = "SUPERSEDED"
 
 COVERAGE_MIN = 0.90       # la respuesta debe traer ≥90 % de las fechas ya guardadas dentro de su propio rango
 CONFIRM_GAP_MIN = 30      # separación mínima (min) entre la descarga candidata y la que la confirma
+MIN_YEAR, MAX_YEAR = 1900, 2100   # límites de cordura del calendario (no sustituyen al horizonte por serie)
 
 
 class SeriesError(ValueError):
@@ -42,11 +43,55 @@ class SeriesError(ValueError):
 
 
 def _norm_date(s):
+    """'YYYY-MM-DD' o 'YYYYMMDD' → 'YYYYMMDD', solo si es una fecha REAL del calendario (hallazgo #7)."""
     s = s.strip().strip('"')
     d = s.replace("-", "")
-    if len(d) == 8 and d.isdigit():
-        return d
-    raise SeriesError("fecha ilegible: %r" % s[:20])
+    if not (len(d) == 8 and d.isdigit()) or ("-" in s and not (len(s) == 10 and s[4] == "-" and s[7] == "-")):
+        raise SeriesError("fecha ilegible: %r" % s[:20])
+    try:
+        datetime.strptime(d, "%Y%m%d")
+    except ValueError:
+        raise SeriesError("fecha inexistente: %r" % s[:20])
+    if not (MIN_YEAR <= int(d[:4]) <= MAX_YEAR):
+        raise SeriesError("fecha fuera del intervalo admitido %d–%d: %r" % (MIN_YEAR, MAX_YEAR, s[:20]))
+    return d
+
+
+def load_horizons(data):
+    """sources/date_horizon.csv (bytes o str) → función fname → max_future_days (int) o None.
+    Admite patrones con '*' (fnmatch). Un fichero sin fila, o con celda vacía, no tiene horizonte."""
+    import csv as _csv
+    import fnmatch
+    import io
+    rules = []
+    if data:
+        txt = data.decode("utf-8") if isinstance(data, bytes) else data
+        for row in _csv.DictReader(io.StringIO(txt)):
+            v = (row.get("max_future_days") or "").strip()
+            rules.append((row.get("file", "").strip(), int(v) if v else None))
+
+    def horizon(fname):
+        for pat, v in rules:
+            if pat == fname:
+                return v
+        for pat, v in rules:
+            if "*" in pat and fnmatch.fnmatchcase(fname, pat):
+                return v
+        return None
+    return horizon
+
+
+def check_horizon(series, today, max_future_days):
+    """Coherencia temporal POR SERIE (hallazgo #7). max_future_days: días naturales que la fecha máxima puede
+    adelantarse a `today` (fecha UTC del ejecutor, AAAAMMDD). None = sin límite documentado para esa serie
+    (no se impone una prohibición genérica de fechas futuras: p. ej. tipos oficiales con fecha efectiva
+    anunciada). Devuelve None si es coherente o el motivo del rechazo."""
+    if max_future_days is None or series.max_date is None:
+        return None
+    lim = (datetime.strptime(today, "%Y%m%d") + timedelta(days=int(max_future_days))).strftime("%Y%m%d")
+    if series.max_date > lim:
+        return "fecha %s posterior al horizonte de la serie (%s + %s días)" % (series.max_date, today, max_future_days)
+    return None
 
 
 class Series(object):
@@ -159,7 +204,8 @@ def _prev_value(keys, rows, d):
 
 
 def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, run_id="", now_utc=None,
-          hold_new_from=None, confirm_gap_min=CONFIRM_GAP_MIN, retain_from=None):
+          hold_new_from=None, confirm_gap_min=CONFIRM_GAP_MIN, retain_from=None, download_id=None,
+          max_future_days=None):
     """Fusión monótona de src (descarga) sobre repo (lo publicado).
 
     plaus: dict(min=, max=, max_jump=) — valores del registro (None = sin control).
@@ -170,12 +216,21 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
     retain_from: fecha (YYYYMMDD) de inicio de la ventana de historia que el escritor original conserva
                  (p. ej. hoy − 5 años). Las filas anteriores se descartan como hacía el script original; esto
                  NO depende de lo que devuelva la fuente, así que una respuesta corta no acorta la historia.
+    download_id: identidad de la DESCARGA CORRECTA que produjo src (hallazgo #1). Solo una descarga correcta
+                 identificable y DISTINTA de la que originó el candidato puede confirmarlo. None = src no procede
+                 de una descarga correcta verificada (fetch fallido, relectura del mismo fichero): puede
+                 publicar lo que no necesita confirmación, pero nunca confirma nada.
+    max_future_days: horizonte temporal de ESTA serie (ver check_horizon). None = sin límite documentado.
     """
     now_utc = now_utc or datetime.now(timezone.utc)
     quarantine = quarantine or {}
     r = MergeResult()
     r.src_max = src.max_date
     r.repo_max = repo.max_date if repo else None
+    why = check_horizon(src, now_utc.strftime("%Y%m%d"), max_future_days)
+    if why:
+        r.status, r.detail = INVALID, "incoherencia temporal: " + why
+        return r
     if repo is None:
         base_rows = {}
     else:
@@ -221,19 +276,26 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
         if reason:
             cid = candidate_id(fname, d, v)
             rec = quarantine.get(cid)
-            decision = _decide(rec, run_id, now_utc, confirm_gap_min)
+            if rec is not None and (rec.get("status") == Q_SUPERSEDED or
+                                    (rec.get("status") == Q_PENDING and not rec.get("first_download") and download_id)):
+                # El valor reaparece tras haber sido sustituido por la fuente, o el candidato nació de una lectura
+                # sin descarga verificada: se reabre con ESTA descarga como origen y el reloj de confirmación
+                # se reinicia (ni se acepta por una confirmación antigua ni se retiene indefinidamente).
+                rec = None
+            decision = _decide(rec, run_id, now_utc, confirm_gap_min, download_id)
             if decision == "accept":
                 rec = dict(rec)
                 if rec["status"] == Q_PENDING:
                     rec["status"] = Q_ACCEPTED_CONFIRMED
                     rec["confirmed_by_run"] = run_id
+                    rec["confirmed_by_download"] = download_id
                     rec["confirmed_utc"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
                 r.candidates.append(rec)
             else:
                 if rec is None:
                     rec = {"id": cid, "file": fname, "date": d, "value": v, "kind": kind, "reason": reason,
                            "previous_value": base_rows[d][1] if d in base_rows else None,
-                           "status": Q_PENDING, "first_run": run_id,
+                           "status": Q_PENDING, "first_run": run_id, "first_download": download_id,
                            "first_seen_utc": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")}
                     r.candidates.append(rec)
                 r.held.append((d, v, reason + ("" if rec["status"] == Q_PENDING else " · " + rec["status"]), cid))
@@ -252,10 +314,12 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
             r.backfill.append(d)
         else:
             r.revised.append(d)
-    # superseded: candidatos pendientes de este fichero cuyo valor la fuente ya no publica
+    # superseded: candidatos pendientes (o aceptados por confirmación) de este fichero cuyo valor la fuente ya
+    # no publica. Un aceptado por confirmación que la fuente sustituye pierde la aceptación: si el valor vuelve,
+    # necesita una confirmación NUEVA e independiente. Solo cuenta si src procede de una descarga verificada.
     for cid, rec in quarantine.items():
-        if rec.get("file") == fname and rec.get("status") == Q_PENDING and rec["date"] in src.rows \
-                and src.rows[rec["date"]][1] != rec["value"]:
+        if rec.get("file") == fname and rec["date"] in src.rows and src.rows[rec["date"]][1] != rec["value"] and \
+                (rec.get("status") == Q_PENDING or (rec.get("status") == Q_ACCEPTED_CONFIRMED and download_id)):
             rec = dict(rec)
             rec["status"] = Q_SUPERSEDED
             rec["superseded_by_run"] = run_id
@@ -277,8 +341,10 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
     return r
 
 
-def _decide(rec, run_id, now_utc, gap_min):
-    """accept | hold, según el registro de cuarentena (decisión manual > confirmación independiente)."""
+def _decide(rec, run_id, now_utc, gap_min, download_id=None):
+    """accept | hold, según el registro de cuarentena (decisión manual > confirmación independiente).
+    Confirmación independiente = descarga correcta identificable, distinta de la de origen, de otra ejecución
+    y separada al menos gap_min minutos. Una ejecución con fetch fallido (download_id None) no confirma."""
     if rec is None:
         return "hold"
     st = rec.get("status")
@@ -286,7 +352,8 @@ def _decide(rec, run_id, now_utc, gap_min):
         return "accept"
     if st == Q_REJECTED_MANUAL:
         return "hold"
-    if st == Q_PENDING and rec.get("first_run") != run_id:
+    if st == Q_PENDING and rec.get("first_run") != run_id and download_id \
+            and rec.get("first_download") and rec.get("first_download") != download_id:
         try:
             t0 = datetime.strptime(rec["first_seen_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
         except Exception:                                   # noqa: BLE001

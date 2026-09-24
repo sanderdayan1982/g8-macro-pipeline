@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""ingest_watch.py — v1.0 (lote 1, 2026-09-24) · vigilancia desde Actions de los ejecutores externos y credenciales.
+"""ingest_watch.py — v1.1 (revisión 24-sep) · vigilancia desde Actions de ejecutores externos, descargadores de
+Actions, plazos del job y credenciales.
+
+v1.1 (hallazgo #4): también lee los registros de los descargadores de Actions (data/_ingest/latest/actions__*.json)
+  y su cuarentena (data/_ingest/quarantine/<FICHERO>.json): candidato retenido (T06) → aviso con su id, fecha,
+  valor y motivo, deduplicado (un aviso por fichero; cambia si cambia el conjunto de candidatos), recordatorio
+  diario mientras siga pendiente y aviso de resolución cuando se acepta, se rechaza o la fuente lo sustituye.
+  Descarga inválida o regresión bloqueada en la última ejecución → aviso. Pasos del job omitidos o cortados por
+  el plazo global (actions__job_<job>.json, hallazgo #3) → aviso.
 
 Hace visible, SIN depender del Mac ni de su token, que:
   · el Mac no publicó su latido para una ejecución programada (apagado, dormido, launchd roto, Python roto,
@@ -123,6 +131,69 @@ def check_executors(root, now_utc, alerts, info):
             alerts["%s:token" % key] = "%s: el token de GitHub caduca en %.1f días (%s)" % (ex, cred["days_left"], cred.get("expires_utc"))
 
 
+ACTIONS_MAX_AGE_H = 7 * 24          # punteros más antiguos no se consideran (descargador retirado o renombrado)
+
+
+def _load(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def check_actions(root, now_utc, alerts, info):
+    """Descargadores de Actions: cuarentena pendiente, descargas inválidas y límites de tiempo del job."""
+    qdir = os.path.join(root, "data", "_ingest", "quarantine")
+    if os.path.isdir(qdir):
+        for n in sorted(os.listdir(qdir)):
+            if not n.endswith(".csv.json"):                  # <FAMILIA>.json es del Mac: ya lo cubre su latido
+                continue
+            try:
+                doc = _load(os.path.join(qdir, n))
+            except ValueError:
+                alerts["actions:quarantine:%s:unreadable" % n] = "Cuarentena ilegible: data/_ingest/quarantine/%s" % n
+                continue
+            fname = n[:-5]
+            pend = sorted((c for c in (doc.get("candidates") or {}).values() if c.get("status") == "PENDING"),
+                          key=lambda c: (c.get("date", ""), c.get("id", "")))
+            if pend:
+                alerts["actions:held:%s" % fname] = (
+                    "Actions %s: %d valor(es) retenido(s) en confirmación, se conserva el último válido: %s. "
+                    "Se aceptan si otra descarga correcta los confirma, o por decisión en data/_ingest/decisions/%s/" % (
+                        fname, len(pend), "; ".join("%s=%s (antes %s; %s; id %s)" % (
+                            c.get("date"), c.get("value"), c.get("previous_value"), (c.get("reason") or "")[:60],
+                            c.get("id")) for c in pend[:4]) + (" …" if len(pend) > 4 else ""), fname))
+    ldir = os.path.join(root, runlog.LATEST_DIR)
+    if not os.path.isdir(ldir):
+        return
+    for n in sorted(os.listdir(ldir)):
+        if not (n.startswith("actions__") and n.endswith(".json")):
+            continue
+        try:
+            rec = _load(os.path.join(ldir, n))
+        except ValueError:
+            alerts["actions:latest:%s:unreadable" % n] = "Registro ilegible: %s/%s" % (runlog.LATEST_DIR, n)
+            continue
+        when = rec.get("finished_utc") or rec.get("written_utc")
+        try:
+            if when and (now_utc - _parse(when)).total_seconds() > ACTIONS_MAX_AGE_H * 3600:
+                continue
+        except ValueError:
+            pass
+        if n.startswith("actions__job_"):
+            lim = rec.get("time_limited") or []
+            if lim:
+                alerts["actions:job:%s:time" % rec.get("job")] = (
+                    "Actions %s: %d paso(s) sin terminar por el plazo global del job: %s. Esos feeds no se "
+                    "actualizaron en esta ejecución." % (rec.get("job"), len(lim), ", ".join(
+                        "%s %s" % (x["name"], x["status"]) for x in lim[:8])))
+            continue
+        job = rec.get("job") or n[len("actions__"):-5]
+        for fname, fr in sorted((rec.get("files") or {}).items()):
+            if fr.get("status") in ("INVALID", "REGRESSION_BLOCKED"):
+                alerts["actions:%s:%s:%s" % (job, fname, fr["status"].lower())] = (
+                    "Actions %s → %s: %s, se conserva lo publicado — %s" % (
+                        job, fname, fr["status"], (fr.get("detail") or "")[:200]))
+
+
 def check_credentials(root, now_utc, alerts, info_keys):
     for row in _read_csv(os.path.join(root, "sources", "credentials.csv")):
         cid, exp = row["credential_id"], (row.get("expires_utc") or "").strip()
@@ -153,9 +224,9 @@ def main(argv=None, now=time.time, root=ROOT):
     now_ts = now()
     now_utc = datetime.fromtimestamp(now_ts, tz=timezone.utc)
     alerts, info, info_keys = {}, [], set()
-    for fn in (check_executors, check_credentials):
+    for fn in (check_executors, check_actions, check_credentials):
         try:
-            if fn is check_executors:
+            if fn in (check_executors, check_actions):
                 fn(root, now_utc, alerts, info)
             else:
                 fn(root, now_utc, alerts, info_keys)

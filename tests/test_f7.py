@@ -40,10 +40,15 @@ class LegacyHttp(unittest.TestCase):
     def setUp(self):
         self.clock = Clock()
         legacy.TEST_CLOCK = self.clock
+        self.tmp = tempfile.mkdtemp()
+        legacy.STATE_PATH = os.path.join(self.tmp, "not_before")
 
     def tearDown(self):
         legacy.TEST_TRANSPORT = None
         legacy.TEST_CLOCK = None
+        legacy.STATE_PATH = None
+        legacy._STORE.clear()
+        shutil.rmtree(self.tmp)
 
     def test_fred_bad_key_not_retried(self):
         legacy.TEST_TRANSPORT, calls = serve([("api.stlouisfed", (400, {}, b'{"error_message":"api_key is not registered"}'))])
@@ -184,3 +189,93 @@ class Static(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LegacyDeferral(unittest.TestCase):
+    """Hallazgo #5: el adaptador F7 conserva y aplica Retry-After entre llamadas, scripts y ejecuciones, por
+    ámbito del proveedor; un endpoint alternativo del mismo ámbito no elude el límite."""
+
+    def setUp(self):
+        self.clock = Clock()
+        legacy.TEST_CLOCK = self.clock
+        self.tmp = tempfile.mkdtemp()
+        legacy.STATE_PATH = os.path.join(self.tmp, "data", "_ingest", "not_before")
+        self.calls = []
+
+        def t(method, url, headers, body, *to):
+            self.calls.append(url)
+            if "fail" in url:
+                return 503, {"retry-after": "3600"}, b""
+            return 200, {}, b"DATE,CLOSE\n20260922,1\n"
+        legacy.TEST_TRANSPORT = t
+
+    def tearDown(self):
+        legacy.TEST_TRANSPORT = None
+        legacy.TEST_CLOCK = None
+        legacy.STATE_PATH = None
+        legacy._STORE.clear()
+        shutil.rmtree(self.tmp)
+
+    def get(self, url):
+        b = g8http.Budget(360, now=self.clock, env={})
+        try:
+            legacy.http_get_text(url, budget_obj=b, log=None)
+            return "OK"
+        except legacy.LegacyHTTPError as e:
+            return e.cls
+
+    def test_reviewer_repro_second_call_not_sent(self):
+        self.assertEqual(self.get("https://source.invalid/fail/series"), g8http.DEFERRED)
+        n = len(self.calls)
+        self.assertEqual(self.get("https://source.invalid/fail/series"), g8http.DEFERRED)
+        self.assertEqual(len(self.calls), n)                           # ninguna consulta nueva
+        self.assertEqual(self.clock.t, 1790000000.0)
+
+    def test_alternate_endpoint_same_scope_blocked_other_scope_free(self):
+        self.get("https://api.stlouisfed.org/fail/fred/series/observations?series_id=X")
+        n = len(self.calls)
+        self.assertEqual(self.get("https://fred.stlouisfed.org/graph/fredgraph.csv?id=X"), g8http.DEFERRED)
+        self.assertEqual(len(self.calls), n)
+        self.assertEqual(self.get("https://www.bankofcanada.ca/valet/x"), "OK")   # otro proveedor: libre
+        self.assertEqual(len(self.calls), n + 1)
+
+    def test_persists_across_runs_and_expires(self):
+        self.get("https://www.rba.gov.au/fail/f1.csv")
+        legacy._STORE.clear()                                           # «nueva ejecución»: sin memoria
+        n = len(self.calls)
+        self.clock.t += 1800
+        self.assertEqual(self.get("https://www.rba.gov.au/statistics/f2.csv"), g8http.DEFERRED)
+        self.assertEqual(len(self.calls), n)
+        with open(os.path.join(legacy.STATE_PATH, "local.json")) as fh:
+            self.assertIn("rba", fh.read())
+        self.clock.t += 1801                                            # pasado Retry-After
+        self.assertEqual(self.get("https://www.rba.gov.au/statistics/f2.csv"), "OK")
+        self.assertEqual(len(self.calls), n + 1)
+
+    def test_shared_with_actions_fetchers(self):
+        from g8common import ingest
+        self.get("https://api.stlouisfed.org/fail/fred/series/observations")
+        ingest.TEST_TRANSPORT = legacy.TEST_TRANSPORT
+        try:
+            ctx = ingest.Ingest("fetch_sofr", root=self.tmp, now=self.clock, env={})
+            n = len(self.calls)
+            with self.assertRaises(ingest.HTTPError) as cm:
+                ctx.requests(provider="fred").get("https://fred.stlouisfed.org/graph/fredgraph.csv?id=SOFR")
+            self.assertEqual(cm.exception.g8cls, g8http.DEFERRED)
+            self.assertEqual(len(self.calls), n)
+        finally:
+            ingest.TEST_TRANSPORT = None
+
+    def test_other_workflow_file_is_read_not_written(self):
+        from g8common import defer
+        other = defer.Store(legacy.STATE_PATH, now=self.clock, job="metals")
+        other.set("stlouisfed", self.clock.t + 600, source="metals")
+        self.assertEqual(self.get("https://api.stlouisfed.org/fred/x"), g8http.DEFERRED)   # la unión se respeta
+        self.assertEqual(sorted(os.listdir(legacy.STATE_PATH)), ["metals.json"])       # y no se reescribe
+
+    def test_scope_table(self):
+        from g8common import defer
+        self.assertEqual(defer.scope_for("https://api.stlouisfed.org/x"), defer.scope_for("https://fred.stlouisfed.org/y"))
+        self.assertEqual(defer.scope_for("https://data-api.ecb.europa.eu/x"), "ecb")
+        self.assertNotEqual(defer.scope_for("https://ec.europa.eu/x"), "ecb")
+        self.assertEqual(defer.scope_for("https://www.example.co.uk/x"), "example.co.uk")
