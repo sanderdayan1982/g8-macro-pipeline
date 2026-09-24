@@ -21,12 +21,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlencode
 
-import io
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
-
-requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
+import requests
 
 
 # Constants
@@ -117,25 +112,8 @@ def write_pine_seeds_csv(rows: list, output_path: Path) -> None:
             writer.writerow([date_str, value, value, value, value, 0])
 
 
-def render_csv(rows) -> bytes:
-    """Mismo formato byte a byte que write_pine_seeds_csv, en memoria (lote 3)."""
-
-    f = io.StringIO(newline="")
-    writer = csv.writer(f)
-    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
-
-    for date, value in rows:
-        date_str = date.strftime("%Y%m%d")
-        # SONIA is a single value per day; use it for OHLC, volume = 0
-        writer.writerow([date_str, value, value, value, value, 0])
-    return f.getvalue().encode("utf-8")
-
-
 def main() -> int:
     """Fetch SONIA and write to data/SONIA.csv."""
-    global requests
-    _ctx = _ingest.Ingest('fetch_sonia')
-    requests = _ctx.requests(provider='boe')
     date_to = datetime.utcnow()
     date_from = date_to - timedelta(days=HISTORY_YEARS * 365)
 
@@ -143,23 +121,21 @@ def main() -> int:
         csv_text = fetch_sonia_csv(date_from, date_to)
     except requests.exceptions.RequestException as e:
         print(f"ERROR: HTTP request failed: {e}", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
 
     rows = parse_boe_csv(csv_text)
     if not rows:
         print("ERROR: No SONIA rows returned from BoE", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
 
-    _rep = _ctx.publish(OUTPUT_PATH.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
-
-    print(f"Publicación {OUTPUT_PATH.name}: {_rep['status']} {_rep.get('detail', '')}")
-    print(f"Descarga: {len(rows)} filas para {OUTPUT_PATH.name}")
+    write_pine_seeds_csv(rows, OUTPUT_PATH)
+    print(f"OK: wrote {len(rows)} rows to {OUTPUT_PATH}")
     print(f"     range: {rows[0][0].date()} -> {rows[-1][0].date()}")
     print(f"     last value: {rows[-1][1]}")
-    return _ctx.finish(0)
+    return 0
 
 
 if __name__ == "__main__":

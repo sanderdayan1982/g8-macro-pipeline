@@ -40,12 +40,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import io
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
-
-requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
+import requests
 
 
 # Constants
@@ -54,11 +49,48 @@ FRED_SERIES_ID = "SOFR"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "SOFR.csv"
 HISTORY_YEARS = 5
 TIMEOUT_SECONDS = 90
-RETRY_ATTEMPTS = 4  # lote 3: política de g8http (intento + 3 reintentos); solo se usa en el mensaje de error
+RETRY_ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = (0, 5, 15)  # delay before attempts 1, 2, 3
 USER_AGENT = "g8-macro-pipeline/1.0 (https://github.com/sanderdayan1982/g8-macro-pipeline)"
 
 
-# lote 3: _request_with_retry eliminado — g8http reintenta (1+3, 10/40/90 s, Retry-After) sin anidar capas.
+def _request_with_retry(
+    url: str,
+    params: dict,
+    headers: dict,
+    timeout: int,
+) -> requests.Response:
+    """
+    GET with retry on transient network errors.
+
+    Retries up to RETRY_ATTEMPTS times on Timeout / ConnectionError, with
+    exponential backoff between attempts. Does NOT retry HTTPError — that
+    indicates a permanent issue (bad query, endpoint moved) which should
+    surface immediately.
+    """
+    last_exc: Exception | None = None
+    for attempt_idx in range(RETRY_ATTEMPTS):
+        delay = RETRY_BACKOFF_SECONDS[attempt_idx]
+        if delay > 0:
+            print(
+                f"  Retry attempt {attempt_idx + 1}/{RETRY_ATTEMPTS} "
+                f"after {delay}s backoff",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+        try:
+            return requests.get(url, params=params, headers=headers, timeout=timeout)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_exc = exc
+            print(
+                f"  Transient network error on attempt {attempt_idx + 1}: {exc}",
+                file=sys.stderr,
+            )
+            continue
+    # All attempts exhausted
+    assert last_exc is not None
+    raise last_exc
+
 
 def fetch_sofr_data(date_from: datetime, date_to: datetime) -> list[tuple[str, float]]:
     """
@@ -76,7 +108,7 @@ def fetch_sofr_data(date_from: datetime, date_to: datetime) -> list[tuple[str, f
         "Accept": "text/csv",
     }
 
-    response = requests.get(
+    response = _request_with_retry(
         FRED_URL,
         params=params,
         headers=headers,
@@ -132,21 +164,7 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
-def render_csv(rows) -> bytes:
-    """Mismo formato byte a byte que write_csv, en memoria (lote 3)."""
-    f = io.StringIO(newline="")
-    writer = csv.writer(f)
-    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
-    for date_str, value in rows:
-        v = f"{value:.4f}"
-        writer.writerow([date_str, v, v, v, v, "0"])
-    return f.getvalue().encode("utf-8")
-
-
 def main() -> int:
-    global requests
-    _ctx = _ingest.Ingest('fetch_sofr')
-    requests = _ctx.requests(provider='fred')
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -157,26 +175,24 @@ def main() -> int:
         rows = fetch_sofr_data(date_from, today)
     except requests.HTTPError as exc:
         print(f"ERROR: FRED HTTP error: {exc}", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
     except requests.RequestException as exc:
         print(f"ERROR: FRED network error after {RETRY_ATTEMPTS} attempts: {exc}",
               file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
     except Exception as exc:
         print(f"ERROR: SOFR fetch failed: {exc}", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
 
     if not rows:
         print("ERROR: No SOFR rows returned from FRED", file=sys.stderr)
-        return _ctx.finish(1)
+        return 1
 
-    _rep = _ctx.publish(OUTPUT_PATH.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
-
-    print(f"Publicación {OUTPUT_PATH.name}: {_rep['status']} {_rep.get('detail', '')}")
-    print(f"Descarga: {len(rows)} filas para {OUTPUT_PATH.name}")
+    write_csv(rows, OUTPUT_PATH)
+    print(f"OK: Wrote {len(rows)} rows to {OUTPUT_PATH}")
     print(f"     Latest: {rows[-1][0]} = {rows[-1][1]:.4f}%")
     print(f"     Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
-    return _ctx.finish(0)
+    return 0
 
 
 if __name__ == "__main__":

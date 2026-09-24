@@ -159,7 +159,7 @@ def _prev_value(keys, rows, d):
 
 
 def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, run_id="", now_utc=None,
-          hold_new_from=None, confirm_gap_min=CONFIRM_GAP_MIN):
+          hold_new_from=None, confirm_gap_min=CONFIRM_GAP_MIN, retain_from=None):
     """Fusión monótona de src (descarga) sobre repo (lo publicado).
 
     plaus: dict(min=, max=, max_jump=) — valores del registro (None = sin control).
@@ -167,6 +167,9 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
                      None = sin datos sobre la política de revisión → TODA revisión pasa por confirmación.
     quarantine: dict id → registro (se lee y se actualiza en el MergeResult.candidates).
     hold_new_from: fecha (YYYYMMDD) desde la que las fechas NUEVAS se retienen por coherencia de familia.
+    retain_from: fecha (YYYYMMDD) de inicio de la ventana de historia que el escritor original conserva
+                 (p. ej. hoy − 5 años). Las filas anteriores se descartan como hacía el script original; esto
+                 NO depende de lo que devuelva la fuente, así que una respuesta corta no acorta la historia.
     """
     now_utc = now_utc or datetime.now(timezone.utc)
     quarantine = quarantine or {}
@@ -257,6 +260,9 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
             rec["status"] = Q_SUPERSEDED
             rec["superseded_by_run"] = run_id
             r.candidates.append(rec)
+    if retain_from:
+        for d in [x for x in merged if x < retain_from and x not in src.rows]:
+            del merged[d]
     comments = src.comments if src.comments else (repo.comments if repo else [])
     out = Series(comments, src.header, merged, src.eol, src.value_col, src.trailing_eol)
     changed = repo is None or out.to_bytes() != repo.to_bytes()
