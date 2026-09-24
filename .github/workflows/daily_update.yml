@@ -235,6 +235,15 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/dashboard_alerts.py
 
+      # ── Lote 1 (2026-09-24): latido del Mac y credenciales — aviso independiente del Mac ──
+      - name: Ingest watch (latido del Mac + credenciales)
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
@@ -272,6 +281,17 @@ jobs:
 
           echo "✗ Push failed after $max_attempts attempts — manual review required"
           exit 1
+
+      - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          p = os.path.join(os.environ["RUNNER_TEMP"], "ingest_watch.json")
+          d = json.load(open(p)) if os.path.exists(p) else {"delivery": "NO_RESULT"}
+          print("ingest_watch entrega:", d.get("delivery"))
+          sys.exit(0 if d.get("delivery") in ("SENT", "DRY", "NOTHING") else 1)
+          PY
 
       # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
       - name: Alert on failure

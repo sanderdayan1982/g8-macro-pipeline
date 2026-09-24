@@ -55,6 +55,15 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/dashboard_alerts.py
 
+      # ── Lote 1 (2026-09-24): latido del Mac y credenciales ──
+      - name: Ingest watch (latido del Mac + credenciales)
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
+
       - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -64,6 +73,7 @@ jobs:
           if [ -f data/S01B.json ]; then git add data/S01B.json; fi
           if [ -d data/s01b ]; then git add data/s01b; fi
           if [ -d data/book_snapshots ]; then git add data/book_snapshots; fi
+          if [ -f data/_ingest/watch_state.json ]; then git add data/_ingest/watch_state.json; fi
           if git diff --cached --quiet; then
             echo "No new BCE date / no change — nothing to commit."
           else
@@ -71,6 +81,17 @@ jobs:
             git pull --rebase origin main
             git push origin main
           fi
+
+      - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          p = os.path.join(os.environ["RUNNER_TEMP"], "ingest_watch.json")
+          d = json.load(open(p)) if os.path.exists(p) else {"delivery": "NO_RESULT"}
+          print("ingest_watch entrega:", d.get("delivery"))
+          sys.exit(0 if d.get("delivery") in ("SENT", "DRY", "NOTHING") else 1)
+          PY
 
       - name: Alert on failure
         if: failure()
