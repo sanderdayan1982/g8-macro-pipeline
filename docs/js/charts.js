@@ -17,12 +17,15 @@
         text: '#dce0e8', textDim: '#9ba3b4', textMuted: '#6b7388',
         gold: '#fdb813', green: '#00c853', red: '#ff4b4b', amber: '#ffaa00',
         teal: '#00b4a0', blue: '#4a9eff', purple: '#c77dff',
+        pink: '#ff6ec7', cyan: '#22d3ee',
         chfProxy: '#888888'
     };
 
     const CCY_COLOR = {
         USD: COLORS.blue, EUR: COLORS.gold, GBP: COLORS.red, JPY: COLORS.green,
-        AUD: COLORS.amber, NZD: COLORS.teal, CAD: COLORS.purple, CHF: COLORS.text
+        /* v5.7 (audit 2026-09-24): AUD was amber #ffaa00 ≈ EUR gold #fdb813 and NZD teal ≈ JPY green —
+           indistinguishable in the 8-line §03 chart. Eight distinct hues now. */
+        AUD: COLORS.pink, NZD: COLORS.cyan, CAD: COLORS.purple, CHF: COLORS.text
     };
 
     const PLOTLY_BASE_LAYOUT = {
@@ -42,6 +45,13 @@
     };
 
     function setLoading(id) { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="chart-loading">Loading data</div>'; }
+    /* v5.7: Plotly.newPlot appends to the container — the "Loading data" div (and its
+       spinner ::before) stayed in the DOM under the plot (stray orange dot in §03). */
+    function plotInto(id, traces, layout, cfg) {
+        const el = document.getElementById(id);
+        if (el && el.querySelector('.chart-loading, .chart-error')) el.innerHTML = '';
+        return Plotly.newPlot(id, traces, layout, cfg);
+    }
     function setError(id, msg) { const el = document.getElementById(id); if (el) el.innerHTML = `<div class="chart-error">⚠ ${msg}</div>`; }
 
     function formatDate(d) {
@@ -95,7 +105,7 @@
             xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%b %d' },
             showlegend: true
         };
-        Plotly.newPlot('chart-rfr', traces, layout, PLOTLY_CONFIG);
+        plotInto('chart-rfr', traces, layout, PLOTLY_CONFIG);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -346,12 +356,17 @@
             const feed = policyData[key];
             if (!feed || !feed.series || feed.series.dates.length === 0) continue;
             const f = filterLastNDays(feed.series, 90);
+            /* v5.7: event-driven series (BIS WS_CBPOL) only print on changes/fixing days, so each
+               line used to stop at its own last observation (RBA "ended" 10-sep). Hold the last
+               value to today as a step — the rate is still in force. Hover says so. */
+            const xs = f.dates.slice(), ys = f.values.slice();
+            const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+            if (xs.length && xs[xs.length - 1] < today) { xs.push(today); ys.push(ys[ys.length - 1]); }
             traces.push({
-                x: f.dates, y: f.values, type: 'scatter', mode: 'lines+markers',
+                x: xs, y: ys, type: 'scatter', mode: 'lines',
                 name: `${feed.label} (${feed.ccy})`,
                 line: { color: CCY_COLOR[feed.ccy] || COLORS.text, width: 1.8, shape: 'hv' },
-                marker: { size: 4, color: CCY_COLOR[feed.ccy] || COLORS.text },
-                hovertemplate: `<b>${feed.label}</b><br>%{x|%Y-%m-%d}<br>%{y:.3f}%<extra></extra>`
+                hovertemplate: `<b>${feed.label}</b><br>%{x|%Y-%m-%d}<br>%{y:.2f}% (vigente)<extra></extra>`
             });
         }
         if (traces.length === 0) { setError('chart-policy', 'No Policy Rate data available'); return; }
@@ -359,9 +374,9 @@
             ...PLOTLY_BASE_LAYOUT,
             yaxis: { ...PLOTLY_BASE_LAYOUT.yaxis, title: { text: 'Policy Rate (%)', font: { color: COLORS.textDim, size: 11 } }, tickformat: '.2f' },
             xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%b %d' },
-            showlegend: true
+            hovermode: 'x unified', showlegend: true
         };
-        Plotly.newPlot('chart-policy', traces, layout, PLOTLY_CONFIG);
+        plotInto('chart-policy', traces, layout, PLOTLY_CONFIG);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -447,7 +462,7 @@
             name: `${feed.ccy} TP 10Y`,
             line: { color: color, width: 1.8 },
             fill: 'tozeroy', fillcolor: hexToRgba(color, 0.08),
-            hovertemplate: `<b>${feed.ccy} TP 10Y</b><br>%{x|%Y-%m}<br>%{y:+.2f}%<extra></extra>`
+            hovertemplate: `<b>${feed.ccy} TP 10Y</b><br>%{x|%Y-%m-%d}<br>%{y:+.2f}%<extra></extra>`
         }];
 
         const layout = {
@@ -458,17 +473,20 @@
                 tickformat: '+.2f', zeroline: true,
                 zerolinecolor: COLORS.textMuted, zerolinewidth: 1
             },
-            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%Y' },
+            /* v5.7: '%Y' on semi-annual auto ticks printed every year twice (2022 2022 2023 …) */
+            xaxis: { ...PLOTLY_BASE_LAYOUT.xaxis, type: 'date', tickformat: '%Y', dtick: 'M12' },
             showlegend: false
         };
-        Plotly.newPlot('chart-acm', traces, layout, PLOTLY_CONFIG);
+        plotInto('chart-acm', traces, layout, PLOTLY_CONFIG);
 
-        // footer: latest TP + ACM decomposition + Z-score (60M window on monthly)
+        // footer: latest TP + ACM decomposition + Z-score.
+        // v5.7: the ACM CSVs are DAILY since acm_g8.py — the old 60-obs window was ~3 months
+        // labelled "Z 5Y". Now 252 business days, same window as §01 (Z 252D).
         const footerEl = document.getElementById('acm-footer-note');
         if (footerEl) {
             const v = s.values, n = v.length;
             const latest = v[n - 1];
-            const win = Math.min(60, n);
+            const win = Math.min(252, n);
             const wd = v.slice(-win);
             const mean = wd.reduce((a, b) => a + b, 0) / wd.length;
             const sd = Math.sqrt(wd.reduce((a, b) => a + (b - mean) ** 2, 0) / wd.length);
@@ -480,7 +498,8 @@
                 `TP <b style="color:${color}">${latest >= 0 ? '+' : ''}${latest.toFixed(2)}%</b> · ` +
                 ((isFinite(fit) && isFinite(rn))
                     ? `Yield ${fit.toFixed(2)}% = RN ${rn.toFixed(2)}% + TP ${latest.toFixed(2)}% · ` : '') +
-                `Z 5Y <b>${z >= 0 ? '+' : ''}${z.toFixed(2)}σ</b> · ` +
+                `Z 252D <b>${z >= 0 ? '+' : ''}${z.toFixed(2)}σ</b> · ` +
+                (feed.kLabel ? `${feed.kLabel} · ` : '') +
                 `${n} obs · Last ${lastDate}`;
         }
     }
@@ -498,7 +517,7 @@
             if (k === 'chpol') return;
             allFeeds.push({ key: `rfr-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'RFR', series: f.series, eventDriven: !!f.eventDriven });
         });
-        Object.entries(billsData).forEach(([k, f]) => allFeeds.push({ key: `bills-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'Bills', series: f.curve ? { dates: f.curve.dates } : null }));
+        Object.entries(billsData).forEach(([k, f]) => allFeeds.push({ key: `bills-${k}`, label: f.label, ccy: f.ccy, source: f.source, type: 'Bills', series: f.curve ? { dates: f.curve.dates } : null, cls: f.cls }));
 
         // v5: add Policy feeds
         if (policyData) {
@@ -515,7 +534,7 @@
             cell.className = 'quality-cell';
             const hasData = f.series && f.series.dates.length > 0;
             const lastDate = hasData ? f.series.dates[f.series.dates.length - 1] : null;
-            const cls = (f.type === 'Policy' || f.eventDriven) ? 'event' : 'daily';   /* v5.2: ACM is daily */
+            const cls = f.cls || ((f.type === 'Policy' || f.eventDriven) ? 'event' : 'daily');   /* v5.2: ACM is daily · v5.7: per-feed class (CHF curve = monthly) */
             const status = hasData ? global.G8DataLoader.staleStatus(lastDate, cls) : 'fail';
             const days = hasData ? global.G8DataLoader.businessDaysSince(lastDate) : null;
             const obs = hasData ? f.series.dates.length : 0;
@@ -588,7 +607,8 @@
                 global.G8DataLoader.loadAllPolicy(),
                 global.G8DataLoader.loadACM()
             ]);
-            updateHeaderStatus(rfrData, billsData, policyData, acmData);
+            /* v5.7: header (count · dots · LAST UPDATE) is owned by G8DQM + §00 brief only.
+               This call used to race G8DQM.syncHeader and overwrite it with a second count. */
             renderRFRChart(rfrData);
             renderCurvesGrid(billsData);
             renderXCCYChart(rfrData, billsData);
@@ -602,6 +622,6 @@
         }
     }
 
-    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.6' };
+    global.G8Dashboard = { init, renderRFRChart, renderCurvesGrid, renderXCCYChart, renderQualityGrid, renderPolicyChart, renderACMChart, COLORS, CCY_COLOR, VERSION: 'v5.7' };
 
 })(window);
