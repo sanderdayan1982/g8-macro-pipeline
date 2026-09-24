@@ -19,11 +19,12 @@ Guarda de salidas (hallazgo R2-1, P6): antes de lanzar el paso se copia el direc
 por defecto ./data; se excluyen de la COPIA los subdirectorios de G8_GUARD_SKIP, por defecto options,futures,
 que el Daily no escribe: allí solo se detectan cambios). Al terminar, cada fichero que el paso creó, cambió o
 borró se reconcilia:
-  · paso CORTADO por tiempo → se restaura TODO lo que cambió (la salida no es fiable: escritura a medias),
+  · paso CORTADO por tiempo o TERMINADO POR SEÑAL (código negativo, o 128+SIGKILL/SIGTERM/SIGINT/SIGABRT) →
+    se restaura TODO lo que cambió (la salida no es fiable: escritura a medias),
     salvo los registros de data/_ingest/ (escritura atómica), que se validan como abajo;
-  · paso terminado (código 0 o ≠0) → se conserva solo lo VÁLIDO: no vacío; un CSV que antes era una serie
-    legible debe seguir siéndolo y su fecha máxima no puede retroceder; un JSON legible debe seguir siéndolo;
-    un fichero borrado se repone. Lo inválido se restaura al último válido.
+  · paso terminado normalmente (código 0 o ≠0) → se conserva solo lo VÁLIDO según el contrato de su tipo
+    (función validate: CSV completo y rectangular con salto final, serie legible sin retroceso, JSON/JSONL
+    completos), también para ficheros NUEVOS; un fichero borrado se repone. Lo inválido se restaura.
 Así `git add data/` solo ve salidas válidas. Todo lo restaurado (o no restaurable) queda en el registro y en el
 aviso de ingest_watch.
 
@@ -46,6 +47,9 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 DEFAULT_SKIP = "options,futures"
 GRACE_KILL_S = 10
 OK, FAILED, TIMEOUT, SKIPPED = "OK", "FAILED", "TIMEOUT", "SKIPPED_NO_TIME"
+ABORTED = "ABORTED"                    # terminación abrupta del hijo (señal): su salida no es fiable (R3-1)
+ABRUPT = (TIMEOUT, ABORTED)
+ABRUPT_RC = {128 + 9, 128 + 15, 128 + 2, 128 + 6}   # SIGKILL/SIGTERM/SIGINT/SIGABRT vistos a través de un shell
 
 
 def _utc(t):
@@ -86,7 +90,15 @@ def run_step(name, cmd, cap, min_s=20, phase="fetch", env=None, now=time.time, l
         p = subprocess.Popen(cmd, env=child_env, start_new_session=True)
         try:
             rc = p.wait(timeout=allowed)
-            rec.update(status=OK if rc == 0 else FAILED, rc=rc)
+            if rc < 0 or rc in ABRUPT_RC:
+                sig = -rc if rc < 0 else rc - 128
+                try:
+                    sname = signal.Signals(sig).name
+                except ValueError:
+                    sname = "señal %d" % sig
+                rec.update(status=ABORTED, rc=rc, detail="terminado por %s: escritura posiblemente incompleta" % sname)
+            else:
+                rec.update(status=OK if rc == 0 else FAILED, rc=rc)
         except subprocess.TimeoutExpired:
             _kill(p)
             rc = 124
@@ -145,10 +157,11 @@ class Guard(object):
                 continue
             new = os.path.join(self.root, rel)
             old = os.path.join(self.copy, rel) if rel in self.before else None
-            if status == TIMEOUT and not rel.startswith("_ingest" + os.sep):
+            if status in ABRUPT and not rel.startswith("_ingest" + os.sep):
                 # los registros de _ingest/ se escriben de forma atómica: se validan en vez de descartarse,
                 # para no perder el rastro (ni un Retry-After) del paso cortado
-                why = "paso cortado por tiempo: salida no fiable"
+                why = ("paso cortado por tiempo" if status == TIMEOUT else "paso terminado por señal") + \
+                    ": salida no fiable"
             elif rel not in after:
                 why = "borrado por el paso"
             else:
@@ -176,46 +189,104 @@ class Guard(object):
         shutil.rmtree(self.copy, ignore_errors=True)
 
 
-def validate(old, new):
-    """None si `new` es una salida aceptable frente a `old` (ruta de la copia previa o None); si no, el motivo."""
+def _read(path):
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def _csv_contract(data):
+    """Contrato GENÉRICO de un CSV (vale también para los ficheros auxiliares): texto UTF-8, no HTML/XML,
+    cabecera, TODAS las filas con el mismo número de campos que la cabecera y terminado en salto de línea
+    (evidencia de que el escritor cerró la última fila). → None o el motivo."""
+    import csv
+    import io
     try:
-        size = os.path.getsize(new)
+        txt = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return "no es texto UTF-8"
+    head = txt.lstrip()[:1]
+    if head == "<":
+        return "contenido HTML/XML en lugar de CSV"
+    try:
+        rows = [r for r in csv.reader(io.StringIO(txt)) if r and not (len(r) == 1 and not r[0].strip())]
+    except csv.Error as e:
+        return "CSV mal formado: %s" % e
+    body = [r for r in rows if not r[0].startswith("#")]
+    if not body:
+        return "sin cabecera"
+    k = len(body[0])
+    for i, r in enumerate(body[1:], 2):
+        if len(r) != k:
+            return "fila %d con %d campos (la cabecera tiene %d): fila incompleta" % (i, len(r), k)
+    if not txt.endswith("\n"):
+        return "última fila sin terminar (falta el salto de línea final)"
+    return None
+
+
+def _looks_series(data):
+    """¿Cabecera de serie (fecha en la 1.ª columna + columna de valor conocida)?"""
+    from g8common import series as S
+    first = data.decode("utf-8-sig", "replace").lstrip().split("\n", 1)[0]
+    cols = [c.strip().strip('"') for c in first.split(",")]
+    return bool(cols) and cols[0].lower() in ("date", "fecha", "time_period") and any(c in S.VALUE_COLS for c in cols)
+
+
+def validate(old, new):
+    """None si `new` es una salida aceptable; si no, el motivo. `old` = ruta de la copia previa o None (nuevo).
+    Los ficheros NUEVOS se validan con el contrato de su tipo aunque no haya versión anterior (R3-1):
+      · .csv  → contrato genérico (_csv_contract); si es una serie (lo era antes o su cabecera lo indica),
+                además serie legible (fechas reales, valores numéricos, sin duplicados) y fecha máxima que
+                no retrocede;
+      · .json → JSON completo; .jsonl → cada línea JSON completa y salto final;
+      · otros → no vacío.
+    Un fichero anterior que ya incumplía el contrato genérico (formato auxiliar propio) no se le exige más de
+    lo que cumplía: solo que no quede vacío, se mantiene su compatibilidad."""
+    try:
+        data = _read(new)
     except OSError as e:
         return "ilegible: %s" % e
-    if size == 0:
+    if not data:
         return "fichero vacío"
+    olddata = None
+    if old:
+        try:
+            olddata = _read(old)
+        except OSError:
+            olddata = None
     low = new.lower()
     if low.endswith(".csv"):
         from g8common import series as S
+        legacy_ok = olddata is not None and _csv_contract(olddata) is not None     # el anterior ya no lo cumplía
+        why = _csv_contract(data)
+        if why and not (legacy_ok and "salto de línea" in why and _csv_contract(data + b"\n") is None):
+            return why
         o = None
-        if old:
+        if olddata is not None:
             try:
-                with open(old, "rb") as fh:
-                    o = S.parse(fh.read())
-            except (OSError, S.SeriesError):
+                o = S.parse(olddata)
+            except S.SeriesError:
                 o = None
-        try:
-            with open(new, "rb") as fh:
-                n = S.parse(fh.read())
-        except (OSError, S.SeriesError) as e:
-            return ("la serie dejó de ser legible: %s" % e) if o is not None else None
-        if o is not None and n.max_date < o.max_date:
-            return "la fecha máxima retrocede (%s → %s)" % (o.max_date, n.max_date)
+        if o is not None or _looks_series(data):
+            try:
+                n = S.parse(data)
+            except S.SeriesError as e:
+                return "serie ilegible: %s" % e
+            if o is not None and n.max_date < o.max_date:
+                return "la fecha máxima retrocede (%s → %s)" % (o.max_date, n.max_date)
+    elif low.endswith(".jsonl"):
+        if not data.endswith(b"\n"):
+            return "última línea JSONL sin terminar"
+        for i, ln in enumerate(data.splitlines(), 1):
+            if ln.strip():
+                try:
+                    json.loads(ln.decode("utf-8"))
+                except (UnicodeDecodeError, ValueError) as e:
+                    return "línea %d JSONL ilegible: %s" % (i, str(e)[:60])
     elif low.endswith(".json"):
-        ok_old = False
-        if old:
-            try:
-                with open(old, encoding="utf-8") as fh:
-                    json.load(fh)
-                ok_old = True
-            except (OSError, ValueError):
-                pass
-        if ok_old:
-            try:
-                with open(new, encoding="utf-8") as fh:
-                    json.load(fh)
-            except (OSError, ValueError) as e:
-                return "JSON ilegible: %s" % str(e)[:80]
+        try:
+            json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as e:
+            return "JSON ilegible: %s" % str(e)[:80]
     return None
 
 
@@ -254,7 +325,7 @@ def ledger(job, env=None, root=ROOT, now=time.time):
     bad = [s for s in steps if s["status"] in (TIMEOUT, SKIPPED)]
     restored = [dict(r, step=s["name"]) for s in steps for r in s.get("restored", [])]
     unrestorable = [dict(r, step=s["name"]) for s in steps for r in s.get("unrestorable", [])]
-    failed = [{"name": s["name"], "rc": s.get("rc")} for s in steps if s["status"] == FAILED]
+    failed = [{"name": s["name"], "rc": s.get("rc"), "status": s["status"]} for s in steps if s["status"] in (FAILED, ABORTED)]
     doc = {"job": job, "executor": "actions", "run_id": env.get("GITHUB_RUN_ID"), "written_utc": _utc(now()),
            "deadline_utc": _utc(float(env["G8_JOB_DEADLINE_EPOCH"])) if env.get("G8_JOB_DEADLINE_EPOCH") else None,
            "reserve_s": env.get("G8_JOB_RESERVE_S"), "steps": steps,

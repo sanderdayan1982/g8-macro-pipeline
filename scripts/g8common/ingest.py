@@ -244,6 +244,15 @@ class Ingest(object):
         # última descarga correcta (se arrastra entre ejecuciones): la vigilancia detecta fallos o aplazamientos
         # que se repiten día tras día aunque cada ejecución, por sí sola, parezca una espera prevista
         rec["last_ok_utc"] = rec["finished_utc"] if rec["rc"] == 0 else self.latest.get("last_ok_utc")
+        # inicio ESTABLE del periodo sin éxito (R3-3): no se reinicia en cada intento. Transición desde registros
+        # anteriores sin el campo: si la ejecución previa ya había fallado, cuenta desde su inicio.
+        prev = self.latest or {}
+        if rec["rc"] == 0:
+            rec["failing_since_utc"] = None
+        elif prev.get("rc"):
+            rec["failing_since_utc"] = prev.get("failing_since_utc") or prev.get("started_utc") or rec["started_utc"]
+        else:
+            rec["failing_since_utc"] = rec["started_utc"]
         runs = os.path.join(self.root, runlog.RUNS_DIR, EXECUTOR, self.job, self.started.strftime("%Y-%m") + ".jsonl")
         os.makedirs(os.path.dirname(runs), exist_ok=True)
         with open(runs, "a", encoding="utf-8") as fh:

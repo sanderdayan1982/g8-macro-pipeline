@@ -2,6 +2,9 @@
 """ingest_watch.py — v1.1 (revisión 24-sep) · vigilancia desde Actions de ejecutores externos, descargadores de
 Actions, plazos del job y credenciales.
 
+v1.3 (tercera revisión, R3-2/R3-3): un aviso de fallo solo se resuelve con una descarga correcta posterior (un
+  aplazamiento no lo cierra: «sigue abierta, a la espera del proveedor»); lo mismo para un paso fallido del job;
+  el periodo sin éxito tiene un inicio estable (failing_since_utc) aunque nunca haya habido un éxito.
 v1.2 (segunda revisión, R2-3/R2-4): fallo FINAL de cada descargador (tras reintentos y alternativas; un
   intento intermedio recuperado no avisa; un aplazamiento por Retry-After tampoco), pasos del job fallidos o
   con salidas restauradas, y SILENCIO: un registro que envejece genera aviso de ausencia de ejecución y nunca
@@ -237,20 +240,25 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
                 alerts["actions:%s:%s:%s" % (job, fname, fr["status"].lower())] = (
                     "Actions %s → %s: %s, se conserva lo publicado — %s" % (
                         job, fname, fr["status"], (fr.get("detail") or "")[:200]))
-        lok = rec.get("last_ok_utc")
-        if lok and rec.get("rc"):
+        if rec.get("rc"):
+            # referencia: último éxito; si nunca lo hubo, inicio estable del periodo sin éxito (R3-3); para un
+            # registro de la versión anterior sin ninguno de los dos campos, su propio inicio
+            lok, fs = rec.get("last_ok_utc"), rec.get("failing_since_utc")
+            ref = lok or fs or rec.get("started_utc")
             try:
-                age = (now_utc - _parse(lok)).total_seconds() / 3600.0
+                age = (now_utc - _parse(ref)).total_seconds() / 3600.0 if ref else 0
             except ValueError:
                 age = 0
             if age > cfg["max_silence_h"]:
+                desde = ("desde la última correcta, %s" % lok) if lok else (
+                    "desde el primer intento sin éxito registrado, %s (no consta ninguna descarga correcta)" % ref)
                 alerts["actions:%s:no_success" % job] = (
-                    "Actions %s: sin ninguna descarga correcta desde %s (límite %.0f h), aunque el job se ejecuta "
-                    "(fallos o aplazamientos repetidos)." % (job, lok, cfg["max_silence_h"]))
+                    "Actions %s: sin descarga correcta %s; límite %.0f h. El job se ejecuta pero falla o el proveedor "
+                    "le hace esperar una y otra vez." % (job, desde, cfg["max_silence_h"]))
         why = _failure_text(rec)
         if why:
-            alerts["actions:%s:fail" % job] = "Actions %s (%s): %s. Se conserva lo publicado; el dato no se actualizó." % (
-                job, rec.get("finished_utc"), why)
+            # texto estable (sin la hora) para que fallos idénticos consecutivos no se reenvíen: recordatorio diario
+            alerts["actions:%s:fail" % job] = "Actions %s: %s. Se conserva lo publicado; el dato no se actualizó." % (job, why)
     for job, led in sorted(ledgers.items()):
         cfg = _job_cfg(jobs, "job_" + job)
         if cfg["status"] == "RETIRED":
@@ -289,12 +297,43 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
         if k.startswith("actions:held:"):
             exists = os.path.exists(os.path.join(qdir, job + ".json"))
         cfg = _job_cfg(jobs, ("job_" + job) if k.startswith("actions:job:") else job)
+        txt = v.get("text", k)
         if cfg["status"] == "RETIRED":
             retired_keys.add(k)
         elif not exists:
-            txt = v.get("text", k)
-            suffix = " — su registro ya no existe: sin evidencia de recuperación"
-            alerts[k] = txt if txt.endswith(suffix) else txt + suffix
+            alerts[k] = _keep(txt, " — su registro ya no existe: sin evidencia de recuperación")
+        else:
+            still = _still_open(k, pointers.get(job), ledgers.get(job))
+            if still:
+                alerts[k] = _keep(txt, still)
+
+
+# Claves cuya resolución exige EVIDENCIA de una descarga correcta posterior (R3-2): que la última ejecución no
+# vuelva a generar la misma alerta (p. ej. porque quedó aplazada) no demuestra que el feed se haya recuperado.
+_NEEDS_SUCCESS = (":fail", ":no_success", ":invalid", ":regression_blocked")
+
+
+def _still_open(k, pointer, ledger):
+    """Texto de «sigue abierta» si no hay evidencia de recuperación para la clave k; None si la hay."""
+    if k.startswith("actions:job:"):
+        parts = k.split(":")
+        if len(parts) >= 5 and parts[3] == "step":
+            ok = any(st.get("name") == parts[4] and st.get("status") == "OK" for st in (ledger or {}).get("steps") or [])
+            return None if ok else " — sigue abierta: el paso no ha vuelto a terminar correctamente"
+        return None                                   # plazos/restauraciones: incidencias de una ejecución concreta
+    if k.startswith("actions:held:") or k.endswith(":silence"):
+        return None                                   # cuarentena: la resuelve su decisión; silencio: hay actividad
+    if k.endswith(_NEEDS_SUCCESS) and pointer is not None and pointer.get("rc"):
+        deferred = any(r.get("cls") == "DEFERRED" for r in pointer.get("requests") or [])
+        return (" — sigue abierta: la última ejecución quedó aplazada por el proveedor (Retry-After); sin descarga "
+                "correcta posterior" if deferred else
+                " — sigue abierta: sin descarga correcta posterior")
+    return None
+
+
+def _keep(txt, suffix):
+    base = txt.split(" — sigue abierta:")[0].split(" — su registro ya no existe:")[0]
+    return base + suffix
 
 
 def _job_of_key(k):

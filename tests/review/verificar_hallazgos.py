@@ -1,6 +1,6 @@
 """Verificación inversa de la revisión del 24-sep: los MISMOS escenarios de repro_revision.py (datos ficticios,
 sin red, solo directorios temporales), pero comprobando el comportamiento CORREGIDO. Cada caso es independiente;
-salida JSON con ok/fallo por hallazgo; código 0 solo si pasan los siete de la primera revisión y los cuatro de la segunda (R2-1…R2-4).
+salida JSON con ok/fallo por hallazgo; código 0 solo si pasan los siete de la primera revisión los cuatro de la segunda (R2-1…R2-4) y los tres de la tercera (R3-1…R3-3).
 
     python tests/review/verificar_hallazgos.py [raíz_del_repo]
 """
@@ -341,6 +341,35 @@ def _():
         return {"alertas_9_dias_despues": sorted(a2), "resueltos_planificados": 0}
     finally:
         shutil.rmtree(r)
+
+
+# ── tercera revisión (R3): pruebas de aceptación, incluidos los escenarios exactos de repro_revision3.py ──
+def _run_tests(module, prefixes):
+    import unittest
+    mod = __import__(module)
+    suite = unittest.TestSuite()
+    for t in unittest.defaultTestLoader.loadTestsFromModule(mod):
+        for c in t:
+            if any(c._testMethodName.startswith(pf) for pf in prefixes):
+                suite.addTest(c)
+    r = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+    assert r.testsRun and r.wasSuccessful(), [str(x[0]) + x[1][-300:] for x in r.failures + r.errors]
+    return {"pruebas": r.testsRun}
+
+
+@case("R3-1_senal_restaura_y_validacion_por_tipo")
+def _():
+    return _run_tests("test_step_guard", ("test_r3_1", "test_reviewer_repro_r3_1"))
+
+
+@case("R3-2_aplazamiento_no_resuelve")
+def _():
+    return _run_tests("test_actions_watch_integration", ("test_r3_2", "test_reviewer_repro_r3_2"))
+
+
+@case("R3-3_sin_exito_nunca_inicializado")
+def _():
+    return _run_tests("test_actions_watch_integration", ("test_r3_3",))
 
 
 print(json.dumps(results, ensure_ascii=False, indent=1))

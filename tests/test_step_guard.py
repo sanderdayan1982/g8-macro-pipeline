@@ -153,6 +153,101 @@ time.sleep(60)
         self.assertIn("actions:job:daily:restored", alerts)
         self.assertIn("US_BILL_1M.csv", alerts["actions:job:daily:restored"])
 
+    # ── R3-1: terminación abrupta e integridad de lo que se conserva ────────────────────────────────
+    V = b"DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4.25,4.25,4.25,4.25,0\n"
+
+    def _partial_writer(self, sig):
+        return self.script("pw_%s.py" % sig, r'''import sys, os, signal
+with open(sys.argv[2], "wb") as f:
+    f.write(b"DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4.25,4.25,4.25,4")
+    f.flush()
+    os.kill(os.getpid(), signal.%s)
+''' % sig)
+
+    def test_r3_1_signal_termination_restores_byte_exact(self):
+        for sig, rc_exp in (("SIGTERM", -15), ("SIGKILL", -9)):
+            open(self.q, "wb").write(self.V)
+            self.assertEqual(self.step("us_bills_2y", self.script("ok.py", OTHER), self.p), 0)   # otro paso: correcto
+            rc = self.step("us_bills", self._partial_writer(sig), self.q)
+            self.assertEqual(rc, rc_exp, sig)
+            self.assertEqual(open(self.q, "rb").read(), self.V, sig)                      # byte a byte
+            self.assertIn(b"20260924,3.2000", open(self.p, "rb").read())                   # el otro se conserva
+            rec = self.records()[-1]
+            self.assertEqual(rec["status"], "ABORTED")
+            self.assertEqual([r["file"] for r in rec["restored"]], ["US_BILL_3M.csv"])
+            self.assertNotIn("kept_valid_outputs", rec)
+            self.assertEqual(self.staged("US_BILL_3M.csv"), self.V)
+
+    def test_r3_1_shell_reported_signal_codes_are_abrupt(self):
+        body = r'''import sys
+open(sys.argv[2], "w").write("DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4.25,4.25,4.25,4.25,0\n20260924,4.3,4.3,4.3,4.3,0\n")
+sys.exit(137)
+'''
+        open(self.q, "wb").write(self.V)
+        self.assertEqual(self.step("sh", self.script("sh.py", body), self.q), 137)
+        self.assertEqual(open(self.q, "rb").read(), self.V)                                # ni siquiera lo que parece válido
+        self.assertEqual(self.records()[-1]["status"], "ABORTED")
+
+    def test_r3_1_normal_error_keeps_only_complete_files(self):
+        body = r'''import os, sys
+d = os.path.dirname(sys.argv[2])
+open(os.path.join(d, "US_BILL_1M.csv"), "w").write("DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4,4,4,4,0\n20260924,4.1,4.1,4.1,4.1,0\n")
+open(os.path.join(d, "US_BILL_3M.csv"), "w").write("DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4.25,4.25,4.25,4")
+open(os.path.join(d, "US_BILL_6M.csv"), "w").write("DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,4,4,4,4,0\n20260923,4.25,4.25,4.25,4.25,1")
+sys.exit(1)
+'''
+        open(self.q, "wb").write(self.V)
+        six = os.path.join(self.data, "US_BILL_6M.csv")
+        open(six, "wb").write(self.V)
+        self.assertEqual(self.step("partial", self.script("pe.py", body), self.p), 1)
+        self.assertIn(b"20260924,4.1", open(self.p, "rb").read())                          # completo y válido
+        self.assertEqual(open(self.q, "rb").read(), self.V)                                # fila incompleta
+        self.assertEqual(open(six, "rb").read(), self.V)                                   # último campo cortado
+        rec = self.records()[-1]
+        self.assertEqual(rec["status"], "FAILED")
+        self.assertEqual(rec["kept_valid_outputs"], ["US_BILL_1M.csv"])
+        why = {r["file"]: r["reason"] for r in rec["restored"]}
+        self.assertIn("fila 3 con 5 campos", why["US_BILL_3M.csv"])
+        self.assertIn("salto de línea", why["US_BILL_6M.csv"])
+
+    def test_r3_1_new_files_validated_by_type_contract(self):
+        cases = {
+            "NEW.csv": (b"<html>Service unavailable</html>", "HTML"),
+            "NEW.json": (b"{truncated", "JSON ilegible"),
+            "RUNS.jsonl": (b'{"a": 1}\n{"b": ', "JSONL"),
+            "NEW_SERIES.csv": (b"DATE,CLOSE\n20269999,1\n", "serie ilegible"),
+            "RAGGED.csv": (b"pair,score\nEURUSD,1\nGBPUSD\n", "campos"),
+        }
+        good = {"AUX.csv": b"pair,score,note\nEURUSD,1,\"a, b\"\n",          # formato auxiliar legítimo
+                "NEW_OK.csv": b"DATE,CLOSE\n20260923,1.5\n", "STATE.json": b'{"ok": true}', "notes.txt": b"x"}
+        for n, b in [(k, v[0]) for k, v in cases.items()] + list(good.items()):
+            with open(os.path.join(self.t, n), "wb") as fh:
+                fh.write(b)
+        for n, (_, frag) in cases.items():
+            why = g8step.validate(None, os.path.join(self.t, n))
+            self.assertIsNotNone(why, n)
+            self.assertIn(frag, why, n)
+        for n in good:
+            self.assertIsNone(g8step.validate(None, os.path.join(self.t, n)), n)
+
+    def test_r3_1_every_current_data_file_passes_its_contract(self):
+        # los formatos reales del repositorio siguen siendo aceptados al reescribirse igual
+        bad = []
+        for dp, _, fs in os.walk(os.path.join(ROOT, "data")):
+            for f in fs:
+                p = os.path.join(dp, f)
+                why = g8step.validate(p, p)
+                if why:
+                    bad.append((p, why))
+        self.assertEqual(bad, [])
+
+    def test_reviewer_repro_r3_1(self):
+        open(self.q, "wb").write(self.V)
+        rc = self.step("us_bills", self._partial_writer("SIGTERM"), self.q)
+        self.assertEqual(rc, -15)
+        self.assertEqual(open(self.q, "rb").read(), self.V)
+        self.assertNotIn("kept_valid_outputs", self.records()[-1])
+
 
 if __name__ == "__main__":
     unittest.main()

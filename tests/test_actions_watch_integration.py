@@ -247,5 +247,107 @@ class ActionsToWatch(unittest.TestCase):
         self.assertEqual(r["delivery"], "SENT")
 
 
+    # ── R3-2: un aplazamiento no es una recuperación ────────────────────────────────────────────────
+    DEFER = staticmethod(lambda url: (503, (b"Unavailable", {"retry-after": "7200"})))
+
+    def _run(self, serve, hours):
+        return H.run_new("fetch_tona", serve, self.root, now=H.NOW + timedelta(hours=hours),
+                         clock=H.Clock(H.NOW_EPOCH + hours * 3600))
+
+    def test_r3_2_failure_then_deferral_stays_open_then_success_resolves(self):
+        self._run(lambda url: (503, b"Unavailable"), 0)
+        r1 = self.watch(H.NOW + timedelta(minutes=5))
+        self.assertIn("actions:fetch_tona:fail", r1["alerts"])
+        self._run(self.DEFER, 1)
+        n = len(self.sent)
+        r2 = self.watch(H.NOW + timedelta(hours=1, minutes=5))
+        self.assertIn("actions:fetch_tona:fail", r2["alerts"])                          # sigue abierta
+        self.assertFalse([m for m in self.sent[n:] if "resuelto" in m])
+        self.assertTrue(any("aplazada por el proveedor" in m for m in self.sent[n:]))
+        self._run(lambda url: (200, self.body), 4)                                      # descarga correcta
+        r3 = self.watch(H.NOW + timedelta(hours=4, minutes=5))
+        self.assertNotIn("actions:fetch_tona:fail", r3["alerts"])
+        self.assertTrue(any("resuelto" in m and "fetch_tona" in m for m in self.sent))
+
+    def test_r3_2_first_short_deferral_without_incident_is_silent(self):
+        self._run(self.DEFER, 0)
+        r = self.watch(H.NOW + timedelta(minutes=5))
+        self.assertFalse([a for a in r["alerts"] if a.startswith("actions:fetch_tona")])
+
+    def test_r3_2_regression_then_deferral_not_resolved(self):
+        short = H.boj_json([r for r in self.rows if r[0] >= "20210901"][:-3])
+        self._run(lambda url: (200, short), 0)
+        k = "actions:fetch_tona:TONA.csv:regression_blocked"
+        self.assertIn(k, self.watch(H.NOW + timedelta(minutes=5))["alerts"])
+        self._run(self.DEFER, 1)
+        self.assertIn(k, self.watch(H.NOW + timedelta(hours=1, minutes=5))["alerts"])
+
+    def test_r3_2_failed_step_not_resolved_by_time_limit(self):
+        p = os.path.join(self.root, "data", "_ingest", "latest", "actions__job_daily.json")
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+
+        def ledger(run, steps, failed, lim):
+            json.dump({"job": "daily", "run_id": run, "written_utc": "2026-09-24T21:50:00Z", "steps": steps,
+                       "failed": failed, "time_limited": lim}, open(p, "w"))
+        k = "actions:job:daily:step:us_bills"
+        ledger("1", [{"name": "us_bills", "status": "FAILED"}], [{"name": "us_bills", "rc": 1}], [])
+        self.assertIn(k, self.watch(datetime(2026, 9, 24, 22, 0))["alerts"])
+        ledger("2", [{"name": "us_bills", "status": "SKIPPED_NO_TIME"}], [], [{"name": "us_bills", "status": "SKIPPED_NO_TIME"}])
+        self.assertIn(k, self.watch(datetime(2026, 9, 24, 23, 0))["alerts"])
+        ledger("3", [{"name": "us_bills", "status": "OK"}], [], [])
+        self.assertNotIn(k, self.watch(datetime(2026, 9, 25, 22, 0))["alerts"])
+
+    def test_reviewer_repro_r3_2(self):
+        from g8common.notify import AlertBook
+        H.run_new("fetch_tona", lambda u: (503, b"Unavailable"), self.root)
+        t1 = (H.NOW + timedelta(minutes=5)).replace(tzinfo=timezone.utc)
+        a1 = {}
+        W.check_actions(self.root, t1, a1, [])
+        b = AlertBook(os.path.join(self.root, "book.json"))
+        b.commit(a1, list(a1), t1.timestamp(), [])
+        self._run(self.DEFER, 1)
+        t2 = t1 + timedelta(hours=1)
+        a2 = {}
+        W.check_actions(self.root, t2, a2, [], prev_active=b.state["active"])
+        self.assertFalse([x for x in b.plan(a2, t2.timestamp()) if x[0] == "RESOLVED"])
+
+    # ── R3-3: aplazamientos indefinidos sin ningún éxito previo ─────────────────────────────────────
+    def test_r3_3_never_success_repeated_deferrals_alert(self):
+        for day in range(6):
+            self.assertEqual(self._run(self.DEFER, 24 * day)[0], 1)
+        rec = json.load(open(os.path.join(self.root, "data", "_ingest", "latest", "actions__fetch_tona.json")))
+        self.assertIsNone(rec["last_ok_utc"])
+        self.assertEqual(rec["failing_since_utc"], "2026-09-24T21:35:00Z")               # estable: el primer intento
+        a = {}
+        W.check_actions(self.root, (H.NOW + timedelta(days=5, hours=1)).replace(tzinfo=timezone.utc), a, [])
+        self.assertIn("actions:fetch_tona:no_success", a)
+        self.assertIn("no consta ninguna descarga correcta", a["actions:fetch_tona:no_success"])
+        self._run(lambda url: (200, self.body), 24 * 5 + 2)                              # éxito posterior
+        a2 = {}
+        W.check_actions(self.root, (H.NOW + timedelta(days=5, hours=3)).replace(tzinfo=timezone.utc), a2, [])
+        self.assertNotIn("actions:fetch_tona:no_success", a2)
+        rec = json.load(open(os.path.join(self.root, "data", "_ingest", "latest", "actions__fetch_tona.json")))
+        self.assertIsNone(rec["failing_since_utc"])
+
+    def test_r3_3_initial_wait_within_limit_no_alert(self):
+        for h in (0, 24, 48):
+            self._run(self.DEFER, h)
+        a = {}
+        W.check_actions(self.root, (H.NOW + timedelta(hours=49)).replace(tzinfo=timezone.utc), a, [])
+        self.assertNotIn("actions:fetch_tona:no_success", a)
+
+    def test_r3_3_transition_from_previous_version_record(self):
+        p = os.path.join(self.root, "data", "_ingest", "latest", "actions__fetch_tona.json")
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        json.dump({"job": "fetch_tona", "rc": 1, "started_utc": "2026-09-20T21:35:00Z",
+                   "finished_utc": "2026-09-20T21:36:00Z", "requests": [{"cls": "DEFERRED"}], "files": {}}, open(p, "w"))
+        self._run(self.DEFER, 0)
+        rec = json.load(open(p))
+        self.assertEqual(rec["failing_since_utc"], "2026-09-20T21:35:00Z")               # hereda el inicio anterior
+        a = {}
+        W.check_actions(self.root, (H.NOW + timedelta(hours=1)).replace(tzinfo=timezone.utc), a, [])
+        self.assertIn("actions:fetch_tona:no_success", a)                                # > 96 h desde el 20-sep
+
+
 if __name__ == "__main__":
     unittest.main()
