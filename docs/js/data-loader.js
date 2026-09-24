@@ -40,7 +40,9 @@
         cad: { ccy: 'CAD', source: 'BoC Valet',      label: 'GoC Bills',         tenors: ['3M', '6M', '1Y']                                },
         // v5.6: CHF/NZD curves come from the Mac local fetch (SNB rendeiduebd / RBNZ B2), Date,Value files.
         // The manual CHF_BILL_* / NZD_BILL_3M/6M/1Y CSVs (May-2026, dead) were removed from the repo.
-        chf: { ccy: 'CHF', source: 'SNB rendeiduebd (Mac fetch)', label: 'CHF Confederation spot', tenors: ['1Y', '2Y', '5Y', '10Y'],
+        // v5.7: the SNB publishes the daily curve once a month → monthly freshness class (was judged
+        // as a daily feed: permanent false FAIL mid-month; the daily 10Y RSS leg is monitored in §05).
+        chf: { ccy: 'CHF', cls: 'monthly', source: 'SNB rendeiduebd (Mac fetch)', label: 'CHF Confederation spot (monthly)', tenors: ['1Y', '2Y', '5Y', '10Y'],
                files: { '1Y': 'CHF_SPOT_1Y.csv', '2Y': 'CHF_SPOT_2Y.csv', '5Y': 'CHF_SPOT_5Y.csv', '10Y': 'CHF_SPOT_10Y.csv' } },
         nzd: { ccy: 'NZD', source: 'RBNZ B2 (Mac fetch)',        label: 'NZ Govt Bonds',          tenors: ['90D', '1Y', '2Y', '5Y', '10Y'],
                files: { '90D': 'NZD_BILL_90D.csv', '1Y': 'NZD_BOND_1Y.csv', '2Y': 'NZD_BOND_2Y.csv', '5Y': 'NZD_BOND_5Y.csv', '10Y': 'NZD_BOND_10Y.csv' } }
@@ -102,7 +104,13 @@
         '2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1,'2027-03-29':1,
         '2027-05-03':1,'2027-05-31':1,'2027-06-18':1,'2027-07-05':1,'2027-08-02':1,
         '2027-08-30':1,'2027-09-06':1,'2027-10-11':1,'2027-11-11':1,'2027-11-25':1,
-        '2027-12-27':1,'2027-12-28':1
+        '2027-12-27':1,'2027-12-28':1,
+        /* v2.7.0 (audit 2026-09-24): Japan was missing from the "G8 union" — the Sep-2026 Silver Week
+           (21-22-23) flipped TONA/JGB to DEGRADED although the BoJ was closed. JP 2026-27 national holidays. */
+        '2026-01-12':1,'2026-02-11':1,'2026-02-23':1,'2026-03-20':1,'2026-04-29':1,'2026-05-05':1,'2026-05-06':1,
+        '2026-07-20':1,'2026-09-21':1,'2026-09-22':1,'2026-09-23':1,'2026-11-03':1,'2026-11-23':1,
+        '2027-01-11':1,'2027-02-11':1,'2027-02-23':1,'2027-03-22':1,'2027-04-29':1,'2027-05-04':1,'2027-05-05':1,
+        '2027-07-19':1,'2027-09-20':1,'2027-09-23':1,'2027-11-03':1,'2027-11-23':1
     };
     function isG8Holiday(dt) { return !!G8_HOLIDAYS[dt.toISOString().slice(0, 10)]; }
 
@@ -449,12 +457,23 @@
         };
     }
 
-    // v6: NEW — loads the 7 G8 ACM term-premium feeds (own K=5 engine)
+    // v6: loads the 8 G8 ACM term-premium feeds (own engine; K read from the QUALITY column)
     async function loadACM() {
         const out = {};
         const promises = Object.entries(ACM_FEED).map(async ([key, cfg]) => {
             const rows = await loadCSV(cfg.file);
             out[key] = { ...cfg, rows, series: rows ? parseACMG8(rows) : null };
+            // v5.7 (audit 2026-09-24): the model order comes from the file, not from a hardcoded
+            // "K=5" label — every ACM_G8_*.csv carries QUALITY=ACM_K3_<n>m today (CAD included).
+            if (rows && rows.length) {
+                const q0 = String(rows[rows.length - 1].quality || '');
+                const mk = q0.match(/ACM_K(\d)(?:_(\d+)m)?/i);
+                if (mk) {
+                    out[key].kLabel = 'ACM K=' + mk[1] + (mk[2] ? ' · ' + mk[2] + 'm muestra' : '') +
+                        (/NOWCAST/i.test(q0) ? ' · cola NOWCAST' : '') + (/SHORT/i.test(q0) ? ' · muestra corta' : '');
+                    if (key !== 'nzd' && key !== 'chf') out[key].source = 'G8 ACM K=' + mk[1];
+                }
+            }
             // v5.4: NZD file may be the SYNTH proxy (QUALITY column) or a real ACM fit — label accordingly
             if (key === 'nzd' && rows && rows.length) {
                 const q = String(rows[rows.length - 1].quality || '');
