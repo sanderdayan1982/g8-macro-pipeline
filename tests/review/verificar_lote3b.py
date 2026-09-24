@@ -22,11 +22,39 @@ SUITES = {
     "descargadores del Mac": "test_lote3b_mac",
     "inventario sin omisiones": "test_inventory",
 }
-out = {"suites": {}, "inventario": {}}
+# Hallazgos de la revisión de 4c4847c: pruebas de aceptación que fallan en 4c4847c y pasan con la corrección
+B3 = {
+    "B3-1 reales: REAL10/BE10 corregidos con NOM10 igual": ("test_lote3b_reales", "B3_1"),
+    "B3-2 Mac: Retry-After/503/redirección no eludidos por otro perfil": ("test_lote3b_mac", "b3_2"),
+    "B3-3 Mac: presupuesto único para toda la cadena de transportes": ("test_lote3b_mac", "b3_3"),
+    "B3-2/3 Mac: extremo a extremo TONA con bibliotecas HTTP dobles": ("test_lote3b_mac", "end_to_end"),
+    "B3-4 Mac: max_date del registro de escritura": ("test_lote3b_mac", "WriteMetadata"),
+}
+
+
+def _filtered(mod, key):
+    suite = unittest.TestSuite()
+    def walk(s):
+        for t in s:
+            if isinstance(t, unittest.TestSuite):
+                walk(t)
+            elif key in t.id():
+                suite.addTest(t)
+    walk(unittest.defaultTestLoader.loadTestsFromName(mod))
+    return suite
+
+
+out = {"hallazgos_B3": {}, "suites": {}, "inventario": {}}
 ok = True
 saved = os.dup(1)
 os.dup2(2, 1)                                   # la salida de las pruebas no se mezcla con el JSON
 try:
+    for label, (mod, key) in B3.items():
+        suite = _filtered(mod, key)
+        r = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+        out["hallazgos_B3"][label] = {"pruebas": r.testsRun, "fallos": len(r.failures) + len(r.errors),
+                                      "detalle": [str(t) for t, _ in r.failures + r.errors][:10]}
+        ok = ok and r.wasSuccessful() and r.testsRun > 0
     for label, mod in SUITES.items():
         r = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(
             unittest.defaultTestLoader.loadTestsFromName(mod))

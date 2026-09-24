@@ -28,6 +28,11 @@ def repo_last(fname):
     return rows[-1]
 
 
+def repo_last_of(root, fname):
+    with open(os.path.join(root, "data", fname)) as fh:
+        return [r for r in csv.reader(fh) if r and r[0].isdigit()][-1]
+
+
 def result_for(d, nom, real, be):
     return {"date": d, "NOM10": nom, "REAL10": real, "BE10": be, "sheet": d.strftime("%d.%m.%Y"), "linkers": [],
             "n_nominals": 5, "otr_num": 30, "otr_resid": 9.4, "otr_coupon": 0.005, "otr_price": 100.0, "n_jgbi": 3,
@@ -79,6 +84,69 @@ class RealBase(object):
         rco, rcn, ro, rn, *_ = self.run_both(result_for(d, nom, real, be))
         self.assertEqual(H.read(rn, self.fname), self.orig)
         self.assertEqual(H.read(ro, self.fname), self.orig)
+
+    # ── B3-1: la observación es (NOM10, REAL10, BE10); NOM10 igual no oculta una corrección de REAL10/BE10 ──
+    def quarantine(self, root):
+        p = os.path.join(root, "data", "_ingest", "quarantine", self.fname + ".json")
+        if not os.path.exists(p):
+            return {}
+        with open(p) as fh:
+            return json.load(fh)["candidates"]
+
+    def pointer(self, root):
+        return json.load(open(os.path.join(root, "data", "_ingest", "actions__%s.json" % self.script)))
+
+    def test_B3_1_last_day_real_be_corrected_with_nom_constant_equivalent(self):
+        d, nom, real, be = self.last()
+        res = result_for(d, nom, round(real + 0.01, 4), round(be - 0.01, 4))   # p. ej. EUR 20260923 → 3.4651,1.2445,2.2206
+        rco, rcn, ro, rn, *_ = self.run_both(res)
+        self.assertEqual((rco, rcn), (0, 0))
+        self.assertNotEqual(H.read(ro, self.fname), self.orig)                  # el original corrige la fila
+        self.assertEqual(H.read(rn, self.fname), H.read(ro, self.fname))        # el nuevo, igual
+        last = repo_last_of(rn, self.fname)
+        self.assertEqual([float(x) for x in last[1:4]], [nom, round(real + 0.01, 4), round(be - 0.01, 4)])
+        self.assertEqual(self.alerts(rn), {})
+
+    def test_B3_1_identical_row_is_noop(self):
+        d, nom, real, be = self.last()
+        rn = self.root()
+        rc, *_ = H.run_new(self.script, self.serve_ok, rn, patch=self.patch(result_for(d, nom, real, be)))
+        self.assertEqual(rc, 0)
+        self.assertEqual(H.read(rn, self.fname), self.orig)
+        self.assertEqual(self.quarantine(rn), {})
+        self.assertEqual(self.alerts(rn), {})
+
+    def test_B3_1_revision_outside_window_held_with_measure_identity_then_confirmed(self):
+        rows = [r for r in csv.reader(io.StringIO(self.orig.decode())) if r and r[0].isdigit()]
+        prev = rows[-2]
+        dprev = datetime.strptime(prev[0], "%Y%m%d").date()
+        nom, real, be = float(prev[1]), float(prev[2]), float(prev[3])
+        res_a = result_for(dprev, nom, round(real + 0.01, 4), be)
+        res_b = result_for(dprev, nom, real, round(be + 0.01, 4))              # mismo NOM10 y otra medida cambiada
+        rn = self.root()
+        clock = H.clock_at_now()
+        H.run_new(self.script, self.serve_ok, rn, patch=self.patch(res_a), clock=clock)
+        self.assertEqual(H.read(rn, self.fname), self.orig)                     # fuera de la ventana: no se publica
+        self.assertIn("actions:held:%s" % self.fname, self.alerts(rn))          # …pero tampoco se descarta en silencio
+        q = self.quarantine(rn)
+        (cid_a, rec_a), = [(k, v) for k, v in q.items() if v["status"] == "PENDING"]
+        self.assertEqual(rec_a["measures"], {"NOM10": nom, "REAL10": round(real + 0.01, 4), "BE10": be})
+        self.assertEqual(rec_a["previous_measures"], {"NOM10": nom, "REAL10": real, "BE10": be})
+        # otra corrección con el mismo NOM10 es OTRO candidato (identidad = todas las medidas) y sustituye al primero
+        clock.t += 3600
+        H.run_new(self.script, self.serve_ok, rn, patch=self.patch(res_b), clock=clock)
+        q = self.quarantine(rn)
+        self.assertEqual(q[cid_a]["status"], "SUPERSEDED")
+        (cid_b, _), = [(k, v) for k, v in q.items() if v["status"] == "PENDING"]
+        self.assertNotEqual(cid_a, cid_b)
+        self.assertEqual(H.read(rn, self.fname), self.orig)
+        # confirmación por una descarga distinta, en otra ejecución y pasado el intervalo: se publica
+        clock.t += 3600
+        rc, *_ = H.run_new(self.script, self.serve_ok, rn, patch=self.patch(res_b), clock=clock,
+                           now=H.NOW + timedelta(hours=2))
+        self.assertEqual(rc, 0)
+        got = {r[0]: r for r in csv.reader(io.StringIO(H.read(rn, self.fname).decode())) if r and r[0].isdigit()}
+        self.assertEqual([float(x) for x in got[prev[0]][1:4]], [nom, real, round(be + 0.01, 4)])
 
     def test_F1_503_retried_file_intact_alert(self):
         rn = self.root()

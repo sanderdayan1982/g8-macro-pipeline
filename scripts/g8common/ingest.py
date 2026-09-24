@@ -196,7 +196,7 @@ class Ingest(object):
                 self._horizon = S.load_horizons(None)
         return self._horizon(fname)
 
-    def publish(self, fname, data, retain_from=None, revision_window=None, expect_header=None):
+    def publish(self, fname, data, retain_from=None, revision_window=None, expect_header=None, measures=None):
         """Fusiona `data` (bytes con el formato exacto del escritor original) sobre data/<fname>.
         No escribe nada si la descarga es inválida, más antigua o incompleta. → informe (dict)."""
         path = os.path.join(self.root, "data", fname)
@@ -230,7 +230,8 @@ class Ingest(object):
         download_id = ("%s:%s" % (self.run_id, hashlib.sha256(data).hexdigest()[:12])) if ok_req else None
         rep["download_id"] = download_id
         r = S.merge(fname, repo, src, self.plaus(fname), revision_window, q, self.run_id, self.started,
-                    retain_from=retain_from, download_id=download_id, max_future_days=self.horizon(fname))
+                    retain_from=retain_from, download_id=download_id, max_future_days=self.horizon(fname),
+                    measures=measures)
         rep.update(r.report())
         if r.series is not None:
             S.write_atomic(path, r.series.to_bytes())

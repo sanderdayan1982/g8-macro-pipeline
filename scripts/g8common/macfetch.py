@@ -34,42 +34,91 @@ class FetchError(RuntimeError):
         self.result = res
 
 
-def curl_transport(log=print, impersonations=IMPERSONATIONS):
-    """Transporte g8http: curl_cffi con cada imitación de navegador; la primera respuesta 200 gana; si ninguna
-    da 200 (o curl_cffi no está), requests. Devuelve la ÚLTIMA respuesta obtenida para que g8http la clasifique
-    (403 → FAIL_ACCESS sin reintento; 503 → transitorio, etc.)."""
+MIN_ATTEMPT_S = 1.0        # no se inicia una alternativa con menos de este tiempo restante
+
+
+def _hdrs(r):
+    return {k.lower(): v for k, v in r.headers.items()}
+
+
+def _next_profile_helps(status, headers):
+    """¿Tiene sentido probar OTRO perfil de navegador tras esta respuesta? Solo ante un bloqueo de acceso sin
+    plazo (WAF: 401/403/406/451 sin Retry-After): para eso existen los perfiles. Un límite de uso (429, o
+    cualquier respuesta con Retry-After/x-ratelimit), un error de servidor o una redirección vuelven a g8http, que
+    la clasifica, respeta y persiste el plazo, reintenta con su programa o sigue la redirección con el mismo
+    presupuesto (B3-2)."""
+    if headers.get("retry-after") or headers.get("x-ratelimit-reset"):
+        return False
+    return status in (401, 403, 406, 451)
+
+
+def curl_transport(log=print, impersonations=IMPERSONATIONS, now=time.time):
+    """Transporte g8http: curl_cffi imitando Safari → Chrome124 → Chrome y, por último, requests (el orden del
+    transporte original de los descargadores del Mac).
+
+      · La primera respuesta 200 gana. Se pasa al perfil siguiente SOLO si la respuesta es un bloqueo de acceso
+        sin plazo o un error de red; cualquier otra respuesta (429/503 con Retry-After, 5xx, 3xx, 404…) se
+        devuelve de inmediato a g8http, que la trata con la política común. Así un Retry-After nunca queda oculto
+        tras la respuesta de otro perfil (B3-2).
+      · UN solo plazo para toda la cadena: deadline = inicio + total_timeout (lo que g8http concede del
+        presupuesto). Cada alternativa recibe solo el tiempo restante y no se inicia ninguna con menos de
+        MIN_ATTEMPT_S (B3-3). Las bibliotecas no siguen redirecciones (allow_redirects=False): las sigue g8http
+        dentro del mismo presupuesto.
+    Sin curl_cffi, directamente requests; sin requests, el transporte estándar de g8http."""
     try:
         from curl_cffi import requests as crequests
     except Exception:                                   # noqa: BLE001
         crequests = None
 
     def transport(method, url, headers, body, connect_timeout, read_timeout, total_timeout):
-        timeout = max(1.0, min(read_timeout, total_timeout))
-        last = None
+        deadline = now() + float(total_timeout)
+        last, last_err = None, None
+
+        def remaining():
+            return deadline - now()
+
+        def attempt(label, fn):
+            nonlocal last, last_err
+            rem = remaining()
+            if rem < MIN_ATTEMPT_S:
+                log("    %s: sin tiempo restante (%.1f s), no se inicia" % (label, rem))
+                return None
+            try:
+                r = fn(max(MIN_ATTEMPT_S, min(float(read_timeout), rem)))
+            except Exception as e:                      # noqa: BLE001  (error de red: se prueba la alternativa)
+                last_err = e
+                log("    %s error: %s" % (label, str(e)[:160]))
+                return None
+            last = (r.status_code, _hdrs(r), r.content or b"")
+            log("    %s → HTTP %s (%s B)" % (label, r.status_code, len(last[2])))
+            if r.status_code == 200 or not _next_profile_helps(r.status_code, last[1]):
+                return last
+            return None
+
         if crequests is not None:
             for imp in impersonations:
-                try:
-                    r = crequests.request(method, url, headers=headers, data=body, timeout=timeout, impersonate=imp)
-                    log("    curl_cffi %s → HTTP %s (%s B)" % (imp, r.status_code, len(r.content or b"")))
-                    last = (r.status_code, {k.lower(): v for k, v in r.headers.items()}, r.content or b"")
-                    if r.status_code == 200:
-                        return last
-                except Exception as e:                  # noqa: BLE001
-                    log("    curl_cffi %s error: %s" % (imp, str(e)[:160]))
+                res = attempt("curl_cffi %s" % imp, lambda t, imp=imp: crequests.request(
+                    method, url, headers=headers, data=body, timeout=t, impersonate=imp, allow_redirects=False))
+                if res is not None:
+                    return res
         try:
             import requests
-            r = requests.request(method, url, headers=headers, data=body, timeout=timeout)
-            log("    requests → HTTP %s" % r.status_code)
-            return r.status_code, {k.lower(): v for k, v in r.headers.items()}, r.content or b""
         except ImportError:
-            if last is not None:
-                return last
-            return g8http.default_transport(method, url, headers, body, connect_timeout, read_timeout, total_timeout)
-        except Exception as e:                          # noqa: BLE001
-            if last is not None:
-                return last
-            kind = "timeout" if "timeout" in type(e).__name__.lower() or "timed out" in str(e).lower() else "other"
-            raise g8http.NetError(kind, str(e)[:200])
+            requests = None
+        if requests is not None:
+            res = attempt("requests", lambda t: requests.request(method, url, headers=headers, data=body, timeout=t,
+                                                                 allow_redirects=False))
+            if res is not None:
+                return res
+        elif remaining() >= MIN_ATTEMPT_S and last is None:
+            rem = remaining()
+            return g8http.default_transport(method, url, headers, body, min(connect_timeout, rem),
+                                            min(read_timeout, rem), rem)
+        if last is not None:
+            return last                                 # p. ej. 403 en todos los perfiles → FAIL_ACCESS
+        e = last_err
+        kind = "timeout" if e is None or "timeout" in type(e).__name__.lower() or "timed out" in str(e).lower() else "other"
+        raise g8http.NetError(kind, str(e)[:200] if e else "plazo agotado antes de completar la cadena de transportes")
     return transport
 
 
@@ -83,7 +132,7 @@ class Fetch(object):
         self.now, self.sleep, self.log = now, sleep, log
         self.started = now()
         self.budget = g8http.Budget(budget_s, now=now, env={})
-        self.transport = transport or curl_transport(log=log)
+        self.transport = transport or curl_transport(log=log, now=now)
         self.store = defer.Store(os.path.join(here, defer.REL_DIR), now=now, job="mac")
         self.requests_log, self.errors, self.files = [], [], {}
 
@@ -130,8 +179,10 @@ class Fetch(object):
             except (OSError, S.SeriesError):
                 pass                                    # copia actual ilegible: se sustituye por una válida
         S.write_atomic(path, out)
-        self.files[name] = {"status": "WRITTEN", "rows": len(new.rows) + kept, "max_date": max(new.max_date, *(
-            [max(missing)] if kept else [])), "kept_from_previous": kept}
+        # B3-4: fecha máxima de la colección completa de fechas escritas (no max() de una cadena)
+        self.files[name] = {"status": "WRITTEN", "rows": len(new.rows) + kept,
+                            "max_date": max([new.max_date] + ([max(missing)] if kept else [])),
+                            "kept_from_previous": kept}
         if kept:
             self.log("[%s] %s: se conservan %d fechas de la copia anterior que la descarga no trae" % (self.key, name, kept))
         return True

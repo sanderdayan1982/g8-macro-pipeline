@@ -172,7 +172,24 @@ def parse(data, value_col=None, expect_header=None):
 
 
 def candidate_id(fname, d, v):
+    """v: valor (serie de una medida) o tupla de medidas (observación multimedida, p. ej. NOM10/REAL10/BE10)."""
     return hashlib.sha1(("%s|%s|%r" % (fname, d, v)).encode()).hexdigest()[:12]
+
+
+def row_measures(series, d, measures):
+    """Tupla de las medidas `measures` (nombres de columna) de la fila d, como float (o texto si no es número).
+    Permite comparar observaciones de varias medidas sin cambiar la semántica de las series de una sola."""
+    cols = [c.strip() for c in series.header.split(",")]
+    cells = series.rows[d][0].split(",")
+    out = []
+    for m in measures:
+        i = cols.index(m)
+        raw = cells[i].strip() if i < len(cells) else ""
+        try:
+            out.append(float(raw))
+        except ValueError:
+            out.append(raw)
+    return tuple(out)
 
 
 class MergeResult(object):
@@ -205,7 +222,7 @@ def _prev_value(keys, rows, d):
 
 def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, run_id="", now_utc=None,
           hold_new_from=None, confirm_gap_min=CONFIRM_GAP_MIN, retain_from=None, download_id=None,
-          max_future_days=None):
+          max_future_days=None, measures=None):
     """Fusión monótona de src (descarga) sobre repo (lo publicado).
 
     plaus: dict(min=, max=, max_jump=) — valores del registro (None = sin control).
@@ -221,6 +238,9 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
                  de una descarga correcta verificada (fetch fallido, relectura del mismo fichero): puede
                  publicar lo que no necesita confirmación, pero nunca confirma nada.
     max_future_days: horizonte temporal de ESTA serie (ver check_horizon). None = sin límite documentado.
+    measures: columnas que forman la observación (B3-1: reales NOM10/REAL10/BE10). Con ellas, una fila cambia si
+              cambia CUALQUIERA de las medidas (no solo la columna de valor) y la identidad del candidato en
+              confirmación incluye todas. None = semántica de una sola medida (columna de valor), sin cambios.
     """
     now_utc = now_utc or datetime.now(timezone.utc)
     quarantine = quarantine or {}
@@ -253,8 +273,9 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
     keys = sorted(merged)
     for d in sorted(src.rows):
         line, v = src.rows[d]
+        mv = row_measures(src, d, measures) if measures else None
         if d in base_rows:
-            if base_rows[d][1] == v:
+            if base_rows[d][1] == v and (not measures or row_measures(repo, d, measures) == mv):
                 continue                                        # mismo valor (formato puede diferir): se conserva
             kind = "revisión" if d in window else "corrección histórica (fuera de la ventana revisable)"
         elif repo is not None and d < repo.max_date:
@@ -274,7 +295,7 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
         if kind == "revisión" and reason is None and not window:
             reason = "revisión sin ventana revisable documentada"
         if reason:
-            cid = candidate_id(fname, d, v)
+            cid = candidate_id(fname, d, mv if measures else v)
             rec = quarantine.get(cid)
             if rec is not None and (rec.get("status") == Q_SUPERSEDED or
                                     (rec.get("status") == Q_PENDING and not rec.get("first_download") and download_id)):
@@ -296,6 +317,9 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
                     rec = {"id": cid, "file": fname, "date": d, "value": v, "kind": kind, "reason": reason,
                            "previous_value": base_rows[d][1] if d in base_rows else None,
                            "status": Q_PENDING, "first_run": run_id, "first_download": download_id,
+                           "measures": dict(zip(measures, mv)) if measures else None,
+                           "previous_measures": (dict(zip(measures, row_measures(repo, d, measures)))
+                                                 if measures and d in base_rows else None),
                            "first_seen_utc": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")}
                     r.candidates.append(rec)
                 r.held.append((d, v, reason + ("" if rec["status"] == Q_PENDING else " · " + rec["status"]), cid))
@@ -318,7 +342,7 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
     # no publica. Un aceptado por confirmación que la fuente sustituye pierde la aceptación: si el valor vuelve,
     # necesita una confirmación NUEVA e independiente. Solo cuenta si src procede de una descarga verificada.
     for cid, rec in quarantine.items():
-        if rec.get("file") == fname and rec["date"] in src.rows and src.rows[rec["date"]][1] != rec["value"] and \
+        if rec.get("file") == fname and rec["date"] in src.rows and _differs(src, rec, measures) and \
                 (rec.get("status") == Q_PENDING or (rec.get("status") == Q_ACCEPTED_CONFIRMED and download_id)):
             rec = dict(rec)
             rec["status"] = Q_SUPERSEDED
@@ -339,6 +363,14 @@ def merge(fname, repo, src, plaus=None, revision_window=None, quarantine=None, r
     else:
         r.status = NOOP
     return r
+
+
+def _differs(src, rec, measures):
+    """¿La descarga trae para la fecha del candidato un valor (o conjunto de medidas) distinto del retenido?"""
+    d = rec["date"]
+    if measures and rec.get("measures"):
+        return row_measures(src, d, measures) != tuple(rec["measures"].get(m) for m in measures)
+    return src.rows[d][1] != rec["value"]
 
 
 def _decide(rec, run_id, now_utc, gap_min, download_id=None):

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """fetch_tona_mac.py — v1.1 (2026-09-24, lote 3B)
 TONA (BoJ FM01'STRDCLUCON) descargado en el Mac, como NZD/CHF. El fetch de GitHub Actions
-(scripts/fetch_tona.py) dejó de actualizar el 16-sep (BoJ rechaza IPs de datacenter).
+(scripts/fetch_tona.py) dejó de actualizar el 16-sep. SIN VERIFICAR: la causa atribuida (el BoJ rechaza IP de
+centro de datos) es una hipótesis no demostrada; queda pendiente de la sonda F8. No usar como hecho.
 Mismo endpoint y mismo formato OHLCV que scripts/fetch_tona.py → data/TONA.csv (5 años).
 push_nzd_to_github.py lo publica fusionándolo contra la rama. No sobrescribe nada si la descarga falla.
 

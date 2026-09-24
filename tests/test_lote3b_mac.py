@@ -340,58 +340,226 @@ class Test_fetch_tona_mac(MacBase, unittest.TestCase):
         self.assertEqual(self.read(rn), self.orig)
 
 
-class CurlTransport(unittest.TestCase):
-    """El transporte del Mac conserva el orden original: curl_cffi Safari → Chrome124 → Chrome → requests."""
+class FakeLibs(object):
+    """Dobles de curl_cffi y requests para ejercitar el transporte REAL (macfetch.curl_transport) sin red.
+    script: {etiqueta: [respuesta, …]} con etiqueta = perfil («safari17_0», «chrome124», «chrome») o «requests»;
+    respuesta = (status, headers) | Exception | ("SLOW", segundos) (consume ese tiempo y agota el timeout).
+    Cada llamada avanza el reloj simulado `cost` s y registra el timeout concedido."""
 
-    def fake_modules(self, script):
+    def __init__(self, script, clock, cost=0.1, body=b"x"):
         import types
-        seen = []
+        self.script, self.clock, self.cost, self.body = script, clock, cost, body
+        self.calls = []
 
         class R(object):
-            def __init__(self, st):
-                self.status_code, self.headers, self.content = st, {"Retry-After": "5"}, b"x"
+            def __init__(s2, st, hd, body):
+                s2.status_code, s2.headers, s2.content = st, hd, body
 
-        def creq(method, url, headers=None, data=None, timeout=None, impersonate=None):
-            seen.append(impersonate)
-            st = script.get(impersonate, 403)
-            if isinstance(st, Exception):
-                raise st
-            return R(st)
+        def serve(label, url, timeout, allow_redirects):
+            self.calls.append({"label": label, "url": url, "timeout": timeout, "allow_redirects": allow_redirects,
+                               "t": self.clock.t})
+            seq = self.script.get(label) or [(403, {})]
+            item = seq.pop(0) if len(seq) > 1 else seq[0]
+            if isinstance(item, tuple) and item[0] == "SLOW":
+                self.clock.t += min(item[1], timeout)
+                raise OSError("Operation timed out")
+            self.clock.t += self.cost
+            if isinstance(item, Exception):
+                raise item
+            st, hd = item[0], item[1]
+            body = item[2] if len(item) > 2 else self.body
+            return R(st, hd, body)
 
-        def req(method, url, headers=None, data=None, timeout=None):
-            seen.append("requests")
-            st = script.get("requests", 403)
-            if isinstance(st, Exception):
-                raise st
-            return R(st)
+        def creq(method, url, headers=None, data=None, timeout=None, impersonate=None, allow_redirects=True):
+            return serve(impersonate, url, timeout, allow_redirects)
+
+        def req(method, url, headers=None, data=None, timeout=None, allow_redirects=True):
+            return serve("requests", url, timeout, allow_redirects)
         cc = types.ModuleType("curl_cffi")
         cc.requests = types.SimpleNamespace(request=creq)
         rq = types.ModuleType("requests")
         rq.request = req
-        return {"curl_cffi": cc, "requests": rq}, seen
+        self.modules = {"curl_cffi": cc, "requests": rq}
 
-    def test_first_200_wins_in_original_order(self):
-        mods, seen = self.fake_modules({"safari17_0": 403, "chrome124": 200})
-        with mock.patch.dict(sys.modules, mods):
-            t = macfetch.curl_transport(log=lambda *a: None)
-            st, hdrs, body = t("GET", "https://x.invalid/", {}, None, 10, 30, 60)
-        self.assertEqual((st, seen), (200, ["safari17_0", "chrome124"]))
-        self.assertEqual(hdrs["retry-after"], "5")                              # cabeceras en minúscula para g8http
+    def labels(self):
+        return [c["label"] for c in self.calls]
 
-    def test_all_blocked_returns_last_status_for_classification(self):
-        mods, seen = self.fake_modules({})
-        with mock.patch.dict(sys.modules, mods):
-            st, _, _ = macfetch.curl_transport(log=lambda *a: None)("GET", "https://x.invalid/", {}, None, 10, 30, 60)
-        self.assertEqual(st, 403)
-        self.assertEqual(seen, ["safari17_0", "chrome124", "chrome", "requests"])
 
-    def test_network_errors_become_neterror(self):
-        from g8common import g8http
-        mods, seen = self.fake_modules({k: OSError("timed out") for k in ("safari17_0", "chrome124", "chrome", "requests")})
-        with mock.patch.dict(sys.modules, mods):
-            with self.assertRaises(g8http.NetError) as cm:
-                macfetch.curl_transport(log=lambda *a: None)("GET", "https://x.invalid/", {}, None, 10, 30, 60)
-        self.assertEqual(cm.exception.kind, "timeout")
+class CurlTransport(unittest.TestCase):
+    """B3-2 / B3-3 — transporte real del Mac con las bibliotecas HTTP sustituidas por dobles."""
+
+    def setUp(self):
+        self.clock = H.clock_at_now()
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+
+    def fetch(self, libs, budget=900):
+        with mock.patch.dict(sys.modules, libs.modules):
+            F = macfetch.Fetch("t", self.tmp, budget_s=budget, now=self.clock, sleep=self.clock.sleep, log=lambda *a: None)
+        return F
+
+    def get(self, F, libs, url="https://www.stat-search.boj.or.jp/api/x"):
+        with mock.patch.dict(sys.modules, libs.modules):
+            return F.get(url, timeout=45)
+
+    # selección legítima de transporte
+    def test_first_200_wins_in_original_order_without_library_redirects(self):
+        libs = FakeLibs({"safari17_0": [(200, {})]}, self.clock)
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+        self.assertEqual(libs.labels(), ["safari17_0"])
+        self.assertFalse(libs.calls[0]["allow_redirects"])
+
+    def test_waf_403_tries_next_profile(self):
+        libs = FakeLibs({"safari17_0": [(403, {})], "chrome124": [(200, {})]}, self.clock)
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+        self.assertEqual(libs.labels(), ["safari17_0", "chrome124"])
+
+    def test_all_profiles_blocked_is_fail_access_without_retries(self):
+        libs = FakeLibs({}, self.clock)
+        F = self.fetch(libs)
+        with self.assertRaises(macfetch.FetchError) as cm:
+            self.get(F, libs)
+        self.assertEqual(cm.exception.cls, "FAIL_ACCESS")
+        self.assertEqual(libs.labels(), ["safari17_0", "chrome124", "chrome", "requests"])
+        self.assertFalse(getattr(self.clock, "slept", []))
+
+    def test_network_error_tries_next_profile(self):
+        libs = FakeLibs({"safari17_0": [OSError("TLS handshake")], "chrome124": [(200, {})]}, self.clock)
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+
+    # B3-2: Retry-After nunca queda oculto tras otro perfil
+    def test_b3_2_retry_after_on_first_profile_single_request_persisted(self):
+        self._retry_after_first_profile(429)
+
+    def test_b3_2_503_with_retry_after_on_first_profile_single_request_persisted(self):
+        self._retry_after_first_profile(503)
+
+    def _retry_after_first_profile(self, status):
+        libs = FakeLibs({"safari17_0": [(status, {"Retry-After": "7200"}), (200, {})], "chrome124": [(200, {})]},
+                        self.clock)
+        F = self.fetch(libs)
+        with self.assertRaises(macfetch.FetchError) as cm:
+            self.get(F, libs)
+        self.assertEqual(cm.exception.cls, "DEFERRED")
+        self.assertEqual(libs.labels(), ["safari17_0"])                            # una sola petición
+        nb = json.load(open(os.path.join(self.tmp, "data", "_ingest", "not_before", "mac.json")))
+        self.assertTrue(nb["not_before"])
+        with self.assertRaises(macfetch.FetchError):                              # misma ejecución: bloqueado
+            self.get(F, libs)
+        self.clock.t += 3600
+        F2 = self.fetch(libs)                                                      # ejecución siguiente: bloqueado
+        with self.assertRaises(macfetch.FetchError) as cm2:
+            self.get(F2, libs)
+        self.assertEqual(cm2.exception.cls, "DEFERRED")
+        self.assertEqual(libs.labels(), ["safari17_0"])
+        self.clock.t += 3601                                                       # vencido: vuelve a consultar
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+
+    def test_b3_2_503_is_retried_by_g8http_not_masked_by_profiles(self):
+        libs = FakeLibs({"safari17_0": [(503, {}), (503, {}), (200, {})], "chrome124": [(200, {})]}, self.clock)
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+        self.assertEqual(libs.labels(), ["safari17_0"] * 3)
+        self.assertEqual(self.clock.slept, [10, 40])
+
+    def test_b3_2_redirect_followed_by_g8http_within_budget(self):
+        libs = FakeLibs({"safari17_0": [(302, {"Location": "https://www.stat-search.boj.or.jp/api/y"}), (200, {})]},
+                        self.clock)
+        self.assertEqual(self.get(self.fetch(libs), libs), b"x")
+        self.assertEqual([c["url"][-1] for c in libs.calls], ["x", "y"])
+
+    # B3-3: un solo plazo para toda la cadena
+    def test_b3_3_chain_respects_total_budget(self):
+        libs = FakeLibs({k: [("SLOW", 100)] for k in ("safari17_0", "chrome124", "chrome", "requests")}, self.clock)
+        F = self.fetch(libs, budget=10)
+        t0 = self.clock.t
+        with self.assertRaises(macfetch.FetchError):
+            self.get(F, libs)
+        spent = self.clock.t - t0
+        self.assertLessEqual(spent, 10 + 0.5)                                      # tolerancia explícita 0,5 s
+        self.assertLessEqual(sum(c["timeout"] for c in libs.calls), 10 + 1e-6)     # concesiones = remanentes
+        self.assertEqual(len(libs.calls), 1)                                       # nada tras agotar el plazo
+
+    def test_b3_3_fast_alternative_after_slow_one_completes_in_budget(self):
+        libs = FakeLibs({"safari17_0": [("SLOW", 6)], "chrome124": [(200, {})]}, self.clock)
+        F = self.fetch(libs, budget=10)
+        t0 = self.clock.t
+        self.assertEqual(self.get(F, libs), b"x")
+        self.assertLessEqual(self.clock.t - t0, 10)
+        self.assertLessEqual(libs.calls[1]["timeout"], 10 - 6 + 1e-6)             # solo el remanente
+
+    def test_b3_3_requests_fallback_gets_only_remaining(self):
+        libs = FakeLibs({"safari17_0": [("SLOW", 3)], "chrome124": [("SLOW", 3)], "chrome": [("SLOW", 3)],
+                         "requests": [(200, {})]}, self.clock)
+        F = self.fetch(libs, budget=10)
+        self.assertEqual(self.get(F, libs), b"x")
+        self.assertLessEqual(libs.calls[-1]["timeout"], 1 + 1e-6)
+
+    # integración de extremo a extremo con un descargador real del Mac
+    def test_end_to_end_tona_retry_after_then_blocked_next_run(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        os.makedirs(os.path.join(root, "data"))
+        orig = open(os.path.join(ROOT, "data", "TONA.csv"), "rb").read()
+        open(os.path.join(root, "data", "TONA.csv"), "wb").write(orig)
+        rows = [r for r in H.repo_rows("TONA.csv") if r[0] >= "20210901"] + [("20260924", "0.9770")]
+        ok = (200, {}, H.boj_json(rows))
+        libs = FakeLibs({"safari17_0": [(429, {"Retry-After": "7200"}), ok], "chrome124": [ok]}, self.clock)
+
+        def run():
+            macfetch.TEST_CLOCK = self.clock
+            try:
+                with mock.patch.dict(sys.modules, libs.modules):
+                    mod = load(os.path.join(ROOT, "mac", "fetch_tona_mac.py"), "tona_e2e")
+                    mod.OUT = os.path.join(root, "data", "TONA.csv")
+                    mod.datetime = H.fixed_dt(H.NOW)
+                    with redirect_stdout(io.StringIO()):
+                        return mod.main()
+            finally:
+                macfetch.TEST_CLOCK = None
+        self.assertEqual(run(), 1)
+        self.assertEqual(libs.labels(), ["safari17_0"])
+        self.assertEqual(H.read(root, "TONA.csv"), orig)
+        st = json.load(open(os.path.join(root, "state", "fetch_tona.json")))
+        self.assertIn("DEFERRED", " ".join(st["errors"]))
+        self.clock.t += 600
+        self.assertEqual(run(), 1)                                                 # siguiente ejecución: sin peticiones
+        self.assertEqual(libs.labels(), ["safari17_0"])
+        self.clock.t += 7200
+        self.assertEqual(run(), 0)                                                 # vencido: descarga y escribe
+        self.assertIn(b"20260924", H.read(root, "TONA.csv"))
+        st = json.load(open(os.path.join(root, "state", "fetch_tona.json")))
+        self.assertEqual(st["files"]["TONA.csv"]["max_date"], "20260924")         # B3-4 en el registro real
+
+
+class WriteMetadata(unittest.TestCase):
+    """B3-4 — max_date del registro = fecha máxima del CSV efectivamente escrito."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.F = macfetch.Fetch("t", self.tmp, transport=lambda *a: None, log=lambda *a: None)
+        self.p = os.path.join(self.tmp, "data", "X.csv")
+
+    def check(self):
+        written = S.parse(open(self.p, "rb").read())
+        self.assertEqual(self.F.files["X.csv"]["max_date"], written.max_date)
+        return self.F.files["X.csv"]
+
+    def test_new_file(self):
+        self.F.write(self.p, b"Date,Value\n2026-09-24,1.0\n", expect_header=["Date", "Value"])
+        self.assertEqual(self.check()["max_date"], "20260924")
+
+    def test_replacement_without_kept_rows(self):
+        self.F.write(self.p, b"Date,Value\n2026-09-23,1.0\n", expect_header=["Date", "Value"])
+        self.F.write(self.p, b"Date,Value\n2026-09-23,1.0\n2026-09-24,1.1\n", expect_header=["Date", "Value"])
+        rec = self.check()
+        self.assertEqual((rec["max_date"], rec["kept_from_previous"]), ("20260924", 0))
+
+    def test_union_with_kept_history(self):
+        self.F.write(self.p, b"Date,Value\n2026-09-20,1.0\n2026-09-25,1.2\n", expect_header=["Date", "Value"])
+        self.F.write(self.p, b"Date,Value\n2026-09-24,1.1\n", expect_header=["Date", "Value"])
+        rec = self.check()
+        self.assertEqual((rec["max_date"], rec["kept_from_previous"]), ("20260925", 2))
 
 
 class HeartbeatDetail(unittest.TestCase):

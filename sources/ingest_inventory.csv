@@ -2,7 +2,7 @@ script,executor,workflow,outputs,estado,p4_http,p6_publicacion,registro_avisos,n
 scripts/fetch_sofr.py,actions,daily_update.yml,SOFR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_sofr.json + ingest_watch,
 scripts/fetch_estr.py,actions,daily_update.yml,ESTR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_estr.json + ingest_watch,
 scripts/fetch_sonia.py,actions,daily_update.yml,SONIA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_sonia.json + ingest_watch,
-scripts/fetch_tona.py,actions,daily_update.yml,TONA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_tona.json + ingest_watch,El BoJ rechaza IP de centro de datos desde el 16-sep: TONA se publica desde el Mac (fetch_tona_mac); decisión D-C (un solo escritor) pendiente
+scripts/fetch_tona.py,actions,daily_update.yml,TONA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_tona.json + ingest_watch,Sin actualizar desde el 16-sep; causa SIN VERIFICAR (hipótesis: bloqueo de IP de centro de datos por el BoJ; pendiente de la sonda F8). TONA también se descarga en el Mac (fetch_tona_mac); decisión D-C (un solo escritor) pendiente
 scripts/fetch_corra.py,actions,daily_update.yml,CORRA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_corra.json + ingest_watch,
 scripts/fetch_aonia.py,actions,daily_update.yml,AONIA.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_aonia.json + ingest_watch,
 scripts/fetch_bis_ocr.py,actions,daily_update.yml,NZD_OCR.csv,CUBIERTO_3A,g8http (Ingest),Ingest.publish,actions__fetch_bis_ocr.json + ingest_watch,
