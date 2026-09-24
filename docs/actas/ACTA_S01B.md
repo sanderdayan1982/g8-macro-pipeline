@@ -179,3 +179,16 @@ la del 22-sep y la 3 será el `--final` del 23-sep a las 21:30 UTC. El ON de AUD
 **Guard.** `s01b.py` v1.3.1: `--final` evalúa la sesión solo desde `FINAL_EARLIEST_UTC = 20` (20:00 UTC, tras FRED H.15); antes se
 comporta como provisional y lo dice en el log (`EARLY_FINAL`). `--force-final` lo anula a propósito; `--date` (pruebas) está exento.
 Motor intacto: suite 25/25, `equiv_s01b_e2.py` 21/22-sep EQUIVALENT.
+
+## Enmienda E3 (2026-09-24) — CHF nominal diario · etiquetas de cadencia (solo contexto)
+
+Pedido del operador: «la sección §01-b tiene feed desactualizado, actualízalos todos».
+
+| Campo | Causa | Reparación | Afecta al detector |
+|---|---|---|---|
+| CHF nominal / RESID | s01b leía `CHF_SPOT_10Y.csv` (curva SNB mensual, fin 31-08) → «atrasado» un mes | `NOM_FILES["CHF"] = CHF_NOM_10Y.csv` (SNB 10Y diario: curva fin de mes + RSS R10), la misma serie que usan la §01 y el NOWCAST del ACM CHF | No (CHF solo lectura) |
+| CHF 2Y | Solo existe en la curva mensual del SNB | Sin cambio de dato; el dashboard lo rotula «mensual SNB dd-mm» en gris | No |
+| AUD 2Y / nominal / BE | La RBA publica F2 una vez por semana (viernes, datos hasta el miércoles) | Sin cambio de dato ni de Δ; el dashboard rotula «semanal RBA dd-mm» en gris si el retraso ≤ 8 d.h. (más allá sigue «atrasado») | No |
+| JPY / NZD NO_DATA el 23-sep | ACM a 17-sep: MoF publicó el 18-sep a las 23:58 UTC del 23 (tras los festivos JP) y los CSV de NZD no se subieron del 19 al 23 (PAT caducado, luego timeout) | Datos NZD/TONA subidos el 24-sep desde el Mac; el ACM se recalcula en la pasada normal de la noche | No |
+
+Verificación: suite de regresión 35 OK; equivalencia E2 sobre 21 y 22-sep (real y sintética) EQUIVALENT ×4; replays 21/22/23-sep exactos con su motor archivado; dry-run 23-sep: CHF nominal OK (0,575, lag 0), RESID 0,31 pb. C no se reinicia; logs y snaps intactos. Versión: s01b v1.3.2.
