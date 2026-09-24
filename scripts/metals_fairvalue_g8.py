@@ -90,6 +90,9 @@ import ssl
 import urllib.request
 
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from g8common import legacy as _g8legacy  # noqa: E402  (F7: HTTP común)
 import pandas as pd
 from scipy import stats
 
@@ -156,29 +159,15 @@ FRED_TGA     = "WTREGEN"      # Treasury General Account (NFA, se RESTA)
 # (interceptación TLS, común en redes corporativas/regionales — da
 # CERTIFICATE_VERIFY_FAILED self-signed), se reintenta con verificación relajada.
 # Esto NO afecta la integridad del dato (FRED/Tesoro son fuentes públicas read-only).
-_SSL_STRICT = ssl.create_default_context()
-_SSL_RELAXED = ssl.create_default_context()
-_SSL_RELAXED.check_hostname = False
-_SSL_RELAXED.verify_mode = ssl.CERT_NONE
+# F7 (2026-09-24): eliminado el reintento «sin verificación TLS». La verificación es siempre estricta;
+# para una ejecución MANUAL tras un proxy que re-firma TLS existe G8_ALLOW_INSECURE_TLS=1 (g8http), nunca en Actions.
 
 
 def _http_get(url, timeout=90, retries=3, headers=None):
-    last = None
-    for attempt in range(1, retries + 1):
-        # en el primer intento prueba estricto; si falla por SSL, relaja en el siguiente
-        ctx = _SSL_STRICT if attempt == 1 else _SSL_RELAXED
-        try:
-            req = urllib.request.Request(url, headers={**UA, **(headers or {})})
-            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
-                return r.read().decode("utf-8", errors="replace")
-        except Exception as e:                                     # noqa: BLE001
-            last = e
-            is_ssl = "CERTIFICATE" in str(e) or "SSL" in str(e)
-            wait = 2 if is_ssl else 5 * (2 ** (attempt - 1))
-            note = " (SSL: reintento sin verificación — proxy con cert propio)" if is_ssl else ""
-            print(f"    [http] attempt {attempt} failed ({e}){note} — retry in {wait}s")
-            time.sleep(wait)
-    raise RuntimeError(f"HTTP failed after {retries} attempts: {url} :: {last}")
+    """F7 (2026-09-24): g8http debajo — sin reintentos de 4xx, Retry-After respetado, TLS verificado,
+    presupuesto del script. `retries` se conserva por compatibilidad de firma (la política es la de g8http)."""
+    return _g8legacy.http_get_text(url, timeout=timeout, headers={**UA, **(headers or {})},
+                                   budget_obj=_g8legacy.budget('metals_fairvalue_g8', 900))
 
 
 def fetch_fred(series_id, start=START, freq=None):
@@ -187,16 +176,25 @@ def fetch_fred(series_id, start=START, freq=None):
     freq: si se da ('d','w','m','q'), pide a FRED esa frecuencia."""
     api_key = os.environ.get("FRED_API_KEY", "").strip()
     fq = f"&frequency={freq}" if freq else ""
+    raw = None
     if api_key:
         url = ("https://api.stlouisfed.org/fred/series/observations"
                f"?series_id={series_id}&api_key={api_key}"
                f"&file_type=json&observation_start={start}{fq}")
-        raw = _http_get(url)
+        try:
+            raw = _http_get(url)
+        except _g8legacy.LegacyHTTPError as e:            # F7: clave rechazada → endpoint sin clave, visible
+            if e.cls != "FAIL_AUTH":
+                raise
+            print("::error title=FRED_API_KEY::FRED rechaza la clave (FAIL_AUTH) en %s; se usa fredgraph sin clave" % series_id)
+            raw = None
+    s = None
+    if api_key and raw is not None:
         obs = json.loads(raw)["observations"]
         df = pd.DataFrame(obs)[["date", "value"]]
         df["date"] = pd.to_datetime(df["date"])
         s = pd.to_numeric(df.set_index("date")["value"], errors="coerce").dropna()
-    else:
+    if s is None:
         url = (f"https://fred.stlouisfed.org/graph/fredgraph.csv"
                f"?id={series_id}&cosd={start}{fq}")
         raw = _http_get(url)

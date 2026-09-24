@@ -178,8 +178,13 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
     u = urllib.parse.urlsplit(url)
     path = (u.path or "/") + ("?" + u.query if u.query else "")
     if u.scheme == "https":
-        conn = http.client.HTTPSConnection(u.hostname, u.port, timeout=connect_timeout,
-                                           context=ssl.create_default_context())
+        ctx = ssl.create_default_context()
+        if os.environ.get("G8_ALLOW_INSECURE_TLS") == "1":
+            # SOLO para ejecuciones manuales en una red con proxy que re-firma TLS (p. ej. la red local en
+            # Bata). Nunca se define en los workflows (lo comprueba tests/test_f7.py). Queda registrado.
+            ctx = ssl._create_unverified_context()
+            print("[g8http] AVISO: verificación TLS DESACTIVADA por G8_ALLOW_INSECURE_TLS=1 → %s" % redact(url))
+        conn = http.client.HTTPSConnection(u.hostname, u.port, timeout=connect_timeout, context=ctx)
     elif u.scheme == "http":
         conn = http.client.HTTPConnection(u.hostname, u.port, timeout=connect_timeout)
     else:

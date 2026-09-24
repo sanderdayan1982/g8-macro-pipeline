@@ -55,6 +55,9 @@ import time
 import urllib.request
 
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from g8common import legacy as _g8legacy  # noqa: E402  (F7: HTTP común)
 import pandas as pd
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
@@ -80,18 +83,10 @@ UA = {"User-Agent": "Mozilla/5.0 (g8-macro-pipeline acm_g8/2.0)"}
 
 # ============================================================== generic fetchers
 def _http_get(url, timeout=90, retries=3):
-    last = None
-    for attempt in range(1, retries + 1):
-        try:
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read().decode("utf-8", errors="replace")
-        except Exception as e:                                     # noqa: BLE001
-            last = e
-            wait = 5 * (2 ** (attempt - 1))
-            print(f"    [http] attempt {attempt} failed ({e}) — retry in {wait}s")
-            time.sleep(wait)
-    raise RuntimeError(f"HTTP failed after {retries} attempts: {url} :: {last}")
+    """F7 (2026-09-24): g8http debajo — sin reintentos de 4xx, Retry-After respetado, TLS verificado,
+    presupuesto del script. `retries` se conserva por compatibilidad de firma (la política es la de g8http)."""
+    return _g8legacy.http_get_text(url, timeout=timeout, headers=UA,
+                                   budget_obj=_g8legacy.budget('acm_g8', 1200))
 
 
 def fetch_fred(series_id, start="1962-01-01"):
@@ -99,17 +94,26 @@ def fetch_fred(series_id, start="1962-01-01"):
     reliable for long histories). Fallback: fredgraph.csv (no key, but times
     out on multi-decade requests from GitHub Actions runners)."""
     api_key = os.environ.get("FRED_API_KEY", "").strip()
+    raw = None
     if api_key:
         url = ("https://api.stlouisfed.org/fred/series/observations"
                f"?series_id={series_id}&api_key={api_key}"
                f"&file_type=json&observation_start={start}")
-        raw = _http_get(url)
+        try:
+            raw = _http_get(url)
+        except _g8legacy.LegacyHTTPError as e:            # F7: clave rechazada → endpoint sin clave, visible
+            if e.cls != "FAIL_AUTH":
+                raise
+            print("::error title=FRED_API_KEY::FRED rechaza la clave (FAIL_AUTH) en %s; se usa fredgraph sin clave" % series_id)
+            raw = None
+    s = None
+    if api_key and raw is not None:
         import json
         obs = json.loads(raw)["observations"]
         df = pd.DataFrame(obs)[["date", "value"]]
         df["date"] = pd.to_datetime(df["date"])
         s = pd.to_numeric(df.set_index("date")["value"], errors="coerce").dropna()
-    else:
+    if s is None:
         url = (f"https://fred.stlouisfed.org/graph/fredgraph.csv"
                f"?id={series_id}&cosd={start}")
         raw = _http_get(url)
@@ -246,9 +250,8 @@ def fetch_rba_xls(urls, series_id):
         content, last = None, None
         for url in urls:
             try:
-                req = urllib.request.Request(url, headers=UA)
-                with urllib.request.urlopen(req, timeout=90) as r:
-                    content = r.read()
+                content = _g8legacy.http_get_bytes(url, timeout=90, headers=UA,
+                                                   budget_obj=_g8legacy.budget('acm_g8', 1200))   # F7
                 print(f"    [RBA] using {url}")
                 break
             except Exception as e:                                 # noqa: BLE001

@@ -29,6 +29,9 @@ import time
 import urllib.request
 import urllib.error
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from g8common import legacy as _g8legacy  # noqa: E402  (F7: HTTP común)
+
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 START = "2021-06-01"
 FRED_KEY = os.environ.get("FRED_API_KEY", "").strip()
@@ -37,19 +40,8 @@ UA = {"User-Agent": "Mozilla/5.0 (g8-macro-pipeline floor-spreads)"}
 
 
 def http_get(url, retries=3, timeout=60):
-    last = None
-    for i in range(1, retries + 1):
-        try:
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read().decode("utf-8", errors="replace")
-        except Exception as e:  # noqa: BLE001
-            last = e
-            if i < retries:
-                wait = 5 * (2 ** (i - 1))
-                print(f"    [http] attempt {i} failed ({e}) — retry in {wait}s")
-                time.sleep(wait)
-    raise RuntimeError(f"HTTP failed after {retries} attempts: {url} :: {last}")
+    """F7 (2026-09-24): g8http debajo (sin reintentos de 4xx, Retry-After, TLS verificado, presupuesto)."""
+    return _g8legacy.http_get_text(url, timeout=timeout, headers=UA, budget_obj=_g8legacy.budget("fetch_floor_spreads", 6 * 60))
 
 
 def write_ohlcv(name, series):
@@ -67,14 +59,30 @@ def write_ohlcv(name, series):
 # ── USD: FRED IORB ──────────────────────────────────────────────────────────
 
 def fetch_usd():
-    if not FRED_KEY:
-        raise RuntimeError("FRED_API_KEY not set")
-    url = ("https://api.stlouisfed.org/fred/series/observations"
-           f"?series_id=IORB&api_key={FRED_KEY}&file_type=json"
-           f"&observation_start={START}")
-    data = json.loads(http_get(url))
-    out = [(o["date"], float(o["value"]))
-           for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
+    out = None
+    if FRED_KEY:
+        url = ("https://api.stlouisfed.org/fred/series/observations"
+               f"?series_id=IORB&api_key={FRED_KEY}&file_type=json"
+               f"&observation_start={START}")
+        try:
+            data = json.loads(http_get(url))
+            out = [(o["date"], float(o["value"]))
+                   for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
+        except _g8legacy.LegacyHTTPError as e:              # F7: clave rechazada → endpoint sin clave, visible
+            if e.cls != "FAIL_AUTH":
+                raise
+            print("::error title=FRED_API_KEY::FRED rechaza la clave (FAIL_AUTH) en IORB; se usa fredgraph sin clave")
+    else:
+        print("::warning title=FRED_API_KEY::FRED_API_KEY no definida; IORB por fredgraph sin clave")
+    if out is None:
+        text = http_get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=IORB&cosd={START}")
+        out = []
+        for row in csv.reader(io.StringIO(text)):
+            if len(row) >= 2 and len(row[0]) == 10 and row[0][4] == "-" and row[1] not in (".", ""):
+                try:
+                    out.append((row[0], float(row[1])))
+                except ValueError:
+                    continue
     if len(out) < 500:
         raise RuntimeError(f"IORB too short: {len(out)} obs")
     print(f"    [FRED IORB] {len(out)} obs  {out[0][0]} → {out[-1][0]}")

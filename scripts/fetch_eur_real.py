@@ -105,7 +105,10 @@ def _open(url, timeout=60):
         return urllib.request.urlopen(req, timeout=timeout)
     except urllib.error.URLError as e:
         reason = getattr(e, "reason", "")
-        if "CERTIFICATE_VERIFY_FAILED" in str(reason) or isinstance(reason, ssl.SSLError):
+        # F7 (2026-09-24): el reintento sin verificación TLS solo con G8_ALLOW_INSECURE_TLS=1 (ejecución manual
+        # tras un proxy con certificado propio). En Actions un fallo de certificado es un error visible.
+        if os.environ.get("G8_ALLOW_INSECURE_TLS") == "1" and (
+                "CERTIFICATE_VERIFY_FAILED" in str(reason) or isinstance(reason, ssl.SSLError)):
             sys.stderr.write("[ssl] verify fallo -> reintento sin verificacion (red local)\n")
             ctx = ssl._create_unverified_context()
             return urllib.request.urlopen(req, timeout=timeout, context=ctx)
