@@ -1,6 +1,6 @@
 """Verificación inversa de la revisión del 24-sep: los MISMOS escenarios de repro_revision.py (datos ficticios,
 sin red, solo directorios temporales), pero comprobando el comportamiento CORREGIDO. Cada caso es independiente;
-salida JSON con ok/fallo por hallazgo; código 0 solo si pasan los siete de la primera revisión los cuatro de la segunda (R2-1…R2-4) y los tres de la tercera (R3-1…R3-3).
+salida JSON con ok/fallo por hallazgo; código 0 solo si pasan los siete de la primera revisión los cuatro de la segunda (R2-1…R2-4) los tres de la tercera (R3-1…R3-3) y R4-1.
 
     python tests/review/verificar_hallazgos.py [raíz_del_repo]
 """
@@ -370,6 +370,11 @@ def _():
 @case("R3-3_sin_exito_nunca_inicializado")
 def _():
     return _run_tests("test_actions_watch_integration", ("test_r3_3",))
+
+
+@case("R4-1_comilla_sin_cerrar")
+def _():
+    return _run_tests("test_step_guard", ("test_r4_1", "test_r3_1_every_current_data_file"))
 
 
 print(json.dumps(results, ensure_ascii=False, indent=1))

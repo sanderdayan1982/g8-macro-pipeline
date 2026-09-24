@@ -241,6 +241,45 @@ sys.exit(1)
                     bad.append((p, why))
         self.assertEqual(bad, [])
 
+    # ── R4-1: comilla sin cerrar (lector CSV estricto) ──────────────────────────────────────────────
+    AUX_OLD = b'pair,score,note\nEURUSD,1,"cierre ok"\n'
+    AUX_OPEN = b'pair,score,note\nEURUSD,1,"texto sin comilla de cierre\n'
+    AUX_MULTI = b'pair,score,note\nEURUSD,1,"linea 1\nlinea 2, con coma"\nGBPUSD,2,x\n'
+
+    def _write_step(self, target, content, rc):
+        body = "import sys\nopen(sys.argv[2], 'wb').write(%r)\nsys.exit(%d)\n" % (content, rc)
+        return self.step("aux", self.script("aux_%d.py" % rc, body), target)
+
+    def test_r4_1_unclosed_quote_existing_file_restored(self):
+        aux = os.path.join(self.data, "AUX.csv")
+        open(aux, "wb").write(self.AUX_OLD)
+        self.assertEqual(self._write_step(aux, self.AUX_OPEN, 1), 1)
+        self.assertEqual(open(aux, "rb").read(), self.AUX_OLD)                              # byte a byte
+        rec = self.records()[-1]
+        self.assertEqual(rec["status"], "FAILED")
+        self.assertNotIn("kept_valid_outputs", rec)
+        self.assertIn("CSV mal formado", rec["restored"][0]["reason"])
+        self.assertEqual(self.staged("AUX.csv"), self.AUX_OLD)
+
+    def test_r4_1_unclosed_quote_new_file_retired(self):
+        aux = os.path.join(self.data, "AUX_NEW.csv")
+        self.assertEqual(self._write_step(aux, self.AUX_OPEN, 0), 0)                       # incluso con código 0
+        self.assertFalse(os.path.exists(aux))
+        self.assertEqual(self.records()[-1]["restored"][0]["action"], "retirado (nuevo)")
+        with open(os.path.join(self.t, "x.csv"), "wb") as fh:
+            fh.write(self.AUX_OPEN)
+        self.assertIn("CSV mal formado", g8step.validate(None, os.path.join(self.t, "x.csv")))
+
+    def test_r4_1_legitimate_multiline_quoted_field_kept(self):
+        aux = os.path.join(self.data, "AUX.csv")
+        open(aux, "wb").write(self.AUX_OLD)
+        self.assertEqual(self._write_step(aux, self.AUX_MULTI, 1), 1)                      # fallo parcial normal
+        self.assertEqual(open(aux, "rb").read(), self.AUX_MULTI)                            # completo y válido
+        self.assertEqual(self.records()[-1]["kept_valid_outputs"], ["AUX.csv"])
+        new = os.path.join(self.data, "AUX_MULTI_NEW.csv")
+        self.assertEqual(self._write_step(new, self.AUX_MULTI, 0), 0)
+        self.assertEqual(open(new, "rb").read(), self.AUX_MULTI)
+
     def test_reviewer_repro_r3_1(self):
         open(self.q, "wb").write(self.V)
         rc = self.step("us_bills", self._partial_writer("SIGTERM"), self.q)

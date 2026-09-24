@@ -23,8 +23,9 @@ borró se reconcilia:
     se restaura TODO lo que cambió (la salida no es fiable: escritura a medias),
     salvo los registros de data/_ingest/ (escritura atómica), que se validan como abajo;
   · paso terminado normalmente (código 0 o ≠0) → se conserva solo lo VÁLIDO según el contrato de su tipo
-    (función validate: CSV completo y rectangular con salto final, serie legible sin retroceso, JSON/JSONL
-    completos), también para ficheros NUEVOS; un fichero borrado se repone. Lo inválido se restaura.
+    (función validate: CSV de sintaxis estricta, rectangular y con salto final; serie legible sin retroceso;
+    JSON/JSONL completos), también para ficheros NUEVOS; un fichero borrado se repone. Lo inválido se restaura.
+    Estas comprobaciones son necesarias, no una prueba de escritura completa (ver _csv_contract).
 Así `git add data/` solo ve salidas válidas. Todo lo restaurado (o no restaurable) queda en el registro y en el
 aviso de ingest_watch.
 
@@ -196,8 +197,13 @@ def _read(path):
 
 def _csv_contract(data):
     """Contrato GENÉRICO de un CSV (vale también para los ficheros auxiliares): texto UTF-8, no HTML/XML,
-    cabecera, TODAS las filas con el mismo número de campos que la cabecera y terminado en salto de línea
-    (evidencia de que el escritor cerró la última fila). → None o el motivo."""
+    cabecera, sintaxis CSV estricta (csv.reader con strict=True: una comilla sin cerrar es un error, no un
+    campo abierto hasta el final del fichero), TODAS las filas con el mismo número de campos que la cabecera y
+    terminado en salto de línea. Son condiciones NECESARIAS del formato que escriben nuestros escritores
+    (csv.writer / pandas); detectan los cortes habituales, pero no DEMUESTRAN por sí solas que el escritor
+    completara el documento: un corte justo tras un salto de línea deja un CSV bien formado con menos filas.
+    Esa parte la cubren la restauración ante terminación abrupta y, en las series, la regla de no retroceso.
+    → None o el motivo."""
     import csv
     import io
     try:
@@ -208,7 +214,7 @@ def _csv_contract(data):
     if head == "<":
         return "contenido HTML/XML en lugar de CSV"
     try:
-        rows = [r for r in csv.reader(io.StringIO(txt)) if r and not (len(r) == 1 and not r[0].strip())]
+        rows = [r for r in csv.reader(io.StringIO(txt), strict=True) if r and not (len(r) == 1 and not r[0].strip())]
     except csv.Error as e:
         return "CSV mal formado: %s" % e
     body = [r for r in rows if not r[0].startswith("#")]
