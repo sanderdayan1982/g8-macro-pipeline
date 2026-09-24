@@ -2,6 +2,11 @@
 """ingest_watch.py — v1.1 (revisión 24-sep) · vigilancia desde Actions de ejecutores externos, descargadores de
 Actions, plazos del job y credenciales.
 
+v1.2 (segunda revisión, R2-3/R2-4): fallo FINAL de cada descargador (tras reintentos y alternativas; un
+  intento intermedio recuperado no avisa; un aplazamiento por Retry-After tampoco), pasos del job fallidos o
+  con salidas restauradas, y SILENCIO: un registro que envejece genera aviso de ausencia de ejecución y nunca
+  «resuelto»; un aviso cuyo registro desaparece se mantiene; solo una retirada explícita en
+  sources/actions_jobs.csv lo cierra, y se anuncia como «retirado», no como recuperado.
 v1.1 (hallazgo #4): también lee los registros de los descargadores de Actions (data/_ingest/latest/actions__*.json)
   y su cuarentena (data/_ingest/quarantine/<FICHERO>.json): candidato retenido (T06) → aviso con su id, fecha,
   valor y motivo, deduplicado (un aviso por fichero; cambia si cambia el conjunto de candidatos), recordatorio
@@ -131,7 +136,8 @@ def check_executors(root, now_utc, alerts, info):
             alerts["%s:token" % key] = "%s: el token de GitHub caduca en %.1f días (%s)" % (ex, cred["days_left"], cred.get("expires_utc"))
 
 
-ACTIONS_MAX_AGE_H = 7 * 24          # punteros más antiguos no se consideran (descargador retirado o renombrado)
+DEFAULT_MAX_SILENCE_H = 96        # Daily: lun–vie; 96 h cubren el fin de semana. PROVISIONAL (sources/actions_jobs.csv)
+QUIET_CLS = {"OK", "DEFERRED", "NO_PUBLICATION"}
 
 
 def _load(path):
@@ -139,12 +145,54 @@ def _load(path):
         return json.load(fh)
 
 
-def check_actions(root, now_utc, alerts, info):
-    """Descargadores de Actions: cuarentena pendiente, descargas inválidas y límites de tiempo del job."""
+def load_jobs(root):
+    """sources/actions_jobs.csv → {job: {status, max_silence_h}}; fila «*» = valores por defecto.
+    Retirar un descargador es EXPLÍCITO (status RETIRED): su silencio no es una recuperación."""
+    out = {"*": {"status": "ACTIVE", "max_silence_h": DEFAULT_MAX_SILENCE_H}}
+    p = os.path.join(root, "sources", "actions_jobs.csv")
+    if os.path.exists(p):
+        for r in _read_csv(p):
+            out[r["job"].strip()] = {"status": (r.get("status") or "ACTIVE").strip().upper(),
+                                     "max_silence_h": float(r.get("max_silence_h") or DEFAULT_MAX_SILENCE_H)}
+    return out
+
+
+def _job_cfg(jobs, job):
+    return jobs.get(job) or jobs["*"]
+
+
+def _failure_text(rec):
+    """Estado FINAL de una ejecución fallida (tras reintentos y alternativas), o None si no es un fallo."""
+    if not rec.get("rc"):
+        return None                                   # terminó bien: un intento intermedio fallido no cuenta
+    files = rec.get("files") or {}
+    if any(v.get("status") in ("INVALID", "REGRESSION_BLOCKED") for v in files.values()):
+        return None                                   # ya tiene su propio aviso (fichero rechazado)
+    reqs = rec.get("requests") or []
+    last_bad = next((r for r in reversed(reqs) if r.get("cls") not in QUIET_CLS), None)
+    if last_bad is None and reqs and all(r.get("cls") in ("DEFERRED", "NO_PUBLICATION") for r in reqs) and not files:
+        return None                                   # aplazamiento o sin publicación: espera prevista, no fallo
+    if last_bad is not None:
+        return "descarga fallida — %s %s (%s)" % (last_bad.get("cls"), (last_bad.get("detail") or "")[:120],
+                                                 last_bad.get("url", "")[:120])
+    if reqs:
+        return "el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla)"
+    return "el script terminó con error sin llegar a descargar"
+
+
+def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=None):
+    """Descargadores de Actions: cuarentena, fallos finales, ficheros rechazados, pasos del job cortados,
+    fallidos o con salidas restauradas, y SILENCIO. Nada se da por resuelto sin un registro posterior que lo
+    demuestre (R2-4): si el registro envejece se avisa de ausencia de ejecución; si desaparece, se mantiene el
+    aviso; solo una retirada explícita (sources/actions_jobs.csv) lo cierra como «retirado»."""
+    prev_active = prev_active or {}
+    retired_keys = retired_keys if retired_keys is not None else set()
+    jobs = load_jobs(root)
+    sources = {}                                      # clave de aviso → (fichero de origen, job)
     qdir = os.path.join(root, "data", "_ingest", "quarantine")
     if os.path.isdir(qdir):
         for n in sorted(os.listdir(qdir)):
-            if not n.endswith(".csv.json"):                  # <FAMILIA>.json es del Mac: ya lo cubre su latido
+            if not n.endswith(".csv.json"):           # <FAMILIA>.json es del Mac: ya lo cubre su latido
                 continue
             try:
                 doc = _load(os.path.join(qdir, n))
@@ -162,9 +210,9 @@ def check_actions(root, now_utc, alerts, info):
                             c.get("date"), c.get("value"), c.get("previous_value"), (c.get("reason") or "")[:60],
                             c.get("id")) for c in pend[:4]) + (" …" if len(pend) > 4 else ""), fname))
     ldir = os.path.join(root, runlog.LATEST_DIR)
-    if not os.path.isdir(ldir):
-        return
-    for n in sorted(os.listdir(ldir)):
+    names = sorted(os.listdir(ldir)) if os.path.isdir(ldir) else []
+    pointers, ledgers = {}, {}
+    for n in names:
         if not (n.startswith("actions__") and n.endswith(".json")):
             continue
         try:
@@ -172,26 +220,103 @@ def check_actions(root, now_utc, alerts, info):
         except ValueError:
             alerts["actions:latest:%s:unreadable" % n] = "Registro ilegible: %s/%s" % (runlog.LATEST_DIR, n)
             continue
-        when = rec.get("finished_utc") or rec.get("written_utc")
-        try:
-            if when and (now_utc - _parse(when)).total_seconds() > ACTIONS_MAX_AGE_H * 3600:
-                continue
-        except ValueError:
-            pass
         if n.startswith("actions__job_"):
-            lim = rec.get("time_limited") or []
-            if lim:
-                alerts["actions:job:%s:time" % rec.get("job")] = (
-                    "Actions %s: %d paso(s) sin terminar por el plazo global del job: %s. Esos feeds no se "
-                    "actualizaron en esta ejecución." % (rec.get("job"), len(lim), ", ".join(
-                        "%s %s" % (x["name"], x["status"]) for x in lim[:8])))
+            ledgers[n[len("actions__job_"):-5]] = rec
+        else:
+            pointers[rec.get("job") or n[len("actions__"):-5]] = rec
+    covered = set()                                   # (run de GitHub, paso) ya cubiertos por el registro del descargador
+    for job, rec in sorted(pointers.items()):
+        cfg = _job_cfg(jobs, job)
+        if cfg["status"] == "RETIRED":
             continue
-        job = rec.get("job") or n[len("actions__"):-5]
+        if rec.get("step") and rec.get("gh_run_id"):
+            covered.add((str(rec["gh_run_id"]), rec["step"]))
+        _silence(alerts, "actions:%s:silence" % job, "Actions %s" % job, rec.get("finished_utc"), cfg, now_utc)
         for fname, fr in sorted((rec.get("files") or {}).items()):
             if fr.get("status") in ("INVALID", "REGRESSION_BLOCKED"):
                 alerts["actions:%s:%s:%s" % (job, fname, fr["status"].lower())] = (
                     "Actions %s → %s: %s, se conserva lo publicado — %s" % (
                         job, fname, fr["status"], (fr.get("detail") or "")[:200]))
+        lok = rec.get("last_ok_utc")
+        if lok and rec.get("rc"):
+            try:
+                age = (now_utc - _parse(lok)).total_seconds() / 3600.0
+            except ValueError:
+                age = 0
+            if age > cfg["max_silence_h"]:
+                alerts["actions:%s:no_success" % job] = (
+                    "Actions %s: sin ninguna descarga correcta desde %s (límite %.0f h), aunque el job se ejecuta "
+                    "(fallos o aplazamientos repetidos)." % (job, lok, cfg["max_silence_h"]))
+        why = _failure_text(rec)
+        if why:
+            alerts["actions:%s:fail" % job] = "Actions %s (%s): %s. Se conserva lo publicado; el dato no se actualizó." % (
+                job, rec.get("finished_utc"), why)
+    for job, led in sorted(ledgers.items()):
+        cfg = _job_cfg(jobs, "job_" + job)
+        if cfg["status"] == "RETIRED":
+            continue
+        _silence(alerts, "actions:job:%s:silence" % job, "Workflow %s" % job, led.get("written_utc"), cfg, now_utc)
+        lim = led.get("time_limited") or []
+        if lim:
+            alerts["actions:job:%s:time" % job] = (
+                "Actions %s: %d paso(s) sin terminar por el plazo global del job: %s. Esos feeds no se "
+                "actualizaron en esta ejecución." % (job, len(lim), ", ".join("%s %s" % (x["name"], x["status"]) for x in lim[:8])))
+        run = str(led.get("run_id"))
+        for st in led.get("failed") or []:
+            if (run, st["name"]) in covered:
+                continue                              # su descargador ya informa del fallo con más detalle
+            alerts["actions:job:%s:step:%s" % (job, st["name"])] = (
+                "Actions %s: el paso %s terminó con código %s (ver el registro del job). Sus salidas válidas se "
+                "conservan; las inválidas se restauraron al último válido." % (job, st["name"], st.get("rc")))
+        rest = led.get("restored") or []
+        if rest:
+            alerts["actions:job:%s:restored" % job] = (
+                "Actions %s: %d salida(s) restaurada(s) al último válido: %s" % (job, len(rest), "; ".join(
+                    "%s (%s: %s)" % (r["file"], r.get("step"), r.get("reason")) for r in rest[:6])))
+        unr = led.get("unrestorable") or []
+        if unr:
+            alerts["actions:job:%s:unrestorable" % job] = (
+                "Actions %s: %d cambio(s) NO restaurable(s) — revisar antes del siguiente commit: %s" % (
+                    job, len(unr), "; ".join("%s (%s)" % (r["file"], r.get("reason")) for r in unr[:6])))
+    # R2-4: un aviso anterior cuyo registro ya no existe NO se da por resuelto
+    for k, v in sorted(prev_active.items()):
+        if not k.startswith("actions:") or k in alerts:
+            continue
+        job = _job_of_key(k)
+        if job is None:
+            continue
+        exists = (job in pointers) if not k.startswith("actions:job:") else (job in ledgers)
+        if k.startswith("actions:held:"):
+            exists = os.path.exists(os.path.join(qdir, job + ".json"))
+        cfg = _job_cfg(jobs, ("job_" + job) if k.startswith("actions:job:") else job)
+        if cfg["status"] == "RETIRED":
+            retired_keys.add(k)
+        elif not exists:
+            txt = v.get("text", k)
+            suffix = " — su registro ya no existe: sin evidencia de recuperación"
+            alerts[k] = txt if txt.endswith(suffix) else txt + suffix
+
+
+def _job_of_key(k):
+    parts = k.split(":")
+    if len(parts) >= 3 and parts[1] == "job":
+        return parts[2]
+    if len(parts) >= 3 and parts[1] == "held":
+        return ":".join(parts[2:])
+    if len(parts) >= 3 and parts[1] not in ("quarantine", "latest"):
+        return parts[1]
+    return None
+
+
+def _silence(alerts, key, label, when, cfg, now_utc):
+    """Sin registro reciente → aviso de AUSENCIA (no resolución)."""
+    try:
+        age_h = (now_utc - _parse(when)).total_seconds() / 3600.0 if when else None
+    except ValueError:
+        age_h = None
+    if age_h is None or age_h > cfg["max_silence_h"]:
+        alerts[key] = "%s: sin ejecución registrada desde %s (límite %.0f h). Nada indica que se haya recuperado." % (
+            label, when or "nunca", cfg["max_silence_h"])
 
 
 def check_credentials(root, now_utc, alerts, info_keys):
@@ -223,23 +348,26 @@ def main(argv=None, now=time.time, root=ROOT):
     a = ap.parse_args(argv)
     now_ts = now()
     now_utc = datetime.fromtimestamp(now_ts, tz=timezone.utc)
-    alerts, info, info_keys = {}, [], set()
+    alerts, info, info_keys, retired = {}, [], set(), set()
+    book = notify.AlertBook(os.path.join(root, "data", "_ingest", "watch_state.json"))
     for fn in (check_executors, check_actions, check_credentials):
         try:
-            if fn in (check_executors, check_actions):
+            if fn is check_actions:
+                fn(root, now_utc, alerts, info, prev_active=book.state.get("active", {}), retired_keys=retired)
+            elif fn is check_executors:
                 fn(root, now_utc, alerts, info)
             else:
                 fn(root, now_utc, alerts, info_keys)
         except Exception as e:                                      # Ley 2: el vigilante nunca calla un fallo propio
             alerts["watch:error:%s" % fn.__name__] = "ingest_watch: error en %s: %s" % (fn.__name__, e)
-    book = notify.AlertBook(os.path.join(root, "data", "_ingest", "watch_state.json"))
-    plan = book.plan(alerts, now_ts, no_remind=info_keys)
+    plan = book.plan(alerts, now_ts, no_remind=info_keys, retired=retired)
     for line in info:
         print("[ingest_watch] " + line)
     delivery, sent, undelivered = "NOTHING", set(), []
     if plan:
         text = "<b>G8 · vigilancia de ingestión</b>\n" + "\n".join(
-            ("🟢 resuelto: " if kind == "RESOLVED" else ("🔁 " if kind == "REMIND" else "🟠 ")) + t for kind, _, t in plan)
+            {"RESOLVED": "🟢 resuelto: ", "RETIRED": "⚪ retirado por configuración (no es una recuperación): ",
+             "REMIND": "🔁 "}.get(kind, "🟠 ") + t for kind, _, t in plan)
         delivery = notify.send(text, dry=a.dry_run or None)
         print(text)
         if delivery in ("SENT", "DRY"):

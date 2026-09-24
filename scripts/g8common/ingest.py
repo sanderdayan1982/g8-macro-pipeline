@@ -239,7 +239,11 @@ class Ingest(object):
                "started_utc": self.started.strftime("%Y-%m-%dT%H:%M:%SZ"),
                "finished_utc": datetime.fromtimestamp(self.now(), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "rc": 1 if (rc or bad) else 0, "requests": self.requests_log, "files": self.files,
-               "not_before": self.not_before, "errors": self.errors}
+               "not_before": self.not_before, "errors": self.errors,
+               "step": os.environ.get("G8_STEP_NAME"), "gh_run_id": os.environ.get("GITHUB_RUN_ID")}
+        # última descarga correcta (se arrastra entre ejecuciones): la vigilancia detecta fallos o aplazamientos
+        # que se repiten día tras día aunque cada ejecución, por sí sola, parezca una espera prevista
+        rec["last_ok_utc"] = rec["finished_utc"] if rec["rc"] == 0 else self.latest.get("last_ok_utc")
         runs = os.path.join(self.root, runlog.RUNS_DIR, EXECUTOR, self.job, self.started.strftime("%Y-%m") + ".jsonl")
         os.makedirs(os.path.dirname(runs), exist_ok=True)
         with open(runs, "a", encoding="utf-8") as fh:

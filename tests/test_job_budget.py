@@ -69,6 +69,17 @@ class DailyWorkflowStatic(unittest.TestCase):
             self.assertGreaterEqual(s["timeout-minutes"] * 60, cap + g8step.GRACE_KILL_S + 30, s["name"])
         self.assertGreaterEqual(n, 25)                                            # 17 descargadores + ACM/RY/reales
 
+    def test_output_guard_enabled(self):
+        self.assertEqual(self.job["env"]["G8_STEP_GUARD"], "data")
+        commit = self.steps[self._index("Commit updated data files")]["run"]
+        self.assertIn("git add data/", commit)
+        # todo paso que escribe en data/ antes del commit pasa por g8step (guarda de salidas)
+        c = self._index("Commit updated data files")
+        for s in self.steps[self._index("Install dependencies") + 1:c]:
+            run = s.get("run", "")
+            if run.lstrip().startswith("python ") and "--ledger" not in run and "RUNNER_TEMP" not in run.split("--")[0]:
+                self.assertIn("g8step.py --name", run, s["name"])
+
     def test_setup_steps_have_timeouts(self):
         for name in ("Checkout repository", "Set up Python", "Install dependencies"):
             self.assertIn("timeout-minutes", self.steps[self._index(name)], name)

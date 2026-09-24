@@ -104,11 +104,122 @@ class ActionsToWatch(unittest.TestCase):
         r = self.watch(H.NOW + timedelta(minutes=5))
         self.assertIn("actions:fetch_tona:TONA.csv:regression_blocked", r["alerts"])
 
-    def test_old_pointer_ignored(self):
-        self.fetch()
-        r = self.watch(H.NOW + timedelta(days=9))
-        self.assertIn(KEY, r["alerts"])                                     # la cuarentena sigue pendiente
-        self.assertFalse([a for a in r["alerts"] if a.startswith("actions:fetch_tona:")])
+    # ── R2-4: el envejecimiento no es una recuperación ──────────────────────────────────────────────
+    def test_r2_4_aging_never_resolves(self):
+        short = H.boj_json([r for r in self.rows if r[0] >= "20210901"][:-3])
+        H.run_new("fetch_tona", lambda url: (200, short), self.root)
+        k = "actions:fetch_tona:TONA.csv:regression_blocked"
+        r1 = self.watch(H.NOW + timedelta(minutes=5))
+        self.assertIn(k, r1["alerts"])
+        n = len(self.sent)
+        r2 = self.watch(H.NOW + timedelta(days=9))                          # sin ninguna ejecución posterior
+        self.assertIn(k, r2["alerts"])                                      # sigue activo
+        self.assertIn("actions:fetch_tona:silence", r2["alerts"])           # y se avisa de la ausencia
+        self.assertFalse([m for m in self.sent[n:] if "resuelto" in m])
+        # recuperación REAL: una ejecución posterior correcta sí lo resuelve
+        H.run_new("fetch_tona", lambda url: (200, H.boj_json([r for r in self.rows if r[0] >= "20210901"])), self.root,
+                  now=H.NOW + timedelta(days=9), clock=H.Clock(H.NOW_EPOCH + 9 * 86400))
+        r3 = self.watch(H.NOW + timedelta(days=9, hours=1))
+        self.assertNotIn(k, r3["alerts"])
+        self.assertNotIn("actions:fetch_tona:silence", r3["alerts"])
+        self.assertTrue([m for m in self.sent if "resuelto" in m and "REGRESSION_BLOCKED" in m])
+
+    def test_r2_4_reviewer_repro_book_plans_no_resolved(self):
+        from g8common.notify import AlertBook
+        rows = [r for r in self.rows if r[0] >= "20210901"][:-3]
+        H.run_new("fetch_tona", lambda url: (200, H.boj_json(rows)), self.root)
+        t1 = (H.NOW + timedelta(minutes=5)).replace(tzinfo=timezone.utc)
+        t2 = t1 + timedelta(days=9)
+        book = AlertBook(os.path.join(self.root, "book.json"))
+        a1 = {}
+        W.check_actions(self.root, t1, a1, [], prev_active=book.state["active"])
+        book.commit(a1, list(a1), t1.timestamp(), [])
+        a2 = {}
+        W.check_actions(self.root, t2, a2, [], prev_active=book.state["active"])
+        self.assertFalse([x for x in book.plan(a2, t2.timestamp()) if x[0] == "RESOLVED"])
+
+    def test_r2_4_vanished_record_is_not_a_recovery_retirement_is_explicit(self):
+        short = H.boj_json([r for r in self.rows if r[0] >= "20210901"][:-3])
+        H.run_new("fetch_tona", lambda url: (200, short), self.root)
+        k = "actions:fetch_tona:TONA.csv:regression_blocked"
+        self.watch(H.NOW + timedelta(minutes=5))
+        os.remove(os.path.join(self.root, "data", "_ingest", "latest", "actions__fetch_tona.json"))
+        n = len(self.sent)
+        r = self.watch(H.NOW + timedelta(hours=2))
+        self.assertIn(k, r["alerts"])
+        self.assertTrue(any("sin evidencia de recuperación" in m for m in self.sent[n:]))
+        with open(os.path.join(self.root, "sources", "actions_jobs.csv"), "a") as fh:
+            fh.write("fetch_tona,RETIRED,96,retirado en prueba\n")
+        n = len(self.sent)
+        r = self.watch(H.NOW + timedelta(hours=3))
+        self.assertNotIn(k, r["alerts"])
+        self.assertTrue(any("retirado por configuración" in m for m in self.sent[n:]))
+        self.assertFalse([m for m in self.sent[n:] if "resuelto" in m])
+
+    # ── R2-3: el fallo FINAL de una descarga avisa; el recuperado no ────────────────────────────────
+    def _fail_case(self, serve):
+        rc, calls, _ = H.run_new("fetch_tona", serve, self.root)
+        a = {}
+        W.check_actions(self.root, (H.NOW + timedelta(hours=1)).replace(tzinfo=timezone.utc), a, [])
+        return rc, calls, a
+
+    def test_r2_3_http_503_exhausted_alerts_then_success_resolves(self):
+        rc, calls, a = self._fail_case(lambda url: (503, b"Unavailable"))
+        self.assertEqual((rc, len(calls)), (1, 4))
+        self.assertIn("actions:fetch_tona:fail", a)
+        self.assertIn("FAIL_TRANSIENT", a["actions:fetch_tona:fail"])
+        r1 = self.watch(H.NOW + timedelta(hours=1))
+        self.assertIn("actions:fetch_tona:fail", r1["alerts"])
+        self.fetch(H.Clock(H.NOW_EPOCH + 7200))                              # descarga posterior correcta
+        r2 = self.watch(H.NOW + timedelta(hours=3))
+        self.assertNotIn("actions:fetch_tona:fail", r2["alerts"])
+        self.assertTrue(any("resuelto" in m and "fetch_tona" in m for m in self.sent))
+
+    def test_r2_3_auth_failure_alerts(self):
+        rc, _, a = self._fail_case(lambda url: (401, b"denied"))
+        self.assertEqual(rc, 1)
+        self.assertIn("FAIL_AUTH", a["actions:fetch_tona:fail"])
+
+    def test_r2_3_parse_error_before_publish_alerts(self):
+        empty = json.dumps({"STATUS": 200, "RESULTSET": []}).encode()
+        rc, _, a = self._fail_case(lambda url: (200, empty))
+        self.assertEqual(rc, 1)
+        self.assertIn("tras obtener respuesta", a["actions:fetch_tona:fail"])
+
+    def test_r2_3_intermediate_failure_recovered_no_alert(self):
+        seq = [(503, b""), (200, self.body)]
+        rc, calls, a = self._fail_case(lambda url: seq.pop(0) if len(seq) > 1 else seq[0])
+        self.assertEqual((rc, len(calls)), (0, 2))
+        self.assertFalse([k for k in a if k.endswith(":fail")])
+
+    def test_r2_3_retry_after_deferral_is_not_a_failure(self):
+        rc, calls, a = self._fail_case(lambda url: (503, (b"", {"retry-after": "7200"})))
+        self.assertEqual(rc, 1)
+        self.assertFalse([k for k in a if k.endswith(":fail")])
+
+    def test_r2_3_repeated_deferrals_eventually_alert(self):
+        self.fetch()                                                         # correcta: last_ok = NOW
+        for d in (1, 2, 3, 4, 5):                                            # 5 días seguidos aplazada
+            H.run_new("fetch_tona", lambda url: (503, (b"", {"retry-after": "7200"})), self.root,
+                      now=H.NOW + timedelta(days=d), clock=H.Clock(H.NOW_EPOCH + d * 86400))
+        a = {}
+        W.check_actions(self.root, (H.NOW + timedelta(days=5, hours=1)).replace(tzinfo=timezone.utc), a, [])
+        self.assertIn("actions:fetch_tona:no_success", a)
+        self.assertFalse([k for k in a if k.endswith(":fail")])
+
+    def test_r2_3_failed_step_without_pointer_alerts_covered_step_does_not(self):
+        p = os.path.join(self.root, "data", "_ingest", "latest", "actions__job_daily.json")
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        json.dump({"job": "daily", "run_id": "77", "written_utc": "2026-09-24T21:50:00Z", "steps": [],
+                   "time_limited": [], "failed": [{"name": "us_bills", "rc": 1}, {"name": "tona", "rc": 1}]}, open(p, "w"))
+        q = os.path.join(self.root, "data", "_ingest", "latest", "actions__fetch_tona.json")
+        json.dump({"job": "fetch_tona", "rc": 1, "finished_utc": "2026-09-24T21:40:00Z", "files": {},
+                   "requests": [{"cls": "FAIL_TRANSIENT", "detail": "HTTP 503"}], "step": "tona", "gh_run_id": "77"}, open(q, "w"))
+        a = {}
+        W.check_actions(self.root, datetime(2026, 9, 24, 22, 0, tzinfo=timezone.utc), a, [])
+        self.assertIn("actions:job:daily:step:us_bills", a)                 # descargador no adoptado (3B)
+        self.assertNotIn("actions:job:daily:step:tona", a)                  # ya lo cubre su registro detallado
+        self.assertIn("actions:fetch_tona:fail", a)
 
     def test_job_time_limits_alerted(self):
         p = os.path.join(self.root, "data", "_ingest", "latest", "actions__job_daily.json")

@@ -1,6 +1,6 @@
 """Verificación inversa de la revisión del 24-sep: los MISMOS escenarios de repro_revision.py (datos ficticios,
 sin red, solo directorios temporales), pero comprobando el comportamiento CORREGIDO. Cada caso es independiente;
-salida JSON con ok/fallo por hallazgo; código 0 solo si los siete pasan.
+salida JSON con ok/fallo por hallazgo; código 0 solo si pasan los siete de la primera revisión y los cuatro de la segunda (R2-1…R2-4).
 
     python tests/review/verificar_hallazgos.py [raíz_del_repo]
 """
@@ -23,11 +23,20 @@ results = {}
 
 def case(name):
     def deco(fn):
+        # la salida de los casos (y de sus subprocesos) va a stderr: stdout queda solo para el JSON final
+        sys.stdout.flush()
+        saved = os.dup(1)
+        os.dup2(2, 1)
         try:
-            results[name] = {"ok": True, "detail": fn()}
+            with contextlib.redirect_stdout(sys.stderr):
+                results[name] = {"ok": True, "detail": fn()}
         except Exception as e:                                  # noqa: BLE001
             results[name] = {"ok": False, "error": "%s: %s" % (type(e).__name__, e),
                              "trace": traceback.format_exc()[-800:]}
+        finally:
+            sys.stdout.flush()
+            os.dup2(saved, 1)
+            os.close(saved)
         return fn
     return deco
 
@@ -211,6 +220,127 @@ def _():
         except S.SeriesError as e:
             out[raw.decode().split("\n")[1]] = str(e)
     return out
+
+
+# ── segunda revisión (R2): los escenarios de repro_adicional.py con la conducta CORRECTA exigida ─────────
+@case("R2-1_corte_no_publica_csv_vacio")
+def _():
+    import subprocess
+    import g8step
+    with tempfile.TemporaryDirectory(dir=TMP) as t:
+        t = pathlib.Path(t)
+        p, q = t / "data" / "US_BILL_1M.csv", t / "data" / "US_BILL_3M.csv"
+        p.parent.mkdir()
+        old = b"DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260923,4,4,4,4,0\n"
+        p.write_bytes(old)
+        q.write_bytes(old)
+        child = t / "writer.py"
+        child.write_text("""import sys,time
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from fetch_us_bills import write_csv
+p=Path(sys.argv[2])
+def rows():
+    yield ('20260924', 4.1)
+    (p.parent.parent / 'ready').write_text('escritor abierto')
+    time.sleep(60)
+    yield ('20260925', 4.2)
+write_csv(rows(), p)
+""")
+        other = t / "other.py"
+        other.write_text("import sys\nfrom pathlib import Path\nsys.path.insert(0, sys.argv[1])\n"
+                         "from fetch_us_bills import write_csv\nwrite_csv([('20260923', 4.0), ('20260924', 4.3)], Path(sys.argv[2]))\n")
+        env = {k: v for k, v in os.environ.items() if k not in ("G8_JOB_DEADLINE_EPOCH", "G8_JOB_RESERVE_S", "G8_STEP_LOG")}
+        g8step.GRACE_KILL_S = 1
+        with contextlib.redirect_stdout(io.StringIO()):
+            # como en el workflow: G8_STEP_GUARD apunta al data/ que escriben los pasos
+            rc0 = g8step.run_step("us_bills_3m", [sys.executable, str(other), str(ROOT / "scripts"), str(q)], 5, .1,
+                                  env=env, guard=str(t / "data"))
+            rc = g8step.run_step("us_bills", [sys.executable, str(child), str(ROOT / "scripts"), str(p)], 3, .1,
+                                 env=env, guard=str(t / "data"))
+        subprocess.run(["git", "init", "-q", str(t)], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(t), "add", "data/"], check=True, capture_output=True)
+        staged = subprocess.run(["git", "-C", str(t), "show", ":data/US_BILL_1M.csv"], check=True, capture_output=True).stdout
+        staged_q = subprocess.run(["git", "-C", str(t), "show", ":data/US_BILL_3M.csv"], check=True, capture_output=True).stdout
+        assert (t / "ready").exists(), "la escritura no llegó a empezar"
+        assert rc == 124 and rc0 == 0
+        assert p.read_bytes() == old and staged == old, "el último CSV válido no quedó intacto"
+        assert b"20260924,4.3000" in staged_q, "se perdió la actualización correcta del otro feed"
+        return {"rc": rc, "bytes_validos_antes": len(old), "bytes_despues": p.stat().st_size,
+                "bytes_preparados_por_git_add": len(staged), "otro_feed_actualizado": True}
+
+
+@case("R2-2_activacion_launchd_en_la_transaccion")
+def _():
+    import test_mac_installer as MI
+    out = {}
+    for name, fail in (("primera_carga_falla", {1}), ("tambien_falla_la_recuperacion", {1, 2})):
+        f = MI.Installer()
+        f.setUp()
+        try:
+            f.fail_loads = fail
+            err = None
+            try:
+                MI.I.install(f.env(), f.pkg)
+            except MI.I.Abort as e:
+                err = e
+            assert err is not None, "declaró éxito"
+            assert f.snapshot() == f.before, "no restauró el conjunto anterior"
+            if fail == {1}:
+                assert not isinstance(err, MI.I.RecoveryFailed) and f.loaded
+            else:
+                assert isinstance(err, MI.I.RecoveryFailed) and "RECUPERACIÓN FALLIDA" in str(err) and not f.loaded
+            out[name] = {"excepcion": type(err).__name__, "codigo_restaurado": True, "programacion_cargada": f.loaded}
+        finally:
+            f.tearDown()
+    return out
+
+
+@case("R2-3_fallo_http_avisado")
+def _():
+    import shutil
+    from datetime import timedelta, timezone
+    import fetcher_harness as H
+    import ingest_watch as W
+    out = {}
+    for name, serve in (("503_agotado", lambda url: (503, b"Unavailable")), ("401", lambda url: (401, b"no")),
+                        ("parseo", lambda url: (200, json.dumps({"STATUS": 200, "RESULTSET": []}).encode()))):
+        r = H.make_root({"TONA.csv": (ROOT / "data/TONA.csv").read_bytes()})
+        try:
+            rc, calls, _ = H.run_new("fetch_tona", serve, r)
+            a = {}
+            W.check_actions(r, (H.NOW + timedelta(hours=1)).replace(tzinfo=timezone.utc), a, [])
+            assert rc == 1 and "actions:fetch_tona:fail" in a, (name, a)
+            out[name] = a["actions:fetch_tona:fail"][:140]
+        finally:
+            shutil.rmtree(r)
+    return out
+
+
+@case("R2-4_sin_resolucion_por_antiguedad")
+def _():
+    import shutil
+    from datetime import timedelta, timezone
+    import fetcher_harness as H
+    import ingest_watch as W
+    from g8common.notify import AlertBook
+    r = H.make_root({"TONA.csv": (ROOT / "data/TONA.csv").read_bytes()})
+    try:
+        rows = [row for row in H.repo_rows("TONA.csv") if row[0] >= "20210901"][:-3]
+        H.run_new("fetch_tona", lambda url: (200, H.boj_json(rows)), r)
+        t1 = (H.NOW + timedelta(minutes=5)).replace(tzinfo=timezone.utc)
+        t2 = t1 + timedelta(days=9)
+        book = AlertBook(str(pathlib.Path(r) / "book.json"))
+        a1, a2 = {}, {}
+        W.check_actions(r, t1, a1, [], prev_active=book.state["active"])
+        book.commit(a1, list(a1), t1.timestamp(), [])
+        W.check_actions(r, t2, a2, [], prev_active=book.state["active"])
+        planned = book.plan(a2, t2.timestamp())
+        assert a1 and not [x for x in planned if x[0] == "RESOLVED"], planned
+        assert "actions:fetch_tona:silence" in a2
+        return {"alertas_9_dias_despues": sorted(a2), "resueltos_planificados": 0}
+    finally:
+        shutil.rmtree(r)
 
 
 print(json.dumps(results, ensure_ascii=False, indent=1))

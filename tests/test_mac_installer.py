@@ -52,6 +52,9 @@ class Installer(unittest.TestCase):
         self.pkg = build_mac_package.build(os.path.join(self.root, "lote1"))
         self.calls = []
         self.loaded = True
+        self.loads = 0
+        self.fail_loads = set()
+        self.fail_unload = False
         self.busy_seq = []
         self.dry = {"rc": 1, "alerts": [], "families": {"NZ-B2": {"status": "DRY:NOOP"}, "JP-TONA": {"status": "DRY:HELD", "held": [{}]}}}
         self.dry_root_fail = False
@@ -73,10 +76,19 @@ class Installer(unittest.TestCase):
         if a[0] == "list":
             return 0 if self.loaded else 113
         if a[0] == "unload":
+            if self.fail_unload:
+                return 5
             self.loaded = False
         if a[0] == "load":
+            self.loads += 1
+            if self.loads in self.fail_loads:                 # nº de carga (1ª, 2ª…) que falla
+                return 5
             self.loaded = True
         return 0
+
+    @property
+    def actions(self):
+        return [c for c in self.calls if c != "list"]
 
     def busy(self):
         return self.busy_seq.pop(0) if self.busy_seq else []
@@ -115,7 +127,8 @@ class Installer(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.root, "g8common", "series.py")))
         pl = plistlib.load(open(os.path.join(self.agents, "com.g8.nzd-b2.plist"), "rb"))
         self.assertEqual(pl["ProgramArguments"][1], os.path.join(self.root, "nzd_local_run.sh"))   # ruta real
-        self.assertEqual(self.calls, ["list", "unload", "load"])
+        self.assertEqual(self.actions, ["unload", "load"])
+        self.assertTrue(self.loaded)
         self.assertTrue(self.lock_seen)                                    # verificación en su sitio con cerrojo
         self.assertFalse(os.path.isdir(os.path.join(self.root, "state", "run.lock")))
         backup = [d for d in os.listdir(self.root) if d.startswith("backup_lote1_")]
@@ -190,16 +203,17 @@ class Installer(unittest.TestCase):
         with self.assertRaises(I.Abort):
             I.install(self.env(), self.pkg)
         self.assert_untouched()
-        self.assertEqual(self.calls, ["list", "unload", "load"])
+        self.assertEqual(self.actions, ["unload", "load"])
         self.assertTrue(self.loaded)
 
     def test_failure_after_swap_restores_previous_set(self):
         self.dry_root_fail = True
         with self.assertRaises(I.Abort) as cm:
             I.install(self.env(), self.pkg)
-        self.assertIn("revertida automáticamente", str(cm.exception))
+        self.assertIn("se restauró y verificó", str(cm.exception))
         self.assertEqual(self.snapshot(), self.before)                     # incluido: sin check_credentials ni g8common
-        self.assertEqual(self.calls, ["list", "unload", "load"])           # vuelve la programación anterior
+        self.assertEqual(self.actions, ["unload", "load"])                 # vuelve la programación anterior
+        self.assertTrue(self.loaded)
         self.assertFalse(os.path.isdir(os.path.join(self.root, "state", "run.lock")))
 
     def test_revert_restores_exact_previous_set(self):
@@ -208,7 +222,93 @@ class Installer(unittest.TestCase):
         self.calls = []
         self.assertEqual(I.revert(self.env()), "REVERTED")
         self.assertEqual(self.snapshot(), self.before)
-        self.assertEqual(self.calls, ["list", "unload", "load"])
+        self.assertEqual(self.actions, ["unload", "load"])
+        self.assertTrue(self.loaded)
+
+    # ── R2-2: la activación final de launchd forma parte de la transacción ─────────────────────────
+    def test_r2_2_final_load_fails_restores_previous_set_and_schedule(self):
+        self.fail_loads = {1}                                              # falla la carga del plist NUEVO
+        with self.assertRaises(I.Abort) as cm:
+            I.install(self.env(), self.pkg)
+        self.assertNotIsInstance(cm.exception, I.RecoveryFailed)
+        self.assertIn("activación de launchd fallida", str(cm.exception))
+        self.assertEqual(self.snapshot(), self.before)                     # hashes iniciales
+        self.assertTrue(self.loaded)                                       # programación anterior cargada
+        self.assertEqual(self.actions, ["unload", "load", "load"])
+        self.assertFalse(os.path.isdir(os.path.join(self.root, "state", "run.lock")))
+        self.assertFalse(os.path.exists(os.path.join(self.root, "state", "install_lote1.json")))
+
+    def test_r2_2_recovery_failure_is_reported_never_success(self):
+        self.fail_loads = {1, 2}                                           # también falla recargar el anterior
+        with self.assertRaises(I.RecoveryFailed) as cm:
+            I.install(self.env(), self.pkg)
+        self.assertIn("RECUPERACIÓN FALLIDA", str(cm.exception))
+        self.assertIn("backup_lote1_", str(cm.exception))
+        self.assertEqual(self.snapshot(), self.before)                     # los ficheros sí se restauraron
+        self.assertFalse(self.loaded)
+
+    def test_r2_2_first_load_ok_is_verified_with_list(self):
+        orig = self.launchctl
+
+        def lying(*a):                                                     # load devuelve 0 pero no queda cargado
+            if a[0] == "load" and self.loads == 0:
+                self.calls.append("load")
+                self.loads += 1
+                return 0
+            return orig(*a)
+        self.launchctl = lying
+        with self.assertRaises(I.Abort):
+            I.install(self.env(), self.pkg)
+        self.assertEqual(self.snapshot(), self.before)
+        self.assertTrue(self.loaded)
+
+    def test_r2_2_unload_failure_changes_nothing(self):
+        self.fail_unload = True
+        with self.assertRaises(I.Abort) as cm:
+            I.install(self.env(), self.pkg)
+        self.assertIn("no se pudo descargar", str(cm.exception))
+        self.assert_untouched()
+        self.assertTrue(self.loaded)
+
+    def test_r2_2_backup_failure_changes_nothing(self):
+        orig = I.snapshot
+
+        def broken(env, dest):
+            os.makedirs(dest)
+            raise OSError(28, "No space left on device")
+        I.snapshot = broken
+        try:
+            with self.assertRaises(I.Abort) as cm:
+                I.install(self.env(), self.pkg)
+        finally:
+            I.snapshot = orig
+        self.assertIn("copia de seguridad", str(cm.exception))
+        self.assert_untouched()
+        self.assertFalse([d for d in os.listdir(self.root) if d.startswith("backup_lote1_")])
+        self.assertTrue(self.loaded)
+        self.assertEqual(self.actions, ["unload", "load"])
+
+    def test_r2_2_revert_with_failed_load_goes_back_to_installed_set(self):
+        I.install(self.env(), self.pkg)
+        installed = self.snapshot()
+        self.loads, self.fail_loads, self.calls = 0, {1}, []
+        with self.assertRaises(I.Abort):
+            I.revert(self.env())
+        self.assertEqual(self.snapshot(), installed)
+        self.assertTrue(self.loaded)
+
+    def test_reviewer_repro_load_returns_5(self):
+        def failing_load(*args):                                           # doble exacto de repro_adicional.py
+            if args[0] == "load":
+                self.calls.append("load")
+                return 5
+            return Installer.launchctl(self, *args)
+        self.launchctl = failing_load
+        with self.assertRaises(I.Abort) as cm:
+            I.install(self.env(), self.pkg)
+        # con un launchctl que NUNCA carga, la recuperación no puede recargar la programación: se declara
+        self.assertIsInstance(cm.exception, I.RecoveryFailed)
+        self.assertEqual(self.snapshot(), self.before)                     # el código anterior sí está restaurado
 
     def test_run_script_respects_install_lock(self):
         shutil.copy2(os.path.join(ROOT, "mac", "nzd_local_run.sh"), os.path.join(self.root, "run.sh"))

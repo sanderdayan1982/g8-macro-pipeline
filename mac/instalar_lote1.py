@@ -256,24 +256,122 @@ def place(env, src_dir, existed=None):
         os.replace(env.agent, os.path.join(src_dir, "agent.retirado_%s" % tag))
 
 
-def _guarded(env, force_window, action):
+class RecoveryFailed(Abort):
+    """La restauración automática no pudo verificarse: requiere intervención manual."""
+
+
+def set_matches(env, ref_dir, existed):
+    """¿El conjunto activo (código + plist de launchd) coincide byte a byte con el guardado en ref_dir?"""
+    bad = []
+    for f in FILES:
+        p, r = os.path.join(env.root, f), os.path.join(ref_dir, f)
+        if existed.get(f):
+            if not os.path.exists(p) or sha256(p) != sha256(r):
+                bad.append(f)
+        elif os.path.exists(p):
+            bad.append(f + " (no existía)")
+    for d in DIRS:
+        p, r = os.path.join(env.root, d), os.path.join(ref_dir, d)
+        if existed.get(d + "/"):
+            def files(x):
+                return {os.path.relpath(os.path.join(dp, n), x): sha256(os.path.join(dp, n))
+                        for dp, _, ns in os.walk(x) if "__pycache__" not in dp for n in ns if not n.endswith(".pyc")}
+            if not os.path.isdir(p) or files(p) != files(r):
+                bad.append(d + "/")
+        elif os.path.isdir(p):
+            bad.append(d + "/ (no existía)")
+    if existed.get("agent"):
+        if not os.path.exists(env.agent) or sha256(env.agent) != sha256(os.path.join(ref_dir, "agent.plist")):
+            bad.append("plist de launchd")
+    elif os.path.exists(env.agent):
+        bad.append("plist de launchd (no existía)")
+    return bad
+
+
+def _loaded(env):
+    return env.launchctl("list", LABEL) == 0
+
+
+def _restore_previous(env, backup, existed, loaded_before, why):
+    """Restaura el conjunto y el estado de programación previos y lo VERIFICA. Siempre lanza una excepción:
+    Abort si la recuperación se verificó; RecoveryFailed si no (con instrucciones)."""
+    problems = []
+    try:
+        if _loaded(env):
+            env.launchctl("unload", env.agent)
+        place(env, backup, existed)
+        problems += ["difiere: " + x for x in set_matches(env, backup, existed)]
+        if not problems:
+            compile_set(env, env.root)
+        if loaded_before:
+            if env.launchctl("load", env.agent) != 0 or not _loaded(env):
+                problems.append("no se pudo volver a cargar la programación anterior en launchd")
+        elif _loaded(env):
+            problems.append("launchd quedó cargado y antes no lo estaba")
+    except Exception as e:                                          # noqa: BLE001
+        problems.append("%s: %s" % (type(e).__name__, e))
+    if problems:
+        raise RecoveryFailed(
+            "RECUPERACIÓN FALLIDA tras «%s»: %s. El conjunto previo completo está en %s. Restáuralo a mano "
+            "(copiar sus ficheros a la carpeta y agent.plist a %s; luego «launchctl load» de ese plist) o "
+            "ejecuta ./revertir_lote1.command %s" % (why, "; ".join(problems), backup, env.agent, backup))
+    raise Abort("%s — se restauró y verificó el conjunto anterior y su programación (launchd %s)" % (
+        why, "cargado" if loaded_before else "sin cargar, como estaba"))
+
+
+def transaction(env, force_window, backup, apply_fn, want_loaded=True):
+    """Cambio del conjunto como UNA operación (hallazgo R2-2):
+      1. fuera de la ventana horaria, sin ejecuciones en curso, cerrojo state/run.lock;
+      2. launchd descargado (comprobado); copia completa del conjunto en `backup`;
+      3. apply_fn() (sustituye y verifica en su sitio);
+      4. se libera el cerrojo y se carga el plist nuevo; la carga se COMPRUEBA con «launchctl list»;
+    cualquier fallo en 2–4 restaura el conjunto y el estado de programación previos y verifica la restauración.
+    Devuelve el dict `existed` de la copia."""
     w = in_window(env)
     if w and not force_window:
         raise Abort("demasiado cerca de la ejecución programada de las %s (±%d min): inténtalo más tarde" % (w, WINDOW_MIN))
     wait_idle(env)
     lock = take_lock(env)
-    loaded_before = env.launchctl("list", LABEL) == 0
+    existed = None
+    loaded_before = _loaded(env)
     try:
-        env.launchctl("unload", env.agent)
+        if loaded_before and (env.launchctl("unload", env.agent) != 0 or _loaded(env)):
+            if not _loaded(env):
+                env.launchctl("load", env.agent)
+            raise Abort("no se pudo descargar la tarea de launchd: no se ha cambiado nada")
         try:
             wait_idle(env, 120)                    # carrera: una ejecución que empezó justo antes de descargar
         except Abort:
-            if loaded_before:
-                env.launchctl("load", env.agent)   # nada cambió: se deja la programación como estaba
+            if loaded_before and env.launchctl("load", env.agent) != 0:
+                raise RecoveryFailed("ejecución en curso y la programación anterior no se pudo volver a cargar: "
+                                     "carga %s a mano con launchctl" % env.agent)
             raise
-        return action(loaded_before)
+        try:
+            existed = snapshot(env, backup)
+        except Exception as e:                                      # noqa: BLE001
+            shutil.rmtree(backup, ignore_errors=True)
+            if loaded_before and env.launchctl("load", env.agent) != 0:
+                raise RecoveryFailed("la copia de seguridad falló (%s) y la programación anterior no se pudo recargar" % e)
+            raise Abort("no se pudo crear la copia de seguridad (%s): no se ha cambiado nada" % e)
+        try:
+            apply_fn()
+        except Exception as e:                                      # noqa: BLE001
+            env.out("¡Fallo tras la sustitución (%s)! Restaurando el conjunto anterior…" % e)
+            _restore_previous(env, backup, existed, loaded_before, "fallo tras la sustitución: %s" % e)
     finally:
         release_lock(lock)
+    if not want_loaded:
+        return existed
+    rc = env.launchctl("load", env.agent)                           # RunAtLoad arranca aquí la primera ejecución
+    if rc != 0 or not _loaded(env):
+        env.out("¡launchctl load devolvió %s! Restaurando el conjunto y la programación anteriores…" % rc)
+        wait_idle(env, 300)
+        lock = take_lock(env)
+        try:
+            _restore_previous(env, backup, existed, loaded_before, "activación de launchd fallida (código %s)" % rc)
+        finally:
+            release_lock(lock)
+    return existed
 
 
 # ── instalación ──────────────────────────────────────────────────────────────
@@ -313,34 +411,22 @@ def install(env, pkg, yes=False, force_window=False):
         return "CANCELLED"
     backup = os.path.join(env.root, "backup_lote1_%s" % ts)
 
-    def activate(loaded_before):
+    def apply_new():
         env.out("E. activación (launchd descargado, cerrojo tomado); copia completa en %s" % backup)
-        existed = snapshot(env, backup)
-        try:
-            place(env, stage)
-            compile_set(env, env.root)
-            for f in FILES:
-                if f != "com.g8.nzd-b2.plist" and sha256(os.path.join(env.root, f)) != sha256(os.path.join(stage, f)):
-                    raise Abort("verificación tras la sustitución: %s no coincide" % f)
-            dry_run(env, env.root)
-        except Exception as e:                                    # noqa: BLE001
-            env.out("¡Fallo tras la sustitución (%s)! Restaurando el conjunto anterior…" % e)
-            place(env, backup, existed)
-            if loaded_before:
-                env.launchctl("load", env.agent)
-            raise Abort("instalación revertida automáticamente: %s" % e)
-        return existed
+        place(env, stage)
+        bad = set_matches(env, stage, {k: True for k in FILES + [d + "/" for d in DIRS] + ["agent"]})
+        if bad:
+            raise Abort("verificación tras la sustitución: %s no coincide" % ", ".join(bad))
+        compile_set(env, env.root)
+        dry_run(env, env.root)
 
     try:
-        _guarded(env, force_window, activate)
+        transaction(env, force_window, backup, apply_new)
     finally:
         shutil.rmtree(stage, ignore_errors=True)
-    rc = env.launchctl("load", env.agent)
     with open(os.path.join(env.root, "state", "install_lote1.json"), "w", encoding="utf-8") as fh:
-        json.dump({"installed_local": ts, "backup": backup, "launchctl_load_rc": rc}, fh, indent=1)
-    env.out("Instalado. launchd cargado (código %s). Reversión: ./revertir_lote1.command" % rc)
-    if rc != 0:
-        raise Abort("launchctl load devolvió %s: el código nuevo está en su sitio pero la programación no se cargó" % rc)
+        json.dump({"installed_local": ts, "backup": backup, "launchd": "cargado y comprobado"}, fh, indent=1)
+    env.out("Instalado. launchd cargado y comprobado. Reversión: ./revertir_lote1.command")
     return "INSTALLED"
 
 
@@ -351,18 +437,22 @@ def revert(env, backup=None, yes=False, force_window=False):
             raise Abort("no hay copias backup_lote1_* en %s" % env.root)
         backup = os.path.join(env.root, cands[-1])
     with open(os.path.join(backup, "SET.json"), encoding="utf-8") as fh:
-        existed = json.load(fh)["existed"]
+        target = json.load(fh)["existed"]
     if not yes and env.ask("¿Restaurar el conjunto guardado en %s? [s/N] " % backup) != "s":
         env.out("Cancelado: no se ha cambiado nada.")
         return "CANCELLED"
+    ts = datetime.fromtimestamp(env.now()).strftime("%Y%m%d%H%M%S")
+    pre = os.path.join(env.root, "prerevert_lote1_%s" % ts)        # copia del conjunto actual (por si falla)
 
-    def restore(loaded_before):
-        place(env, backup, existed)
+    def apply_old():
+        place(env, backup, target)
+        bad = set_matches(env, backup, target)
+        if bad:
+            raise Abort("verificación tras restaurar: %s" % ", ".join(bad))
         compile_set(env, env.root)
 
-    _guarded(env, force_window, restore)
-    rc = env.launchctl("load", env.agent) if existed.get("agent") else 0
-    env.out("Revertido al conjunto de %s (launchd: %s)." % (backup, rc))
+    transaction(env, force_window, pre, apply_old, want_loaded=bool(target.get("agent")))
+    env.out("Revertido al conjunto de %s (launchd %s)." % (backup, "cargado y comprobado" if target.get("agent") else "sin plist"))
     return "REVERTED"
 
 

@@ -3,4 +3,4 @@
 Adopción progresiva (autorizada 24-sep-2026): cada script que los adopta lleva su prueba de
 equivalencia. Nada aquí lee credenciales por sí mismo ni envía mensajes salvo que el llamador lo pida.
 """
-VERSION = "g8common 1.1.0"
+VERSION = "g8common 1.2.0"

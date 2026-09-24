@@ -30,6 +30,10 @@ jobs:
     env:
       G8_JOB: daily
       G8_JOB_RESERVE_S: '540'
+      # R2-1: cada paso g8step copia data/ antes de ejecutarse y, al terminar, restaura al último válido lo que
+      # quede vacío, ilegible, retrocedido o escrito por un paso cortado → «git add data/» solo ve salidas válidas.
+      G8_STEP_GUARD: data
+      G8_GUARD_SKIP: options,futures
 
     steps:
       # ── 0. Plazo global: todo paso de descarga termina antes de DEADLINE − RESERVE ──

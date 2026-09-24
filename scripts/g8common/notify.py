@@ -68,7 +68,7 @@ class AlertBook(object):
         except (OSError, ValueError):
             self.state = {"active": {}, "pending": []}
 
-    def plan(self, alerts, now_ts, no_remind=()):
+    def plan(self, alerts, now_ts, no_remind=(), retired=()):
         """alerts: {clave: texto}. → lista de textos a enviar (nuevas, resueltas, recordatorios).
         no_remind: claves informativas que se avisan al aparecer o cambiar, sin recordatorio diario."""
         act = self.state.get("active", {})
@@ -80,7 +80,8 @@ class AlertBook(object):
             elif k not in no_remind and now_ts - prev.get("sent_ts", 0) >= self.remind_h * 3600:
                 out.append(("REMIND", k, txt))
         for k in sorted(set(act) - set(alerts)):
-            out.append(("RESOLVED", k, act[k].get("text", k)))
+            # desaparecer por retirada explícita no es una recuperación (R2-4)
+            out.append(("RETIRED" if k in retired else "RESOLVED", k, act[k].get("text", k)))
         return out
 
     def commit(self, alerts, sent_keys, now_ts, undelivered):
