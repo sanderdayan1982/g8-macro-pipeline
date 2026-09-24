@@ -318,7 +318,7 @@
     <div class="header-inner">
         <div class="header-left">
             <h1 class="brand">G8 MACRO PIPELINE</h1>
-            <span class="brand-sub">Institutional Dashboard v2.7.0 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
+            <span class="brand-sub">Institutional Dashboard v2.7.1 · G8 Macro Pipeline · daily timeframe · contexto de composición — el embudo vive en TradingView</span>
             <div class="asof-chips" id="asof-chips"></div>
         </div>
         <div class="header-right">
@@ -388,6 +388,13 @@
                     if (nz(x)) { return cl && cl.quality ? '<span title="' + esc(cl.quality) + '">' + bp(x) + '</span>' : bp(x); }
                     if (!cl) return '·';
                     var tip = (cl.quality ? cl.quality + ' · ' : '') + (cl.date ? 'último ' + cl.date + ' = ' + cl.value + (cl.lag_bd != null ? ' (' + cl.lag_bd + ' d.h.)' : '') : 'sin observación ≤ sesión');
+                    /* v2.7.1: legs whose SOURCE publishes on a slower cadence are not "atrasado":
+                       AUD (RBA F2/iAGS) is published weekly (Fri, data to Wed) → ≤ 8 d.h. is normal;
+                       CHF 2Y comes only from the monthly SNB curve. Muted label, same Δ rule (blank). */
+                    if (cl.status === 'STALE' && v.ccy === 'AUD' && cl.lag_bd != null && cl.lag_bd <= 8)
+                        return '<span title="' + esc(tip + ' · RBA publica la tabla F2 una vez por semana (viernes, datos hasta el miércoles)') + '" style="color:' + MUTE + '">semanal RBA ' + esc(String(cl.date).slice(5)) + '</span>';
+                    if (cl.status === 'STALE' && cl.quality === 'SNB_CURVE_MONTHLY')
+                        return '<span title="' + esc(tip + ' · el SNB publica la curva diaria una vez al mes') + '" style="color:' + MUTE + '">mensual SNB ' + esc(String(cl.date).slice(5)) + '</span>';
                     if (cl.status === 'STALE') return '<span title="' + esc(tip) + '" style="color:' + AMBER + '">atrasado ' + esc(cl.date) + '</span>';
                     if (cl.status === 'SHORT') return '<span title="' + esc(tip + (cl.first ? ' · serie desde ' + cl.first + ', t0 ' + cl.t0_needed : '')) + '">sin historia</span>';
                     return '<span title="' + esc(tip) + '">sin feed</span>';
