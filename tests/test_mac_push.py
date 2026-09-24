@@ -71,7 +71,8 @@ class MacPushTests(unittest.TestCase):
         with redirect_stdout(buf):
             rc = P.main(args or ["--fetch-status", "nzd=0,chf=0,tona=0"], repo_factory=fac, now=self.clock,
                         cfg_dir=os.path.join(self.tmp, "nocfg"))
-        with open(os.path.join(self.tmp, "state", "last_run.json")) as fh:
+        name = "last_dry_run.json" if "--dry-run" in (args or []) else "last_run.json"
+        with open(os.path.join(self.tmp, "state", name)) as fh:
             rec = json.load(fh)
         self.assertNotIn(TOKEN, buf.getvalue())
         for dirpath, _, fnames in os.walk(self.tmp):
@@ -239,6 +240,8 @@ class MacPushTests(unittest.TestCase):
         rc, rec, _ = self.run_push(["--dry-run"])
         self.assertEqual(self.gh.ref, before)
         self.assertEqual(rec["families"]["JP-TONA"]["status"], "DRY:PUBLISH")
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "state", "alerts_local.json")))
+        self.assertNotIn("data/_ingest/latest/mac-primary__nzchf-tona.json", self.gh.files())
 
 
 if __name__ == "__main__":

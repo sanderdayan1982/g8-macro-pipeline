@@ -297,6 +297,12 @@ def finish(rec, alerts, repo, a, cfg_dir, now):
             alerts["heartbeat"] = "Mac: latido no publicado (%s) — Actions avisará por ausencia" % e.cls
     os.makedirs(LOG_DIR, exist_ok=True)
     os.makedirs(STATE_DIR, exist_ok=True)
+    if a.dry_run:                                           # simulación: ni avisos, ni estado de avisos, ni latido
+        S.write_atomic(os.path.join(STATE_DIR, "last_dry_run.json"), runlog.dumps(rec))
+        for fam, fr in rec["families"].items():
+            log("[simulación] %s: %s %s" % (fam, fr.get("status"), (fr.get("detail") or fr.get("outcome", {}).get("detail", ""))[:200]))
+        log("[simulación] avisos que se habrían emitido: %s" % (", ".join(sorted(alerts)) or "ninguno"))
+        return 1 if alerts else 0
     S.write_atomic(os.path.join(STATE_DIR, "last_run.json"), runlog.dumps(rec))
     book = notify.AlertBook(os.path.join(STATE_DIR, "alerts_local.json"))
     now_ts = now()
