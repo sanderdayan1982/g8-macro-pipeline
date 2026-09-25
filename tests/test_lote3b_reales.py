@@ -18,13 +18,14 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 import fetcher_harness as H  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 import ingest_watch as W  # noqa: E402
 
 TODAY = H.NOW.date()
 
 
 def repo_last(fname):
-    rows = [r for r in csv.reader(open(os.path.join(ROOT, "data", fname))) if r and r[0].isdigit()]
+    rows = [r for r in csv.reader(open(frozen_data.path(fname))) if r and r[0].isdigit()]
     return rows[-1]
 
 
@@ -43,7 +44,7 @@ class RealBase(object):
     script = fname = None
 
     def setUp(self):
-        self.orig = open(os.path.join(ROOT, "data", self.fname), "rb").read()
+        self.orig = frozen_data.read_bytes(self.fname)
         self.roots = []
 
     def tearDown(self):
@@ -290,7 +291,7 @@ class Backfills(unittest.TestCase):
         self.assertEqual(F.BUDGET_S, 6 * 3600)
         F.BUDGET_S = 360
         path = os.path.join(self.tmp, "RY.csv")
-        orig = open(os.path.join(ROOT, "data", "RY_G8_EUR.csv"), "rb").read()
+        orig = frozen_data.read_bytes("RY_G8_EUR.csv")
         open(path, "wb").write(orig)
         with mock.patch("os.replace", side_effect=KeyboardInterrupt("corte")):
             with self.assertRaises(KeyboardInterrupt):

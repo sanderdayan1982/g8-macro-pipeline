@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 import fetcher_harness as H  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 import ingest_watch as W  # noqa: E402
 from g8common import series as S  # noqa: E402
 
@@ -170,7 +171,7 @@ class Base(object):
 
     def setUp(self):
         self.files, self.serve_fn, self.patch_fn, self.window, self.one_series = SPECS[self.script]
-        self.orig = {f: open(os.path.join(ROOT, "data", f), "rb").read() for f in self.files}
+        self.orig = {f: frozen_data.read_bytes(f) for f in self.files}
         self.rows = {f: H.repo_rows(f) for f in self.files}
         self.roots = []
         os.environ.pop("FRED_API_KEY", None)

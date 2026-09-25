@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from g8common import g8http, ghpublish as G  # noqa: E402
 import push_nzd_to_github as P  # noqa: E402
 from g8fakes import Clock, FakeGitHub  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 
 TOKEN = "ghp_SECRET_MAC_TOKEN_do_not_print"
 PATTERNS = ["NZD_BILL_*.csv", "NZD_BOND_*.csv", "NZD_CASH_ON.csv", "NZD_IIB_*.csv", "NZD_OCR.csv", "CHF_SPOT_*.csv", "CHF_NOM_10Y.csv", "CHF_SARON.csv", "TONA.csv"]
@@ -30,7 +31,7 @@ PATTERNS = ["NZD_BILL_*.csv", "NZD_BOND_*.csv", "NZD_CASH_ON.csv", "NZD_IIB_*.cs
 def repo_files():
     out = {}
     for pat in PATTERNS:
-        for p in glob.glob(os.path.join(ROOT, "data", pat)):
+        for p in frozen_data.glob(pat):                    # copia congelada de ed9ed64 (no los datos vivos)
             with open(p, "rb") as fh:
                 out["data/" + os.path.basename(p)] = fh.read()
     for src in ("registry.csv", "date_horizon.csv"):

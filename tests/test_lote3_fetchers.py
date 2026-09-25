@@ -21,6 +21,7 @@ from datetime import timedelta
 
 sys.path.insert(0, os.path.dirname(__file__))
 import fetcher_harness as H  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 from g8fakes import Clock  # noqa: E402
 
 SPECS = [
@@ -53,7 +54,7 @@ class Base(object):
 
     def setUp(self):
         self.rows = H.repo_rows(self.fname)
-        self.orig_bytes = open(os.path.join(H.ROOT, "data", self.fname), "rb").read()
+        self.orig_bytes = frozen_data.read_bytes(self.fname)
         self.roots = []
 
     def tearDown(self):

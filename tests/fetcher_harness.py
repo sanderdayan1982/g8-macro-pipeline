@@ -245,7 +245,8 @@ def read(root, name):
 
 def repo_rows(name):
     """[(YYYYMMDD, texto_valor)] del CSV real del repo (columna CLOSE)."""
-    with open(os.path.join(ROOT, "data", name), encoding="utf-8") as fh:
+    import frozen_data                                   # copia congelada de ed9ed64 (no los datos vivos)
+    with open(frozen_data.path(name), encoding="utf-8") as fh:
         rd = list(csv.reader(fh))
     hdr = rd[0]
     ci = hdr.index("CLOSE")

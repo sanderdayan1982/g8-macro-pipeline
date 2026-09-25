@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 import fetcher_harness as H  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 from g8common import macfetch, series as S  # noqa: E402
 
 NZ_IDS = {"INM.DB01.NZZV": "NZD_BILL_30D.csv", "INM.DB02.NZZV": "NZD_BILL_60D.csv", "INM.DB03.NZZV": "NZD_BILL_90D.csv",
@@ -36,7 +37,7 @@ _cnt = [0]
 
 
 def dv_rows(fname, source=False):
-    with open(os.path.join(ROOT, "data", fname), encoding="utf-8") as fh:
+    with open(frozen_data.path(fname), encoding="utf-8") as fh:
         rd = list(csv.DictReader(fh))
     return [(r["Date"], r["Value"]) + ((r.get("Source") or "",) if source else ()) for r in rd]
 
@@ -79,7 +80,7 @@ class MacBase(object):
 
     def setUp(self):
         self.roots = []
-        self.orig = {f: open(os.path.join(ROOT, "data", f), "rb").read() for f in self.files}
+        self.orig = {f: frozen_data.read_bytes(f) for f in self.files}
 
     def tearDown(self):
         macfetch.TEST_TRANSPORT = macfetch.TEST_CLOCK = None
@@ -516,7 +517,7 @@ class CurlTransport(unittest.TestCase):
         root = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, root)
         os.makedirs(os.path.join(root, "data"))
-        orig = open(os.path.join(ROOT, "data", "TONA.csv"), "rb").read()
+        orig = frozen_data.read_bytes("TONA.csv")
         open(os.path.join(root, "data", "TONA.csv"), "wb").write(orig)
         rows = [r for r in H.repo_rows("TONA.csv") if r[0] >= "20210901"] + [("20260924", "0.9770")]
         ok = (200, {}, H.boj_json(rows))

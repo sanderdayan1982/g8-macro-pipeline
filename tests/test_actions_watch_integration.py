@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 import fetcher_harness as H  # noqa: E402
+import frozen_data  # noqa: E402  (datos congelados de ed9ed64)
 import ingest_watch as W  # noqa: E402
 from g8common import notify  # noqa: E402
 
@@ -30,7 +31,7 @@ def ts(dt):
 class ActionsToWatch(unittest.TestCase):
     def setUp(self):
         self.rows = H.repo_rows("TONA.csv")
-        self.orig = open(os.path.join(ROOT, "data", "TONA.csv"), "rb").read()
+        self.orig = frozen_data.read_bytes("TONA.csv")
         self.root = H.make_root({"TONA.csv": self.orig})
         self.sent, self.fail = [], False
         self._send = notify.send
