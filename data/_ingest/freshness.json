@@ -1,5 +1,5 @@
 {
- "at_utc": "2026-09-25T17:26:16Z",
+ "at_utc": "2026-09-25T17:44:06Z",
  "compare_summary": {
   "ACUERDO": 44,
   "FUERA_DE_F3": 2,
@@ -315,6 +315,35 @@
       "started_utc": "2026-09-25T17:20:25Z",
       "where": "actions__fetch_tona.json"
      },
+     "mac:JP-TONA/tona": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "JP-TONA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-18",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     },
      "step:tona": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
@@ -331,20 +360,35 @@
      }
     },
     "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "JP-TONA",
+     "family_detail": "",
+     "family_status": "NOOP",
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-18",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-09-25T17:24:57Z",
-     "job": "daily",
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
      "rc": 0,
-     "restored": [],
-     "run_id": "36166436946",
-     "source": "step",
-     "started_utc": "2026-09-25T17:20:25Z",
-     "status": "OK",
-     "where": "actions__job_daily.json"
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
     },
-    "latest_source": "step:tona"
+    "latest_source": "mac:JP-TONA/tona"
    },
    "file": "TONA.csv",
    "flags": [],
@@ -3931,8 +3975,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_30D.csv",
    "flags": [],
@@ -3950,8 +4054,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_60D.csv",
    "flags": [],
@@ -3969,8 +4133,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_90D.csv",
    "flags": [],
@@ -3988,8 +4212,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_1Y.csv",
    "flags": [],
@@ -4007,8 +4291,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_2Y.csv",
    "flags": [],
@@ -4026,8 +4370,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_5Y.csv",
    "flags": [],
@@ -4045,8 +4449,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_10Y.csv",
    "flags": [],
@@ -4064,8 +4528,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2030.csv",
    "flags": [],
@@ -4083,8 +4607,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2035.csv",
    "flags": [],
@@ -4102,8 +4686,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2040.csv",
    "flags": [],
@@ -4121,8 +4765,68 @@
    "calendar": "NZ",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2050.csv",
    "flags": [],
@@ -4141,8 +4845,68 @@
    "calendar": "NZ",
    "expected_obs": null,
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-23",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-23",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_CASH_ON.csv",
    "flags": [],
@@ -4161,8 +4925,68 @@
    "calendar": "NZ",
    "expected_obs": null,
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:NZ-B2/nzd"
+    "available": true,
+    "by_source": {
+     "mac:NZ-B2/nzd": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "NZ-B2",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2025-10-20",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "NZ-B2",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2025-10-20",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2025.csv",
    "flags": [],
@@ -4181,14 +5005,94 @@
    "calendar": "CH",
    "expected_obs": "2026-09-24",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-DIARIO/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-DIARIO/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-DIARIO",
+      "family_detail": "",
+      "family_status": "PUBLISHED",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-25",
+       "status": "PUBLISH",
+       "written": true
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "PUBLISHED",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-DIARIO",
+     "family_detail": "",
+     "family_status": "PUBLISHED",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-25",
+      "status": "PUBLISH",
+      "written": true
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "PUBLISHED",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-DIARIO/chf"
    },
    "file": "CHF_NOM_10Y.csv",
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-24",
+   "have_max": "2026-09-25",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_R10",
@@ -4200,14 +5104,94 @@
    "calendar": "CH",
    "expected_obs": "2026-09-23",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-DIARIO/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-DIARIO/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-DIARIO",
+      "family_detail": "",
+      "family_status": "PUBLISHED",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-24",
+       "status": "PUBLISH",
+       "written": true
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "PUBLISHED",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-DIARIO",
+     "family_detail": "",
+     "family_status": "PUBLISHED",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-24",
+      "status": "PUBLISH",
+      "written": true
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "PUBLISHED",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-DIARIO/chf"
    },
    "file": "CHF_SARON.csv",
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-23",
+   "have_max": "2026-09-24",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_SARON",
@@ -4219,8 +5203,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_1Y.csv",
    "flags": [],
@@ -4238,8 +5302,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_2Y.csv",
    "flags": [],
@@ -4257,8 +5401,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_3Y.csv",
    "flags": [],
@@ -4276,8 +5500,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_4Y.csv",
    "flags": [],
@@ -4295,8 +5599,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_5Y.csv",
    "flags": [],
@@ -4314,8 +5698,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_6Y.csv",
    "flags": [],
@@ -4333,8 +5797,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_7Y.csv",
    "flags": [],
@@ -4352,8 +5896,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_8Y.csv",
    "flags": [],
@@ -4371,8 +5995,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_9Y.csv",
    "flags": [],
@@ -4390,8 +6094,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_10Y.csv",
    "flags": [],
@@ -4409,8 +6193,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_20Y.csv",
    "flags": [],
@@ -4428,8 +6292,88 @@
    "calendar": "CH",
    "expected_obs": "2026-08-31",
    "facts": {
-    "available": false,
-    "reason": "sin registros todavía para mac:CH-CURVA/chf"
+    "available": true,
+    "by_source": {
+     "mac:CH-CURVA/chf": {
+      "errors": [],
+      "executor": "mac-primary",
+      "family": "CH-CURVA",
+      "family_detail": "",
+      "family_status": "NOOP",
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-08-31",
+       "status": "NOOP",
+       "written": false
+      },
+      "finished_utc": "2026-09-25T17:37:27Z",
+      "publish_failed_family": null,
+      "publish_status": "NOOP",
+      "rc": 0,
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+      "source": "mac",
+      "started_utc": "2026-09-25T17:36:20Z",
+      "where": "mac-primary__nzchf-tona.json"
+     }
+    },
+    "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "CH-CURVA",
+     "family_detail": "",
+     "family_status": "NOOP",
+     "file": {
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-08-31",
+      "status": "NOOP",
+      "written": false
+     },
+     "finished_utc": "2026-09-25T17:37:27Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
+     "rc": 0,
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260925T173620Z_mac-primary_nzchf-tona_adb3",
+     "source": "mac",
+     "started_utc": "2026-09-25T17:36:20Z",
+     "where": "mac-primary__nzchf-tona.json"
+    },
+    "latest_source": "mac:CH-CURVA/chf"
    },
    "file": "CHF_SPOT_30Y.csv",
    "flags": [],
@@ -4986,6 +6930,10 @@
      [
       "USDF1",
       "2026-09-25T15:30Z"
+     ],
+     [
+      "USDF2",
+      "2026-09-25T17:30Z"
      ]
     ]
    },
@@ -5237,6 +7185,10 @@
      [
       "USDF1",
       "2026-09-25T15:30Z"
+     ],
+     [
+      "USDF2",
+      "2026-09-25T17:30Z"
      ]
     ]
    },
@@ -5275,6 +7227,10 @@
      [
       "USDF1",
       "2026-09-25T15:30Z"
+     ],
+     [
+      "USDF2",
+      "2026-09-25T17:30Z"
      ]
     ]
    },
