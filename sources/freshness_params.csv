@@ -1,0 +1,40 @@
+rule_id,model,g_min,g_basis,g_status,notes
+SOFR,bd_offset,60,Hora oficial (NY Fed ~08:00 ET); 60 min = propuesta operativa sin evidencia medida de variabilidad,PROVISIONAL,
+ESTR,bd_offset,60,Hora oficial (BCE 08:00 CET); 60 min = propuesta operativa sin evidencia medida de variabilidad,PROVISIONAL,
+SONIA,bd_offset,60,Hora de la web del BoE (09:00 Londres); endpoint IADB no documentado; 60 min = propuesta operativa,PROVISIONAL,
+TONA,bd_offset,60,Manual de la API del BoJ (~08:50 JST); 60 min = propuesta operativa,PROVISIONAL,
+CORRA,bd_offset,60,Hora habitual A_VERIFICAR (09:00 Toronto); 60 min = propuesta operativa,PROVISIONAL,
+AONIA,bd_offset,60,La hora es una COTA SUPERIOR medida una vez (presente 23:53Z); 60 min = propuesta operativa,PROVISIONAL,
+AUD_F1,bd_offset,60,Como AONIA (cota superior medida una vez),PROVISIONAL,
+EUR_CURVE,bd_offset,60,Hora oficial aproximada del BCE (~12:00 CET; a verificar); 60 min = propuesta operativa,PROVISIONAL,
+AUD_F2,weekly_before:2,60,Last-Modified medido una vez (vie 03:57Z) = metadato del recurso; 60 min = propuesta operativa,PROVISIONAL,Publicación semanal (vie) con datos hasta el último día hábil ≤ vie−2 (miércoles)
+NZ_B2,bd_offset,60,Descarga correcta medida una vez (04:04Z) = cota superior; 60 min = propuesta operativa,PROVISIONAL,
+CH_R10,bd_offset,60,Regla 09:01 Zúrich PROVISIONAL; la evidencia (T−1 presente a 07:00Z) indica publicación ANTERIOR: la regla solo puede retrasar el aviso unos minutos,PROVISIONAL,Revisar pub_local con la evidencia del paralelo
+CH_SARON,bd_offset,60,Como CH_R10 (una sola observación),PROVISIONAL,
+CH_CURVE,prev_month_end,60,PublishingDate del cubo SNB (2026-09-01 14:30) = metadato del proveedor medido una vez,PROVISIONAL,Mensual: primer día hábil CH con datos hasta el último día hábil del mes anterior
+USD_FACTOR,bd_offset,60,Hora oficial BCE (~16:00 CET) de los tipos de referencia; 60 min = propuesta operativa,PROVISIONAL,Fichero congelado (usd_factor PENDIENTE): solo lectura
+ECB_CACHE,bd_offset,60,= USD_FACTOR,PROVISIONAL,Solo lectura
+COT,weekly_before:3,60,Hora oficial CFTC (vie 15:30 ET) con datos del martes; 60 min = propuesta operativa,PROVISIONAL,Script PENDIENTE: solo lectura
+US_BILLS,bd_offset,,Hora DESCONOCIDA: PENDING_TIME_UNKNOWN durante el día local de publicación; exigible al terminar ese día (sin día extra),PROVISIONAL,
+GBP_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+JPY_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+CAD_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+USD_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+GBP_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,La regla dice desfase 1 pero la evidencia es T−2 en 14/14 pasadas finales: conflicto para tu decisión (no se ajusta aquí)
+CAD_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+EUR_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+JPY_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+ACM_TP,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+FLOORS,bd_offset,,Serie diaria por salida y jurisdicción; hora DESCONOCIDA (misma regla),PROVISIONAL,Cada salida con su calendario (freshness_outputs.csv)
+BIS_POLICY,event,,Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE,PROVISIONAL,Se muestran fecha y antigüedad
+GOLD_DEMAND,event,,Mensual con hora y desfase desconocidos → UNKNOWN_SCHEDULE,PROVISIONAL,
+NZ_CASH,none,,Serie dispersa (fechas no diarias en los datos) → cadencia no establecida → UNKNOWN_SCHEDULE,PROVISIONAL,Más permisivo que el motor actual: se señala en la comparación para tu decisión
+ACM_DERIVED,derived,60,Derivado calculado en la pasada FINAL (21:30Z); 60 min tras la hora programada = propuesta operativa,PROVISIONAL,Exigible = mínimo de las fechas de sus entradas del repo en la última FINAL
+RY_NZD,derived,60,= ACM_DERIVED,PROVISIONAL,
+METALS,derived,,Derivado semanal (sábado) de COT y precios externos: sin hora exigible documentada → comprobación de entradas sin OVERDUE,PROVISIONAL,
+NZ_IIB_2025,not_monitored,,Serie terminada (bono vencido sep-2025),APROBADO,
+S01B,not_monitored,,EXCLUIDO_DE_CAMBIOS_F6: solo se muestra su fecha,APROBADO,
+MANUAL_BE,not_monitored,,Entrada manual (calendario PENDIENTE),APROBADO,
+OPTIONS,not_monitored,,EXCLUIDO (Databento/opciones CME),APROBADO,
+MIRROR,not_monitored,,Bajo demanda; ningún consumidor,APROBADO,
+NOT_INGESTED,not_monitored,,Sin ingestión,APROBADO,

@@ -42,11 +42,22 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
 
+      # F3 (lote 3C): motor de frescura EN PARALELO. Solo escribe su informe y la comparación con el motor actual;
+      # no avisa (sin Telegram) y no bloquea el job. El historial reciente de git le da la hora de las entradas de
+      # los derivados; si no está disponible, lo declara (INPUT_TIMING_UNKNOWN).
+      - name: F3 · informe de frescura en paralelo (sin avisos)
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          git fetch --quiet --shallow-since="$(date -u -d '10 days ago' +%Y-%m-%d)" origin main || true
+          python scripts/freshness_report.py
+
       - name: Commit watch state
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/_ingest/watch_state.json 2>/dev/null || true
+          git add data/_ingest/freshness.json data/_ingest/freshness_compare/ 2>/dev/null || true
           if git diff --cached --quiet; then echo "sin cambios de estado"; exit 0; fi
           git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3 4 5; do

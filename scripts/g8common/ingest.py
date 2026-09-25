@@ -92,6 +92,14 @@ def _load_json(path, default):
         return default
 
 
+EVIDENCE_DIR = os.path.join("data", "_ingest", "evidence")
+
+
+def _iso(d):
+    d = str(d or "")
+    return "%s-%s-%s" % (d[:4], d[4:6], d[6:8]) if len(d) == 8 and d.isdigit() else (d or None)
+
+
 class Ingest(object):
     def __init__(self, job, root=None, budget_s=360, now=None, env=None):
         now = now or TEST_CLOCK or time.time
@@ -241,8 +249,52 @@ class Ingest(object):
             newq[c["id"]] = c
         if newq != qdoc.get("candidates", {}):
             S.write_atomic(qpath, runlog.dumps({"file": fname, "candidates": newq, "updated_by_run": self.run_id}))
+        if download_id:
+            try:
+                self._evidence(fname, src, repo, rep, download_id, measures)
+            except (OSError, ValueError) as e:              # la evidencia nunca impide publicar
+                rep["evidence_error"] = str(e)[:200]
         self.files[fname] = rep
         return rep
+
+    def _evidence(self, fname, src, repo, rep, download_id, measures):
+        """F3 · historial de evidencia (solo de alta): data/_ingest/evidence/<fichero>.jsonl, una línea por descarga
+        VERIFICADA (clave única download_id: releer o repetir la misma descarga no duplica). Registra la fecha
+        máxima traída, las observaciones nuevas o con versión distinta (revisiones, aceptadas o no) y los metadatos
+        de las respuestas del run (Date, Last-Modified: del RECURSO, nunca hora de publicación por observación)."""
+        path = os.path.join(self.root, EVIDENCE_DIR, fname + ".jsonl")
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                if any('"download_id": "%s"' % download_id in line for line in fh):
+                    return
+        obs = []
+
+        def version(series, d):
+            v = S.row_measures(series, d, measures) if measures else series.rows[d][1]
+            return hashlib.sha1(repr(v).encode()).hexdigest()[:12]
+        dates = sorted(src.rows) if repo is not None else sorted(src.rows)[-1:]
+        for d in dates:
+            if repo is None or d not in repo.rows:
+                obs.append({"date": _iso(d), "version": version(src, d), "kind": "new"})
+            elif version(src, d) != version(repo, d):
+                obs.append({"date": _iso(d), "version": version(src, d), "previous_version": version(repo, d),
+                            "kind": "revision"})
+        written = {str(h.get("date")) for h in rep.get("held", [])}
+        for o in obs:
+            o["accepted"] = bool(rep.get("written")) and o["date"].replace("-", "") not in written
+        line = {"download_id": download_id, "run_id": self.run_id, "job": self.job, "file": fname,
+                "query_utc": datetime.fromtimestamp(self.now(), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "query_utc_meaning": "instante de la fusión, inmediatamente después de la descarga",
+                "ok": True, "src_max": _iso(src.max_date), "repo_max_before": _iso(repo.max_date) if repo else None,
+                "status": rep.get("status"), "wrote": bool(rep.get("written")), "obs": obs[-50:],
+                "obs_truncated": len(obs) > 50,
+                "responses": [{"url": x.get("url"), "status": x.get("status"), "date": x.get("date_header"),
+                               "last_modified": x.get("last_modified"),
+                               "meaning": "metadatos HTTP del recurso; no son la hora de publicación de cada fila"}
+                              for x in self.requests_log if x.get("cls") == g8http.OK]}
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(line, ensure_ascii=False, sort_keys=True) + "\n")
 
     # ── cierre ───────────────────────────────────────────────────────────────
     def finish(self, rc):
