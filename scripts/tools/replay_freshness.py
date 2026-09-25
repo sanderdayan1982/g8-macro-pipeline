@@ -31,10 +31,12 @@ def replay(root, ref, start, end, step_min=60, files=None, with_current=True):
         for r in rep["outputs"]:
             if files and r["file"] not in files:
                 continue
-            key = (r["state"], tuple(r.get("missing", [])))
+            key = (r["state"], tuple(r.get("missing", [])), r.get("cause"))   # un cambio de causa es una transición
             if last.get(r["file"]) != key:
                 trans.setdefault(r["file"], []).append({"at": t.strftime("%Y-%m-%dT%H:%MZ"), "state": r["state"],
                                                          "missing": r.get("missing", []),
+                                                         "cause": r.get("cause"),
+                                                         "cause_certainty": r.get("cause_certainty"),
                                                          "flags": r.get("flags", [])})
                 last[r["file"]] = key
         if with_current:

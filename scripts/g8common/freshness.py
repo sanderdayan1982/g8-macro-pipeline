@@ -12,9 +12,12 @@ Dos ejes que nunca se mezclan:
       UNKNOWN_SCHEDULE      sin observación exigible documentada (evento sin calendario, serie dispersa…)
       NOT_MONITORED         fuera de vigilancia por decisión documentada (terminada, manual, excluida…)
       NO_OBS_DATE           el fichero no tiene fecha de observación legible
-  Banderas de atraso: SIN_CONSULTA_DESDE_PUBLICACION = ninguna pasada activa (ni consulta real registrada) desde
-  la publicación esperada: latencia de la PROGRAMACIÓN, no fallo de la fuente. CONSULTADA_Y_FALTA = hubo consulta
-  (programada o real) y la observación sigue faltando. RULE_PROVISIONAL = la regla no es oficial.
+      INPUT_REVISED         derivado: una entrada PUBLICADA se revisó después de su última escritura (posible desactualización)
+      INPUT_REVISION_UNRESOLVED  derivado: hay revisión publicada de una entrada y no se sabe si fue antes o después
+  Causa de un atraso (C3-1), de lo EJECUTADO y nunca de un cron programado: SIN_PASADA_PROGRAMADA (configuración),
+  PROGRAMADA_SIN_EJECUCION_REGISTRADA (incierta: cron retrasado/omitido o sin evidencia), EJECUTADA_CON_FALLO,
+  EJECUTADA_SIN_DESCARGA_DEL_FICHERO, CONSULTADA_SIN_NOVEDAD, RECIBIDA_RETENIDA (registradas). RULE_PROVISIONAL =
+  la regla no es oficial.
   B · HECHOS de ingestión (último intento, resultado, errores, candidatos retenidos): se adjuntan y ningún estado
       del eje A los borra.
 
@@ -42,6 +45,8 @@ UTC = timezone.utc
 LOOKBACK_BD = 40                     # observaciones exigibles que se miran hacia atrás (≥ 2 meses de días hábiles)
 FINAL_CRON = (21, 30)                # pasada FINAL programada (UTC), días laborables — acta S01B, no se toca
 LATE_STATES = ("OVERDUE", "STALE", "BEHIND_INPUTS")
+# no saludables sin ser un atraso de calendario: entrada publicada revisada después (o sin orden conocido)
+UNHEALTHY_STATES = LATE_STATES + ("INPUT_REVISED", "INPUT_REVISION_UNRESOLVED")
 
 
 def _rows(root, name):
@@ -204,11 +209,60 @@ def scheduled_queries(rule, passes, since, until):
     return sorted(out, key=lambda x: x[1])
 
 
-def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evidence=None, facts=None, passes=None):
+def _ts(t):
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def classify_cause(fname, obs, due_first, now, scheduled, runs, downloads, evidence_available):
+    """C3-1 · causa del atraso de `obs` a partir de lo EJECUTADO, nunca de un cron programado.
+    Niveles separados: consulta programada → intento ejecutado → respuesta/descarga correcta → dato recibido →
+    dato publicado o retenido. Devuelve (causa, certeza, detalle)."""
+    since = _ts(due_first)
+    obs_iso = obs.isoformat()
+    ran = [r for r in runs if (r.get("started_utc") or r.get("finished_utc") or "") >= since]
+    dls = [r for r in downloads if r.get("ok") and (r.get("query_utc") or "") >= since]
+    detail = {"scheduled_passes": [(pid, t.strftime("%Y-%m-%dT%H:%MZ")) for pid, t in scheduled],
+              "executed_runs": [{"source": r.get("source"), "run_id": r.get("run_id"), "started_utc": r.get("started_utc"),
+                                 "rc": r.get("rc"), "file": (r.get("files") or {}).get(fname)} for r in ran][-5:],
+              "downloads": len(dls), "evidence_available": evidence_available}
+    # 1) dato recibido pero no publicado (retenido/inválido)
+    for r in dls:
+        if any(o.get("date") == obs_iso and not o.get("accepted") for o in r.get("obs", [])):
+            return "RECIBIDA_RETENIDA", "registrada", detail
+    for r in ran:
+        f = (r.get("files") or {}).get(fname) or {}
+        if f.get("src_max") and f["src_max"] >= obs_iso and not f.get("written") and f.get("status") != "PUBLISH":
+            return "RECIBIDA_RETENIDA", "registrada", detail
+    # 2) consulta correcta sin la observación (la fuente aún no la tenía en el endpoint consultado)
+    if any((r.get("src_max") or "") < obs_iso for r in dls):
+        return "CONSULTADA_SIN_NOVEDAD", "registrada", detail
+    for r in ran:
+        f = (r.get("files") or {}).get(fname) or {}
+        if f.get("src_max") and f["src_max"] < obs_iso and f.get("status") not in ("INVALID", None):
+            return "CONSULTADA_SIN_NOVEDAD", "registrada", detail
+    # 3) intento ejecutado que falló o se aplazó
+    for r in ran:
+        bad_req = [q for q in (r.get("requests") or []) if q.get("cls") not in (None, "OK")]
+        if (r.get("rc") not in (0, "0", None)) or bad_req or r.get("status") in ("FAILED", "TIMEOUT", "ABORTED", "SKIPPED_NO_TIME"):
+            return "EJECUTADA_CON_FALLO", "registrada", detail
+    if ran:
+        return "EJECUTADA_SIN_DESCARGA_DEL_FICHERO", "registrada", detail
+    # 4) nada ejecutado registrado
+    if scheduled:
+        # cron retrasado u omitido, o evidencia no disponible (reproducción histórica): NO se atribuye a la fuente
+        return "PROGRAMADA_SIN_EJECUCION_REGISTRADA", "incierta", detail
+    return "SIN_PASADA_PROGRAMADA", "configuracion", detail
+
+
+def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evidence=None, facts=None, passes=None,
+             runs=None, evidence_available=True, written_at=None):
     """→ dict con el estado del eje A, sus fundamentos y los hechos del eje B.
     have_dates: fechas de observación presentes en la salida (None = fichero ausente).
     input_max_at(file, instant) → fecha máxima de esa entrada en ese instante (o None si no se puede saber).
-    evidence: registros del historial de evidencia de la salida y de sus entradas ({file: [registros]})."""
+    evidence: historial de descargas de la salida y de sus entradas ({file: [registros]}).
+    runs: ejecuciones REALES registradas de las fuentes de la salida (Actions, g8step, latido del Mac).
+    evidence_available: False en reproducciones históricas (no existía el historial): la causa queda incierta.
+    written_at: instante de la última escritura publicada de la salida (derivados), o None si se desconoce."""
     model = param["model"]
     cal = output.get("calendar") or rule.get("calendar") or ""
     tz = output.get("timezone") or rule.get("timezone") or "UTC"
@@ -232,7 +286,7 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
                    age_days=(now.date() - have_max).days)
         return res
     if model == "derived":
-        return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence)
+        return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at)
 
     pubs = publications(rule, param, cal, tz, cals, now)
     exigible = [(d, due, ex) for d, due, ex in pubs if ex <= now]
@@ -257,22 +311,19 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
         res["overdue_since"] = min(ex for d, _, ex in exigible if d == first).strftime("%Y-%m-%dT%H:%M:%SZ")
         due_first = min(due for d, due, _ in exigible if d == first)
         sq = scheduled_queries(rule, passes, due_first, now)
-        res["scheduled_passes_since_due"] = [(pid, t.strftime("%Y-%m-%dT%H:%MZ")) for pid, t in sq]
-        # consultas REALES (historial de evidencia): descargas correctas posteriores a la publicación esperada
-        real = [r for r in (evidence or {}).get(output["file"], [])
-                if r.get("ok") and r.get("query_utc", "") >= due_first.strftime("%Y-%m-%dT%H:%M:%SZ")]
-        res["real_queries_since_due"] = len(real)
-        if not sq and not real:
-            res["flags"].append("SIN_CONSULTA_DESDE_PUBLICACION")   # latencia de la programación, no fallo de fuente
-        else:
-            res["flags"].append("CONSULTADA_Y_FALTA")               # hubo (al menos programada) consulta y falta
+        cause, certainty, detail = classify_cause(output["file"], first, due_first, now, sq, runs or [],
+                                                  (evidence or {}).get(output["file"], []), evidence_available)
+        res.update(cause=cause, cause_certainty=certainty, cause_detail=detail)
+        res["flags"].append("CAUSA_" + cause)
+        if not evidence_available:
+            res["flags"].append("EVIDENCIA_NO_DISPONIBLE")
     res["state"] = state
     if (rule.get("status") or "") != "OFICIAL_GENERAL" and state in LATE_STATES:
         res["flags"].append("RULE_PROVISIONAL")          # atraso según una regla no oficial: no «demostrado»
     return res
 
 
-def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence):
+def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None):
     inputs = [x for x in (output.get("inputs") or "").split(";") if x]
     res["flags"].append("INPUT_VERSION_UNKNOWN")         # los derivados no registran qué versión de entradas usaron
     if output.get("external_inputs"):
@@ -308,36 +359,100 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence)
     else:
         res["state"] = "BEHIND_INPUTS"
         res["missing"] = [need.isoformat()]
-    # revisiones de una entrada posteriores a la última escritura conocida de la salida
+    # C3-3 · revisiones de las entradas: observada ≠ aceptada ≠ publicada ≠ consumida por el derivado
     ev = evidence or {}
-    wrote = [r.get("query_utc") for r in ev.get(output["file"], []) if r.get("wrote")]
-    last_write = max(wrote) if wrote else None
+    if written_at is None:                               # sin git: última escritura registrada de la propia salida
+        w = [r.get("query_utc") for r in ev.get(output["file"], []) if r.get("wrote") and r.get("query_utc")]
+        if w:
+            written_at = datetime.strptime(max(w), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+            res["written_at_source"] = "evidencia de la salida"
+    res["written_at"] = _ts(written_at) if written_at else None
+    published, held = [], []
     for f in inputs:
         for r in ev.get(f, []):
+            when = r.get("query_utc", "")
+            if r.get("obs_complete") is False:
+                for rg in r.get("obs_ranges", []):
+                    if rg["kind"] == "revision" and rg["from"] <= have_max.isoformat():
+                        (published if r.get("wrote") else held).append(
+                            {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False})
+                continue
             for o in r.get("obs", []):
-                if o.get("kind") == "revision" and o.get("date", "9999") <= have_max.isoformat() and \
-                        (last_write is None or r.get("query_utc", "") > last_write):
-                    if "INPUTS_REVISED_AFTER" not in res["flags"]:
-                        res["flags"].append("INPUTS_REVISED_AFTER")
-                    res.setdefault("revised_inputs", []).append({"file": f, "date": o["date"],
-                                                                 "seen_utc": r.get("query_utc")})
-    if "INPUTS_REVISED_AFTER" in res["flags"] and res["state"] == "CURRENT":
-        res["state_note"] = "posiblemente desactualizado: entrada revisada después de la última escritura"
+                if o.get("kind") != "revision" or o.get("date", "9999") > have_max.isoformat():
+                    continue
+                item = {"file": f, "date": o["date"], "version": o.get("version"), "seen_utc": when}
+                (published if (r.get("wrote") and o.get("accepted")) else held).append(item)
+    if held:
+        res["flags"].append("INPUT_REVISION_HELD")        # candidata visible: NO cambió la entrada publicada
+        res["held_input_revisions"] = held[-20:]
+    if any(x.get("complete") is False for x in published + held):
+        res["flags"].append("EVIDENCE_INCOMPLETE")
+    if published:
+        if written_at is None:
+            after, order = published, "desconocido"
+        else:
+            after = [x for x in published if x["seen_utc"] > _ts(written_at)]
+            order = "posterior"
+        if after:
+            res["published_input_revisions"] = after[-20:]
+            res["revision_order"] = order
+            if res["state"] == "CURRENT":
+                # nunca «al día»: una entrada publicada cambió después (o no se sabe si antes) de calcular la salida
+                res["state"] = "INPUT_REVISED" if order == "posterior" else "INPUT_REVISION_UNRESOLVED"
+            res["flags"].append("INPUTS_REVISED_AFTER" if order == "posterior" else "INPUT_REVISION_ORDER_UNKNOWN")
+        else:
+            res["revisions_consumed"] = len(published)   # la salida se recalculó después: estado cerrado
     return res
 
 
 # ── evidencia: intervalo de disponibilidad observado ───────────────────────────────────────────────────────────
-def availability(records, obs_date):
-    """Intervalo (última consulta correcta SIN la observación, primera consulta correcta CON ella] en el endpoint
-    consultado, a partir del historial de evidencia de un fichero. Las consultas fallidas no fijan extremos."""
-    lo = hi = None
-    for r in sorted(records, key=lambda x: x.get("query_utc", "")):
-        if not r.get("ok") or not r.get("src_max"):
+def availability(records, obs_date, version=None):
+    """C3-4 · intervalo de disponibilidad OBSERVADO en el endpoint consultado para (fecha, versión):
+    (última consulta correcta en la que la fecha no estaba o tenía OTRA versión, primera consulta correcta con esa
+    versión]. version=None → la versión más reciente vista de esa fecha. Devuelve también todos los episodios
+    (una versión puede volver). Las consultas fallidas no fijan extremos; un extremo desconocido queda en None.
+    La versión presente en una consulta sin cambios (NOOP) es la publicada en ese momento: se conoce desde la
+    primera observación registrada o, hacia atrás, por la versión previa que declara la primera revisión."""
+    recs = sorted((r for r in records if r.get("ok")), key=lambda x: x.get("query_utc", ""))
+    limitation = None
+    seen = []                                           # [(query_utc, versión presente o None si ausente/desconocida)]
+    published = None                                    # versión publicada de la fecha tras cada consulta
+    pending_unknown = []
+    for r in recs:
+        if r.get("obs_complete") is False and any(rg["from"] <= obs_date <= rg["to"] for rg in r.get("obs_ranges", [])):
+            limitation = "evidencia sin versión por fecha en %s (%s)" % (r.get("query_utc"), r.get("obs_limitation", ""))
+            seen.append((r["query_utc"], "?"))
             continue
-        if r["src_max"] < obs_date:
-            if hi is None:
-                lo = r["query_utc"]
-        elif hi is None:
-            hi = r["query_utc"]
-    return {"obs_date": obs_date, "lower_bound": lo, "upper_bound": hi,
+        entry = next((o for o in r.get("obs", []) if o.get("date") == obs_date), None)
+        if (r.get("src_max") or "") < obs_date and entry is None:
+            seen.append((r["query_utc"], None))         # la fecha aún no estaba en la descarga
+            continue
+        if entry is not None:
+            if entry.get("kind") == "revision" and published is None and entry.get("previous_version"):
+                for k in pending_unknown:               # la versión previa declarada resuelve las NOOP anteriores
+                    seen[k] = (seen[k][0], entry["previous_version"])
+                pending_unknown = []
+            seen.append((r["query_utc"], entry.get("version")))
+            if r.get("wrote") and entry.get("accepted"):
+                published = entry.get("version")
+        else:
+            # NOOP: la descarga coincidía con lo publicado; "~" = presente con versión aún desconocida
+            seen.append((r["query_utc"], published or "~"))
+            if published is None:
+                pending_unknown.append(len(seen) - 1)
+    episodes = []
+    prev = ("__start__", None)
+    for q, v in seen:
+        if v not in (None, "?") and v != prev[1]:
+            lower = prev[0] if prev[0] != "__start__" and prev[1] != "?" else None
+            episodes.append({"version": None if v == "~" else v, "lower_bound": lower, "upper_bound": q,
+                             "version_known": v != "~"})
+        prev = (q, v)
+    target = version or (episodes[-1]["version"] if episodes else None)
+    mine = [e for e in episodes if e["version"] == target] if (version or not episodes) else episodes[-1:]
+    ep = mine[-1] if mine else {"version": target, "lower_bound": None, "upper_bound": None}
+    if ep.get("version_known") is False and limitation is None:
+        limitation = "versión de la fecha desconocida en ese episodio (registro sin versión por fecha)"
+    return {"obs_date": obs_date, "version": target, "lower_bound": ep["lower_bound"], "upper_bound": ep["upper_bound"],
+            "episodes": episodes, "limitation": limitation,
             "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor"}

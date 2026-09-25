@@ -93,6 +93,19 @@ def _load_json(path, default):
 
 
 EVIDENCE_DIR = os.path.join("data", "_ingest", "evidence")
+EVIDENCE_MAX_OBS = 2000          # por encima: fechas completas en rangos, sin versión por fecha (declarado)
+
+
+def _ranges(obs):
+    """[{kind, from, to, n}] de fechas consecutivas (en el orden de la serie) con el mismo tipo de cambio."""
+    out = []
+    for o in obs:
+        if out and out[-1]["kind"] == o["kind"]:
+            out[-1]["to"] = o["date"]
+            out[-1]["n"] += 1
+        else:
+            out.append({"kind": o["kind"], "from": o["date"], "to": o["date"], "n": 1})
+    return out
 
 
 def _iso(d):
@@ -272,8 +285,7 @@ class Ingest(object):
         def version(series, d):
             v = S.row_measures(series, d, measures) if measures else series.rows[d][1]
             return hashlib.sha1(repr(v).encode()).hexdigest()[:12]
-        dates = sorted(src.rows) if repo is not None else sorted(src.rows)[-1:]
-        for d in dates:
+        for d in sorted(src.rows):                     # TODAS las fechas (también en la primera descarga)
             if repo is None or d not in repo.rows:
                 obs.append({"date": _iso(d), "version": version(src, d), "kind": "new"})
             elif version(src, d) != version(repo, d):
@@ -286,12 +298,20 @@ class Ingest(object):
                 "query_utc": datetime.fromtimestamp(self.now(), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "query_utc_meaning": "instante de la fusión, inmediatamente después de la descarga",
                 "ok": True, "src_max": _iso(src.max_date), "repo_max_before": _iso(repo.max_date) if repo else None,
-                "status": rep.get("status"), "wrote": bool(rep.get("written")), "obs": obs[-50:],
-                "obs_truncated": len(obs) > 50,
+                "status": rep.get("status"), "wrote": bool(rep.get("written")),
                 "responses": [{"url": x.get("url"), "status": x.get("status"), "date": x.get("date_header"),
                                "last_modified": x.get("last_modified"),
                                "meaning": "metadatos HTTP del recurso; no son la hora de publicación de cada fila"}
                               for x in self.requests_log if x.get("cls") == g8http.OK]}
+        line["obs_truncated"] = False                    # nunca se recorta: ver obs_complete para la forma compacta
+        if len(obs) <= EVIDENCE_MAX_OBS:
+            line.update(obs=obs, obs_complete=True)
+        else:
+            # C3-4: nunca se recorta en silencio. Por encima del límite se guardan TODAS las fechas cambiadas como
+            # rangos contiguos por tipo (sin versión por fecha) y obs_complete=false: los consumidores lo declaran.
+            line.update(obs=[], obs_complete=False, obs_count=len(obs), obs_ranges=_ranges(obs),
+                        obs_limitation="más de %d observaciones cambiadas: fechas completas en rangos, versiones por "
+                                       "fecha no conservadas" % EVIDENCE_MAX_OBS)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(line, ensure_ascii=False, sort_keys=True) + "\n")

@@ -29,7 +29,7 @@ from g8common import runlog, series as S  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 UTC = timezone.utc
-SCHEMA = "g8-freshness/1"
+SCHEMA = "g8-freshness/2"
 
 
 def _utc(s):
@@ -83,30 +83,147 @@ class TreeSource(object):
                         continue
         return out
 
-    def facts(self):
-        """Hechos de ingestión (eje B) por fichero, desde los punteros data/_ingest/latest/*.json."""
-        d = os.path.join(self.root, runlog.LATEST_DIR)
-        out = {}
-        if not os.path.isdir(d):
-            return out
-        for n in sorted(os.listdir(d)):
-            if not n.endswith(".json"):
-                continue
-            try:
-                with open(os.path.join(d, n), encoding="utf-8") as fh:
-                    rec = json.load(fh)
-            except (OSError, ValueError):
-                continue
-            files = rec.get("files") or {}
-            for f, v in (files.items() if isinstance(files, dict) else []):
-                if not isinstance(v, dict):
-                    continue
-                out[f] = {"pointer": n, "run_id": rec.get("run_id"), "finished_utc": rec.get("finished_utc"),
-                          "rc": rec.get("rc"), "status": v.get("status"), "held": len(v.get("held") or []),
-                          "detail": (v.get("detail") or "")[:200], "last_ok_utc": rec.get("last_ok_utc"),
-                          "failing_since_utc": rec.get("failing_since_utc"),
-                          "errors": [e.get("msg", e) if isinstance(e, dict) else e for e in (rec.get("errors") or [])][:5]}
+    # ── C3-2 · ejecuciones y hechos (eje B) por fuente: Actions (puntero + registro de ejecuciones), g8step y latido
+    #    del Mac (families[...].files, fetch_detail). Se leen los formatos existentes; no se modifica ningún emisor.
+    def _json_files(self, rel, pattern=".json"):
+        d = os.path.join(self.root, rel)
+        out = []
+        for base, _, names in os.walk(d) if os.path.isdir(d) else []:
+            for n in sorted(names):
+                if n.endswith(pattern):
+                    out.append(os.path.join(base, n))
         return out
+
+    def _records(self):
+        if getattr(self, "_rec_cache", None) is None:
+            recs = []
+            for p in self._json_files(runlog.LATEST_DIR):
+                try:
+                    with open(p, encoding="utf-8") as fh:
+                        recs.append((os.path.basename(p), json.load(fh)))
+                except (OSError, ValueError):
+                    continue
+            for p in self._json_files(runlog.RUNS_DIR, ".jsonl"):
+                with open(p, encoding="utf-8") as fh:
+                    for line in fh:
+                        try:
+                            recs.append((os.path.relpath(p, self.root), json.loads(line)))
+                        except ValueError:
+                            continue
+            self._rec_cache = recs
+        return self._rec_cache
+
+    @staticmethod
+    def _file_entry(v, published=None):
+        v = v if isinstance(v, dict) else {}
+        st = v.get("status")
+        written = bool(v.get("written")) or (st in ("PUBLISH", "PUBLISHED") and published is not False)
+        return {"status": st, "src_max": _iso(v.get("src_max")), "held": len(v.get("held") or []), "written": written,
+                "detail": (v.get("detail") or "")[:200]}
+
+    def executions(self, spec):
+        """Ejecuciones REALES registradas para una fuente «actions:<job>», «step:<nombre>» o «mac:<FAM>/<clave>»,
+        de la más antigua a la más reciente, sin duplicados (run_id)."""
+        kind, _, name = spec.partition(":")
+        out, seen = [], set()
+        for where, rec in self._records():
+            if kind == "actions" and rec.get("job") == name and rec.get("executor", "actions") == "actions" \
+                    and "steps" not in rec:
+                key = ("actions", rec.get("run_id"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append({"source": "actions", "where": where, "run_id": rec.get("run_id"),
+                            "started_utc": rec.get("started_utc"), "finished_utc": rec.get("finished_utc"),
+                            "rc": rec.get("rc"), "requests": [{"cls": q.get("cls"), "status": q.get("status")}
+                                                              for q in (rec.get("requests") or [])],
+                            "files": {f: self._file_entry(v) for f, v in (rec.get("files") or {}).items()},
+                            "errors": [e.get("msg", e) if isinstance(e, dict) else e for e in (rec.get("errors") or [])][:5],
+                            "not_before": rec.get("not_before") or {}, "last_ok_utc": rec.get("last_ok_utc"),
+                            "failing_since_utc": rec.get("failing_since_utc")})
+            elif kind == "step" and "steps" in rec:
+                for st in rec.get("steps") or []:
+                    if st.get("name") != name:
+                        continue
+                    key = ("step", rec.get("run_id"), st.get("started_utc"))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    out.append({"source": "step", "where": where, "run_id": rec.get("run_id"), "job": rec.get("job"),
+                                "started_utc": st.get("started_utc"), "finished_utc": rec.get("written_utc"),
+                                "status": st.get("status"), "rc": st.get("rc"), "files": {},
+                                "restored": [r for r in rec.get("restored") or [] if r.get("step") == name]})
+            elif kind == "mac" and isinstance(rec.get("families"), dict):
+                fam, _, fkey = name.partition("/")
+                fr = rec["families"].get(fam)
+                if fr is None:
+                    continue
+                key = ("mac", rec.get("executor"), rec.get("run_id"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                det = (rec.get("fetch_detail") or {}).get(fkey) or {}
+                rc = det.get("rc", (rec.get("fetch_status") or {}).get(fkey))
+                out.append({"source": "mac", "where": where, "executor": rec.get("executor"), "run_id": rec.get("run_id"),
+                            "started_utc": rec.get("started_utc"), "finished_utc": rec.get("finished_utc"),
+                            "rc": int(rc) if str(rc).lstrip("-").isdigit() else rc, "family": fam,
+                            "family_status": fr.get("status"), "family_detail": (fr.get("detail") or "")[:200],
+                            "requests": det.get("requests") or [], "errors": (det.get("errors") or [])[:5],
+                            "files": {f: self._file_entry(v, fr.get("published")) for f, v in (fr.get("files") or {}).items()},
+                            "fetch_files": det.get("files") or {}})
+        return sorted(out, key=lambda r: r.get("finished_utc") or r.get("started_utc") or "")
+
+    def runs_for(self, output):
+        specs = [x for x in (output.get("sources") or "").split("|") if x]
+        return sorted((r for spec in specs for r in self.executions(spec)),
+                      key=lambda r: r.get("finished_utc") or r.get("started_utc") or "")
+
+    def facts_for(self, output):
+        """Eje B de una salida: último hecho por fuente (con procedencia) y el más reciente en conjunto. Un intento
+        que falló ANTES de publicar (files vacío) se asocia a la salida por su fuente y se conserva."""
+        specs = [x for x in (output.get("sources") or "").split("|") if x]
+        if not specs:
+            return {"available": False, "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"}
+        per = {}
+        for spec in specs:
+            ex = self.executions(spec)
+            if ex:
+                last = dict(ex[-1])
+                f = last.pop("files", {}).get(output["file"])
+                last["file"] = f if f is not None else {"status": "SIN_RESULTADO_PARA_ESTE_FICHERO"}
+                last.pop("fetch_files", None)
+                per[spec] = last
+        if not per:
+            return {"available": False, "reason": "sin registros todavía para " + ", ".join(specs)}
+        latest_spec = max(per, key=lambda k: per[k].get("finished_utc") or per[k].get("started_utc") or "")
+        return {"available": True, "latest_source": latest_spec, "latest": per[latest_spec], "by_source": per}
+
+    def facts(self):
+        """{fichero: hechos} de todas las salidas del mapa con hechos disponibles (interfaz pública)."""
+        _, _, outputs, _ = FR.load_config(self.root)
+        out = {}
+        for o in outputs:
+            f = self.facts_for(o)
+            if f.get("available"):
+                out[o["file"]] = f
+        return out
+
+    def written_at(self, f):
+        """Última escritura publicada de data/<f> (commit de git) o None si no se puede saber."""
+        try:
+            t = self._git("log", "-1", "--format=%ct", "--", "data/" + f).decode().strip()
+            return datetime.fromtimestamp(int(t), tz=UTC) if t else None
+        except (OSError, subprocess.CalledProcessError, ValueError):
+            return None
+
+    evidence_available = True
+
+
+def _iso(d):
+    d = str(d or "")
+    if len(d) == 8 and d.isdigit():
+        return "%s-%s-%s" % (d[:4], d[4:6], d[6:])
+    return d or None
 
 
 class GitSource(TreeSource):
@@ -161,14 +278,22 @@ class GitSource(TreeSource):
     def evidence(self, f):
         return []                                        # el historial de evidencia no existía en esas fechas
 
-    def facts(self):
-        return {}
+    def executions(self, spec):
+        return []                                        # ni el registro de ejecuciones
+
+    def facts_for(self, output):
+        return {"available": False, "reason": "reproducción histórica: no existían registros de ejecución"}
+
+    def written_at(self, f):
+        t = [ts for ts, h in self._commits(f) if ts <= self.at.timestamp()]
+        return datetime.fromtimestamp(t[0], tz=UTC) if t else None
+
+    evidence_available = False
 
 
 def build(root, at, src):
     rules, params, outputs, cals = FR.load_config(root)
     passes = FR.SC.load_passes(root)
-    facts = src.facts()
     items = []
     for o in outputs:
         rule, param = rules[o["rule_id"]], params[o["rule_id"]]
@@ -178,8 +303,11 @@ def build(root, at, src):
         else:
             have = FR.obs_dates_from_bytes(src.read(o["file"]), o.get("date_key", ""))
         ev = {f: src.evidence(f) for f in [o["file"]] + [x for x in (o.get("inputs") or "").split(";") if x]}
+        derived = param["model"] == "derived"
         r = FR.evaluate(o, rule, param, cals, at, have, input_max_at=src.input_max_at, evidence=ev,
-                        facts=facts.get(o["file"], {}), passes=passes)
+                        facts=src.facts_for(o), passes=passes, runs=src.runs_for(o),
+                        evidence_available=src.evidence_available,
+                        written_at=src.written_at(o["file"]) if derived else None)
         if r.get("state") in FR.LATE_STATES or r.get("state") in ("DUE", "PENDING_TIME_UNKNOWN"):
             obs = r.get("missing", [None])[0] if r.get("missing") else r.get("due_obs")
             if obs and ev.get(o["file"]):
@@ -234,7 +362,7 @@ def compare(report, current):
         if not cur:
             continue
         for feed, status in cur:
-            new_late = r["state"] in FR.LATE_STATES
+            new_late = r["state"] in FR.UNHEALTHY_STATES      # una entrada revisada después NO es «acuerdo sano»
             cur_late = status in ("DEGRADED", "STALE", "DEAD")
             if r["state"] == "NOT_MONITORED":
                 kind = "FUERA_DE_F3"                     # decisión documentada; el motor oficial lo sigue vigilando
