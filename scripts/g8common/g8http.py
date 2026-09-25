@@ -187,15 +187,22 @@ def _shutdown(sock):
 
 
 class SocketDeadline(object):
-    """Plazo EFECTIVO de una petición (B3R1-1). Un timeout de socket limita cada espera de conexión o lectura, no
-    la duración total: un servidor que envía poco a poco puede alargar la descarga sin límite. Al vencer el plazo,
-    este guardián hace shutdown() de los sockets registrados, lo que despierta en el acto una lectura bloqueada
-    (Linux y macOS) y corta la conexión; el llamador comprueba `expired` y nunca da por buena esa respuesta.
-    Reloj real (threading.Timer): es tiempo de pared lo que se protege. Registrar tras vencer cierra al momento."""
+    """Plazo EFECTIVO de una petición (B3R1-1, B3R2-1). Un timeout de socket limita cada espera de conexión o
+    lectura, no la duración total: un servidor (o un proxy) que envía poco a poco puede alargar sin límite la
+    negociación CONNECT, el saludo TLS, las cabeceras o el cuerpo. Al vencer el plazo, este guardián hace shutdown()
+    de los sockets registrados, lo que despierta en el acto una lectura bloqueada (Linux y macOS) y corta la
+    conexión; el llamador comprueba `expired` y nunca da por buena esa respuesta.
+
+    Se registra un DUPLICADO del socket TCP en cuanto existe (watch_new_socket): cubre todo lo que ocurre después,
+    incluido el túnel CONNECT y el saludo TLS, que se hacen dentro de connect() y convierten el socket original en
+    otro objeto (wrap_socket lo «desprende»). shutdown() sobre el duplicado actúa sobre la misma conexión; el
+    duplicado es propiedad del guardián y se cierra en cancel(), así que su descriptor no puede reutilizarse
+    mientras el temporizador podría actuar. Reloj real (threading.Timer): se protege tiempo de pared."""
 
     def __init__(self, seconds):
         self.expired = False
-        self._socks = []
+        self._done = False
+        self._socks = []                                # [(socket, propio)]
         self._lock = threading.Lock()
         self._timer = threading.Timer(max(0.0, float(seconds)), self._fire)
         self._timer.daemon = True
@@ -203,20 +210,37 @@ class SocketDeadline(object):
 
     def _fire(self):
         with self._lock:
+            if self._done:
+                return
             self.expired = True
-            socks = list(self._socks)
-        for s in socks:
-            _shutdown(s)
+            for s, _ in self._socks:
+                _shutdown(s)
 
-    def register(self, sock):
+    def register(self, sock, owned=False):
         with self._lock:
-            self._socks.append(sock)
-            expired = self.expired
-        if expired:
-            _shutdown(sock)
+            if self._done:
+                if owned:
+                    sock.close()
+                return
+            self._socks.append((sock, owned))
+            if self.expired:
+                _shutdown(sock)
+
+    def watch_new_socket(self, sock):
+        """Para el socket TCP recién conectado, antes de CONNECT/TLS. Devuelve el mismo socket."""
+        self.register(sock.dup(), owned=True)
+        return sock
 
     def cancel(self):
         self._timer.cancel()
+        with self._lock:
+            self._done = True
+            owned, self._socks = [s for s, o in self._socks if o], []
+        for s in owned:
+            try:
+                s.close()
+            except OSError:
+                pass
 
     def __enter__(self):
         return self
@@ -244,10 +268,11 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
         raise NetError("other", "esquema no soportado")
     deadline = time.time() + total_timeout if total_timeout else None
     guard = SocketDeadline(total_timeout) if total_timeout else None
+    if guard is not None:                               # B3R2-1: vigilado desde el TCP, antes del saludo TLS
+        create = conn._create_connection
+        conn._create_connection = lambda *a, **k: guard.watch_new_socket(create(*a, **k))
     try:
         conn.connect()
-        if guard is not None:
-            guard.register(conn.sock)                           # B3R1-1: el plazo total interrumpe la lectura
         conn.sock.settimeout(read_timeout)
         conn.request(method, path, body=body, headers=headers or {})
         resp = conn.getresponse()

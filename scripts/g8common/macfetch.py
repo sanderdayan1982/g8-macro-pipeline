@@ -56,14 +56,15 @@ def _guarded_session(requests, guard):
     """Session de requests cuyas conexiones quedan registradas en el guardián de plazo (B3R1-1).
     `timeout=t` de requests limita cada espera de conexión o lectura, no la duración total de la descarga; al
     registrar el socket de cada conexión, g8http.SocketDeadline puede cortarla en el plazo compartido.
-    Solo usa atributos públicos y estables de urllib3 1.26 y 2.x (ConnectionCls, pool_classes_by_scheme)."""
+    El socket se vigila desde que existe la conexión TCP (HTTPConnection._new_conn), de modo que el plazo cubre
+    también el túnel CONNECT de un proxy HTTP y el saludo TLS (B3R2-1). Usa atributos presentes y probados en
+    urllib3 1.26 y 2.x (ConnectionCls, pool_classes_by_scheme, _new_conn)."""
     from urllib3 import connection, connectionpool
 
     def registering(base):
         class Conn(base):
-            def connect(self):
-                base.connect(self)
-                guard.register(self.sock)
+            def _new_conn(self):                        # socket TCP recién abierto: antes de CONNECT y TLS (B3R2-1)
+                return guard.watch_new_socket(base._new_conn(self))
         return Conn
 
     class Pool(connectionpool.HTTPConnectionPool):

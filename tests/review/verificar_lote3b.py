@@ -22,7 +22,7 @@ SUITES = {
     "descargadores del Mac": "test_lote3b_mac",
     "inventario sin omisiones": "test_inventory",
 }
-# Hallazgos de las revisiones de 4c4847c (B3-*) y 1e31fd1 (B3R1-1): pruebas de aceptación que fallan en la versión
+# Hallazgos de las revisiones de 4c4847c (B3-*), 1e31fd1 (B3R1-1) y 5b2a4dc (B3R2-1): pruebas de aceptación que fallan en la versión
 # revisada y pasan con la corrección
 B3 = {
     "B3-1 reales: REAL10/BE10 corregidos con NOM10 igual": ("test_lote3b_reales", "B3_1"),
@@ -32,6 +32,7 @@ B3 = {
     "B3-4 Mac: max_date del registro de escritura": ("test_lote3b_mac", "WriteMetadata"),
     "B3R1-1 Mac: plazo total efectivo con requests real y biblioteca estándar (servidor lento local)":
         ("test_lote3b_mac", "RequestsDeadlineReal"),
+    "B3R2-1 Mac: plazo durante el túnel CONNECT de un proxy HTTP y el saludo TLS": ("test_lote3b_mac", "b3r2_1"),
 }
 
 

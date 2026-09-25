@@ -607,6 +607,101 @@ class _Slow(object):
         self.thread.join()
 
 
+class _Proxy(object):
+    """Proxy HTTP local (127.0.0.1) para B3R2-1. mode:
+       slow_connect — responde al CONNECT «HTTP/1.0 502 Bad Gateway» de 1 B cada 0,10 s (no toca el destino);
+       tunnel       — CONNECT normal: abre el túnel al destino (solo 127.0.0.1) y reenvía en ambos sentidos."""
+
+    def __init__(self, mode):
+        import select
+        import socket
+        import socketserver
+        import threading
+        outer = self
+        self.hits, self.aborted = 0, threading.Event()
+
+        class H(socketserver.StreamRequestHandler):
+            def handle(self):
+                line = self.rfile.readline()
+                while self.rfile.readline() not in (b"\r\n", b"\n", b""):
+                    pass
+                outer.hits += 1
+                try:
+                    if mode == "slow_connect":
+                        for b in b"HTTP/1.0 502 Bad Gateway\r\n\r\n":
+                            time.sleep(0.10)
+                            self.wfile.write(bytes([b]))
+                            self.wfile.flush()
+                        return
+                    host, port = line.split()[1].decode().rsplit(":", 1)
+                    assert host == "127.0.0.1", host                # nunca fuera de la máquina
+                    up = socket.create_connection((host, int(port)))
+                    self.wfile.write(b"HTTP/1.0 200 Connection established\r\n\r\n")
+                    self.wfile.flush()
+                    a = self.connection
+                    while True:
+                        r, _, _ = select.select([a, up], [], [], 5)
+                        if not r:
+                            break
+                        for src in r:
+                            data = src.recv(65536)
+                            if not data:
+                                up.close()
+                                return
+                            (up if src is a else a).sendall(data)
+                except OSError:
+                    outer.aborted.set()
+
+        class Srv(socketserver.ThreadingTCPServer):
+            daemon_threads = True
+            allow_reuse_address = True
+        self.server = Srv(("127.0.0.1", 0), H)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.url = "http://127.0.0.1:%d" % self.server.server_address[1]
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+
+class _SlowTLSHandshake(object):
+    """Servidor TCP local que, en lugar del ServerHello, envía la cabecera de un registro TLS de 16 KiB y luego su
+    contenido de 1 B cada 0,10 s: el cliente queda dentro del saludo TLS (connect()) sin agotar ninguna espera."""
+
+    def __init__(self):
+        import socketserver
+        import threading
+        outer = self
+        self.hits, self.aborted = 0, threading.Event()
+
+        class H(socketserver.BaseRequestHandler):
+            def handle(self):
+                outer.hits += 1
+                try:
+                    self.request.recv(4096)                          # ClientHello
+                    self.request.sendall(b"\x16\x03\x03\x40\x00")
+                    for _ in range(100):
+                        time.sleep(0.10)
+                        self.request.sendall(b"\x00")
+                except OSError:
+                    outer.aborted.set()
+
+        class Srv(socketserver.ThreadingTCPServer):
+            daemon_threads = True
+            allow_reuse_address = True
+        self.server = Srv(("127.0.0.1", 0), H)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.url = "https://127.0.0.1:%d/x" % self.server.server_address[1]
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+
 try:
     import requests as _real_requests  # noqa: F401
     HAS_REQUESTS = True
@@ -715,7 +810,92 @@ class RequestsDeadlineReal(unittest.TestCase):
             self.assertEqual(body, b"x" * 10)
 
     @NEEDS_REQUESTS
+    # ── B3R2-1: fases dentro de connect() — túnel CONNECT de un proxy HTTP y saludo TLS ──
+    def fetch_via(self, target_url, proxy=None, stdlib=False):
+        import time as _t
+        env = {}                                        # sin proxy: el NO_PROXY de setUp garantiza conexión directa
+        if proxy:
+            env = {"NO_PROXY": "", "no_proxy": "", "ALL_PROXY": "", "all_proxy": "",
+                   "HTTPS_PROXY": proxy, "https_proxy": proxy, "HTTP_PROXY": proxy, "http_proxy": proxy}
+        mods = {"curl_cffi": None}
+        if stdlib:
+            mods["requests"] = None
+        with mock.patch.dict(os.environ, env), mock.patch.dict(sys.modules, mods):
+            F = macfetch.Fetch("t", self.tmp, budget_s=self.BUDGET, log=lambda *a: None)
+            t0 = _t.monotonic()
+            try:
+                body, err = F.get(target_url, timeout=120), None
+            except macfetch.FetchError as e:
+                body, err = None, e
+            return body, err, _t.monotonic() - t0, F
+
+    def check_cut(self, body, err, elapsed, F, hits, aborted):
+        self.assertLessEqual(elapsed, self.BUDGET + self.TOL, "%.3f s" % elapsed)
+        self.assertIsNone(body)
+        self.assertIsNotNone(err)
+        self.assertNotEqual(F.requests_log[-1]["cls"], "OK")
+        self.assertEqual(hits, 1)                                       # ni otro intento ni otro transporte
+        self.assertTrue(aborted, "la conexión no se cortó")
+
+    @NEEDS_REQUESTS
+    def test_b3r2_1_https_via_proxy_slow_connect_cut_at_deadline(self):
+        px = _Proxy("slow_connect")
+        try:
+            res = self.fetch_via("https://never-contacted.invalid/file", proxy=px.url)
+            aborted = px.aborted.wait(3)
+        finally:
+            px.close()
+        self.check_cut(*res, hits=px.hits, aborted=aborted)
+
+    @NEEDS_REQUESTS
+    def test_b3r2_1_https_via_proxy_tunnel_fast_response_ok(self):
+        t = self.tls()
+        srv, px = _Slow("fast", t), _Proxy("tunnel")
+        try:
+            body, err, elapsed, F = self.fetch_via(srv.url, proxy=px.url)
+        finally:
+            px.close()
+            srv.close()
+        self.assertIsNone(err)
+        self.assertEqual(body, b"x" * 10)
+        self.assertEqual(px.hits, 1)                                    # pasó de verdad por el túnel
+        self.assertLess(elapsed, self.BUDGET)
+
+    @NEEDS_REQUESTS
+    def test_b3r2_1_https_via_proxy_tunnel_slow_body_cut_at_deadline(self):
+        t = self.tls()
+        srv, px = _Slow("drip", t), _Proxy("tunnel")
+        try:
+            res = self.fetch_via(srv.url, proxy=px.url)
+            aborted = srv.aborted.wait(3)
+        finally:
+            px.close()
+            srv.close()
+        self.check_cut(*res, hits=srv.hits, aborted=aborted)
+        self.assertEqual(px.hits, 1)
+
+    @NEEDS_REQUESTS
+    def test_b3r2_1_requests_slow_tls_handshake_cut_at_deadline(self):
+        hs = _SlowTLSHandshake()
+        try:
+            res = self.fetch_via(hs.url)
+            aborted = hs.aborted.wait(3)
+        finally:
+            hs.close()
+        self.check_cut(*res, hits=hs.hits, aborted=aborted)
+
+    def test_b3r2_1_stdlib_slow_tls_handshake_cut_at_deadline(self):
+        hs = _SlowTLSHandshake()
+        try:
+            res = self.fetch_via(hs.url, stdlib=True)
+            aborted = hs.aborted.wait(3)
+        finally:
+            hs.close()
+        self.check_cut(*res, hits=hs.hits, aborted=aborted)
+
+    @NEEDS_REQUESTS
     def test_proxy_connections_are_guarded_too(self):
+        """Solo comprueba la configuración del gestor de proxy; la negociación real la cubren las pruebas b3r2_1."""
         import requests
         from g8common import g8http
         guard = g8http.SocketDeadline(60)
