@@ -19,6 +19,7 @@ import os
 import re
 import socket
 import ssl
+import threading
 import time
 import urllib.parse
 
@@ -178,6 +179,53 @@ def classify(provider, status, headers, body, not_found_is_no_publication=False,
     return FAIL_INVALID, None, "HTTP %s" % status
 
 
+def _shutdown(sock):
+    try:
+        sock.shutdown(socket.SHUT_RDWR)
+    except (OSError, ValueError):
+        pass
+
+
+class SocketDeadline(object):
+    """Plazo EFECTIVO de una petición (B3R1-1). Un timeout de socket limita cada espera de conexión o lectura, no
+    la duración total: un servidor que envía poco a poco puede alargar la descarga sin límite. Al vencer el plazo,
+    este guardián hace shutdown() de los sockets registrados, lo que despierta en el acto una lectura bloqueada
+    (Linux y macOS) y corta la conexión; el llamador comprueba `expired` y nunca da por buena esa respuesta.
+    Reloj real (threading.Timer): es tiempo de pared lo que se protege. Registrar tras vencer cierra al momento."""
+
+    def __init__(self, seconds):
+        self.expired = False
+        self._socks = []
+        self._lock = threading.Lock()
+        self._timer = threading.Timer(max(0.0, float(seconds)), self._fire)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def _fire(self):
+        with self._lock:
+            self.expired = True
+            socks = list(self._socks)
+        for s in socks:
+            _shutdown(s)
+
+    def register(self, sock):
+        with self._lock:
+            self._socks.append(sock)
+            expired = self.expired
+        if expired:
+            _shutdown(sock)
+
+    def cancel(self):
+        self._timer.cancel()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.cancel()
+        return False
+
+
 def default_transport(method, url, headers, body, connect_timeout, read_timeout, total_timeout):
     """Una petición, sin reintentos. Conexión y lectura con tiempos separados y plazo total."""
     u = urllib.parse.urlsplit(url)
@@ -195,8 +243,11 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
     else:
         raise NetError("other", "esquema no soportado")
     deadline = time.time() + total_timeout if total_timeout else None
+    guard = SocketDeadline(total_timeout) if total_timeout else None
     try:
         conn.connect()
+        if guard is not None:
+            guard.register(conn.sock)                           # B3R1-1: el plazo total interrumpe la lectura
         conn.sock.settimeout(read_timeout)
         conn.request(method, path, body=body, headers=headers or {})
         resp = conn.getresponse()
@@ -208,6 +259,10 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
             if not c:
                 break
             chunks.append(c)
+        if guard is not None:
+            guard.cancel()
+            if guard.expired:                                   # cortada por el plazo: nunca se da por buena
+                raise NetError("timeout", "plazo total de la petición agotado (descarga interrumpida)")
         data = b"".join(chunks)
         hdrs = {k.lower(): v for k, v in resp.getheaders()}
         cl = hdrs.get("content-length")
@@ -216,24 +271,35 @@ def default_transport(method, url, headers, body, connect_timeout, read_timeout,
         return resp.status, hdrs, data
     except NetError:
         raise
-    except socket.timeout as e:
-        raise NetError("timeout", str(e))
-    except ssl.SSLCertVerificationError as e:
-        raise NetError("tls_verify", str(e)[:200])
-    except ssl.SSLError as e:
-        raise NetError("tls", str(e)[:200])
-    except socket.gaierror as e:
-        raise NetError("dns", str(e))
-    except http.client.IncompleteRead as e:
-        raise NetError("incomplete", "%d bytes leídos" % len(e.partial))
-    except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError) as e:
-        raise NetError("reset", str(e))
-    except http.client.HTTPException as e:
-        raise NetError("other", type(e).__name__)
-    except OSError as e:
-        raise NetError("other", str(e)[:200])
+    except Exception as e:                                      # noqa: BLE001
+        if guard is not None and guard.expired:                 # cualquier error provocado por el corte = plazo
+            raise NetError("timeout", "plazo total de la petición agotado (descarga interrumpida)")
+        _classify_raise(e)
     finally:
+        if guard is not None:
+            guard.cancel()
         conn.close()
+
+
+def _classify_raise(e):
+    """Mismo orden y mismas clases que antes de B3R1-1; lo no previsto se propaga tal cual."""
+    if isinstance(e, socket.timeout):
+        raise NetError("timeout", str(e))
+    if isinstance(e, ssl.SSLCertVerificationError):
+        raise NetError("tls_verify", str(e)[:200])
+    if isinstance(e, ssl.SSLError):
+        raise NetError("tls", str(e)[:200])
+    if isinstance(e, socket.gaierror):
+        raise NetError("dns", str(e))
+    if isinstance(e, http.client.IncompleteRead):
+        raise NetError("incomplete", "%d bytes leídos" % len(e.partial))
+    if isinstance(e, (ConnectionResetError, BrokenPipeError, ConnectionAbortedError)):
+        raise NetError("reset", str(e))
+    if isinstance(e, http.client.HTTPException):
+        raise NetError("other", type(e).__name__)
+    if isinstance(e, OSError):
+        raise NetError("other", str(e)[:200])
+    raise e
 
 
 class _RedirectRefused(Exception):

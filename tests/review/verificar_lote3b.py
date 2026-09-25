@@ -22,13 +22,16 @@ SUITES = {
     "descargadores del Mac": "test_lote3b_mac",
     "inventario sin omisiones": "test_inventory",
 }
-# Hallazgos de la revisión de 4c4847c: pruebas de aceptación que fallan en 4c4847c y pasan con la corrección
+# Hallazgos de las revisiones de 4c4847c (B3-*) y 1e31fd1 (B3R1-1): pruebas de aceptación que fallan en la versión
+# revisada y pasan con la corrección
 B3 = {
     "B3-1 reales: REAL10/BE10 corregidos con NOM10 igual": ("test_lote3b_reales", "B3_1"),
     "B3-2 Mac: Retry-After/503/redirección no eludidos por otro perfil": ("test_lote3b_mac", "b3_2"),
     "B3-3 Mac: presupuesto único para toda la cadena de transportes": ("test_lote3b_mac", "b3_3"),
     "B3-2/3 Mac: extremo a extremo TONA con bibliotecas HTTP dobles": ("test_lote3b_mac", "end_to_end"),
     "B3-4 Mac: max_date del registro de escritura": ("test_lote3b_mac", "WriteMetadata"),
+    "B3R1-1 Mac: plazo total efectivo con requests real y biblioteca estándar (servidor lento local)":
+        ("test_lote3b_mac", "RequestsDeadlineReal"),
 }
 
 

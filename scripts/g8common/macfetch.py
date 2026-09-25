@@ -52,6 +52,70 @@ def _next_profile_helps(status, headers):
     return status in (401, 403, 406, 451)
 
 
+def _guarded_session(requests, guard):
+    """Session de requests cuyas conexiones quedan registradas en el guardián de plazo (B3R1-1).
+    `timeout=t` de requests limita cada espera de conexión o lectura, no la duración total de la descarga; al
+    registrar el socket de cada conexión, g8http.SocketDeadline puede cortarla en el plazo compartido.
+    Solo usa atributos públicos y estables de urllib3 1.26 y 2.x (ConnectionCls, pool_classes_by_scheme)."""
+    from urllib3 import connection, connectionpool
+
+    def registering(base):
+        class Conn(base):
+            def connect(self):
+                base.connect(self)
+                guard.register(self.sock)
+        return Conn
+
+    class Pool(connectionpool.HTTPConnectionPool):
+        ConnectionCls = registering(connection.HTTPConnection)
+
+    class PoolS(connectionpool.HTTPSConnectionPool):
+        ConnectionCls = registering(connection.HTTPSConnection)
+
+    pools = {"http": Pool, "https": PoolS}
+
+    class Adapter(requests.adapters.HTTPAdapter):
+        def init_poolmanager(self, *a, **kw):
+            requests.adapters.HTTPAdapter.init_poolmanager(self, *a, **kw)
+            self.poolmanager.pool_classes_by_scheme = pools
+
+        def proxy_manager_for(self, proxy, **kw):
+            m = requests.adapters.HTTPAdapter.proxy_manager_for(self, proxy, **kw)
+            if not proxy.lower().startswith("socks"):
+                m.pool_classes_by_scheme = pools
+            return m
+
+    sess = requests.Session()
+    adapter = Adapter(max_retries=0)                    # sin reintentos propios: los hace g8http
+    sess.mount("http://", adapter)
+    sess.mount("https://", adapter)
+    return sess
+
+
+def _requests_with_deadline(requests, rem, method, url, headers, body, t):
+    """Una petición requests que no puede durar más de `rem` s de reloj real (B3R1-1): al vencer se cortan sus
+    sockets, se liberan (Session cerrada) y el resultado es NetError timeout, nunca una respuesta «OK»."""
+    guard = g8http.SocketDeadline(rem)
+    sess = None
+    try:
+        sess = _guarded_session(requests, guard)
+        r = sess.request(method, url, headers=headers, data=body, timeout=t, allow_redirects=False)
+        guard.cancel()
+        if guard.expired:
+            raise g8http.NetError("timeout", "plazo total agotado: descarga interrumpida")
+        return r
+    except g8http.NetError:
+        raise
+    except Exception as e:                              # noqa: BLE001
+        if guard.expired:
+            raise g8http.NetError("timeout", "plazo total agotado: descarga interrumpida")
+        raise e
+    finally:
+        guard.cancel()
+        if sess is not None:
+            sess.close()
+
+
 def curl_transport(log=print, impersonations=IMPERSONATIONS, now=time.time):
     """Transporte g8http: curl_cffi imitando Safari → Chrome124 → Chrome y, por último, requests (el orden del
     transporte original de los descargadores del Mac).
@@ -64,6 +128,9 @@ def curl_transport(log=print, impersonations=IMPERSONATIONS, now=time.time):
         presupuesto). Cada alternativa recibe solo el tiempo restante y no se inicia ninguna con menos de
         MIN_ATTEMPT_S (B3-3). Las bibliotecas no siguen redirecciones (allow_redirects=False): las sigue g8http
         dentro del mismo presupuesto.
+      · El plazo es EFECTIVO en cada alternativa (B3R1-1): curl_cffi con timeout escalar fija el TIMEOUT_MS de
+        libcurl (duración total de la transferencia); requests y la biblioteca estándar quedan bajo
+        g8http.SocketDeadline, que corta la conexión al vencer. Una respuesta cortada nunca se da por buena.
     Sin curl_cffi, directamente requests; sin requests, el transporte estándar de g8http."""
     try:
         from curl_cffi import requests as crequests
@@ -106,8 +173,8 @@ def curl_transport(log=print, impersonations=IMPERSONATIONS, now=time.time):
         except ImportError:
             requests = None
         if requests is not None:
-            res = attempt("requests", lambda t: requests.request(method, url, headers=headers, data=body, timeout=t,
-                                                                 allow_redirects=False))
+            res = attempt("requests", lambda t: _requests_with_deadline(requests, remaining(), method, url, headers,
+                                                                        body, t))
             if res is not None:
                 return res
         elif remaining() >= MIN_ATTEMPT_S and last is None:
@@ -117,6 +184,8 @@ def curl_transport(log=print, impersonations=IMPERSONATIONS, now=time.time):
         if last is not None:
             return last                                 # p. ej. 403 en todos los perfiles → FAIL_ACCESS
         e = last_err
+        if isinstance(e, g8http.NetError):
+            raise e
         kind = "timeout" if e is None or "timeout" in type(e).__name__.lower() or "timed out" in str(e).lower() else "other"
         raise g8http.NetError(kind, str(e)[:200] if e else "plazo agotado antes de completar la cadena de transportes")
     return transport

@@ -14,6 +14,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timedelta
@@ -379,6 +380,22 @@ class FakeLibs(object):
         cc.requests = types.SimpleNamespace(request=creq)
         rq = types.ModuleType("requests")
         rq.request = req
+
+        class Session(object):                          # el transporte usa Session + adaptador (B3R1-1)
+            def request(s2, method, url, headers=None, data=None, timeout=None, allow_redirects=True):
+                return req(method, url, headers=headers, data=data, timeout=timeout, allow_redirects=allow_redirects)
+
+            def mount(s2, prefix, adapter):
+                pass
+
+            def close(s2):
+                pass
+
+        class HTTPAdapter(object):
+            def __init__(s2, **kw):
+                pass
+        rq.Session = Session
+        rq.adapters = types.SimpleNamespace(HTTPAdapter=HTTPAdapter)
         self.modules = {"curl_cffi": cc, "requests": rq}
 
     def labels(self):
@@ -529,6 +546,195 @@ class CurlTransport(unittest.TestCase):
         self.assertIn(b"20260924", H.read(root, "TONA.csv"))
         st = json.load(open(os.path.join(root, "state", "fetch_tona.json")))
         self.assertEqual(st["files"]["TONA.csv"]["max_date"], "20260924")         # B3-4 en el registro real
+
+
+class _Slow(object):
+    """Servidor HTTP local (127.0.0.1) para B3R1-1. mode:
+       drip       — cabeceras al momento, cuerpo de 10 B con Content-Length, 1 B cada 0,30 s;
+       drip_nolen — igual pero sin Content-Length (fin por cierre): un corte parecería una respuesta completa;
+       headers    — la línea de estado y las cabeceras llegan 1 B cada 0,10 s;
+       fast       — respuesta completa inmediata."""
+
+    def __init__(self, mode, tls=None):
+        import http.server
+        import threading
+        outer = self
+        self.hits, self.aborted = 0, threading.Event()
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            protocol_version = "HTTP/1.0"
+
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                outer.hits += 1
+                try:
+                    if mode == "headers":
+                        for b in b"HTTP/1.0 200 OK\r\nContent-Length: 1\r\n\r\nx":
+                            time.sleep(0.10)
+                            self.wfile.write(bytes([b]))
+                            self.wfile.flush()
+                        return
+                    self.send_response(200)
+                    if mode != "drip_nolen":
+                        self.send_header("Content-Length", "10")
+                    self.end_headers()
+                    if mode == "fast":
+                        self.wfile.write(b"x" * 10)
+                        return
+                    for _ in range(10):
+                        time.sleep(0.30)
+                        self.wfile.write(b"x")
+                        self.wfile.flush()
+                except OSError:                         # EPIPE/ECONNRESET o, con TLS, SSLEOFError
+                    outer.aborted.set()                 # el cliente cortó la conexión: recursos liberados
+
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.server.daemon_threads = True
+        if tls:                                         # (cert, key): TLS real, verificado por el cliente
+            import ssl
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(*tls)
+            self.server.socket = ctx.wrap_socket(self.server.socket, server_side=True)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.url = "%s://127.0.0.1:%d/x" % ("https" if tls else "http", self.server.server_port)
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+
+try:
+    import requests as _real_requests  # noqa: F401
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+NEEDS_REQUESTS = unittest.skipUnless(HAS_REQUESTS, "requests no instalado: la alternativa requests no existe aquí")
+
+
+class RequestsDeadlineReal(unittest.TestCase):
+    """B3R1-1 — plazo total EFECTIVO con requests REAL (y la biblioteca estándar) frente a un servidor lento local.
+    Reloj real; solo 127.0.0.1; sin proveedores. El cierre del servidor se hace después de medir la llamada."""
+    BUDGET, TOL = 1.2, 0.5
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        env = mock.patch.dict(os.environ, {"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+        env.start()
+        self.addCleanup(env.stop)
+
+    def call(self, mode, stdlib=False, tls=None):
+        import time as _t
+        srv = _Slow(mode, tls)
+        mods = {"curl_cffi": None}
+        if stdlib:
+            mods["requests"] = None                     # alternativa final: g8http.default_transport
+        try:
+            with mock.patch.dict(sys.modules, mods):
+                F = macfetch.Fetch("t", self.tmp, budget_s=self.BUDGET, log=lambda *a: None)
+                t0 = _t.monotonic()
+                try:
+                    body, err = F.get(srv.url, timeout=120), None
+                except macfetch.FetchError as e:
+                    body, err = None, e
+                elapsed = _t.monotonic() - t0
+            aborted = srv.aborted.wait(3) if err is not None else None
+            return body, err, elapsed, F, srv.hits, aborted
+        finally:
+            srv.close()
+
+    def assert_cut(self, mode, stdlib=False, tls=None):
+        body, err, elapsed, F, hits, aborted = self.call(mode, stdlib, tls)
+        self.assertLessEqual(elapsed, self.BUDGET + self.TOL, "%s: %.3f s" % (mode, elapsed))
+        self.assertIsNone(body)                                         # nunca OK fuera de plazo
+        self.assertIsNotNone(err)
+        self.assertNotEqual(F.requests_log[-1]["cls"], "OK")
+        self.assertEqual(hits, 1)                                       # ningún transporte ni reintento tras agotarlo
+        self.assertTrue(aborted, "la conexión no se cortó")              # recursos liberados
+
+    @NEEDS_REQUESTS
+    def test_requests_real_drip_body_cut_at_deadline(self):
+        self.assert_cut("drip")
+
+    @NEEDS_REQUESTS
+    def test_requests_real_drip_without_length_not_taken_as_complete(self):
+        self.assert_cut("drip_nolen")
+
+    @NEEDS_REQUESTS
+    def test_requests_real_slow_headers_cut_at_deadline(self):
+        self.assert_cut("headers")
+
+    def test_stdlib_fallback_drip_body_cut_at_deadline(self):
+        self.assert_cut("drip", stdlib=True)
+
+    def test_stdlib_fallback_slow_headers_cut_at_deadline(self):
+        self.assert_cut("headers", stdlib=True)
+
+    def test_fast_response_still_ok(self):
+        for stdlib in (False, True):
+            body, err, elapsed, F, hits, _ = self.call("fast", stdlib)
+            self.assertIsNone(err, stdlib)
+            self.assertEqual(body, b"x" * 10)
+            self.assertEqual(F.requests_log[-1]["cls"], "OK")
+            self.assertLess(elapsed, self.BUDGET)
+
+    # HTTPS (los proveedores del Mac lo son): certificado autofirmado para 127.0.0.1, VERIFICADO por el cliente
+    # (REQUESTS_CA_BUNDLE para requests, SSL_CERT_FILE para la biblioteca estándar); nunca se desactiva TLS.
+    def tls(self):
+        import subprocess
+        d = os.path.join(self.tmp, "tls")
+        os.makedirs(d)
+        cert, key = os.path.join(d, "c.pem"), os.path.join(d, "k.pem")
+        try:
+            subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1", "-subj",
+                            "/CN=127.0.0.1", "-addext", "subjectAltName=IP:127.0.0.1", "-keyout", key, "-out", cert],
+                           check=True, capture_output=True)
+        except (OSError, subprocess.CalledProcessError) as e:
+            self.skipTest("openssl no disponible: %s" % e)
+        env = mock.patch.dict(os.environ, {"REQUESTS_CA_BUNDLE": cert, "SSL_CERT_FILE": cert})
+        env.start()
+        self.addCleanup(env.stop)
+        return cert, key
+
+    @NEEDS_REQUESTS
+    def test_https_requests_real_drip_cut_at_deadline(self):
+        self.assert_cut("drip", tls=self.tls())
+
+    def test_https_stdlib_fallback_drip_cut_at_deadline(self):
+        self.assert_cut("drip", stdlib=True, tls=self.tls())
+
+    def test_https_fast_response_still_ok(self):
+        t = self.tls()
+        for stdlib in (False, True):
+            body, err, *_ = self.call("fast", stdlib, t)
+            self.assertIsNone(err, stdlib)
+            self.assertEqual(body, b"x" * 10)
+
+    @NEEDS_REQUESTS
+    def test_proxy_connections_are_guarded_too(self):
+        import requests
+        from g8common import g8http
+        guard = g8http.SocketDeadline(60)
+        self.addCleanup(guard.cancel)
+        sess = macfetch._guarded_session(requests, guard)
+        self.addCleanup(sess.close)
+        a = sess.get_adapter("https://x")
+        m = a.proxy_manager_for("http://proxy.invalid:3128")
+        self.assertIs(m.pool_classes_by_scheme, a.poolmanager.pool_classes_by_scheme)
+        self.assertTrue(issubclass(m.pool_classes_by_scheme["https"].ConnectionCls,
+                                   __import__("urllib3").connection.HTTPSConnection))
+
+    def test_no_guard_threads_left(self):
+        import threading
+        before = threading.active_count()
+        self.call("fast")
+        self.call("drip")
+        time.sleep(0.2)
+        self.assertLessEqual(threading.active_count(), before)
 
 
 class WriteMetadata(unittest.TestCase):
