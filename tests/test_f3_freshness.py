@@ -171,6 +171,89 @@ class Cause(unittest.TestCase):
         self.assertEqual(r["cause"], "EJECUTADA_CON_FALLO")
 
 
+# ── C3R1-1 · publicación del Mac: resultado de la FUSIÓN ≠ resultado de la PUBLICACIÓN (publicador real) ────────
+class MacPublication(unittest.TestCase):
+    OLD = b"DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,0.9,0.9,0.9,0.9,0\n"
+    NEW = OLD + b"20260923,0.95,0.95,0.95,0.95,0\n"
+
+    def run_publisher(self, local, reject):
+        import contextlib
+        import io
+        sys.path.insert(0, os.path.join(ROOT, "mac"))
+        import push_nzd_to_github as P
+        from g8common import ghpublish as G
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        shutil.copytree(os.path.join(ROOT, "sources"), os.path.join(root, "sources"))
+        os.makedirs(os.path.join(root, "data"))
+        with open(os.path.join(root, "data", "TONA.csv"), "wb") as fh:
+            fh.write(local)
+        with open(os.path.join(ROOT, "sources", "registry.csv"), "rb") as fh:
+            registry = fh.read()
+        old = self.OLD
+
+        class MemoryRepo(object):                          # GitHub en memoria (sin red)
+            files = {"data/TONA.csv": old, "sources/registry.csv": registry}
+
+            def publish(self, build, message, **kw):
+                cur = {q: self.files.get(q) for q in build.paths}
+                for q, v in self.files.items():
+                    if any(q.startswith(x) for x in build.prefixes):
+                        cur[q] = v
+                changes, info = build(cur, "fake-head")
+                if reject and "data/TONA.csv" in changes:
+                    return G.Outcome(G.CONFLICT_EXHAUSTED, info=info, attempts=3)
+                self.files.update(changes)
+                return G.Outcome(G.PUBLISHED, info=info, commit="fake")
+        memory = MemoryRepo()
+        now = T("2026-09-24T12:00Z").timestamp()
+        with mock.patch.multiple(P, LOCAL_DATA=os.path.join(root, "data"), STATE_DIR=os.path.join(root, "state"),
+                                 LOG_DIR=os.path.join(root, "logs"),
+                                 FAMILIES=[f for f in P.FAMILIES if f[0] == "JP-TONA"],
+                                 read_token=lambda: "FAKE_TEST_TOKEN", executor_id=lambda: "mac-primary",
+                                 env_check=lambda: {}), \
+                mock.patch.object(G, "check_token", return_value={"valid": True, "required_ok": True}), \
+                mock.patch.object(P.notify, "send", return_value="DRY"), contextlib.redirect_stdout(io.StringIO()):
+            P.main(["--fetch-status", "tona=0", "--fetch-started", str(now - 5)],
+                   repo_factory=lambda *a: memory, now=lambda: now, cfg_dir=os.path.join(root, "no-config"))
+        for q, body in memory.files.items():                 # el repo remoto tal como quedó
+            os.makedirs(os.path.dirname(os.path.join(root, q)), exist_ok=True)
+            with open(os.path.join(root, q), "wb") as fh:
+                fh.write(body)
+        src = FRR.TreeSource(root)
+        return memory, src.facts_for(OUT["TONA.csv"]), src.executions("mac:JP-TONA/tona")
+
+    def cause(self, runs):
+        return FR.classify_cause("TONA.csv", D("2026-09-23"), T("2026-09-24T00:00Z"), T("2026-09-24T13:00Z"),
+                                 [], runs, [], True)[0]
+
+    def test_rejected_publication_is_not_written_and_not_a_missing_download(self):
+        memory, fx, runs = self.run_publisher(self.NEW, reject=True)
+        self.assertEqual(memory.files["data/TONA.csv"], self.OLD)          # remoto intacto
+        f = fx["latest"]["file"]
+        self.assertEqual((f["status"], f["src_max"], f["written"]), ("PUBLISH", "2026-09-23", False))
+        self.assertEqual(f["publish_failed"]["outcome"], "CONFLICT_EXHAUSTED")
+        self.assertEqual(fx["latest"]["rc"], 0)                            # la descarga sí fue correcta
+        self.assertEqual(self.cause(runs), "DESCARGADA_PUBLICACION_FALLIDA")
+
+    def test_successful_publication_is_written(self):
+        memory, fx, runs = self.run_publisher(self.NEW, reject=False)
+        self.assertEqual(memory.files["data/TONA.csv"], self.NEW)
+        self.assertEqual(fx["latest"]["file"]["written"], True)
+        self.assertNotIn("publish_failed", fx["latest"]["file"])
+
+    def test_no_change_is_not_written_and_means_no_novelty(self):
+        memory, fx, runs = self.run_publisher(self.OLD, reject=False)
+        self.assertEqual(memory.files["data/TONA.csv"], self.OLD)
+        self.assertEqual((fx["latest"]["file"]["status"], fx["latest"]["file"]["written"]), ("NOOP", False))
+        self.assertEqual(self.cause(runs), "CONSULTADA_SIN_NOVEDAD")
+
+    def test_actions_written_but_absent_from_repo(self):
+        run = {"source": "actions", "run_id": "r", "started_utc": "2026-09-24T01:00:00Z", "rc": 0,
+               "files": {"TONA.csv": {"status": "PUBLISH", "src_max": "2026-09-23", "written": True}}}
+        self.assertEqual(self.cause([run]), "ESCRITA_SIN_CONSTAR_EN_REPO")   # commit/push no confirmado
+
+
 # ── C3-2 · hechos de Actions (también sin publicación), g8step y latido del Mac ──────────────────────────────
 class Facts(unittest.TestCase):
     def setUp(self):
@@ -331,6 +414,39 @@ class GroupedAndDerived(unittest.TestCase):
         r = self.derived(rev, written_at=T("2026-09-23T22:00Z"))
         self.assertEqual(r["state"], "INPUT_REVISED")
         self.assertIn("EVIDENCE_INCOMPLETE", r["flags"])
+
+    # C3R1-2 · una retención confirmada deja de estar activa; otra candidata pendiente sigue visible
+    def test_held_then_confirmed_is_not_active_but_history_is_kept(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        shutil.copytree(os.path.join(ROOT, "sources"), os.path.join(root, "sources"))
+        os.makedirs(os.path.join(root, "data"))
+        with open(os.path.join(root, "data", "X.csv"), "wb") as fh:
+            fh.write(b"DATE,CLOSE\n20260922,1\n20260923,1\n")
+
+        def pub(at, body):
+            c = ING.Ingest("review", root=root, now=lambda: T(at).timestamp())
+            c.requests_log.append({"cls": g8http.OK, "url": "https://example.invalid/x", "status": 200})
+            return c.publish("X.csv", body, revision_window=0)
+        b = b"DATE,CLOSE\n20260922,2\n20260923,1\n"
+        self.assertEqual(pub("2026-09-24T09:00Z", b)["status"], "HELD")
+        self.assertTrue(pub("2026-09-24T10:00Z", b).get("written"))           # confirmada por otra descarga
+        recs = FRR.TreeSource(root).evidence("X.csv")
+
+        def derived(records, written):
+            return ev("ACM_G8_NZD.csv", T("2026-09-24T12:00Z"), ["2026-09-23"],
+                      input_max_at=lambda f, t: D("2026-09-23"), evidence={"NZD_BOND_10Y.csv": records},
+                      written_at=T(written))
+        r = derived(recs, "2026-09-24T11:00Z")
+        self.assertEqual((r["state"], r["revisions_consumed"]), ("CURRENT", 1))
+        self.assertNotIn("INPUT_REVISION_HELD", r["flags"])
+        self.assertEqual([h["status"] for h in r["input_revision_history"]], ["CONFIRMADA"])   # suceso conservado
+        # una segunda candidata DISTINTA de la misma fecha, aún pendiente, sigue visible
+        self.assertEqual(pub("2026-09-24T11:30Z", b"DATE,CLOSE\n20260922,3\n20260923,1\n")["status"], "HELD")
+        r = derived(FRR.TreeSource(root).evidence("X.csv"), "2026-09-24T11:00Z")
+        self.assertIn("INPUT_REVISION_HELD", r["flags"])
+        self.assertEqual(len(r["held_input_revisions"]), 1)
+        self.assertEqual(r["state"], "CURRENT")                              # retenida: no cambia la entrada
 
     def test_derived_uses_driving_inputs(self):
         o = OUT["ACM_G8_CHF.csv"]
@@ -580,6 +696,34 @@ class Evidence(unittest.TestCase):
         eps = FR.availability(recs, "2026-09-23", version=va)
         self.assertEqual([e["version"] for e in eps["episodes"]], [vb, va])  # solo episodios OBSERVADOS
         self.assertEqual((eps["lower_bound"], eps["upper_bound"]), ("2026-09-24T09:00:00Z", "2026-09-24T10:00:00Z"))
+
+    # C3R1-3 · tras una revisión compactada publicada, la versión anterior deja de ser conocida (límite REAL)
+    def test_compacted_revision_invalidates_known_version(self):
+        dates = [(date(2020, 1, 1) + timedelta(days=i)).strftime("%Y%m%d") for i in range(ING.EVIDENCE_MAX_OBS + 1)]
+
+        def body(v):
+            return ("DATE,CLOSE\n" + "".join(d + "," + str(v) + "\n" for d in dates)).encode()
+        with open(os.path.join(self.root, "data", "Z.csv"), "wb") as fh:
+            fh.write(body(1))
+
+        def pub(at, data):
+            c = ING.Ingest("f3test", root=self.root, now=lambda: T(at).timestamp())
+            c.requests_log.append({"cls": g8http.OK, "url": "https://example.invalid/z", "status": 200})
+            c.publish("Z.csv", data, revision_window=10000)
+        pub("2026-09-24T09:00Z", body(1).replace(b"20200101,1\n", b"20200101,1.5\n"))   # versión 1,5 individual
+        pub("2026-09-24T10:00Z", body(2))                                                 # 2001 revisiones: compacta
+        pub("2026-09-24T11:00Z", body(2))                                                 # sin cambios
+        with open(os.path.join(self.root, "data", "_ingest", "evidence", "Z.csv.jsonl")) as fh:
+            recs = [json.loads(x) for x in fh]
+        self.assertEqual([r["obs_complete"] for r in recs], [True, False, True])
+        a = FR.availability(recs, "2020-01-01")
+        v15 = recs[0]["obs"][0]["version"]
+        self.assertIsNone(a["version"])                                   # la versión actual es desconocida…
+        self.assertFalse(a["episodes"][-1]["version_known"])
+        self.assertNotEqual(a["episodes"][-1]["version"], v15)             # …nunca la antigua como conocida
+        self.assertEqual((a["episodes"][0]["version"], a["episodes"][0]["upper_bound"]),
+                         (v15, "2026-09-24T09:00:00Z"))                    # el episodio demostrado se conserva
+        self.assertIn("sin versión por fecha", a["limitation"])
 
     def test_availability_interval_ignores_failed_queries(self):
         recs = [{"ok": True, "query_utc": "2026-09-22T21:30:00Z", "src_max": "2026-09-21"},

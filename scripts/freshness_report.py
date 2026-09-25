@@ -114,12 +114,24 @@ class TreeSource(object):
         return self._rec_cache
 
     @staticmethod
-    def _file_entry(v, published=None):
+    def _file_entry(v, family=None):
+        """Resultado por fichero. Actions: `written` = escrito en el árbol del job (el commit/push posterior no consta
+        aquí). Mac (C3R1-1): el estado del fichero es la PROPUESTA de fusión; solo cuenta como escrito si la familia
+        confirma la publicación (published=True y outcome PUBLISHED). Un rechazo queda como publish_failed."""
         v = v if isinstance(v, dict) else {}
         st = v.get("status")
-        written = bool(v.get("written")) or (st in ("PUBLISH", "PUBLISHED") and published is not False)
-        return {"status": st, "src_max": _iso(v.get("src_max")), "held": len(v.get("held") or []), "written": written,
-                "detail": (v.get("detail") or "")[:200]}
+        out = {"status": st, "src_max": _iso(v.get("src_max")), "held": len(v.get("held") or []),
+               "detail": (v.get("detail") or "")[:200]}
+        if family is None:
+            out["written"] = bool(v.get("written"))
+            return out
+        outcome = (family.get("outcome") or {}).get("status")
+        confirmed = family.get("published") is True and outcome in (None, "PUBLISHED")
+        out["written"] = bool(confirmed and st in ("PUBLISH", "PUBLISHED"))
+        if st in ("PUBLISH", "PUBLISHED") and not confirmed:
+            out["publish_failed"] = {"family_status": family.get("status"), "outcome": outcome,
+                                     "cls": family.get("cls"), "detail": (family.get("detail") or "")[:200]}
+        return out
 
     def executions(self, spec):
         """Ejecuciones REALES registradas para una fuente «actions:<job>», «step:<nombre>» o «mac:<FAM>/<clave>»,
@@ -169,7 +181,8 @@ class TreeSource(object):
                             "rc": int(rc) if str(rc).lstrip("-").isdigit() else rc, "family": fam,
                             "family_status": fr.get("status"), "family_detail": (fr.get("detail") or "")[:200],
                             "requests": det.get("requests") or [], "errors": (det.get("errors") or [])[:5],
-                            "files": {f: self._file_entry(v, fr.get("published")) for f, v in (fr.get("files") or {}).items()},
+                            "publish_status": (fr.get("outcome") or {}).get("status") or fr.get("status"),
+                            "files": {f: self._file_entry(v, fr) for f, v in (fr.get("files") or {}).items()},
                             "fetch_files": det.get("files") or {}})
         return sorted(out, key=lambda r: r.get("finished_utc") or r.get("started_utc") or "")
 

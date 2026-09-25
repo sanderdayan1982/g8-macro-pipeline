@@ -16,7 +16,8 @@ Dos ejes que nunca se mezclan:
       INPUT_REVISION_UNRESOLVED  derivado: hay revisión publicada de una entrada y no se sabe si fue antes o después
   Causa de un atraso (C3-1), de lo EJECUTADO y nunca de un cron programado: SIN_PASADA_PROGRAMADA (configuración),
   PROGRAMADA_SIN_EJECUCION_REGISTRADA (incierta: cron retrasado/omitido o sin evidencia), EJECUTADA_CON_FALLO,
-  EJECUTADA_SIN_DESCARGA_DEL_FICHERO, CONSULTADA_SIN_NOVEDAD, RECIBIDA_RETENIDA (registradas). RULE_PROVISIONAL =
+  EJECUTADA_SIN_DESCARGA_DEL_FICHERO, CONSULTADA_SIN_NOVEDAD, RECIBIDA_RETENIDA, DESCARGADA_PUBLICACION_FALLIDA,
+  ESCRITA_SIN_CONSTAR_EN_REPO (registradas). RULE_PROVISIONAL =
   la regla no es oficial.
   B · HECHOS de ingestión (último intento, resultado, errores, candidatos retenidos): se adjuntan y ningún estado
       del eje A los borra.
@@ -225,13 +226,21 @@ def classify_cause(fname, obs, due_first, now, scheduled, runs, downloads, evide
               "executed_runs": [{"source": r.get("source"), "run_id": r.get("run_id"), "started_utc": r.get("started_utc"),
                                  "rc": r.get("rc"), "file": (r.get("files") or {}).get(fname)} for r in ran][-5:],
               "downloads": len(dls), "evidence_available": evidence_available}
-    # 1) dato recibido pero no publicado (retenido/inválido)
+    # 1) dato recibido pero no publicado: retenido por la fusión, publicación rechazada, o escrito y ausente del repo
     for r in dls:
         if any(o.get("date") == obs_iso and not o.get("accepted") for o in r.get("obs", [])):
             return "RECIBIDA_RETENIDA", "registrada", detail
-    for r in ran:
+    for r in reversed(ran):                                  # la ejecución más reciente manda
         f = (r.get("files") or {}).get(fname) or {}
-        if f.get("src_max") and f["src_max"] >= obs_iso and not f.get("written") and f.get("status") != "PUBLISH":
+        if not (f.get("src_max") and f["src_max"] >= obs_iso):
+            continue
+        if f.get("publish_failed"):
+            detail["publish_failed"] = f["publish_failed"]   # la descarga fue correcta; falló la subida
+            return "DESCARGADA_PUBLICACION_FALLIDA", "registrada", detail
+        if f.get("written"):
+            # escrito por el descargador pero la observación no está en el repo: commit/push no confirmado
+            return "ESCRITA_SIN_CONSTAR_EN_REPO", "registrada", detail
+        if f.get("status") in ("HELD", "INVALID", "REGRESSION_BLOCKED") or f.get("held"):
             return "RECIBIDA_RETENIDA", "registrada", detail
     # 2) consulta correcta sin la observación (la fuente aún no la tenía en el endpoint consultado)
     if any((r.get("src_max") or "") < obs_iso for r in dls):
@@ -367,21 +376,40 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
             written_at = datetime.strptime(max(w), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
             res["written_at_source"] = "evidencia de la salida"
     res["written_at"] = _ts(written_at) if written_at else None
-    published, held = [], []
+    # estado VIGENTE por (entrada, fecha, versión): una candidata retenida deja de estar activa cuando una descarga
+    # posterior acepta esa versión (confirmada) u otra versión de la misma fecha (sustituida). El historial se conserva.
+    published, cand, history = [], {}, []
     for f in inputs:
-        for r in ev.get(f, []):
+        for r in sorted(ev.get(f, []), key=lambda x: x.get("query_utc", "")):
             when = r.get("query_utc", "")
             if r.get("obs_complete") is False:
                 for rg in r.get("obs_ranges", []):
                     if rg["kind"] == "revision" and rg["from"] <= have_max.isoformat():
-                        (published if r.get("wrote") else held).append(
-                            {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False})
+                        item = {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False}
+                        if r.get("wrote"):
+                            published.append(item)
+                            for k, c in cand.items():          # versión nueva desconocida en el rango: ya no vigente
+                                if k[0] == f and rg["from"] <= k[1] <= rg["to"] and c["status"] == "RETENIDA":
+                                    c.update(status="SUSTITUIDA_SIN_VERSION", resolved_utc=when)
+                        else:
+                            cand[(f, "rango:%s..%s" % (rg["from"], rg["to"]), when)] = dict(item, status="RETENIDA")
                 continue
             for o in r.get("obs", []):
                 if o.get("kind") != "revision" or o.get("date", "9999") > have_max.isoformat():
                     continue
+                key = (f, o["date"], o.get("version"))
                 item = {"file": f, "date": o["date"], "version": o.get("version"), "seen_utc": when}
-                (published if (r.get("wrote") and o.get("accepted")) else held).append(item)
+                if r.get("wrote") and o.get("accepted"):
+                    published.append(item)
+                    for k, c in cand.items():
+                        if k[0] == f and k[1] == o["date"] and c["status"] == "RETENIDA":
+                            c.update(status="CONFIRMADA" if k == key else "SUSTITUIDA", resolved_utc=when)
+                elif key not in cand or cand[key]["status"] != "RETENIDA":
+                    cand[key] = dict(item, status="RETENIDA")
+    held = [c for c in cand.values() if c["status"] == "RETENIDA"]
+    history = [c for c in cand.values() if c["status"] != "RETENIDA"]
+    if history:
+        res["input_revision_history"] = history[-20:]     # sucesos resueltos: se conservan, no están activos
     if held:
         res["flags"].append("INPUT_REVISION_HELD")        # candidata visible: NO cambió la entrada publicada
         res["held_input_revisions"] = held[-20:]
@@ -422,6 +450,11 @@ def availability(records, obs_date, version=None):
         if r.get("obs_complete") is False and any(rg["from"] <= obs_date <= rg["to"] for rg in r.get("obs_ranges", [])):
             limitation = "evidencia sin versión por fecha en %s (%s)" % (r.get("query_utc"), r.get("obs_limitation", ""))
             seen.append((r["query_utc"], "?"))
+            if r.get("wrote"):
+                # C3R1-3: una revisión compactada publicada pudo cambiar la versión: la anterior deja de ser conocida
+                # hasta que una revisión individual posterior declare su versión previa
+                published = None
+                pending_unknown = []
             continue
         entry = next((o for o in r.get("obs", []) if o.get("date") == obs_date), None)
         if (r.get("src_max") or "") < obs_date and entry is None:

@@ -146,6 +146,7 @@ class TlsStrict(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.httpd.shutdown()
+        cls.httpd.server_close()                     # cierra el socket TLS de escucha (ResourceWarning al salir)
         shutil.rmtree(cls.d)
 
     def test_self_signed_rejected_not_retried(self):

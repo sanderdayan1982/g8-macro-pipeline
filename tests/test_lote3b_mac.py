@@ -591,7 +591,8 @@ class _Slow(object):
                     outer.aborted.set()                 # el cliente cortó la conexión: recursos liberados
 
         self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-        self.server.daemon_threads = True
+        self.server.daemon_threads = False           # server_close espera a los manejadores: sin sockets abiertos
+        self.server.block_on_close = True
         if tls:                                         # (cert, key): TLS real, verificado por el cliente
             import ssl
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -653,7 +654,8 @@ class _Proxy(object):
                     outer.aborted.set()
 
         class Srv(socketserver.ThreadingTCPServer):
-            daemon_threads = True
+            daemon_threads = False                    # server_close espera a los manejadores
+            block_on_close = True
             allow_reuse_address = True
         self.server = Srv(("127.0.0.1", 0), H)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
@@ -689,7 +691,8 @@ class _SlowTLSHandshake(object):
                     outer.aborted.set()
 
         class Srv(socketserver.ThreadingTCPServer):
-            daemon_threads = True
+            daemon_threads = False                    # server_close espera a los manejadores
+            block_on_close = True
             allow_reuse_address = True
         self.server = Srv(("127.0.0.1", 0), H)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
