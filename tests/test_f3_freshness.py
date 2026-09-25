@@ -504,6 +504,61 @@ class GroupedAndDerived(unittest.TestCase):
         self.assertIn("INPUT_REVISION_HELD", r["flags"])
         self.assertEqual(len(r["held_input_revisions"]), 1)
 
+    # C3R3-1 · estar entre los extremos de un rango no basta: la fecha omitida por la fuente no se da por resuelta
+    def test_date_omitted_from_confirming_download_stays_held(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        shutil.copytree(os.path.join(ROOT, "sources"), os.path.join(root, "sources"))
+        os.makedirs(os.path.join(root, "data"))
+        dates = [(date(2026, 9, 23) - timedelta(days=i)).strftime("%Y%m%d") for i in range(ING.EVIDENCE_MAX_OBS + 2, 0, -1)]
+        target = dates[1000]
+
+        def body(rows):
+            return ("DATE,CLOSE\n" + "".join("%s,%s\n" % r for r in rows) + "20260923,1\n").encode()
+        with open(os.path.join(root, "data", "X.csv"), "wb") as fh:
+            fh.write(body([(d, 1) for d in dates]))
+        seq = [("2026-09-24T08:00Z", body([(d, 2 if d == target else 1) for d in dates])),     # revisión aislada
+               ("2026-09-24T09:00Z", body([(d, 2) for d in dates if d != target])),            # la fuente OMITE target
+               ("2026-09-24T10:00Z", body([(d, 2) for d in dates if d != target]))]            # confirmación del resto
+        reps = []
+        for at, b in seq:
+            c = ING.Ingest("review", root=root, now=lambda at=at: T(at).timestamp())
+            c.requests_log.append({"cls": g8http.OK, "url": "https://example.invalid/x", "status": 200})
+            reps.append(c.publish("X.csv", b, revision_window=0))
+        self.assertEqual([r["status"] for r in reps], ["HELD", "HELD", "PUBLISH"])
+        # verdad de referencia: CSV y cuarentena reales
+        with open(os.path.join(root, "data", "X.csv")) as fh:
+            self.assertIn(target + ",1\n", fh.read())
+        with open(os.path.join(root, "data", "_ingest", "quarantine", "X.csv.json")) as fh:
+            self.assertEqual([c["status"] for c in json.load(fh)["candidates"].values() if c["date"] == target],
+                             ["PENDING"])
+        recs = FRR.TreeSource(root).evidence("X.csv")
+        tiso = "%s-%s-%s" % (target[:4], target[4:6], target[6:])
+        for g in recs[-1]["obs_ranges"]:                                  # ningún rango «cruza» la fecha omitida
+            self.assertTrue(g["gapless"])
+            self.assertFalse(g["from"] <= tiso <= g["to"], g)
+        r = self.derived_at(recs)
+        self.assertIn("INPUT_REVISION_HELD", r["flags"])                  # F3 coincide con CSV y cuarentena
+        self.assertIn(tiso, [h.get("date") for h in r["held_input_revisions"]])
+        self.assertNotIn(tiso, [h.get("date") for h in r.get("input_revision_history", [])])
+        self.assertEqual({h["status"] for h in r["input_revision_history"]}, {"CONFIRMADA_O_SUSTITUIDA_SIN_VERSION"})
+
+    def test_accepted_range_without_continuity_guarantee_never_closes(self):
+        cand = {"query_utc": "2026-09-24T08:00:00Z", "ok": True, "wrote": False,
+                "obs": [{"date": "2023-12-26", "kind": "revision", "accepted": False, "version": "b"}]}
+        rng_held = {"query_utc": "2026-09-24T08:30:00Z", "ok": True, "wrote": False, "obs": [], "obs_complete": False,
+                    "obs_ranges": [{"kind": "revision", "accepted": False, "from": "2022-01-03", "to": "2022-06-30",
+                                    "n": 130, "gapless": True}]}
+        legacy = {"query_utc": "2026-09-24T09:00:00Z", "ok": True, "wrote": True, "obs": [], "obs_complete": False,
+                  "obs_ranges": [{"kind": "revision", "accepted": True, "from": "2021-01-01", "to": "2026-09-22",
+                                  "n": 2001}]}                          # sin gapless (formato anterior)
+        r = self.derived_at([cand, rng_held, legacy])
+        self.assertNotIn("INPUT_REVISION_HELD", r["flags"])              # no se afirma activa…
+        self.assertIn("INPUT_REVISION_HELD_UNCERTAIN", r["flags"])      # …ni resuelta: incierta
+        self.assertEqual(sorted(str(u.get("date") or u.get("dates")) for u in r["uncertain_input_revisions"]),
+                         sorted(["2023-12-26", "['2022-01-03', '2022-06-30']"]))
+        self.assertFalse(r.get("input_revision_history"))
+
     def test_partial_write_does_not_close_the_whole_range(self):
         held = {"query_utc": "2026-09-24T09:00:00Z", "ok": True, "wrote": False, "obs": [], "obs_complete": False,
                 "obs_ranges": [{"kind": "revision", "accepted": False, "from": "2021-01-01", "to": "2026-09-22", "n": 2500}]}

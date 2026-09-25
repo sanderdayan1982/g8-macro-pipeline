@@ -342,7 +342,9 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
 
 
 def _resolve_by_ranges(cand, f, accepted, when, single=False):
-    """Cierra candidatas RETENIDAS de la entrada f con rangos ACEPTADOS posteriores ([(desde, hasta[, "?"])]).
+    """Cierra candidatas RETENIDAS de la entrada f con rangos ACEPTADOS posteriores ([(desde, hasta[, "?"])]). Solo un
+    rango sin huecos (gapless, C3R3-1) demuestra que cada fecha entre sus extremos se descargó y se aceptó; los
+    marcados "?" (sin continuidad garantizada o aceptación desconocida) solo pueden dejar la candidata INCIERTA.
     · candidata individual (fecha) dentro de un rango aceptado → SUSTITUIDA_SIN_VERSION (se aceptó una versión de esa
       fecha; cuál, no consta) — con aceptación desconocida → INCIERTA;
     · candidata por rango cubierta POR COMPLETO por rangos aceptados → CONFIRMADA_O_SUSTITUIDA_SIN_VERSION; cubierta
@@ -436,9 +438,14 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
                     if acc is None:
                         acc = None if r.get("wrote") else False
                     item = {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False}
-                    if acc is True:
+                    if acc is True and rg.get("gapless"):
                         published.append(item)
                         acc_ranges.append((rg["from"], rg["to"]))
+                    elif acc is True:
+                        # C3R3-1: rango aceptado SIN garantía de continuidad (formato anterior): una fecha entre sus
+                        # extremos pudo no estar en la descarga → no cierra nada, solo deja incertidumbre
+                        published.append(dict(item, gapless=False))
+                        acc_ranges.append((rg["from"], rg["to"], "?"))
                     elif acc is None:
                         published.append(dict(item, accepted="desconocido"))
                         acc_ranges.append((rg["from"], rg["to"], "?"))

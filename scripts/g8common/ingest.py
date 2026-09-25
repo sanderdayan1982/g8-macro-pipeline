@@ -96,17 +96,27 @@ EVIDENCE_DIR = os.path.join("data", "_ingest", "evidence")
 EVIDENCE_MAX_OBS = 2000          # por encima: fechas completas en rangos, sin versión por fecha (declarado)
 
 
-def _ranges(obs):
-    """[{kind, accepted, from, to, n}] de fechas consecutivas (en el orden de la serie) con el mismo tipo de cambio y
-    el mismo resultado (aceptada/retenida): una escritura parcial nunca se confunde con la aceptación de todo el lote."""
+def _ranges(obs, universe):
+    """[{kind, accepted, from, to, n, gapless}] SIN HUECOS (C3R3-1): un rango solo agrupa fechas que son contiguas en el
+    universo de fechas del fichero (lo publicado ∪ lo descargado) y tienen el mismo tipo de cambio y el mismo resultado
+    (aceptada/retenida). Cualquier fecha del universo que no cambió, o que la fuente omitió, CORTA el rango. Así, «estar
+    entre from y to» equivale a «estaba en la descarga y cambió con ese resultado» (gapless=true); n = to − from + 1
+    posiciones del universo."""
+    pos = {d: i for i, d in enumerate(universe)}
     out = []
     for o in obs:
         acc = bool(o.get("accepted"))
-        if out and out[-1]["kind"] == o["kind"] and out[-1]["accepted"] == acc:
+        p = pos.get(o["date"])
+        if out and out[-1]["kind"] == o["kind"] and out[-1]["accepted"] == acc and p is not None \
+                and out[-1]["_last"] is not None and p == out[-1]["_last"] + 1:
             out[-1]["to"] = o["date"]
             out[-1]["n"] += 1
+            out[-1]["_last"] = p
         else:
-            out.append({"kind": o["kind"], "accepted": acc, "from": o["date"], "to": o["date"], "n": 1})
+            out.append({"kind": o["kind"], "accepted": acc, "from": o["date"], "to": o["date"], "n": 1,
+                        "gapless": True, "_last": p})
+    for r in out:
+        del r["_last"]
     return out
 
 
@@ -311,7 +321,8 @@ class Ingest(object):
         else:
             # C3-4: nunca se recorta en silencio. Por encima del límite se guardan TODAS las fechas cambiadas como
             # rangos contiguos por tipo (sin versión por fecha) y obs_complete=false: los consumidores lo declaran.
-            line.update(obs=[], obs_complete=False, obs_count=len(obs), obs_ranges=_ranges(obs),
+            universe = sorted({_iso(d) for d in src.rows} | ({_iso(d) for d in repo.rows} if repo else set()))
+            line.update(obs=[], obs_complete=False, obs_count=len(obs), obs_ranges=_ranges(obs, universe),
                         obs_limitation="más de %d observaciones cambiadas: fechas completas en rangos, versiones por "
                                        "fecha no conservadas" % EVIDENCE_MAX_OBS)
         os.makedirs(os.path.dirname(path), exist_ok=True)
