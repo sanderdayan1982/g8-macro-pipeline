@@ -97,14 +97,16 @@ EVIDENCE_MAX_OBS = 2000          # por encima: fechas completas en rangos, sin v
 
 
 def _ranges(obs):
-    """[{kind, from, to, n}] de fechas consecutivas (en el orden de la serie) con el mismo tipo de cambio."""
+    """[{kind, accepted, from, to, n}] de fechas consecutivas (en el orden de la serie) con el mismo tipo de cambio y
+    el mismo resultado (aceptada/retenida): una escritura parcial nunca se confunde con la aceptación de todo el lote."""
     out = []
     for o in obs:
-        if out and out[-1]["kind"] == o["kind"]:
+        acc = bool(o.get("accepted"))
+        if out and out[-1]["kind"] == o["kind"] and out[-1]["accepted"] == acc:
             out[-1]["to"] = o["date"]
             out[-1]["n"] += 1
         else:
-            out.append({"kind": o["kind"], "from": o["date"], "to": o["date"], "n": 1})
+            out.append({"kind": o["kind"], "accepted": acc, "from": o["date"], "to": o["date"], "n": 1})
     return out
 
 

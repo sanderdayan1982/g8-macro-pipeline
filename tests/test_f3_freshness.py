@@ -176,7 +176,7 @@ class MacPublication(unittest.TestCase):
     OLD = b"DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20260922,0.9,0.9,0.9,0.9,0\n"
     NEW = OLD + b"20260923,0.95,0.95,0.95,0.95,0\n"
 
-    def run_publisher(self, local, reject):
+    def run_publisher(self, local, reject, raise_error=False):
         import contextlib
         import io
         sys.path.insert(0, os.path.join(ROOT, "mac"))
@@ -201,6 +201,8 @@ class MacPublication(unittest.TestCase):
                     if any(q.startswith(x) for x in build.prefixes):
                         cur[q] = v
                 changes, info = build(cur, "fake-head")
+                if raise_error and "data/TONA.csv" in changes:
+                    raise G.GitHubError("FAIL_TRANSIENT", "HTTP 503 al actualizar la rama")
                 if reject and "data/TONA.csv" in changes:
                     return G.Outcome(G.CONFLICT_EXHAUSTED, info=info, attempts=3)
                 self.files.update(changes)
@@ -235,6 +237,19 @@ class MacPublication(unittest.TestCase):
         self.assertEqual(f["publish_failed"]["outcome"], "CONFLICT_EXHAUSTED")
         self.assertEqual(fx["latest"]["rc"], 0)                            # la descarga sí fue correcta
         self.assertEqual(self.cause(runs), "DESCARGADA_PUBLICACION_FALLIDA")
+
+    # C3R2-1 · excepción de GitHub al publicar (no conflicto): la familia falla SIN resultado por fichero
+    def test_publication_exception_reaches_the_cause(self):
+        memory, fx, runs = self.run_publisher(self.NEW, reject=False, raise_error=True)
+        self.assertEqual(memory.files["data/TONA.csv"], self.OLD)          # remoto intacto
+        self.assertEqual((fx["latest"]["family_status"], fx["latest"]["rc"]), ("PUBLISH_FAIL", 0))
+        c, cert, detail = FR.classify_cause("TONA.csv", D("2026-09-23"), T("2026-09-24T00:00Z"),
+                                            T("2026-09-24T13:00Z"), [], runs, [], True)
+        self.assertEqual((c, cert), ("PUBLICACION_FALLIDA", "registrada"))
+        self.assertNotEqual(c, "EJECUTADA_SIN_DESCARGA_DEL_FICHERO")
+        self.assertEqual((detail["publish_failed"]["cls"], detail["download_rc"]), ("FAIL_TRANSIENT", 0))
+        self.assertIn("503", detail["publish_failed"]["detail"])
+        self.assertIn("no acreditada", detail["receipt"])                  # no afirma ni niega la recepción
 
     def test_successful_publication_is_written(self):
         memory, fx, runs = self.run_publisher(self.NEW, reject=False)
@@ -447,6 +462,71 @@ class GroupedAndDerived(unittest.TestCase):
         self.assertIn("INPUT_REVISION_HELD", r["flags"])
         self.assertEqual(len(r["held_input_revisions"]), 1)
         self.assertEqual(r["state"], "CURRENT")                              # retenida: no cambia la entrada
+
+    # C3R2-2 · retenciones COMPACTADAS: se tratan como rangos, con aceptación declarada por rango
+    def compact_root(self):
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        shutil.copytree(os.path.join(ROOT, "sources"), os.path.join(root, "sources"))
+        os.makedirs(os.path.join(root, "data"))
+        dates = [(date(2026, 9, 23) - timedelta(days=i)).strftime("%Y%m%d") for i in range(ING.EVIDENCE_MAX_OBS + 1, 0, -1)]
+
+        def body(v):
+            return ("DATE,CLOSE\n" + "".join(d + ",%s\n" % v for d in dates) + "20260923,1\n").encode()
+        with open(os.path.join(root, "data", "X.csv"), "wb") as fh:
+            fh.write(body(1))
+
+        def pub(at, v):
+            c = ING.Ingest("review", root=root, now=lambda: T(at).timestamp())
+            c.requests_log.append({"cls": g8http.OK, "url": "https://example.invalid/x", "status": 200})
+            return c.publish("X.csv", body(v), revision_window=0)
+        return root, pub
+
+    def derived_at(self, records):
+        return ev("ACM_G8_NZD.csv", T("2026-09-24T12:00Z"), ["2026-09-23"], input_max_at=lambda f, t: D("2026-09-23"),
+                  evidence={"NZD_BOND_10Y.csv": records}, written_at=T("2026-09-24T11:00Z"))
+
+    def test_compacted_hold_confirmed_by_same_batch_is_not_active(self):
+        root, pub = self.compact_root()
+        self.assertEqual(pub("2026-09-24T09:00Z", 2)["status"], "HELD")          # límite REAL: se compacta
+        self.assertTrue(pub("2026-09-24T10:00Z", 2).get("written"))              # confirmación del mismo lote
+        recs = FRR.TreeSource(root).evidence("X.csv")
+        self.assertEqual([(r["obs_complete"], [g["accepted"] for g in r["obs_ranges"]]) for r in recs],
+                         [(False, [False]), (False, [True])])
+        r = self.derived_at(recs)
+        self.assertEqual(r["state"], "CURRENT")
+        self.assertNotIn("INPUT_REVISION_HELD", r["flags"])
+        self.assertEqual([h["status"] for h in r["input_revision_history"]], ["CONFIRMADA_O_SUSTITUIDA_SIN_VERSION"])
+        self.assertIn("EVIDENCE_INCOMPLETE", r["flags"])                          # el aviso se conserva
+        # una candidata compactada DISTINTA, posterior y pendiente, sigue activa
+        self.assertEqual(pub("2026-09-24T11:30Z", 3)["status"], "HELD")
+        r = self.derived_at(FRR.TreeSource(root).evidence("X.csv"))
+        self.assertIn("INPUT_REVISION_HELD", r["flags"])
+        self.assertEqual(len(r["held_input_revisions"]), 1)
+
+    def test_partial_write_does_not_close_the_whole_range(self):
+        held = {"query_utc": "2026-09-24T09:00:00Z", "ok": True, "wrote": False, "obs": [], "obs_complete": False,
+                "obs_ranges": [{"kind": "revision", "accepted": False, "from": "2021-01-01", "to": "2026-09-22", "n": 2500}]}
+        partial = {"query_utc": "2026-09-24T10:00:00Z", "ok": True, "wrote": True, "obs": [], "obs_complete": False,
+                   "obs_ranges": [{"kind": "revision", "accepted": True, "from": "2021-01-01", "to": "2024-12-31", "n": 1200},
+                                  {"kind": "revision", "accepted": False, "from": "2025-01-02", "to": "2026-09-22", "n": 1300}]}
+        r = self.derived_at([held, partial])
+        # el rango original ni se cierra ni se afirma activo: queda INCIERTO…
+        self.assertIn("INPUT_REVISION_HELD_UNCERTAIN", r["flags"])
+        self.assertEqual((r["uncertain_input_revisions"][0]["status"], r["uncertain_input_revisions"][0]["dates"]),
+                         ("INCIERTA", ["2021-01-01", "2026-09-22"]))
+        # …y la parte que la propia escritura parcial declara aún retenida sí es una retención activa
+        self.assertIn("INPUT_REVISION_HELD", r["flags"])
+        self.assertEqual([h["dates"] for h in r["held_input_revisions"]], [["2025-01-02", "2026-09-22"]])
+
+    def test_legacy_range_without_acceptance_is_uncertain(self):
+        held = {"query_utc": "2026-09-24T09:00:00Z", "ok": True, "wrote": False, "obs": [], "obs_complete": False,
+                "obs_ranges": [{"kind": "revision", "accepted": False, "from": "2021-01-01", "to": "2026-09-22", "n": 2500}]}
+        legacy = {"query_utc": "2026-09-24T10:00:00Z", "ok": True, "wrote": True, "obs": [], "obs_complete": False,
+                  "obs_ranges": [{"kind": "revision", "from": "2021-01-01", "to": "2026-09-22", "n": 2500}]}
+        r = self.derived_at([held, legacy])
+        self.assertIn("INPUT_REVISION_HELD_UNCERTAIN", r["flags"])
+        self.assertNotIn("INPUT_REVISION_HELD", r["flags"])
 
     def test_derived_uses_driving_inputs(self):
         o = OUT["ACM_G8_CHF.csv"]
@@ -724,6 +804,17 @@ class Evidence(unittest.TestCase):
         self.assertEqual((a["episodes"][0]["version"], a["episodes"][0]["upper_bound"]),
                          (v15, "2026-09-24T09:00:00Z"))                    # el episodio demostrado se conserva
         self.assertIn("sin versión por fecha", a["limitation"])
+
+    def test_held_compacted_range_keeps_known_published_version(self):
+        a = {"ok": True, "query_utc": "2026-09-24T09:00:00Z", "src_max": "2026-09-23", "wrote": True,
+             "obs": [{"date": "2026-09-01", "version": "A", "kind": "new", "accepted": True}]}
+        held = {"ok": True, "query_utc": "2026-09-24T10:00:00Z", "src_max": "2026-09-23", "wrote": False, "obs": [],
+                "obs_complete": False,
+                "obs_ranges": [{"kind": "revision", "accepted": False, "from": "2026-01-01", "to": "2026-09-22", "n": 2100}]}
+        noop = {"ok": True, "query_utc": "2026-09-24T11:00:00Z", "src_max": "2026-09-23", "wrote": False, "obs": []}
+        av = FR.availability([a, held, noop], "2026-09-01")
+        # la revisión compactada NO se publicó: lo publicado sigue siendo A
+        self.assertEqual([e["version"] for e in av["episodes"]], ["A", "A"])
 
     def test_availability_interval_ignores_failed_queries(self):
         recs = [{"ok": True, "query_utc": "2026-09-22T21:30:00Z", "src_max": "2026-09-21"},

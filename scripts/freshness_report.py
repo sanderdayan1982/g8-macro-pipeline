@@ -182,6 +182,11 @@ class TreeSource(object):
                             "family_status": fr.get("status"), "family_detail": (fr.get("detail") or "")[:200],
                             "requests": det.get("requests") or [], "errors": (det.get("errors") or [])[:5],
                             "publish_status": (fr.get("outcome") or {}).get("status") or fr.get("status"),
+                            # C3R2-1: fallo de la FAMILIA (p. ej. GitHubError antes de tener resultado por fichero)
+                            "publish_failed_family": ({"family_status": fr.get("status"),
+                                                       "outcome": (fr.get("outcome") or {}).get("status"),
+                                                       "cls": fr.get("cls"), "detail": (fr.get("detail") or "")[:200]}
+                                                      if fr.get("status") == "PUBLISH_FAIL" else None),
                             "files": {f: self._file_entry(v, fr) for f, v in (fr.get("files") or {}).items()},
                             "fetch_files": det.get("files") or {}})
         return sorted(out, key=lambda r: r.get("finished_utc") or r.get("started_utc") or "")

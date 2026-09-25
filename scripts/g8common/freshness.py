@@ -17,7 +17,8 @@ Dos ejes que nunca se mezclan:
   Causa de un atraso (C3-1), de lo EJECUTADO y nunca de un cron programado: SIN_PASADA_PROGRAMADA (configuración),
   PROGRAMADA_SIN_EJECUCION_REGISTRADA (incierta: cron retrasado/omitido o sin evidencia), EJECUTADA_CON_FALLO,
   EJECUTADA_SIN_DESCARGA_DEL_FICHERO, CONSULTADA_SIN_NOVEDAD, RECIBIDA_RETENIDA, DESCARGADA_PUBLICACION_FALLIDA,
-  ESCRITA_SIN_CONSTAR_EN_REPO (registradas). RULE_PROVISIONAL =
+  ESCRITA_SIN_CONSTAR_EN_REPO, PUBLICACION_FALLIDA (fallo de la familia sin resultado por fichero; recepción no
+  acreditada) (registradas). RULE_PROVISIONAL =
   la regla no es oficial.
   B · HECHOS de ingestión (último intento, resultado, errores, candidatos retenidos): se adjuntan y ningún estado
       del eje A los borra.
@@ -242,6 +243,14 @@ def classify_cause(fname, obs, due_first, now, scheduled, runs, downloads, evide
             return "ESCRITA_SIN_CONSTAR_EN_REPO", "registrada", detail
         if f.get("status") in ("HELD", "INVALID", "REGRESSION_BLOCKED") or f.get("held"):
             return "RECIBIDA_RETENIDA", "registrada", detail
+    # C3R2-1 · la publicación de la FAMILIA falló sin resultado por fichero (excepción de GitHub, p. ej. 503): el fallo
+    # de subida es un hecho registrado; la recepción de ESTA observación no puede acreditarse (ni negarse).
+    for r in reversed(ran):
+        if r.get("publish_failed_family") and not ((r.get("files") or {}).get(fname) or {}).get("src_max"):
+            detail["publish_failed"] = r["publish_failed_family"]
+            detail["download_rc"] = r.get("rc")
+            detail["receipt"] = "no acreditada: el latido no trae resultado por fichero"
+            return "PUBLICACION_FALLIDA", "registrada", detail
     # 2) consulta correcta sin la observación (la fuente aún no la tenía en el endpoint consultado)
     if any((r.get("src_max") or "") < obs_iso for r in dls):
         return "CONSULTADA_SIN_NOVEDAD", "registrada", detail
@@ -332,6 +341,40 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
     return res
 
 
+def _resolve_by_ranges(cand, f, accepted, when, single=False):
+    """Cierra candidatas RETENIDAS de la entrada f con rangos ACEPTADOS posteriores ([(desde, hasta[, "?"])]).
+    · candidata individual (fecha) dentro de un rango aceptado → SUSTITUIDA_SIN_VERSION (se aceptó una versión de esa
+      fecha; cuál, no consta) — con aceptación desconocida → INCIERTA;
+    · candidata por rango cubierta POR COMPLETO por rangos aceptados → CONFIRMADA_O_SUSTITUIDA_SIN_VERSION; cubierta
+      solo en parte, o por rangos de aceptación desconocida → INCIERTA (nunca «activa» sin evidencia).
+    Un registro individual (single) no cierra rangos enteros: solo los vuelve INCIERTA si los toca."""
+    if not accepted:
+        return
+    for k, c in cand.items():
+        if c["status"] != "RETENIDA" or c.get("file") != f:
+            continue
+        if k[0] == "rango":
+            lo, hi = k[2], k[3]
+            touching = [a for a in accepted if a[0] <= hi and a[1] >= lo]
+            if not touching:
+                continue
+            sure = [a for a in touching if len(a) == 2]
+            covered = (not single) and _covers(sure, lo, hi) and len(sure) == len(touching)
+            c.update(status="CONFIRMADA_O_SUSTITUIDA_SIN_VERSION" if covered else "INCIERTA", resolved_utc=when)
+        elif k[0] == f:
+            d = k[1]
+            hit = [a for a in accepted if a[0] <= d <= a[1]]
+            if hit and not single:
+                c.update(status="SUSTITUIDA_SIN_VERSION" if all(len(a) == 2 for a in hit) else "INCIERTA",
+                         resolved_utc=when)
+
+
+def _covers(ranges, lo, hi):
+    """¿Hay un rango aceptado [a, b] que contenga entero [lo, hi]? Si la cobertura se reparte entre varios rangos, no
+    puede demostrarse sin las fechas de la serie (los huecos no constan): el llamador lo trata como INCIERTA."""
+    return any(a <= lo and b >= hi for a, b in ranges)
+
+
 def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None):
     inputs = [x for x in (output.get("inputs") or "").split(";") if x]
     res["flags"].append("INPUT_VERSION_UNKNOWN")         # los derivados no registran qué versión de entradas usaron
@@ -383,16 +426,25 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
         for r in sorted(ev.get(f, []), key=lambda x: x.get("query_utc", "")):
             when = r.get("query_utc", "")
             if r.get("obs_complete") is False:
+                # C3R2-2 · rangos compactados, tratados como RANGOS (no como fechas). Cada rango declara si sus
+                # revisiones se aceptaron; los registros antiguos sin ese dato quedan como «desconocido».
+                acc_ranges = []
                 for rg in r.get("obs_ranges", []):
-                    if rg["kind"] == "revision" and rg["from"] <= have_max.isoformat():
-                        item = {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False}
-                        if r.get("wrote"):
-                            published.append(item)
-                            for k, c in cand.items():          # versión nueva desconocida en el rango: ya no vigente
-                                if k[0] == f and rg["from"] <= k[1] <= rg["to"] and c["status"] == "RETENIDA":
-                                    c.update(status="SUSTITUIDA_SIN_VERSION", resolved_utc=when)
-                        else:
-                            cand[(f, "rango:%s..%s" % (rg["from"], rg["to"]), when)] = dict(item, status="RETENIDA")
+                    if rg["kind"] != "revision" or rg["from"] > have_max.isoformat():
+                        continue
+                    acc = rg.get("accepted")
+                    if acc is None:
+                        acc = None if r.get("wrote") else False
+                    item = {"file": f, "dates": [rg["from"], rg["to"]], "seen_utc": when, "complete": False}
+                    if acc is True:
+                        published.append(item)
+                        acc_ranges.append((rg["from"], rg["to"]))
+                    elif acc is None:
+                        published.append(dict(item, accepted="desconocido"))
+                        acc_ranges.append((rg["from"], rg["to"], "?"))
+                    else:
+                        cand[("rango", f, rg["from"], rg["to"], when)] = dict(item, status="RETENIDA")
+                _resolve_by_ranges(cand, f, acc_ranges, when)
                 continue
             for o in r.get("obs", []):
                 if o.get("kind") != "revision" or o.get("date", "9999") > have_max.isoformat():
@@ -404,10 +456,16 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
                     for k, c in cand.items():
                         if k[0] == f and k[1] == o["date"] and c["status"] == "RETENIDA":
                             c.update(status="CONFIRMADA" if k == key else "SUSTITUIDA", resolved_utc=when)
+                    _resolve_by_ranges(cand, f, [(o["date"], o["date"])], when, single=True)
                 elif key not in cand or cand[key]["status"] != "RETENIDA":
                     cand[key] = dict(item, status="RETENIDA")
     held = [c for c in cand.values() if c["status"] == "RETENIDA"]
-    history = [c for c in cand.values() if c["status"] != "RETENIDA"]
+    uncertain = [c for c in cand.values() if c["status"] == "INCIERTA"]
+    history = [c for c in cand.values() if c["status"] not in ("RETENIDA", "INCIERTA")]
+    if uncertain:
+        # la evidencia no permite decidir si siguen vigentes: se dice, sin afirmar una retención activa
+        res["flags"].append("INPUT_REVISION_HELD_UNCERTAIN")
+        res["uncertain_input_revisions"] = uncertain[-20:]
     if history:
         res["input_revision_history"] = history[-20:]     # sucesos resueltos: se conservan, no están activos
     if held:
@@ -450,7 +508,8 @@ def availability(records, obs_date, version=None):
         if r.get("obs_complete") is False and any(rg["from"] <= obs_date <= rg["to"] for rg in r.get("obs_ranges", [])):
             limitation = "evidencia sin versión por fecha en %s (%s)" % (r.get("query_utc"), r.get("obs_limitation", ""))
             seen.append((r["query_utc"], "?"))
-            if r.get("wrote"):
+            cover = [rg for rg in r.get("obs_ranges", []) if rg["from"] <= obs_date <= rg["to"]]
+            if r.get("wrote") and any(rg.get("accepted") is not False for rg in cover):
                 # C3R1-3: una revisión compactada publicada pudo cambiar la versión: la anterior deja de ser conocida
                 # hasta que una revisión individual posterior declare su versión previa
                 published = None
