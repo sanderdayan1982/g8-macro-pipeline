@@ -38,7 +38,12 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import requests
+import io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
+
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # Constants
@@ -138,7 +143,21 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3)."""
+    f = io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 def main() -> int:
+    global requests
+    _ctx = _ingest.Ingest('fetch_bis_ocr')
+    requests = _ctx.requests(provider='bis')
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
 
@@ -149,23 +168,25 @@ def main() -> int:
         rows = fetch_bis_ocr_data(date_from, today)
     except requests.HTTPError as exc:
         print(f"ERROR: BIS HTTP error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except requests.RequestException as exc:
         print(f"ERROR: BIS network error: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except Exception as exc:
         print(f"ERROR: NZD OCR fetch failed: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
     if not rows:
         print("ERROR: No NZD OCR rows returned from BIS", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
-    write_csv(rows, OUTPUT_PATH)
-    print(f"OK: Wrote {len(rows)} rows to {OUTPUT_PATH}")
+    _rep = _ctx.publish(OUTPUT_PATH.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+
+    print(f"Publicación {OUTPUT_PATH.name}: {_rep['status']} {_rep.get('detail', '')}")
+    print(f"Descarga: {len(rows)} filas para {OUTPUT_PATH.name}")
     print(f"     Latest: {rows[-1][0]} = {rows[-1][1]:.4f}%")
     print(f"     Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
-    return 0
+    return _ctx.finish(0)
 
 
 if __name__ == "__main__":

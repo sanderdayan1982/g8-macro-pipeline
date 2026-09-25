@@ -1,0 +1,82 @@
+# ============================================================================
+# Ingest Watch — v1.0 (lote 1 fiabilidad de ingestión, 2026-09-24)
+# Vigila desde Actions, sin depender del Mac ni de su token, que el Mac publica su latido
+# (data/_ingest/latest/*) tras cada ejecución programada y que sus familias se publican; y la
+# caducidad de las credenciales registradas (sources/credentials.csv). Solo AVISA (Telegram):
+# la recuperación automática (respaldo residencial) es F9, no instalada.
+# Horarios: el Mac corre a las 08:00 de Bata (07:00 UTC, sin cambio de hora). Plazo de aviso 45 min
+# (sources/executors.csv). Los cron de GitHub se disparan con retraso (2–4 h observadas), por eso hay
+# varias oportunidades en el día; además el paso se repite dentro de Daily Data Update y USD Factor.
+# ============================================================================
+name: Ingest Watch
+
+on:
+  schedule:
+    - cron: '53 7 * * *'
+    - cron: '23 10 * * *'
+    - cron: '43 13 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: g8-shared-data-alerts
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ingest watch (latido del Mac + credenciales)
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
+
+      # F3 (lote 3C): motor de frescura EN PARALELO. Solo escribe su informe y la comparación con el motor actual;
+      # no avisa (sin Telegram) y no bloquea el job. El historial reciente de git le da la hora de las entradas de
+      # los derivados; si no está disponible, lo declara (INPUT_TIMING_UNKNOWN).
+      - name: F3 · informe de frescura en paralelo (sin avisos)
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          git fetch --quiet --shallow-since="$(date -u -d '10 days ago' +%Y-%m-%d)" origin main || true
+          python scripts/freshness_report.py
+
+      - name: Commit watch state
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/_ingest/watch_state.json 2>/dev/null || true
+          git add data/_ingest/freshness.json data/_ingest/freshness_compare/ 2>/dev/null || true
+          if git diff --cached --quiet; then echo "sin cambios de estado"; exit 0; fi
+          git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
+          done
+          echo "push fallido tras 5 intentos"; exit 1
+
+      - name: Telegram no entregado → job en rojo (GitHub envía email)
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          p = os.path.join(os.environ["RUNNER_TEMP"], "ingest_watch.json")
+          if not os.path.exists(p):
+              print("ingest_watch no produjo resultado"); sys.exit(1)
+          d = json.load(open(p))
+          ok = d.get("delivery") in ("SENT", "DRY", "NOTHING")
+          print("entrega:", d.get("delivery"), "· alertas:", len(d.get("alerts", [])))
+          sys.exit(0 if ok else 1)
+          PY

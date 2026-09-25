@@ -44,6 +44,8 @@ import datetime as dt
 
 import fetch_eur_real as fx   # motor compartido (mismo directorio scripts/)
 
+fx.BUDGET_S = 6 * 3600         # lote 3B: backfill manual — presupuesto HTTP de la ejecución larga (g8http)
+
 # Listado paginado: la URL de paginacion que devuelve resultados (probada).
 # Sin query=*/sort (el endpoint ya ordena por "Latest" y pagina sobre TODO el set).
 BBKSEARCH = "https://www.bundesbank.de/action/en/810710/bbksearch?pageNumString=%d"

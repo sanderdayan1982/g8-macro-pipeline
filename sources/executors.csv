@@ -1,0 +1,2 @@
+executor_id,job,timezone,run_times_local,days,alert_after_min,active_from,recovery,provisional,justification
+mac-primary,nzchf-tona,Africa/Malabo,08:00,mon-sun,45,,sin respaldo automático hasta F9 (aviso a Sander),Y,"launchd a la hora local del Mac (Bata, sin cambio de hora). 45 min = duración supuesta ≤15 min + 30 min de margen; se recalibra con acta usando started/finished de los latidos (p95 + 10 min). active_from se rellena el día en que se instala push v2.0 (antes no existe latido y avisar sería ruido). Añadir 17:00 al instalar el plist v1.3."

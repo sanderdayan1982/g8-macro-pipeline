@@ -40,7 +40,12 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import requests
+import io
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
+
+requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -156,11 +161,25 @@ def write_csv(rows: list[tuple[str, float]], output_path: Path) -> None:
             writer.writerow([date_str, v, v, v, v, "0"])
 
 
+def render_csv(rows) -> bytes:
+    """Mismo formato byte a byte que write_csv, en memoria (lote 3)."""
+    f = io.StringIO(newline="")
+    writer = csv.writer(f)
+    writer.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for date_str, value in rows:
+        v = f"{value:.4f}"
+        writer.writerow([date_str, v, v, v, v, "0"])
+    return f.getvalue().encode("utf-8")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> int:
+    global requests
+    _ctx = _ingest.Ingest('fetch_bis_policy')
+    requests = _ctx.requests(provider='bis')
     if len(sys.argv) != 2:
         print("Usage: python fetch_bis_policy.py <COUNTRY_CODE>", file=sys.stderr)
         print(f"Supported codes: {', '.join(SUPPORTED_COUNTRIES.keys())}", file=sys.stderr)
@@ -173,6 +192,7 @@ def main() -> int:
         print(f"Supported codes: {', '.join(SUPPORTED_COUNTRIES.keys())}", file=sys.stderr)
         return 2
 
+    _ctx.rename("fetch_bis_policy_" + country)
     label = SUPPORTED_COUNTRIES[country]
     today = datetime.utcnow()
     date_from = today - timedelta(days=365 * HISTORY_YEARS)
@@ -189,23 +209,25 @@ def main() -> int:
         rows = fetch_bis_policy_rate(country, date_from, today)
     except requests.HTTPError as exc:
         print(f"ERROR: BIS HTTP error for {country}: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except requests.RequestException as exc:
         print(f"ERROR: BIS network error for {country}: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
     except Exception as exc:
         print(f"ERROR: {country} policy fetch failed: {exc}", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
     if not rows:
         print(f"ERROR: No {country} policy rows returned from BIS", file=sys.stderr)
-        return 1
+        return _ctx.finish(1)
 
-    write_csv(rows, output_path)
-    print(f"OK: Wrote {len(rows)} rows to {output_path}")
+    _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+
+    print(f"Publicación {output_path.name}: {_rep['status']} {_rep.get('detail', '')}")
+    print(f"Descarga: {len(rows)} filas para {output_path.name}")
     print(f"     Latest:   {rows[-1][0]} = {rows[-1][1]:.4f}%")
     print(f"     Earliest: {rows[0][0]} = {rows[0][1]:.4f}%")
-    return 0
+    return _ctx.finish(0)
 
 
 if __name__ == "__main__":

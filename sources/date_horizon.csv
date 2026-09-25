@@ -1,0 +1,36 @@
+file,max_future_days,basis,note
+SOFR.csv,1,PROVISIONAL,Fijación diaria observada; la fecha es el día hábil de la operación (nunca futura). 1 día natural de holgura por huso horario del ejecutor.
+ESTR.csv,1,PROVISIONAL,Idem: fijación diaria publicada T+1 hábil con fecha de la operación.
+SONIA.csv,1,PROVISIONAL,Idem.
+TONA.csv,1,PROVISIONAL,Idem (Japón va por delante de UTC: holgura de 1 día).
+CORRA.csv,1,PROVISIONAL,Idem.
+AONIA.csv,1,PROVISIONAL,Idem.
+NZD_BILL_30D.csv,1,PROVISIONAL,Tabla B2 RBNZ: cierre diario observado (Nueva Zelanda va por delante de UTC).
+NZD_BILL_60D.csv,1,PROVISIONAL,Idem.
+NZD_BILL_90D.csv,1,PROVISIONAL,Idem.
+NZD_BOND_1Y.csv,1,PROVISIONAL,Idem.
+NZD_BOND_2Y.csv,1,PROVISIONAL,Idem.
+NZD_BOND_5Y.csv,1,PROVISIONAL,Idem.
+NZD_BOND_10Y.csv,1,PROVISIONAL,Idem.
+NZD_CASH_ON.csv,1,PROVISIONAL,Idem.
+CHF_NOM_10Y.csv,1,PROVISIONAL,Rendimiento diario observado SNB.
+CHF_SARON.csv,1,PROVISIONAL,Fijación diaria observada.
+GB_POLICY.csv,,SIN_LIMITE_DOCUMENTADO,Tipo oficial: la fuente podría fechar un cambio anunciado con su fecha efectiva futura. No se impone horizonte hasta medirlo.
+JP_POLICY.csv,,SIN_LIMITE_DOCUMENTADO,Idem.
+CH_POLICY.csv,,SIN_LIMITE_DOCUMENTADO,Idem.
+AU_POLICY.csv,,SIN_LIMITE_DOCUMENTADO,Idem.
+NZD_OCR.csv,,SIN_LIMITE_DOCUMENTADO,Idem.
+NZD_IIB_*.csv,1,PROVISIONAL,Bonos indexados RBNZ B2: cierre diario observado.
+CHF_SPOT_*.csv,1,PROVISIONAL,Curva spot SNB: fecha de observación (mensual o diaria rss) nunca futura.
+US_BILL_*.csv,1,PROVISIONAL,Lote 3B: rendimiento de cierre observado (FRED H.15); nunca fecha futura.
+CAD_BILL_*.csv,1,PROVISIONAL,Lote 3B: cierre observado BoC Valet.
+AUD_BILL_*.csv,1,PROVISIONAL,Lote 3B: cierre observado RBA F1 (Australia va por delante de UTC).
+EUR_BILL_*.csv,1,PROVISIONAL,Lote 3B: curva AAA diaria BCE (fecha de observación).
+GBP_BILL_*.csv,1,PROVISIONAL,Lote 3B: curva spot BoE (fecha de observación).
+JPY_BILL_*.csv,1,PROVISIONAL,Lote 3B: JGB MOF (Japón va por delante de UTC).
+ACM_TP_10Y.csv,1,PROVISIONAL,Lote 3B: prima ACM diaria NY Fed (fecha de observación).
+RY_G8_EUR.csv,1,PROVISIONAL,Lote 3B: fecha de la hoja Bundesbank.
+RY_G8_JPY.csv,1,PROVISIONAL,Lote 3B: fecha del fichero ES del JSDA.
+FLOOR_USD.csv,,SIN_LIMITE_DOCUMENTADO,Lote 3B: IORB puede fecharse con su vigencia; sin horizonte hasta medirlo.
+FLOOR_EUR.csv,,SIN_LIMITE_DOCUMENTADO,Lote 3B: DFR con fecha efectiva anunciada.
+FLOOR_CAD.csv,,SIN_LIMITE_DOCUMENTADO,Lote 3B: tipo objetivo BoC con fecha efectiva.

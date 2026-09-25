@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.g8.nzd-b2</string>
+    <key>ProgramArguments</key>
+    <array><string>/bin/zsh</string><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/nzd_local_run.sh</string></array>
+    <!-- v1.3: dos ejecuciones diarias (hora local del Mac). 08:00 recoge B2 de NZ y SNB R10 de la víspera;
+         17:00 recoge la curva mensual del SNB el mismo día 1 (publicada ~14:30 hora suiza) y el SARON del RSS. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+    <key>RunAtLoad</key><true/>
+    <key>StandardOutPath</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/logs/launchd.out</string>
+    <key>StandardErrorPath</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/logs/launchd.err</string>
+</dict>
+</plist>

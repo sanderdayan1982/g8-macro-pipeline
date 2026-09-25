@@ -18,6 +18,10 @@ Output format: repo-standard OHLCV
 
 Tolerant per source: failures reported in summary; exit 1 if any source failed
 (workflow runs this step with continue-on-error: true).
+
+Lote 3B (2026-09-24): HTTP y publicación por g8common.ingest — reintentos con presupuesto, Retry-After,
+validación por serie, escritura atómica y conservación del último dato válido; registro en
+data/_ingest/latest/actions__fetch_floor_spreads.json (avisos de ingest_watch).
 """
 
 import csv
@@ -29,6 +33,11 @@ import time
 import urllib.request
 import urllib.error
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from g8common import ingest as _ingest  # noqa: E402  (lote 3B: HTTP común + publicación segura por fichero)
+
+_ctx = None       # contexto de ingestión (lo crea main())
+
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 START = "2021-06-01"
 FRED_KEY = os.environ.get("FRED_API_KEY", "").strip()
@@ -37,44 +46,60 @@ UA = {"User-Agent": "Mozilla/5.0 (g8-macro-pipeline floor-spreads)"}
 
 
 def http_get(url, retries=3, timeout=60):
-    last = None
-    for i in range(1, retries + 1):
-        try:
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read().decode("utf-8", errors="replace")
-        except Exception as e:  # noqa: BLE001
-            last = e
-            if i < retries:
-                wait = 5 * (2 ** (i - 1))
-                print(f"    [http] attempt {i} failed ({e}) — retry in {wait}s")
-                time.sleep(wait)
-    raise RuntimeError(f"HTTP failed after {retries} attempts: {url} :: {last}")
+    """Lote 3B: g8http con el registro del descargador (reintentos 1+3, Retry-After por ámbito, presupuesto,
+    TLS verificado, redirecciones). La API de FRED se clasifica aparte para reconocer la clave rechazada."""
+    provider = "fred_api" if "api.stlouisfed.org" in url else "generic"
+    return _ctx.requests(provider=provider).get(url, headers=UA, timeout=timeout).text
+
+
+def render_ohlcv(series):
+    """Mismo formato byte a byte que el escritor original (CRLF, V=0), en memoria."""
+    f = io.StringIO(newline="")
+    w = csv.writer(f, lineterminator="\r\n")
+    w.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
+    for d, v in series:
+        ymd = d.replace("-", "")
+        w.writerow([ymd, f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", 0])
+    return f.getvalue().encode("utf-8")
 
 
 def write_ohlcv(name, series):
-    """series: list of (date_iso, value) sorted ascending."""
-    path = os.path.join(OUT_DIR, name)
-    with open(path, "w", newline="") as f:
-        w = csv.writer(f, lineterminator="\r\n")
-        w.writerow(["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"])
-        for d, v in series:
-            ymd = d.replace("-", "")
-            w.writerow([ymd, f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", f"{v:.4f}", 0])
-    print(f"  wrote  : {path} ({len(series)} rows, last {series[-1][0]} = {series[-1][1]:.4f})")
+    """series: list of (date_iso, value) sorted ascending. Lote 3B: fusión monótona + escritura atómica; una
+    respuesta corta, retrocedida o implausible no sustituye al último dato válido."""
+    rep = _ctx.publish(name, render_ohlcv(series), retain_from=START.replace("-", ""))
+    print(f"  {rep['status']}: {name} ({len(series)} filas descargadas, última {series[-1][0]} = "
+          f"{series[-1][1]:.4f}) {rep.get('detail', '')}")
+    if rep["status"] in ("INVALID", "REGRESSION_BLOCKED"):
+        raise RuntimeError(f"{name}: {rep['status']} — {rep.get('detail', '')}")
 
 
 # ── USD: FRED IORB ──────────────────────────────────────────────────────────
 
 def fetch_usd():
-    if not FRED_KEY:
-        raise RuntimeError("FRED_API_KEY not set")
-    url = ("https://api.stlouisfed.org/fred/series/observations"
-           f"?series_id=IORB&api_key={FRED_KEY}&file_type=json"
-           f"&observation_start={START}")
-    data = json.loads(http_get(url))
-    out = [(o["date"], float(o["value"]))
-           for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
+    out = None
+    if FRED_KEY:
+        url = ("https://api.stlouisfed.org/fred/series/observations"
+               f"?series_id=IORB&api_key={FRED_KEY}&file_type=json"
+               f"&observation_start={START}")
+        try:
+            data = json.loads(http_get(url))
+            out = [(o["date"], float(o["value"]))
+                   for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
+        except _ingest.HTTPError as e:                      # F7: clave rechazada → endpoint sin clave, visible
+            if e.g8cls != "FAIL_AUTH":
+                raise
+            print("::error title=FRED_API_KEY::FRED rechaza la clave (FAIL_AUTH) en IORB; se usa fredgraph sin clave")
+    else:
+        print("::warning title=FRED_API_KEY::FRED_API_KEY no definida; IORB por fredgraph sin clave")
+    if out is None:
+        text = http_get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=IORB&cosd={START}")
+        out = []
+        for row in csv.reader(io.StringIO(text)):
+            if len(row) >= 2 and len(row[0]) == 10 and row[0][4] == "-" and row[1] not in (".", ""):
+                try:
+                    out.append((row[0], float(row[1])))
+                except ValueError:
+                    continue
     if len(out) < 500:
         raise RuntimeError(f"IORB too short: {len(out)} obs")
     print(f"    [FRED IORB] {len(out)} obs  {out[0][0]} → {out[-1][0]}")
@@ -131,6 +156,8 @@ def fetch_cad():
 # ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
+    global _ctx
+    _ctx = _ingest.Ingest("fetch_floor_spreads")
     jobs = [("USD", fetch_usd), ("EUR", fetch_eur), ("CAD", fetch_cad)]
     failed = []
     for tag, fn in jobs:
@@ -141,7 +168,7 @@ def main():
             print(f"[{tag}] FAILED: {e}")
             failed.append(tag)
     print(f"Summary: {len(jobs) - len(failed)} OK, {len(failed)} failed of {len(jobs)}")
-    sys.exit(1 if failed else 0)
+    sys.exit(_ctx.finish(1 if failed else 0))
 
 
 if __name__ == "__main__":

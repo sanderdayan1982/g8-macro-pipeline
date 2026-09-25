@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-fetch_chf_snb.py — SNB data portal + SNB current-rates RSS → CHF curve, SARON, 10Y  — v1.0 (2026-09-13)
+fetch_chf_snb.py — SNB data portal + SNB current-rates RSS → CHF curve, SARON, 10Y  — v1.1 (2026-09-24, lote 3B)
+
+v1.1: HTTP por g8common (reintentos 1+3 con presupuesto, Retry-After, 403 sin reintento; mismo transporte
+curl_cffi→requests); escritura atómica y validada; curva, SARON y RSS independientes (una fuente caída no
+impide escribir las otras); registro en state/fetch_chf.json. Fuentes y frecuencias: sin cambios.
 
 Runs on the operator's Mac (launchd, same job as fetch_nzd_b2.py): data.snb.ch rejects
 datacenter IPs / non-browser TLS (GitHub Actions gets 403), a residential IP with
@@ -32,13 +36,8 @@ import sys
 import time
 from datetime import date, timedelta
 
-try:
-    from curl_cffi import requests as crequests
-    _IMPERSONATE = True
-except Exception:                                    # pragma: no cover
-    crequests = None
-    _IMPERSONATE = False
-import requests
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from g8common import macfetch  # noqa: E402  (lote 3B: HTTP común + escritura atómica validada)
 
 CUBE_CURVE = "https://data.snb.ch/api/cube/rendeiduebd/data/csv/en"
 CUBE_SARON = "https://data.snb.ch/api/cube/zirepo/data/csv/en"
@@ -52,42 +51,26 @@ HEADERS = {
 }
 OUTPUT_DIR = "data"
 TIMEOUT = 120
-RETRY_DELAYS = [0, 5, 15]
+# v1.1 (lote 3B): reintentos/Retry-After/presupuesto por g8common; transporte curl_cffi→requests como antes.
+_F = None
+
+
+def _fetch():
+    global _F
+    if _F is None:
+        _F = macfetch.Fetch("chf", os.getcwd())
+    return _F
 TENORS = {"1J": 1, "2J": 2, "3J": 3, "4J": 4, "5J": 5, "6J": 6, "7J": 7, "8J": 8, "9J": 9,
           "10J": 10, "20J": 20, "30J": 30}
 CURVE_LOOKBACK_DAYS = 45
 
 
-def _get(url):
-    if _IMPERSONATE:
-        for imp in ("safari17_0", "chrome124", "chrome"):
-            try:
-                r = crequests.get(url, headers=HEADERS, timeout=TIMEOUT, impersonate=imp)
-                print(f"[fetch_chf_snb] curl_cffi {imp} → HTTP {r.status_code} ({len(r.content):,} B)")
-                if r.status_code == 200:
-                    return r.content
-            except Exception as e:
-                print(f"[fetch_chf_snb] curl_cffi {imp} error: {e}")
-    r = requests.get(url, timeout=TIMEOUT, headers=HEADERS)
-    print(f"[fetch_chf_snb] requests → HTTP {r.status_code}")
-    r.raise_for_status()
-    return r.content
-
-
 def download(url):
-    last = None
-    for attempt, delay in enumerate(RETRY_DELAYS, start=1):
-        if delay:
-            time.sleep(delay)
-        try:
-            print(f"[fetch_chf_snb] attempt {attempt}/{len(RETRY_DELAYS)} GET {url}")
-            return _get(url)
-        except Exception as e:
-            last = e
-            print(f"[fetch_chf_snb] error: {e}")
-            if "403" in str(e):
-                break
-    raise RuntimeError(f"download failed: {last}")
+    try:
+        print(f"[fetch_chf_snb] GET {url}")
+        return _fetch().get(url, headers=HEADERS, timeout=TIMEOUT)
+    except macfetch.FetchError as e:
+        raise RuntimeError(f"download failed: {e}")
 
 
 def parse_snb_csv(content):
@@ -120,13 +103,19 @@ def read_dv(path):
     return out
 
 
+def render_dv(series, with_source=False):
+    """Mismo contenido byte a byte que el escritor v1.0, en memoria."""
+    out = ["Date,Value,Source\n" if with_source else "Date,Value\n"]
+    for d in sorted(series):
+        v, src = series[d]
+        out.append(f"{d},{round(v, 6)}" + (f",{src}\n" if with_source else "\n"))
+    return "".join(out).encode("utf-8")
+
+
 def write_dv(path, series, with_source=False):
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write("Date,Value,Source\n" if with_source else "Date,Value\n")
-        for d in sorted(series):
-            v, src = series[d]
-            fh.write(f"{d},{round(v, 6)}" + (f",{src}\n" if with_source else "\n"))
+    """v1.1: escritura atómica y validada (vacía/ilegible → no se escribe y queda registrada)."""
+    hdr = ["Date", "Value", "Source"] if with_source else ["Date", "Value"]
+    return _fetch().write(path, render_dv(series, with_source), expect_header=hdr)
 
 
 def fetch_curve(list_only=False):
@@ -195,6 +184,9 @@ def merge_with_rss(base, rss_vals, path):
     for d, v in (rss_vals or {}).items():
         if d not in merged or merged[d][1] == "rss":
             merged[d] = (v, "rss")
+    if not merged:
+        _fetch().error("%s: sin filas que escribir" % os.path.basename(path))
+        return
     write_dv(path, merged, with_source=True)
     last = max(merged)
     print(f"[fetch_chf_snb] {os.path.basename(path)}: {len(merged):,} rows, last {last} = {merged[last][0]} ({merged[last][1]})")
@@ -202,19 +194,33 @@ def merge_with_rss(base, rss_vals, path):
 
 def main():
     list_only = "--list" in sys.argv
-    try:
-        curve = fetch_curve(list_only)
-        saron = fetch_saron(list_only)
-        if list_only:
+    if list_only:
+        try:
+            fetch_curve(True)
+            fetch_saron(True)
             return 0
-        rss = fetch_rss()
-    except Exception as e:
-        print(f"[fetch_chf_snb] FATAL: {e}", file=sys.stderr)
-        return 1
-    merge_with_rss(curve.get("10J", {}), rss.get("R10"), os.path.join(OUTPUT_DIR, "CHF_NOM_10Y.csv"))
-    merge_with_rss(saron, rss.get("SARH"), os.path.join(OUTPUT_DIR, "CHF_SARON.csv"))
-    print("[fetch_chf_snb] OK")
-    return 0
+        except Exception as e:
+            print(f"[fetch_chf_snb] FATAL: {e}", file=sys.stderr)
+            return 1
+    # v1.1 (lote 3B): cada fuente es independiente. Si una falla, las demás se escriben igualmente (las
+    # salidas completas y válidas se conservan), el fallo queda registrado y el código de salida es 1.
+    parts = {}
+    for name, fn in (("curve", fetch_curve), ("saron", fetch_saron), ("rss", fetch_rss)):
+        try:
+            parts[name] = fn() if name == "rss" else fn(False)
+        except Exception as e:
+            print(f"[fetch_chf_snb] ERROR {name}: {e}", file=sys.stderr)
+            _fetch().error("%s: %s" % (name, e))
+    if not parts:
+        print("[fetch_chf_snb] FATAL: ninguna fuente disponible", file=sys.stderr)
+        return _fetch().finish(1)
+    rss = parts.get("rss", {})
+    if "curve" in parts or "rss" in parts:
+        merge_with_rss(parts.get("curve", {}).get("10J", {}), rss.get("R10"), os.path.join(OUTPUT_DIR, "CHF_NOM_10Y.csv"))
+    if "saron" in parts or "rss" in parts:
+        merge_with_rss(parts.get("saron", {}), rss.get("SARH"), os.path.join(OUTPUT_DIR, "CHF_SARON.csv"))
+    print("[fetch_chf_snb] OK" if len(parts) == 3 else "[fetch_chf_snb] PARCIAL: %s" % ", ".join(sorted(parts)))
+    return _fetch().finish(0 if len(parts) == 3 else 1)
 
 
 if __name__ == "__main__":
