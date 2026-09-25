@@ -1,0 +1,50 @@
+{
+ "errors": [],
+ "executor": "actions",
+ "failing_since_utc": null,
+ "files": {
+  "AU_POLICY.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172153Z_actions_fetch-bis-policy-au_bd5f:55662d5f7ddd",
+   "dropped_by_source": 0,
+   "file": "AU_POLICY.csv",
+   "held": [],
+   "new": 0,
+   "repo_max": "20260917",
+   "revised": [],
+   "src_max": "20260917",
+   "status": "NOOP"
+  }
+ },
+ "finished_utc": "2026-09-25T17:22:14Z",
+ "gh_run_id": "36166436946",
+ "job": "fetch_bis_policy_AU",
+ "last_ok_utc": "2026-09-25T17:22:14Z",
+ "not_before": {},
+ "rc": 0,
+ "requests": [
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 20.49,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:21:54 GMT",
+   "detail": "",
+   "last_modified": null,
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.AU/all?format=csv"
+  }
+ ],
+ "run_id": "20260925T172153Z_actions_fetch-bis-policy-au_bd5f",
+ "started_utc": "2026-09-25T17:21:53Z",
+ "step": "bis_au"
+}

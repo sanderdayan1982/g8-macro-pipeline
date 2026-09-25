@@ -1,0 +1,216 @@
+{
+ "errors": [],
+ "executor": "actions",
+ "failing_since_utc": null,
+ "files": {
+  "EUR_BILL_10Y.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:a2aea829f24a",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_10Y.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  },
+  "EUR_BILL_1Y.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:577b37518651",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_1Y.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  },
+  "EUR_BILL_2Y.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:143967e14012",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_2Y.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  },
+  "EUR_BILL_3M.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:082f718bdbad",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_3M.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  },
+  "EUR_BILL_5Y.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:752dadbdd315",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_5Y.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  },
+  "EUR_BILL_6M.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172219Z_actions_fetch-eur-bills_22fc:b7a7b1265b11",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_6M.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  }
+ },
+ "finished_utc": "2026-09-25T17:22:45Z",
+ "gh_run_id": "36166436946",
+ "job": "fetch_eur_bills",
+ "last_ok_utc": "2026-09-25T17:22:45Z",
+ "not_before": {},
+ "rc": 0,
+ "requests": [
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.17,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:22 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_3M?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.29,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:27 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_6M?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.16,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:31 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_1Y?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.03,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:35 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.58,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:40 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_5Y?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 4.83,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:22:44 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 10:00:00 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?format=csvdata&startPeriod=2021-09-26&endPeriod=2026-09-25"
+  }
+ ],
+ "run_id": "20260925T172219Z_actions_fetch-eur-bills_22fc",
+ "started_utc": "2026-09-25T17:22:19Z",
+ "step": "eur_bills"
+}

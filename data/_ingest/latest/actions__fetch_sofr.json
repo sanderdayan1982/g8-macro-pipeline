@@ -1,0 +1,51 @@
+{
+ "errors": [],
+ "executor": "actions",
+ "failing_since_utc": null,
+ "files": {
+  "SOFR.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20260925T172021Z_actions_fetch-sofr_a407:1e37e3e3fbd0",
+   "dropped_by_source": 0,
+   "file": "SOFR.csv",
+   "held": [],
+   "new": 1,
+   "repo_max": "20260923",
+   "revised": [],
+   "src_max": "20260924",
+   "status": "PUBLISH",
+   "written": true
+  }
+ },
+ "finished_utc": "2026-09-25T17:20:21Z",
+ "gh_run_id": "36166436946",
+ "job": "fetch_sofr",
+ "last_ok_utc": "2026-09-25T17:20:21Z",
+ "not_before": {},
+ "rc": 0,
+ "requests": [
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 0.6,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 25 Sep 2026 17:20:21 GMT",
+   "detail": "",
+   "last_modified": "Fri, 25 Sep 2026 12:02:30 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SOFR&cosd=2021-09-26&coed=2026-09-25"
+  }
+ ],
+ "run_id": "20260925T172021Z_actions_fetch-sofr_a407",
+ "started_utc": "2026-09-25T17:20:21Z",
+ "step": "sofr"
+}
