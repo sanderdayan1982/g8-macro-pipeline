@@ -6,36 +6,44 @@
   "GB_POLICY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20260926T000042Z_actions_fetch-bis-policy-gb_1c83:9b80e0cb9dad",
-   "dropped_by_source": 1,
+   "download_id": "20260929T010741Z_actions_fetch-bis-policy-gb_e44b:13a456aeb13c",
+   "dropped_by_source": 4,
    "file": "GB_POLICY.csv",
    "held": [],
    "new": 0,
    "repo_max": "20260921",
    "revised": [],
    "src_max": "20260921",
-   "status": "NOOP"
+   "status": "PUBLISH",
+   "written": true
   }
  },
- "finished_utc": "2026-09-26T00:00:47Z",
- "gh_run_id": "36203150879",
+ "finished_utc": "2026-09-29T01:08:56Z",
+ "gh_run_id": "36506355063",
  "job": "fetch_bis_policy_GB",
- "last_ok_utc": "2026-09-26T00:00:47Z",
+ "last_ok_utc": "2026-09-29T01:08:56Z",
  "not_before": {},
  "rc": 0,
  "requests": [
   {
    "attempts": [
     {
+     "cls": "FAIL_TRANSIENT",
+     "detail": "incomplete: 26231 bytes leídos",
+     "n": 1,
+     "secs": 21.92,
+     "status": null
+    },
+    {
      "cls": "OK",
      "detail": "",
-     "n": 1,
-     "secs": 4.65,
+     "n": 2,
+     "secs": 42.84,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Sat, 26 Sep 2026 00:00:42 GMT",
+   "date_header": "Tue, 29 Sep 2026 01:08:12 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
@@ -44,7 +52,7 @@
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.GB/all?format=csv"
   }
  ],
- "run_id": "20260926T000042Z_actions_fetch-bis-policy-gb_1c83",
- "started_utc": "2026-09-26T00:00:42Z",
+ "run_id": "20260929T010741Z_actions_fetch-bis-policy-gb_e44b",
+ "started_utc": "2026-09-29T01:07:41Z",
  "step": "bis_gb"
 }
