@@ -1,18 +1,17 @@
 {
- "at_utc": "2026-09-30T14:16:11Z",
+ "at_utc": "2026-09-30T16:26:52Z",
  "compare_summary": {
-  "ACUERDO": 36,
+  "ACUERDO": 38,
   "FUERA_DE_F3": 2,
-  "NUEVO_MAS_ESTRICTO": 10
+  "NUEVO_MAS_ESTRICTO": 8
  },
  "counts": {
-  "CURRENT": 24,
-  "DUE": 3,
+  "CURRENT": 29,
   "NOT_MONITORED": 4,
   "NO_OBS_DATE": 3,
   "NO_PUBLICATION": 15,
-  "OVERDUE": 21,
-  "PENDING_TIME_UNKNOWN": 19,
+  "OVERDUE": 14,
+  "PENDING_TIME_UNKNOWN": 24,
   "STALE": 1,
   "UNKNOWN_SCHEDULE": 9
  },
@@ -372,17 +371,17 @@
       "executor": "mac-primary",
       "family": "JP-TONA",
       "family_detail": "",
-      "family_status": "NOOP",
+      "family_status": "PUBLISHED",
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-25",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-28",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
-      "publish_status": "NOOP",
+      "publish_status": "PUBLISHED",
       "rc": 0,
       "requests": [
        {
@@ -391,9 +390,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      },
      "step:tona": {
@@ -412,20 +411,35 @@
      }
     },
     "latest": {
+     "errors": [],
+     "executor": "mac-primary",
+     "family": "JP-TONA",
+     "family_detail": "",
+     "family_status": "PUBLISHED",
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-09-28",
+      "status": "PUBLISH",
+      "written": true
      },
-     "finished_utc": "2026-09-30T00:42:48Z",
-     "job": "daily",
+     "finished_utc": "2026-09-30T16:01:30Z",
+     "publish_failed_family": null,
+     "publish_status": "PUBLISHED",
      "rc": 0,
-     "restored": [],
-     "run_id": "36651287383",
-     "source": "step",
-     "started_utc": "2026-09-30T00:38:46Z",
-     "status": "OK",
-     "where": "actions__job_daily.json"
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
+     "source": "mac",
+     "started_utc": "2026-09-30T16:00:18Z",
+     "where": "mac-primary__nzchf-tona.json"
     },
-    "latest_source": "step:tona"
+    "latest_source": "mac:JP-TONA/tona"
    },
    "file": "TONA.csv",
    "flags": [],
@@ -2792,9 +2806,20 @@
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -2865,14 +2890,26 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -2943,14 +2980,26 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -3021,14 +3070,26 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -3099,14 +3160,26 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -3177,14 +3250,26 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-09-30",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-28",
+   "due_obs": "2026-09-30",
+   "due_since": "2026-09-30T15:00:00Z",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -3255,8 +3340,9 @@
    "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-01T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -4171,9 +4257,41 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-09-29T15:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "CONSULTADA_SIN_NOVEDAD",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 1,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20260930T004244Z_actions_fetch-jpy-real_001f",
+      "source": "actions",
+      "started_utc": "2026-09-30T00:42:44Z"
+     },
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36651287383",
+      "source": "step",
+      "started_utc": "2026-09-30T00:42:44Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-09-29T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -4253,15 +4371,20 @@
     "latest_source": "actions:fetch_jpy_real"
    },
    "file": "RY_G8_JPY.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_CONSULTADA_SIN_NOVEDAD",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-09-30T15:00:00Z",
+   "overdue_since": "2026-09-30T15:00:00Z",
    "rule_id": "JPY_RY",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -4353,19 +4476,6 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4379,11 +4489,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4394,9 +4504,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4409,11 +4519,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4424,46 +4534,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_30D.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4477,11 +4568,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4492,9 +4583,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4507,11 +4598,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4522,46 +4613,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_60D.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4575,11 +4647,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4590,9 +4662,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4605,11 +4677,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4620,46 +4692,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_90D.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4673,11 +4726,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4688,9 +4741,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4703,11 +4756,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4718,46 +4771,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_1Y.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4771,11 +4805,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4786,9 +4820,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4801,11 +4835,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4816,46 +4850,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_2Y.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4869,11 +4884,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4884,9 +4899,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4899,11 +4914,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -4914,46 +4929,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_5Y.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -4967,11 +4963,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -4982,9 +4978,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -4997,11 +4993,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5012,46 +5008,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_10Y.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -5065,11 +5042,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5080,9 +5057,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5095,11 +5072,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5110,46 +5087,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2030.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -5163,11 +5121,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5178,9 +5136,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5193,11 +5151,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5208,46 +5166,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2035.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -5261,11 +5200,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5276,9 +5215,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5291,11 +5230,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5306,46 +5245,27 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2040.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "MAC1",
-      "2026-09-30T07:00Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
@@ -5359,11 +5279,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5374,9 +5294,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5389,11 +5309,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5404,32 +5324,26 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2050.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
-   "missing": [
-    "2026-09-29"
-   ],
+   "have_max": "2026-09-29",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-09-30T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "Pacific/Auckland"
   },
   {
-   "age_days": 7,
+   "age_days": 1,
    "basis": "PROVISIONAL",
    "calendar": "NZ",
    "expected_obs": null,
@@ -5445,11 +5359,11 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-23",
+       "src_max": "2026-09-29",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5460,9 +5374,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5475,11 +5389,11 @@
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-23",
+      "src_max": "2026-09-29",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5490,9 +5404,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5501,7 +5415,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-23",
+   "have_max": "2026-09-29",
    "missing": [],
    "model": "none",
    "reason": "Serie dispersa (fechas no diarias en los datos) → cadencia no establecida → UNKNOWN_SCHEDULE",
@@ -5529,7 +5443,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5540,9 +5454,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5559,7 +5473,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5570,9 +5484,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5601,17 +5515,17 @@
       "executor": "mac-primary",
       "family": "CH-DIARIO",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "PUBLISH",
-       "written": true
+       "src_max": "2026-09-30",
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
       "requests": [
        {
@@ -5630,9 +5544,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5641,17 +5555,17 @@
      "executor": "mac-primary",
      "family": "CH-DIARIO",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-29",
-      "status": "PUBLISH",
-      "written": true
+      "src_max": "2026-09-30",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
      "requests": [
       {
@@ -5670,9 +5584,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-DIARIO/chf"
@@ -5681,7 +5595,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_R10",
@@ -5700,17 +5614,17 @@
       "executor": "mac-primary",
       "family": "CH-DIARIO",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
-       "status": "PUBLISH",
-       "written": true
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
       "requests": [
        {
@@ -5729,9 +5643,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5740,17 +5654,17 @@
      "executor": "mac-primary",
      "family": "CH-DIARIO",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-09-28",
-      "status": "PUBLISH",
-      "written": true
+      "src_max": "2026-09-29",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
      "requests": [
       {
@@ -5769,9 +5683,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-DIARIO/chf"
@@ -5780,7 +5694,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
+   "have_max": "2026-09-29",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_SARON",
@@ -5807,7 +5721,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5828,9 +5742,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5847,7 +5761,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5868,9 +5782,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5906,7 +5820,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -5927,9 +5841,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -5946,7 +5860,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -5967,9 +5881,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6005,7 +5919,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6026,9 +5940,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6045,7 +5959,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6066,9 +5980,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6104,7 +6018,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6125,9 +6039,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6144,7 +6058,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6165,9 +6079,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6203,7 +6117,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6224,9 +6138,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6243,7 +6157,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6264,9 +6178,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6302,7 +6216,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6323,9 +6237,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6342,7 +6256,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6363,9 +6277,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6401,7 +6315,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6422,9 +6336,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6441,7 +6355,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6462,9 +6376,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6500,7 +6414,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6521,9 +6435,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6540,7 +6454,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6561,9 +6475,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6599,7 +6513,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6620,9 +6534,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6639,7 +6553,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6660,9 +6574,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6698,7 +6612,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6719,9 +6633,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6738,7 +6652,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6759,9 +6673,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6797,7 +6711,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6818,9 +6732,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6837,7 +6751,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6858,9 +6772,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6896,7 +6810,7 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-09-29T16:01:25Z",
+      "finished_utc": "2026-09-30T16:01:30Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
@@ -6917,9 +6831,9 @@
         "status": 200
        }
       ],
-      "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+      "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
       "source": "mac",
-      "started_utc": "2026-09-29T16:00:18Z",
+      "started_utc": "2026-09-30T16:00:18Z",
       "where": "mac-primary__nzchf-tona.json"
      }
     },
@@ -6936,7 +6850,7 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-09-29T16:01:25Z",
+     "finished_utc": "2026-09-30T16:01:30Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
@@ -6957,9 +6871,9 @@
        "status": 200
       }
      ],
-     "run_id": "20260929T160018Z_mac-primary_nzchf-tona_4d69",
+     "run_id": "20260930T160018Z_mac-primary_nzchf-tona_aa06",
      "source": "mac",
-     "started_utc": "2026-09-29T16:00:18Z",
+     "started_utc": "2026-09-30T16:00:18Z",
      "where": "mac-primary__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -7509,23 +7423,38 @@
   {
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-09-30T14:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-09-30T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "USD_FACTOR.json",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-09-30T15:00:00Z",
+   "overdue_since": "2026-09-30T15:00:00Z",
    "rule_id": "USD_FACTOR",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -7745,45 +7674,77 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-09-30T14:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-09-30T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/ecb_rates.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-09-30T15:00:00Z",
+   "overdue_since": "2026-09-30T15:00:00Z",
    "rule_id": "ECB_CACHE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-09-30T14:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-09-30T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/canonical.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-09-30T15:00:00Z",
+   "overdue_since": "2026-09-30T15:00:00Z",
    "rule_id": "ECB_CACHE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   }
  ],
