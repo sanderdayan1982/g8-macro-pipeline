@@ -1,17 +1,11 @@
 {
- "deadline_utc": "2026-09-29T01:35:36Z",
+ "deadline_utc": "2026-09-30T01:06:49Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "bis_jp",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "daily",
  "reserve_s": "540",
  "restored": [],
- "run_id": "36506355063",
+ "run_id": "36651287383",
  "steps": [
   {
    "allowed_s": 240.0,
@@ -20,8 +14,8 @@
    "name": "sofr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-09-29T01:07:26Z",
+   "secs": 1.0,
+   "started_utc": "2026-09-30T00:38:40Z",
    "status": "OK"
   },
   {
@@ -31,8 +25,8 @@
    "name": "estr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.8,
-   "started_utc": "2026-09-29T01:07:27Z",
+   "secs": 2.1,
+   "started_utc": "2026-09-30T00:38:41Z",
    "status": "OK"
   },
   {
@@ -43,7 +37,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 1.0,
-   "started_utc": "2026-09-29T01:07:29Z",
+   "started_utc": "2026-09-30T00:38:44Z",
    "status": "OK"
   },
   {
@@ -53,8 +47,8 @@
    "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.1,
-   "started_utc": "2026-09-29T01:07:30Z",
+   "secs": 1.5,
+   "started_utc": "2026-09-30T00:38:45Z",
    "status": "OK"
   },
   {
@@ -64,8 +58,8 @@
    "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.4,
-   "started_utc": "2026-09-29T01:07:31Z",
+   "secs": 1.5,
+   "started_utc": "2026-09-30T00:38:46Z",
    "status": "OK"
   },
   {
@@ -76,7 +70,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.7,
-   "started_utc": "2026-09-29T01:07:34Z",
+   "started_utc": "2026-09-30T00:38:48Z",
    "status": "OK"
   },
   {
@@ -86,8 +80,8 @@
    "name": "bis_ocr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 6.0,
-   "started_utc": "2026-09-29T01:07:34Z",
+   "secs": 3.6,
+   "started_utc": "2026-09-30T00:38:48Z",
    "status": "OK"
   },
   {
@@ -97,24 +91,20 @@
    "name": "bis_gb",
    "phase": "fetch",
    "rc": 0,
-   "secs": 75.2,
-   "started_utc": "2026-09-29T01:07:40Z",
+   "secs": 13.6,
+   "started_utc": "2026-09-30T00:38:52Z",
    "status": "OK"
   },
   {
    "allowed_s": 240.0,
    "cap_s": 240.0,
    "cmd": "python scripts/fetch_bis_policy.py JP",
-   "kept_valid_outputs": [
-    "_ingest/latest/actions__fetch_bis_policy_JP.json",
-    "_ingest/runs/actions/fetch_bis_policy_JP/2026-09.jsonl"
-   ],
    "name": "bis_jp",
    "phase": "fetch",
-   "rc": 1,
-   "secs": 0.7,
-   "started_utc": "2026-09-29T01:08:56Z",
-   "status": "FAILED"
+   "rc": 0,
+   "secs": 38.1,
+   "started_utc": "2026-09-30T00:39:06Z",
+   "status": "OK"
   },
   {
    "allowed_s": 240.0,
@@ -123,8 +113,8 @@
    "name": "bis_ch",
    "phase": "fetch",
    "rc": 0,
-   "secs": 9.0,
-   "started_utc": "2026-09-29T01:08:56Z",
+   "secs": 4.1,
+   "started_utc": "2026-09-30T00:39:44Z",
    "status": "OK"
   },
   {
@@ -134,8 +124,8 @@
    "name": "bis_au",
    "phase": "fetch",
    "rc": 0,
-   "secs": 4.2,
-   "started_utc": "2026-09-29T01:09:05Z",
+   "secs": 4.0,
+   "started_utc": "2026-09-30T00:39:48Z",
    "status": "OK"
   },
   {
@@ -145,8 +135,8 @@
    "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.4,
-   "started_utc": "2026-09-29T01:09:10Z",
+   "secs": 1.8,
+   "started_utc": "2026-09-30T00:39:52Z",
    "status": "OK"
   },
   {
@@ -156,8 +146,8 @@
    "name": "cad_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-09-29T01:09:12Z",
+   "secs": 0.6,
+   "started_utc": "2026-09-30T00:39:54Z",
    "status": "OK"
   },
   {
@@ -167,8 +157,8 @@
    "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.4,
-   "started_utc": "2026-09-29T01:09:13Z",
+   "secs": 0.8,
+   "started_utc": "2026-09-30T00:39:55Z",
    "status": "OK"
   },
   {
@@ -178,8 +168,8 @@
    "name": "eur_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 31.3,
-   "started_utc": "2026-09-29T01:09:14Z",
+   "secs": 34.5,
+   "started_utc": "2026-09-30T00:39:56Z",
    "status": "OK"
   },
   {
@@ -189,8 +179,8 @@
    "name": "gbp_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.2,
-   "started_utc": "2026-09-29T01:09:46Z",
+   "secs": 3.4,
+   "started_utc": "2026-09-30T00:40:30Z",
    "status": "OK"
   },
   {
@@ -200,8 +190,8 @@
    "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.7,
-   "started_utc": "2026-09-29T01:09:49Z",
+   "secs": 4.0,
+   "started_utc": "2026-09-30T00:40:34Z",
    "status": "OK"
   },
   {
@@ -211,8 +201,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.9,
-   "started_utc": "2026-09-29T01:09:52Z",
+   "secs": 3.0,
+   "started_utc": "2026-09-30T00:40:38Z",
    "status": "OK"
   },
   {
@@ -222,8 +212,8 @@
    "name": "acm_tp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.0,
-   "started_utc": "2026-09-29T01:09:56Z",
+   "secs": 2.1,
+   "started_utc": "2026-09-30T00:40:41Z",
    "status": "OK"
   },
   {
@@ -233,8 +223,8 @@
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 0,
-   "secs": 98.3,
-   "started_utc": "2026-09-29T01:09:58Z",
+   "secs": 97.0,
+   "started_utc": "2026-09-30T00:40:43Z",
    "status": "OK"
   },
   {
@@ -244,8 +234,8 @@
    "name": "acm_nzd",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.5,
-   "started_utc": "2026-09-29T01:11:36Z",
+   "secs": 0.6,
+   "started_utc": "2026-09-30T00:42:20Z",
    "status": "OK"
   },
   {
@@ -255,8 +245,8 @@
    "name": "acm_chf",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-09-29T01:11:37Z",
+   "secs": 0.8,
+   "started_utc": "2026-09-30T00:42:21Z",
    "status": "OK"
   },
   {
@@ -267,7 +257,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.1,
-   "started_utc": "2026-09-29T01:11:37Z",
+   "started_utc": "2026-09-30T00:42:21Z",
    "status": "OK"
   },
   {
@@ -277,8 +267,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 17.2,
-   "started_utc": "2026-09-29T01:11:38Z",
+   "secs": 19.4,
+   "started_utc": "2026-09-30T00:42:22Z",
    "status": "OK"
   },
   {
@@ -288,8 +278,8 @@
    "name": "eur_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-09-29T01:11:55Z",
+   "secs": 3.2,
+   "started_utc": "2026-09-30T00:42:41Z",
    "status": "OK"
   },
   {
@@ -300,11 +290,11 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 3.6,
-   "started_utc": "2026-09-29T01:11:58Z",
+   "started_utc": "2026-09-30T00:42:44Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-09-29T01:12:01Z"
+ "written_utc": "2026-09-30T00:42:48Z"
 }
