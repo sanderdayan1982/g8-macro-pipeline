@@ -34,7 +34,7 @@ otros hosts sin cambios; sin red + caché → copia con hora solo con `staleOk`;
 Comprobado además en el navegador (servidor local): con red §00 se pinta y guarda caché; con fetch caído
 recorre los 5 intentos en orden y muestra la copia con su hora.
 Suite completa (Python 3.11 + requirements + pyyaml): 617 tests OK (5 omitidos: 1 de red en vivo y 4 casos
-que no aplican; antes de P-1 se contaban 10 porque faltaba pyyaml). La ruta `/proxy/raw/` solo se puede probar de verdad una vez desplegado en Netlify.
+que no aplican). La ruta `/proxy/raw/` solo se puede probar de verdad una vez desplegado en Netlify.
 
 ## Siguiente
 Punto 2: AUD congelado desde el 23-sep (AUD_NOM_2Y, RY_G8_AUD, ACM_G8_AUD).
