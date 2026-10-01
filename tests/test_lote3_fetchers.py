@@ -86,6 +86,13 @@ class Base(object):
         rc_n, calls, clock = H.run_new(self.script, serve, rn, self.argv, now=now)
         return (rc_o, H.read(ro, self.fname)), (rc_n, H.read(rn, self.fname)), rn, calls, clock
 
+    def primary(self, calls):
+        # Acta P-4: fetch_bis_policy AU/GB consulta además al banco central (1 intento, después del BIS);
+        # los contratos de reintento/aplazamiento de este lote se refieren a la fuente principal (BIS).
+        if self.script == "fetch_bis_policy":
+            return [c for c in calls if "stats.bis.org" in c]
+        return calls
+
     def new_row(self):
         d, v = self.rows[-1]
         return (next_bd(d), v)
@@ -120,7 +127,7 @@ class Base(object):
         self.assertEqual((rco, rcn), (1, 1))
         self.assertEqual(bo, self.orig_bytes)
         self.assertEqual(bn, self.orig_bytes)
-        self.assertEqual(len(calls), 4)
+        self.assertEqual(len(self.primary(calls)), 4)
         self.assertEqual(clock.slept, [10, 40, 90])
 
     def test_F2_truncated_response_kept(self):
@@ -148,7 +155,7 @@ class Base(object):
         rn = self.root()
         clock = H.clock_at_now()
         rc, calls, _ = H.run_new(self.script, lambda url: (503, (b"", {"retry-after": "3600"})), rn, self.argv, clock=clock)
-        self.assertEqual((rc, len(calls)), (1, 1))
+        self.assertEqual((rc, len(self.primary(calls))), (1, 1))
         latest = json.load(open(os.path.join(rn, "data", "_ingest", "latest", "actions__%s.json" % self.job_name())))
         self.assertTrue(latest["not_before"])
         clock.t += 600                                              # 10 min después: aún no se puede llamar
@@ -157,7 +164,7 @@ class Base(object):
         self.assertEqual(H.read(rn, self.fname), self.orig_bytes)
         clock.t += 3600                                             # pasado Retry-After: vuelve a consultar
         rc3, calls3, _ = H.run_new(self.script, self.serve_rows(self.rows + [self.new_row()]), rn, self.argv, clock=clock)
-        self.assertEqual((rc3, len(calls3)), (0, 1))
+        self.assertEqual((rc3, len(self.primary(calls3))), (0, 1))
 
     def test_F6_transient_then_ok(self):
         body = self.wrap(self.window_rows(self.rows + [self.new_row()], H.NOW))

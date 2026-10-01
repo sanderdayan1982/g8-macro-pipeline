@@ -72,16 +72,17 @@ class _Requests(object):
     ConnectionError = RequestException  # g8http ya reintentó debajo (sin anidar reintentos)
     exceptions = None
 
-    def __init__(self, ctx, provider, not_found_is_no_publication=False, validate=None):
+    def __init__(self, ctx, provider, not_found_is_no_publication=False, validate=None, max_attempts=None):
         self._ctx, self._provider = ctx, provider
         self._nf, self._validate = not_found_is_no_publication, validate
+        self._max_attempts = max_attempts          # Acta P-4: fuente complementaria = 1 intento, sin gastar presupuesto
         self.exceptions = self
 
     def get(self, url, params=None, headers=None, timeout=None, **_ignored):
         if params:
             url = url + ("&" if "?" in url else "?") + urlencode(params)
         read_t = float(timeout) if isinstance(timeout, (int, float)) else 60.0
-        return self._ctx._get(url, self._provider, headers or {}, read_t, self._nf, self._validate)
+        return self._ctx._get(url, self._provider, headers or {}, read_t, self._nf, self._validate, self._max_attempts)
 
 
 def _load_json(path, default):
@@ -151,10 +152,10 @@ class Ingest(object):
         self.not_before = dict(self.latest.get("not_before", {}))
 
     # ── HTTP ─────────────────────────────────────────────────────────────────
-    def requests(self, provider="generic", not_found_is_no_publication=False, validate=None):
-        return _Requests(self, provider, not_found_is_no_publication, validate)
+    def requests(self, provider="generic", not_found_is_no_publication=False, validate=None, max_attempts=None):
+        return _Requests(self, provider, not_found_is_no_publication, validate, max_attempts)
 
-    def _get(self, url, provider, headers, read_t, nf, validate):
+    def _get(self, url, provider, headers, read_t, nf, validate, max_attempts=None):
         key = provider
         if not hasattr(self, "_defer"):
             self._defer = defer.Store(os.path.join(self.root, defer.REL_DIR), now=self.now)
@@ -163,7 +164,8 @@ class Ingest(object):
         nb = max(nbs) if nbs else None                  # el límite compartido del ámbito también cuenta (hallazgo #5)
         res = g8http.fetch(url, provider=provider, headers=headers, budget=self.budget, read_timeout=read_t,
                            connect_timeout=min(10.0, read_t), not_found_is_no_publication=nf, validate=validate,
-                           not_before=nb, transport=TEST_TRANSPORT, now=self.now, sleep=_sleep_for(self.now))
+                           not_before=nb, transport=TEST_TRANSPORT, now=self.now, sleep=_sleep_for(self.now),
+                           max_attempts=max_attempts or g8http.MAX_ATTEMPTS)
         rec = res.record()
         self.requests_log.append(rec)
         if res.not_before:

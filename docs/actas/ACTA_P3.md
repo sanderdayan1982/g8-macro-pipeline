@@ -44,6 +44,11 @@
 - **B. Nowcast diario AUD con futuros de bonos ASX (3Y YT, 10Y XT)**: desplazar la última curva F2 con el cambio
   diario implícito en los futuros hasta que llegue el viernes. Precedente: CHF. Es otra fuente y otro instrumento,
   así que antes habría que verificar en la ASX el acceso a la liquidación diaria desde Actions y su licencia.
+  → **Aprobada por el propietario (1-oct-2026), bloqueada por fuente.** No hay publicación gratuita y verificable de la
+  liquidación diaria de XT/YT: la web de la ASX solo publica la liquidación al vencimiento
+  (asx.com.au/…/interest-rate-derivatives-settlement-history) y los precios diarios forman parte de sus productos de pago
+  (ASX Information Services → price data). Databento declara cobertura de CME/ICE/EEX/Eurex, no de la ASX.
+  Se retoma cuando haya una fuente con licencia (feed ASX de pago, o el que use el bróker del operador).
 
 ## Opción A — autorizada por el propietario (1-oct-2026, en el chat)
 - `acm_g8.py`: `build_daily_panel` anota qué filas llevan algún tramo arrastrado (`panel.attrs["ffilled"]`) y

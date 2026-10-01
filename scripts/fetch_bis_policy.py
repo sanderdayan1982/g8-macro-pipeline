@@ -46,6 +46,7 @@ import io
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
 from g8common import policy_decisions as _pd  # noqa: E402  (Acta P-1: decisiones verificadas por delante del BIS)
+from g8common import cb_direct as _cb  # noqa: E402  (Acta P-4: banco central directo por delante del BIS)
 
 requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
@@ -228,24 +229,51 @@ def main() -> int:
         print(f"ERROR: {country} policy fetch failed: {exc}", file=sys.stderr)
         rows, bis_rc = None, 1
 
+    # Acta P-4: banco central directo (RBA F1 / BoE IADB) donde Actions llega, DESPUÉS del BIS (el BIS conserva su
+    # presupuesto y sus reintentos) y con un solo intento. Caída → aviso, se sigue con BIS + decisiones.
+    direct = []
+    if country in _cb.SOURCES:
+        try:
+            direct = _cb.fetch(country, _ctx.requests(provider={"AU": "rba", "GB": "boe"}[country], max_attempts=1).get,
+                               date_from, today)
+            print(f"Banco central directo: {_cb.SOURCES[country]} · {len(direct)} obs · último "
+                  f"{direct[-1][0] if direct else '—'} = {direct[-1][1] if direct else float('nan'):.4f}%")
+        except Exception as exc:                                      # noqa: BLE001
+            print(f"AVISO: fuente directa {_cb.SOURCES[country]} no disponible ({exc}); sigue BIS + decisiones",
+                  file=sys.stderr)
+            direct = []
+
+    def _with_direct(base):
+        if not direct:
+            return base
+        merged, ahead, fixed, dwarns = _cb.merge(base, direct, country)
+        for w in dwarns:
+            print(f"AVISO: {w}", file=sys.stderr)
+        if ahead:
+            print(f"Banco central por delante del BIS/CSV (último {base[-1][0] if base else '—'}): +{ahead} filas "
+                  f"hasta {merged[-1][0]} = {merged[-1][1]:.4f}%")
+        return merged
+
     if rows is None:
         # Acta P-1: BIS caído → último CSV publicado + decisiones verificadas. El fallo del BIS sigue en rc=1.
-        rows = _pd.read_published(os.path.join(_ctx.root, "data", output_path.name))
+        published = _pd.read_published(os.path.join(_ctx.root, "data", output_path.name))
+        rows = _with_direct(published)
         rows, added, warns = _pd.apply(rows, country, decisions, today.date())
         for w in warns:
             print(f"AVISO: {w}", file=sys.stderr)
-        if added:
+        if added or rows != published:
             _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
-            print(f"Publicación {output_path.name} (BIS caído, decisión verificada): {_rep['status']} "
-                  f"{_rep.get('detail', '')} · +{added} filas · último {rows[-1][0]} = {rows[-1][1]:.4f}%")
+            print(f"Publicación {output_path.name} (BIS caído; banco central / decisión verificada): {_rep['status']} "
+                  f"{_rep.get('detail', '')} · último {rows[-1][0]} = {rows[-1][1]:.4f}%")
         return _ctx.finish(bis_rc)
 
     bis_last = rows[-1]
+    rows = _with_direct(rows)
     rows, added, warns = _pd.apply(rows, country, decisions, today.date())
     for w in warns:
         print(f"AVISO: {w}", file=sys.stderr)
     if added:
-        print(f"Decisión verificada por delante del BIS (último BIS {bis_last[0]} = {bis_last[1]:.4f}%): "
+        print(f"Decisión verificada por delante del BIS/banco central (último BIS {bis_last[0]} = {bis_last[1]:.4f}%): "
               f"+{added} filas hasta {rows[-1][0]} = {rows[-1][1]:.4f}%")
 
     _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
