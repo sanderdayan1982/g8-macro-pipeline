@@ -70,6 +70,25 @@ jobs:
             --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*)"
             --disallowedTools "Bash(git push:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh secret:*),Bash(gh workflow:*)"
 
+      - name: Claude result line (diagnostic, no secrets)
+        if: always()
+        run: |
+          mkdir -p .agent
+          f="$RUNNER_TEMP/claude-execution-output.json"
+          if [ -f "$f" ]; then
+            python - "$f" <<'EOF' | tee .agent/claude_result.txt
+          import json, sys
+          try:
+              data = json.load(open(sys.argv[1]))
+          except Exception as e:
+              print("no se pudo leer la salida de Claude: %s" % type(e).__name__); sys.exit(0)
+          res = [m for m in (data if isinstance(data, list) else [data]) if isinstance(m, dict) and m.get("type") == "result"]
+          r = res[-1] if res else {}
+          print("is_error=%s turns=%s cost_usd=%s result=%s" % (r.get("is_error"), r.get("num_turns"), r.get("total_cost_usd"),
+                str(r.get("result") or r.get("errors") or "")[:400].replace("\n", " ")))
+          EOF
+          fi
+
       - name: Package work (bundle + report)
         if: always()
         run: |
@@ -78,7 +97,7 @@ jobs:
           if [ "$(git rev-list --count "$base..HEAD")" -gt 0 ]; then
             git bundle create .agent/work.bundle "$base..HEAD"
           fi
-          [ -f .agent/report.md ] || echo "ESTADO: FALLO SIN ARREGLO — el agente no dejó informe (paso de Claude: ${{ steps.claude.outcome }})" > .agent/report.md
+          [ -f .agent/report.md ] || echo "ESTADO: FALLO SIN ARREGLO — el agente no dejó informe (paso de Claude: ${{ steps.claude.outcome }}; $(cat .agent/claude_result.txt 2>/dev/null))" > .agent/report.md
 
       - uses: actions/upload-artifact@v4
         if: always()
