@@ -40,18 +40,31 @@
 `acm_g8.py` (incluido el `ffill(limit=5)`), fórmulas, umbrales, z, ACM, s01b, factor USD y presupuestos de §05.
 
 ## Pendiente de OK (metodología)
-- **A. Marcar las filas ACM arrastradas en el propio CSV** (p. ej. QUALITY `ACM_K3_380m_FFILL` cuando algún tramo
-  del panel diario va por detrás de la fila), como ya se hace con CHF `…_NOWCAST_PARALLEL`. Así `brief.json`,
-  Telegram y el agente lo ven sin depender del navegador.
+- ~~A. Marcar las filas ACM arrastradas en el propio CSV~~ → autorizada e implementada (sección siguiente).
 - **B. Nowcast diario AUD con futuros de bonos ASX (3Y YT, 10Y XT)**: desplazar la última curva F2 con el cambio
   diario implícito en los futuros hasta que llegue el viernes. Precedente: CHF. Es otra fuente y otro instrumento,
   así que antes habría que verificar en la ASX el acceso a la liquidación diaria desde Actions y su licencia.
+
+## Opción A — autorizada por el propietario (1-oct-2026, en el chat)
+- `acm_g8.py`: `build_daily_panel` anota qué filas llevan algún tramo arrastrado (`panel.attrs["ffilled"]`) y
+  `tag_ffill()` añade `_FFILL` a su QUALITY (ej. `ACM_K3_380m_FFILL`). Y10_FIT, RNY10 y TP10 no cambian; el
+  `ffill(limit=5)` sigue igual. Vale para todas las divisas: también marca festivos en los que un tramo no cotizó.
+- `s01b.py`: `quality_ok()` quita el sufijo `_FFILL` antes de evaluar, así que emisión y badge son idénticos. La lectura
+  ACM_FFILL de §01-b sigue saliendo de E2. Equivalencias 21-sep y 22-sep (reales y sintéticas): EQUIVALENT.
+- `dashboard_alerts.py`: si la última fila ACM de la divisa lleva `_FFILL`, la fila del libro de brief.json añade el flag
+  «TP curva arrastrada (ffill)» (visible en §00).
+- `docs/js/data-loader.js`: la etiqueta K del ACM añade «última fila con curva arrastrada (ffill)».
+- Huellas nuevas autorizadas: `dashboard_alerts.py` y `s01b.py` (`tests/test_exclusions.py`, `tests/test_f3_freshness.py`).
+- Los CSV se regeneran en la próxima ejecución de Daily Data Update (desde el Mac la RBA devuelve 403).
+- Tests: `tests/test_p3_acm_ffill.py` (6) — panel con letras diarias y bonos hasta el miércoles → 5 filas marcadas y
+  valores intactos; sufijo solo en las filas marcadas; sin máscara no cambia nada; `quality_ok` idéntico con y sin
+  sufijo; lectura del sufijo en el brief.
 
 ## Pruebas
 `tests/test_p3_s01_asof.py` (6): funciones reales de `docs/index.html` ejecutadas en Node con TZ Africa/Malabo,
 UTC y America/New_York. Días hábiles iguales en las tres zonas; marca AUD ámbar con nota de publicación y fecha
 del viernes; rojo con estado cuando se pasa del presupuesto; sin marca si el dato es fresco; línea «dato … · ACM …»;
-comprobaciones estáticas. Suite completa (Python 3.11): 623 OK (5 omitidos).
+comprobaciones estáticas. Suite completa (Python 3.11): 623 OK (5 omitidos); con la opción A, 629 OK (5 omitidos).
 En el navegador (servidor local, 1-oct): AUD «dato 2026-09-23 · ACM 09-30 ⚠ curva 09-23», «⧗ 09-23 · 6d» en ámbar;
 USD, GBP y CAD «⧗ 09-29 · 2d»; EUR y JPY sin marca; §05 con 45 LIVE y 2 MANUAL; consola sin errores.
 

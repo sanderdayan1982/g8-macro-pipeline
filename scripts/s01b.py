@@ -251,7 +251,7 @@ def is_target_day(d):
 
 def quality_ok(q):
     """(emits?, badge) from an acm_g8 QUALITY tag."""
-    q = q or ""
+    q = re.sub(r"_FFILL$", "", q or "")    # acta P-3: provenance suffix only — gating unchanged (ACM_FFILL is read via E2)
     if "NOWCAST" in q:
         return False, "NOWCAST"
     if re.fullmatch(r"ACM_K3_SHORT_SAMPLE_\d+m", q):

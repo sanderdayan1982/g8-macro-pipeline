@@ -470,7 +470,8 @@
                 const mk = q0.match(/ACM_K(\d)(?:_(\d+)m)?/i);
                 if (mk) {
                     out[key].kLabel = 'ACM K=' + mk[1] + (mk[2] ? ' · ' + mk[2] + 'm muestra' : '') +
-                        (/NOWCAST/i.test(q0) ? ' · cola NOWCAST' : '') + (/SHORT/i.test(q0) ? ' · muestra corta' : '');
+                        (/NOWCAST/i.test(q0) ? ' · cola NOWCAST' : '') + (/SHORT/i.test(q0) ? ' · muestra corta' : '') +
+                        (/FFILL/i.test(q0) ? ' · última fila con curva arrastrada (ffill)' : '');   // acta P-3
                     if (key !== 'nzd' && key !== 'chf') out[key].source = 'G8 ACM K=' + mk[1];
                 }
             }

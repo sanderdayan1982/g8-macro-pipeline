@@ -1051,6 +1051,9 @@ def build_book(st):
         if tp:
             vals = [v for _, v in tp]
             r["tp"], r["tp_z"], r["tp_asof"] = vals[-1], zscore(vals), tp[-1][0].isoformat()
+            if "FFILL" in _acm_quality("ACM_G8_%s.csv" % c).upper():
+                # acta P-3: last ACM row built on a carried-forward tenor (AUD: weekly RBA F2)
+                r["flags"].append("TP curva arrastrada (ffill)")
             if c == "CHF":
                 # v1.7: real fit from acm_g8.py CHF carries a QUALITY column; the frozen 2025-07 file has none
                 q = _acm_quality("ACM_G8_CHF.csv")

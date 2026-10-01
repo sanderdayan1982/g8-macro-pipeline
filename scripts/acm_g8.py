@@ -657,10 +657,26 @@ def build_daily_panel(ccy):
         s = fn()
         cols[tenor] = s[s.index >= cutoff]
         persist_extra(ccy, tenor, s)                                     # v2.6 (E1): side-write only
-    panel = pd.DataFrame(cols).sort_index().ffill(limit=5).dropna()
+    raw = pd.DataFrame(cols).sort_index()
+    panel = raw.ffill(limit=5).dropna()
+    # v2.7 (acta P-3): rows where any tenor was carried forward (no new print that day) —
+    # read by run_currency() to tag QUALITY …_FFILL. Values unchanged.
+    panel.attrs["ffilled"] = raw.reindex(panel.index).isna().any(axis=1)
     print(f"  daily panel  : tenors {list(panel.columns)}  "
           f"{panel.index[0].date()} → {panel.index[-1].date()}  ({len(panel)} obs)")
     return panel
+
+
+def tag_ffill(quality, dates, ffilled):
+    """v2.7 (acta P-3): append _FFILL to the QUALITY of rows built on a carried-forward tenor
+    (e.g. AUD: F1 bills daily, F2 bonds published weekly → Thu–Tue rows reuse Wednesday's bonds).
+    Provenance only: Y10/RNY/TP are not touched."""
+    if ffilled is None or not len(quality):
+        return quality, 0
+    mask = ffilled.reindex(dates).fillna(False).to_numpy(dtype=bool)
+    out = quality.copy()
+    out[mask] = np.array([q + "_FFILL" for q in out[mask]], dtype=object)
+    return out, int(mask.sum())
 
 
 # ====================================================================== pipeline
@@ -714,6 +730,10 @@ def run_currency(ccy):
     # a real fit from the proxy by value: /SYNTH/ = proxy, ACM_K3… = real). SHORT_SAMPLE
     # marks a documented exception (MIN_OBS_OVERRIDE) — level low-confidence.
     quality = np.array([f"ACM_K{K}" + ("_SHORT_SAMPLE" if n_m < MIN_OBS_MONTHLY else "") + f"_{n_m}m"] * len(y10), dtype=object)
+    quality, n_ff = tag_ffill(quality, z_d.index, daily.attrs.get("ffilled"))
+    if n_ff:
+        tail = z_d.index[-1] if bool(daily.attrs["ffilled"].reindex([z_d.index[-1]]).fillna(False).iloc[0]) else None
+        print(f"  ffill: {n_ff} daily rows tagged _FFILL" + (f" (incl. last row {tail.date()})" if tail is not None else ""))
     dates_out = z_d.index
     if ccy in NOWCAST_10Y:                                            # v2.5
         try:
