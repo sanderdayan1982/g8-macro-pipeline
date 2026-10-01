@@ -1,10 +1,10 @@
 {
  "schema": "s01b-1",
- "version": "s01b v1.3.2",
- "run_id": "2026-10-01T154013ZP",
+ "version": "s01b v1.3.3",
+ "run_id": "2026-10-01T202525ZP",
  "as_of": "2026-10-01",
- "fx_effective": "2026-09-30",
- "generated_utc": "2026-10-01T15:40:13Z",
+ "fx_effective": "2026-10-01",
+ "generated_utc": "2026-10-01T20:25:25Z",
  "status": "CONTEXT",
  "note": "compatible con tensión fiscal — CONTEXT, sin voto · umbral expanding a t−1 (P80 firmado, ΔTP>0, histéresis p60) · FX ≤ −0,5 % log sobre la misma ventana · CHF solo lectura · PROVISIONAL: vista previa de mediodía, la sesión se evalúa en el run --final (write-once)",
  "currencies": {
@@ -12,9 +12,7 @@
    "ccy": "USD",
    "t": "2026-10-01",
    "avail": "OK",
-   "flags": [
-    "DESFASE"
-   ],
+   "flags": [],
    "signal": "OFF",
    "persist": 3,
    "fx_fail_streak": 0,
@@ -73,9 +71,9 @@
      "status": "OK"
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": 1.949,
+   "d_fx": 2.352,
    "n_pop": 1257,
    "theta": 19.19,
    "theta_off": 6.71,
@@ -88,9 +86,7 @@
    "ccy": "EUR",
    "t": "2026-10-01",
    "avail": "OK",
-   "flags": [
-    "DESFASE"
-   ],
+   "flags": [],
    "signal": "OFF",
    "persist": 3,
    "fx_fail_streak": 0,
@@ -149,9 +145,9 @@
      "status": "OK"
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": -2.048,
+   "d_fx": -2.552,
    "n_pop": 1257,
    "theta": 21.44,
    "theta_off": 9.55,
@@ -164,9 +160,7 @@
    "ccy": "GBP",
    "t": "2026-10-01",
    "avail": "OK",
-   "flags": [
-    "DESFASE"
-   ],
+   "flags": [],
    "signal": "OFF",
    "persist": 3,
    "fx_fail_streak": 0,
@@ -225,9 +219,9 @@
      "status": "OK"
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": -1.824,
+   "d_fx": -2.222,
    "n_pop": 795,
    "theta": 24.47,
    "theta_off": 11.24,
@@ -240,9 +234,7 @@
    "ccy": "JPY",
    "t": "2026-10-01",
    "avail": "OK",
-   "flags": [
-    "DESFASE"
-   ],
+   "flags": [],
    "signal": "OFF",
    "persist": 2,
    "fx_fail_streak": 0,
@@ -301,9 +293,9 @@
      "status": "OK"
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": 1.997,
+   "d_fx": 1.371,
    "n_pop": 1255,
    "theta": 13.5,
    "theta_off": 6.87,
@@ -317,8 +309,8 @@
    "t": "2026-10-01",
    "avail": "OK",
    "flags": [
-    "ACM_FFILL",
-    "DESFASE"
+    "CTX_EST",
+    "ACM_FFILL"
    ],
    "signal": "ON",
    "persist": 1,
@@ -337,17 +329,17 @@
    "quality_t": "ACM_K3_380m_FFILL",
    "quality_t0": "ACM_K3_380m",
    "d_fit": 8.86,
-   "d_nom": null,
-   "resid": null,
-   "d_2y": null,
+   "d_nom": 23.26,
+   "resid": 14.4,
+   "d_2y": 25.84,
    "d_be": null,
    "context_asof": {
     "nominal": {
-     "t": null,
+     "t": "2026-09-30",
      "t0": "2026-09-01"
     },
     "y2": {
-     "t": null,
+     "t": "2026-09-30",
      "t0": "2026-09-01"
     },
     "be": {
@@ -357,18 +349,20 @@
    },
    "context_last": {
     "nominal": {
-     "date": "2026-09-23",
-     "value": 5.245,
-     "lag_bd": 6,
-     "quality": null,
-     "status": "STALE"
+     "date": "2026-09-30",
+     "value": 5.4016,
+     "lag_bd": 1,
+     "quality": "EST_AUD_V1",
+     "status": "OK",
+     "estimate": true
     },
     "y2": {
-     "date": "2026-09-23",
-     "value": 4.947,
-     "lag_bd": 6,
-     "quality": "RBA_F2_DAILY_TABLE",
-     "status": "STALE"
+     "date": "2026-09-30",
+     "value": 4.9924,
+     "lag_bd": 1,
+     "quality": "EST_AUD_V1",
+     "status": "OK",
+     "estimate": true
     },
     "be": {
      "date": "2026-09-23",
@@ -380,9 +374,9 @@
    },
    "acm_input_asof_t": "2026-09-23",
    "acm_input_asof_t0": "2026-09-01",
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": -2.46,
+   "d_fx": -2.706,
    "n_pop": 1256,
    "theta": 18.25,
    "theta_off": 7.81,
@@ -396,8 +390,7 @@
    "t": "2026-10-01",
    "avail": "OK",
    "flags": [
-    "SHORT",
-    "DESFASE"
+    "SHORT"
    ],
    "signal": "ON",
    "persist": 2,
@@ -457,9 +450,9 @@
      "status": "OK"
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": -4.265,
+   "d_fx": -4.798,
    "n_pop": 1246,
    "theta": 24.27,
    "theta_off": 9.05,
@@ -472,9 +465,7 @@
    "ccy": "CAD",
    "t": "2026-10-01",
    "avail": "OK",
-   "flags": [
-    "DESFASE"
-   ],
+   "flags": [],
    "signal": "OFF",
    "persist": 3,
    "fx_fail_streak": 0,
@@ -535,9 +526,9 @@
    },
    "acm_input_asof_t": "2026-09-29",
    "acm_input_asof_t0": "2026-09-01",
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
-   "d_fx": -2.104,
+   "d_fx": -2.545,
    "n_pop": 1257,
    "theta": 18.35,
    "theta_off": 7.66,
@@ -551,8 +542,7 @@
    "t": "2026-10-01",
    "avail": "NO_QUAL",
    "flags": [
-    "NOWCAST",
-    "DESFASE"
+    "NOWCAST"
    ],
    "signal": "NA",
    "persist": 0,
@@ -571,14 +561,14 @@
    "quality_t": "ACM_K3_NOWCAST_PARALLEL",
    "quality_t0": "ACM_K3_465m",
    "d_fit": 13.32,
-   "d_nom": 17.0,
-   "resid": 3.68,
+   "d_nom": 12.9,
+   "resid": -0.42,
    "d_2y": 18.6,
    "d_be": null,
    "context_asof": {
     "nominal": {
      "t": "2026-10-01",
-     "t0": "2026-08-31"
+     "t0": "2026-09-01"
     },
     "y2": {
      "t": "2026-09-30",
@@ -610,7 +600,7 @@
      "n_obs": 0
     }
    },
-   "fx_asof_t": "2026-09-30",
+   "fx_asof_t": "2026-10-01",
    "fx_asof_t0": "2026-09-01",
    "d_fx": null,
    "n_pop": 1257,
