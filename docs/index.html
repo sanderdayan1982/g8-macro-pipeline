@@ -1606,13 +1606,23 @@ var G8_HOLIDAYS = {
         '2027-07-19':1,'2027-09-20':1,'2027-09-23':1,'2027-11-03':1,'2027-11-23':1
 };
 function isG8Holiday(dt) {
-    return !!G8_HOLIDAYS[dt.toISOString().slice(0, 10)];
+    /* P-3: callers pass LOCAL midnight; toISOString() read it as the previous UTC day east of
+       UTC (Bata UTC+1: Thu 24-sep looked up as 23-sep = JP holiday → one business day lost). */
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return !!G8_HOLIDAYS[dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate())];
+}
+
+/* P-3: yyyymmdd / yyyy-mm-dd as a LOCAL calendar day. new Date('yyyy-mm-dd') is UTC midnight,
+   i.e. the previous day west of UTC, which shifted every staleness count by one there. */
+function localDay(str) {
+    var m = /^(\d{4})-?(\d{2})-?(\d{2})/.exec(String(str));
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(String(str));
 }
 
 /* G8 business days between a date and today (null if unparseable) */
 function calBusinessDays(lastDateStr) {
     if (!lastDateStr) return null;
-    var ld = new Date(String(lastDateStr).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'));
+    var ld = localDay(lastDateStr);
     if (isNaN(ld.getTime())) return null;
     ld.setHours(0, 0, 0, 0);
     var today = new Date(); today.setHours(0, 0, 0, 0);
@@ -1638,7 +1648,7 @@ function calBusinessDays(lastDateStr) {
    so every feed went amber after one weekend. This is the core durability fix. */
 function computeStaleness(lastDateStr, maxStale) {
     if (!lastDateStr) return 'DEAD';
-    var lastDate = new Date(String(lastDateStr).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'));
+    var lastDate = localDay(lastDateStr);
     if (isNaN(lastDate.getTime())) return 'DEAD';
     lastDate.setHours(0, 0, 0, 0);
     var today = new Date(); today.setHours(0, 0, 0, 0);
@@ -2007,6 +2017,7 @@ function init() {
 }
 
 window.G8DQM = { report: report, runAll: runAll, computeStaleness: computeStaleness,
+                 businessDays: calBusinessDays,   /* P-3: §01 lag mark (same G8 calendar) */
                  FEED_REGISTRY: FEED_REGISTRY, state: state };
 
 if (document.readyState === 'loading') {
@@ -2364,6 +2375,44 @@ function staleTag(s) {
         'd old — this daily feed is not updating (see §05 · Data Quality Monitor)">⧗ ' + iso.slice(5) + '</span>';
 }
 
+/* P-3 (acta P-3, 1-oct-2026): real date of the market data on the card, with a lag mark.
+   staleTag() only fires after 15 calendar days, so a weekly-published leg (AUD: RBA F2) showed
+   no mark at all while the CCY line printed the ACM date (ACM rows run ahead on ffilled bonds).
+   Business days on the same G8 calendar as §05; colour = §05 status against the feed's budget. */
+var PUB_NOTE = {
+    AUD: { note: 'RBA F2/F16 se publican una vez por semana, el viernes, con datos hasta el miércoles (verificado en rba.gov.au, 1-oct-2026)', dow: 5 }
+};
+function nextDow(dow) {
+    var t = new Date(); t.setHours(0, 0, 0, 0);
+    do { t.setDate(t.getDate() + 1); } while (t.getDay() !== dow);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };   /* local date, not toISOString (UTC shift) */
+    return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate());
+}
+function lagTag(ccy, iso, maxStale) {
+    if (!iso || !window.G8DQM || !G8DQM.businessDays) return '';
+    var bd = G8DQM.businessDays(iso);
+    if (bd === null || bd <= 1) return '';                      /* today / previous session: on time */
+    var st = G8DQM.computeStaleness(iso.replace(/-/g, ''), maxStale);
+    var pn = PUB_NOTE[ccy];
+    var cls = st === 'LIVE' ? 'attr-z-md' : 'attr-z-hi';
+    var title = 'dato de mercado del ' + iso + ' · ' + bd + ' días hábiles de atraso · §05 ' + st +
+        ' (presupuesto ' + maxStale + ' d háb)' + (pn ? ' · ' + pn.note + ' · próxima publicación prevista ' + nextDow(pn.dow) : '');
+    return '<span class="attr-z ' + cls + '" title="' + title + '">⧗ ' + iso.slice(5) + ' · ' + bd + 'd' +
+        (st === 'LIVE' ? '' : ' ' + st) + '</span>';
+}
+function asOfLine(d) {
+    var nom = d.nomAsOf, acm = d.acmAsOf;
+    if (!nom) return acm || '';
+    var h = 'dato ' + nom;
+    if (acm && acm !== nom) {
+        h += acm > nom
+            ? ' · <span style="color:#fdb813" title="La fila ACM (' + acm + ') va por delante del último dato de la curva (' + nom +
+              '): acm_g8.py arrastra los tramos que faltan hasta 5 sesiones (ffill). TP/RNY de esos días no son observaciones nuevas.">ACM ' + acm.slice(5) + ' ⚠ curva ' + nom.slice(5) + '</span>'
+            : ' · ACM ' + acm.slice(5);
+    }
+    return h;
+}
+
 function cell(valHtml, deltaHtml, zHtml) {
     return '<td><span class="attr-val">' + valHtml + '</span>' + (zHtml || '') + (deltaHtml || '') + '</td>';
 }
@@ -2446,10 +2495,10 @@ function build(data) {
                 '<a class="attr-edit-src" href="' + d.manual.link + '" target="_blank" rel="noopener">↗ src</a>' +
                 '</span></td>';
         } else {
-            nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom), staleTag(d.nom));
+            nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom), d.lagMax ? lagTag(c, d.nomAsOf, d.lagMax) || staleTag(d.nom) : staleTag(d.nom));
         }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
-            '<span class="attr-sub">' + (/^\d{8}$/.test(String(d.asOf || '')) ? isoNorm(d.asOf) : (d.asOf || '')) + '</span>' +
+            '<span class="attr-sub">' + (d.lagMax ? asOfLine(d) : (/^\d{8}$/.test(String(d.asOf || '')) ? isoNorm(d.asOf) : (d.asOf || ''))) + '</span>' +
             (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
             nomCell +
             cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
@@ -2662,6 +2711,13 @@ function assemble(raw) {
             quality: d.ry ? d.ry.quality : null,
             asOf: d.acm[d.acm.length - 1].DATE
         };
+        /* P-3: real market date (last NOM10 row) vs ACM row date; budget = §05 registry */
+        var regRy = ((window.G8DQM && G8DQM.FEED_REGISTRY) || {})[c + '_RY'];
+        if (data[c].nom && data[c].nom.lastDate) {
+            data[c].nomAsOf = isoNorm(data[c].nom.lastDate);
+            data[c].acmAsOf = isoNorm(data[c].asOf);
+            data[c].lagMax = (regRy && regRy.maxStaleness) || 4;
+        }
         /* C2: level-confidence flag for the ACM term premium. The TP LEVEL (not its
            shape) is biased when (a) the sample is short — finite-sample bias,
            Bauer-Rudebusch-Wu 2012 — or (b) the gaussian model is misspecified under
