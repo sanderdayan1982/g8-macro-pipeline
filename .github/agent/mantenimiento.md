@@ -27,6 +27,26 @@ Lee primero `CLAUDE.md`: sus reglas mandan sobre todo lo demás.
 - Tus actas y tests: `docs/actas/ACTA_AGENTE_<AAAAMMDD>.md`, `tests/test_agent_*.py`, `tests/fixtures/agent/**`.
 Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo solo si de verdad es necesario y explícalo.
 
+## Mapa del dashboard: qué revisar en cada sección
+Regla común (acta P-8): **dato oficial lo más fresco posible; si la fuente es más lenta que el resto, estimación etiquetada
+(«EST», con su error y la fecha del último dato oficial); nunca un número congelado sin marca.** Revisa todas las secciones
+en cada ejecución; en el informe pon una línea por sección: OK / atrasado (fecha y causa) / arreglado.
+
+| Sección | Ficheros de `data/` | Ritmo normal |
+|---|---|---|
+| §00 Brief | `alerts/brief.json` (`generated_utc`, `dqm`, `book[].flags`) | varias veces al día; ATRASADO si > 30 h (78 h en fin de semana) |
+| §01 Matriz 10Y / §04 ACM | `ACM_G8_*.csv`, `RY_G8_*.csv`, `CHF_NOM_10Y.csv`, `NZD_BOND_10Y.csv`, `AUD_NOWCAST.csv` | diario T+1; AUD oficial semanal + estimación diaria; CHF curva mensual + nowcast |
+| §01-b Lectura 22 s. | `S01B.json` (+ `s01b/log`, `s01b/snap`) | una evaluación por sesión (`--final`); provisional a mediodía |
+| §02 Suelos | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `NZD_CASH_ON.csv`, `FLOOR_*.csv`, `*_BILL_*.csv` | diario T+1 |
+| §03 Tipos oficiales | `*_POLICY.csv`, `NZD_OCR.csv`, `manual/policy_decisions.csv` | por evento; RBA y BoE directos (acta P-4), resto BIS semanal + decisiones verificadas |
+| §05 Calidad | lo calcula el navegador con el registro de §05; `_ingest/latest/*.json`, `_ingest/watch_state.json` | continuo |
+| §06/§07 Metales | `MFV_G8_*.csv/json` | semanal (COT, martes) |
+| §08 Opciones | `OPTIONS_SURFACE.json`, `options/canonical/<fecha>/` | diario (workflow *CME Options Surface*) |
+| §09 COT | `pos_g8_cot.json` | semanal (CFTC, viernes con datos del martes) |
+| §10 Factor USD / libro | `USD_FACTOR.json`, `BOOK_RISK.json`, `usd_factor/*.csv` | diario (tipos BCE ~16:00 CET) |
+Si una sección va más atrás de lo que permite su ritmo, busca la causa (paso de Actions, descargador, fuente) y arréglala
+si está en la lista permitida; si no, informe con la propuesta.
+
 ## Procedimiento
 1. **Diagnóstico** (sin cambiar nada):
    - `python scripts/freshness_report.py --out .agent/freshness.json --compare-dir .agent/cmp` y léelo.
@@ -51,8 +71,9 @@ Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo
    Si la hay, añade la fila: fecha efectiva, tipo, fecha del anuncio, fuente con URL del comunicado y «agente <fecha>».
    Nunca pongas como dato una fecha efectiva futura. En el informe, pon una línea por banco: última decisión vista, su
    fecha y si estaba ya recogida. Si no pudiste abrir la página de un banco, dilo.
-4. **Estimación diaria AUD (EST_AUD_V1, acta P-8) — revísala en cada ejecución.**
-   - Qué es: `scripts/aud_nowcast.py` estima los nominales AUD 2Y/10Y cada día entre publicaciones semanales de la RBA.
+4. **Estimación diaria AUD (EST_AUD_V2, acta P-8) — revísala en cada ejecución.**
+   - Qué es: `scripts/aud_nowcast.py` estima cada día los nominales AUD 2Y/10Y y el breakeven 10Y (real = nominal − BE)
+     entre publicaciones semanales de la RBA.
      Insumos: `AUD_NOM_2Y.csv` y `RY_G8_AUD.csv` (RBA F2, semanal), `AUD_BILL_6M.csv` (RBA F1, diario), `US_BILL_2Y.csv` y
      `RY_G8_USD.csv` (Fed, diario). Salidas: `data/AUD_NOWCAST.csv` (historial que solo crece) y `data/AUD_NOWCAST.json`
      (estado, betas, error esperado). Consumidores: §01 (`docs/index.html`), §01-b (`scripts/s01b.py`), §00 (`dashboard_alerts.py`).
@@ -67,7 +88,7 @@ Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo
    - **Nunca** cambies `sources/nowcast_aud.json` (drivers, retardos, ventana: es el modelo; requiere OK del propietario)
      ni el test `tests/test_p8_aud_nowcast.py`.
    - **Error real** (cada lunes y viernes): para las fechas de `AUD_NOWCAST.csv` que la RBA ya ha publicado, compara
-     NOM2Y/NOM10 estimados con el dato RBA de esa fecha. Pon en el informe el error medio en pb de las últimas 4 semanas
+     NOM2Y/NOM10/BE10 estimados con el dato RBA de esa fecha. Pon en el informe el error medio en pb de las últimas 4 semanas
      frente al esperado (`err_bp_by_h` del JSON). Si durante 2 semanas seguidas el error real es más del doble del
      esperado, escribe `ESTADO: REQUIERE OK` y propón la recalibración o el cambio de drivers (no lo apliques).
 5. **Pruebas.** `python -m unittest discover -s tests -p 'test_*.py'` en verde antes de cada commit.

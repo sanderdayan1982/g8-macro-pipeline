@@ -1017,7 +1017,10 @@ def build_book(st):
                     err = [x for x in (read_series("AUD_NOWCAST.csv", col="ERR10_BP") or []) if x[0] == est[-1][0]]
                     r["nom_rba"], r["nom_rba_asof"] = r["nom"], r["nom_asof"]
                     r["nom"], r["nom_asof"], r["nom_est"] = est[-1][1], est[-1][0].isoformat(), True
-                    r["flags"].append("NOM EST %s ±%s pb (RBA %s; vs USD/real/BE con RBA)" % (
+                    be_e = [x for x in (read_series("AUD_NOWCAST.csv", col="BE10") or []) if x[0] == est[-1][0]]
+                    if be_e:                                        # V2: breakeven estimado; real = nominal − breakeven
+                        r["be"], r["real"] = be_e[0][1], round(est[-1][1] - be_e[0][1], 4)
+                    r["flags"].append("NOM/REAL/BE EST %s ±%s pb (RBA %s; vs USD y alertas con RBA)" % (
                         est[-1][0].strftime("%d-%m"), ("%.0f" % err[0][1]) if err else "?", nom[-1][0].strftime("%d-%m")))
             if c == "NZD":
                 r["flags"].append("REAL IIB (B2)")

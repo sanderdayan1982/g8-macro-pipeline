@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-aud_nowcast.py — Acta P-8 (2026-10-01): estimación diaria de los nominales AUD 2Y y 10Y (modelo EST_AUD_V1).
+aud_nowcast.py — Acta P-8 (2026-10-01): estimación diaria AUD 2Y/10Y nominal y breakeven 10Y (modelo en sources/nowcast_aud.json).
 
 La RBA publica los rendimientos de los bonos (tabla F2) UNA vez por semana: viernes, con datos hasta el miércoles. Entre
 publicaciones, AUD se quedaba congelado en §01, §01-b y §00. Este script estima cada día hábil posterior al último dato
-de la RBA:
+de la RBA (NOM2Y, NOM10, BE10; el real sale de la identidad REAL10 = NOM10 − BE10):
 
     nivel_estimado(d) = último dato RBA + Σ  β · Δdrivers   (días hábiles desde el dato RBA hasta d)
 
@@ -13,7 +13,7 @@ con β por MCO sin constante sobre variaciones diarias (últimos `calibration_ye
 especificación (objetivos, drivers, retardos, ventana) vive en sources/nowcast_aud.json — aquí no hay parámetros.
 
 Salidas
-  data/AUD_NOWCAST.csv   DATE,NOM2Y,NOM10,H_BD,ERR2Y_BP,ERR10_BP,BASE_DATE,MODEL — historial que solo crece: las filas
+  data/AUD_NOWCAST.csv   DATE,NOM2Y,NOM10,BE10,REAL10,H_BD,ERR2Y_BP,ERR10_BP,ERRBE_BP,BASE_DATE,MODEL — historial que solo crece: las filas
                          posteriores al último dato RBA se recalculan en cada ejecución; las anteriores quedan como registro
                          (permite medir el error real de cada estimación cuando llega la RBA).
   data/AUD_NOWCAST.json  estado, fecha base, betas, R², nº de observaciones, error esperado por horizonte, avisos.
@@ -33,8 +33,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG = os.path.join("sources", "nowcast_aud.json")
 OUT_CSV = os.path.join("data", "AUD_NOWCAST.csv")
 OUT_JSON = os.path.join("data", "AUD_NOWCAST.json")
-HEADER = ["DATE", "NOM2Y", "NOM10", "H_BD", "ERR2Y_BP", "ERR10_BP", "BASE_DATE", "MODEL"]
-TARGETS = ("NOM2Y", "NOM10")
+HEADER = ["DATE", "NOM2Y", "NOM10", "BE10", "REAL10", "H_BD", "ERR2Y_BP", "ERR10_BP", "ERRBE_BP", "BASE_DATE", "MODEL"]
+TARGETS = ("NOM2Y", "NOM10", "BE10")
 
 
 def parse_date(s):
@@ -209,13 +209,14 @@ def run(root=ROOT, today=None):
     # ── CSV (historial que solo crece)
     old = load_existing(os.path.join(root, OUT_CSV))
     dates = sorted(set().union(*[set(v) for v in est.values()])) if est else []
+    base = min((m["base_date"] for m in meta["targets"].values() if m.get("base_date")), default=None)
     for d in dates:
-        a, b = est.get("NOM2Y", {}).get(d), est.get("NOM10", {}).get(d)
-        base = min(x for x in (meta["targets"]["NOM2Y"]["base_date"], meta["targets"]["NOM10"]["base_date"]) if x)
+        a, b, e = est.get("NOM2Y", {}).get(d), est.get("NOM10", {}).get(d), est.get("BE10", {}).get(d)
         old[d.strftime("%Y%m%d")] = {
             "DATE": d.strftime("%Y%m%d"), "NOM2Y": "" if not a else "%.4f" % a[0], "NOM10": "" if not b else "%.4f" % b[0],
-            "H_BD": str((a or b)[1]), "ERR2Y_BP": "" if not a else "%.1f" % a[2], "ERR10_BP": "" if not b else "%.1f" % b[2],
-            "BASE_DATE": base.replace("-", ""), "MODEL": cfg["model"]}
+            "BE10": "" if not e else "%.4f" % e[0], "REAL10": "" if not (b and e) else "%.4f" % (b[0] - e[0]),
+            "H_BD": str((a or b or e)[1]), "ERR2Y_BP": "" if not a else "%.1f" % a[2], "ERR10_BP": "" if not b else "%.1f" % b[2],
+            "ERRBE_BP": "" if not e else "%.1f" % e[2], "BASE_DATE": base.replace("-", ""), "MODEL": cfg["model"]}
     tmp = os.path.join(root, OUT_CSV + ".tmp")
     with open(tmp, "w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=HEADER, lineterminator="\n")

@@ -2413,9 +2413,9 @@ function asOfLine(d) {
     if (!nom) return acm || '';
     var h = 'dato ' + nom;
     if (d.est) {   /* P-8: nominal estimado (EST_AUD_V1) por delante del último dato RBA */
-        h += ' <span style="color:#fdb813" title="Nominal 10Y ESTIMADO (modelo EST_AUD_V1, acta P-8): último dato RBA (' + d.est.rba +
-             ') + variaciones diarias estimadas con la letra a 6 meses (RBA F1) y el Treasury 10Y del día anterior (Fed). Error esperado a ' +
-             d.est.h + ' días: ±' + d.est.err + ' pb (1σ). Real y breakeven siguen con el dato RBA. El viernes la RBA sustituye la estimación.">EST ±' +
+        h += ' <span style="color:#fdb813" title="Nominal, breakeven y real 10Y ESTIMADOS (modelo ' + esc(d.est.model || 'EST_AUD') + ', acta P-8): último dato RBA (' + d.est.rba +
+             ') + variaciones diarias estimadas con la letra a 6 meses (RBA F1) y el Treasury 10Y / breakeven de EE. UU. del día anterior (Fed). Real = nominal − breakeven. Error esperado a ' +
+             d.est.h + ' días: nominal ±' + d.est.err + ' pb, breakeven ±' + d.est.errBe + ' pb (1σ). El viernes la RBA sustituye la estimación y las siguientes parten del dato nuevo.">EST ±' +
              (isFinite(d.est.err) ? Math.round(d.est.err) : '?') + ' pb · RBA ' + d.est.rba.slice(5) + '</span>';
         nom = d.est.rba;                       /* la curva del ACM se compara con el último dato OFICIAL */
     }
@@ -2732,9 +2732,14 @@ function assemble(raw) {
         var ryRows = raw.AUD.ry.rows, lastRba = String(ryRows[ryRows.length - 1].DATE);
         var ext = raw.audEst.filter(function (o) { return o.DATE > lastRba; });
         if (ext.length) {
-            raw.AUD.ry.rows = ryRows.concat(ext.map(function (o) { return { DATE: Number(o.DATE), NOM10: parseFloat(o.NOM10), REAL10: NaN, BE10: NaN }; }));
+            /* V2: nominal, breakeven y real (= nominal − breakeven) estimados con la misma fórmula */
+            raw.AUD.ry.rows = ryRows.concat(ext.map(function (o) {
+                var be = parseFloat(o.BE10), re = parseFloat(o.REAL10);
+                return { DATE: Number(o.DATE), NOM10: parseFloat(o.NOM10), REAL10: isFinite(re) ? re : NaN, BE10: isFinite(be) ? be : NaN };
+            }));
             var lastE = ext[ext.length - 1];
-            audEstInfo = { date: isoNorm(lastE.DATE), err: parseFloat(lastE.ERR10_BP), rba: isoNorm(lastRba), h: lastE.H_BD };
+            audEstInfo = { date: isoNorm(lastE.DATE), err: parseFloat(lastE.ERR10_BP), errBe: parseFloat(lastE.ERRBE_BP), model: lastE.MODEL,
+                           rba: isoNorm(lastRba), h: lastE.H_BD };
         }
     }
 

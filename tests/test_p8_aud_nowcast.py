@@ -1,7 +1,7 @@
 """Acta P-8 · estimación diaria AUD 2Y/10Y (EST_AUD_V1, scripts/aud_nowcast.py) y sus consumidores.
 
-N1 especificación solo en sources/nowcast_aud.json (el script no lleva betas ni drivers escritos)
-N2 datos sintéticos exactos: recupera β y la estimación coincide con la verdad
+N1 especificación solo en sources/nowcast_aud.json (el script no lleva betas ni drivers escritos); V2 = NOM2Y, NOM10, BE10
+N2 datos sintéticos exactos: recupera β y la estimación coincide con la verdad (también BE10 y REAL10 = NOM10 − BE10)
 N3 retardo: el driver de EE. UU. entra con el valor del día hábil ANTERIOR
 N4 driver ausente → estado INPUT_MISSING, rc 1, sin filas nuevas y sin borrar el historial
 N5 historial que solo crece: al llegar la RBA, las filas viejas quedan y se recalculan solo las posteriores
@@ -103,13 +103,16 @@ class Synthetic(unittest.TestCase):
         self.assertAlmostEqual(meta["targets"]["NOM2Y"]["beta"]["AU_BILL_6M"], 0.8, places=3)
         self.assertAlmostEqual(meta["targets"]["NOM2Y"]["beta"]["US_2Y"], 0.3, places=3)
         self.assertAlmostEqual(meta["targets"]["NOM10"]["beta"]["US_10Y"], 0.6, places=3)
+        self.assertAlmostEqual(meta["targets"]["BE10"]["beta"]["US_BE10"], 0.6, places=3)
         rows = self.rows()
         self.assertEqual(len(rows), 5)                                     # 5 días hábiles posteriores a la base
         for r in rows:
             d = date(int(r["DATE"][:4]), int(r["DATE"][4:6]), int(r["DATE"][6:]))
             self.assertAlmostEqual(float(r["NOM2Y"]), self.truth["NOM2Y"][d], places=3)
             self.assertAlmostEqual(float(r["NOM10"]), self.truth["NOM10"][d], places=3)
-            self.assertEqual(r["MODEL"], "EST_AUD_V1")
+            self.assertAlmostEqual(float(r["BE10"]), self.truth["NOM10"][d] - 1.0, places=3)
+            self.assertAlmostEqual(float(r["REAL10"]), 1.0, places=3)           # real = nominal − breakeven
+            self.assertEqual(r["MODEL"], "EST_AUD_V2")
         self.assertEqual([r["H_BD"] for r in rows], ["1", "2", "3", "4", "5"])
 
     def test_N3_us_driver_lag(self):
@@ -149,7 +152,8 @@ class Spec(unittest.TestCase):
         for token in ("AUD_BILL_6M.csv", "US_BILL_2Y.csv", "RY_G8_USD.csv", "0.8954", "0.5406"):
             self.assertNotIn(token, src, token)
         cfg = load_json(os.path.join(ROOT, "sources", "nowcast_aud.json"))
-        self.assertEqual(cfg["model"], "EST_AUD_V1")
+        self.assertEqual(cfg["model"], "EST_AUD_V2")
+        self.assertEqual(set(cfg["targets"]), {"NOM2Y", "NOM10", "BE10"})
         self.assertEqual({d["name"] for d in cfg["drivers"]["NOM10"]}, {"AU_BILL_6M", "US_10Y"})
 
 
@@ -196,7 +200,7 @@ class S01bIntegration(unittest.TestCase):
         est = {"nominal": [d for d, _ in ext], "y2": [d for d, _ in ext]}
         row, _ = s01b.evaluate_ccy("AUD", t, pos, cal, acm, off + ext, off + ext, [], r, f, t, {"initialized": True}, est=est)
         self.assertIn("CTX_EST", row["flags"])
-        self.assertEqual(row["context_last"]["nominal"]["quality"], "EST_AUD_V1")
+        self.assertEqual(row["context_last"]["nominal"]["quality"], "EST_AUD_V2")
         self.assertTrue(row["context_last"]["y2"]["estimate"])
         self.assertIsNotNone(row["d_nom"])
         self.assertEqual(row["acm_input_asof_t"], cal[-6].isoformat())   # sonda: último dato OFICIAL
@@ -209,7 +213,7 @@ class S01bIntegration(unittest.TestCase):
 class Consumers(unittest.TestCase):
     def test_N8_labels_workflow_and_gate(self):
         with open(os.path.join(ROOT, "scripts", "dashboard_alerts.py"), encoding="utf-8") as fh:
-            self.assertIn('"NOM EST %s', fh.read())
+            self.assertIn('"NOM/REAL/BE EST %s', fh.read())
         with open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8") as fh:
             h = fh.read()
         self.assertIn("RAW + 'AUD_NOWCAST.csv'", h)

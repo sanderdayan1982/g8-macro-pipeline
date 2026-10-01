@@ -50,7 +50,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.3.3" # P-8 (2026-10-01): contexto AUD (nominal, 2Y) prolongado con la estimación diaria EST_AUD_V1, etiquetada; detector y señal intactos · v1.3.2: E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
+VERSION = "s01b v1.3.3" # P-8 (2026-10-01): contexto AUD (nominal, 2Y, BE) prolongado con la estimación diaria EST_AUD_V2, etiquetada; detector y señal intactos · v1.3.2: E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -95,8 +95,8 @@ ACM_INPUT_PROBE = {"AUD": "y2", "CAD": "y2"}
 # P-8 (acta P-8): estimación diaria de los nominales AUD entre publicaciones semanales de la RBA (aud_nowcast.py).
 # Solo prolonga las patas de CONTEXTO (nominal, y2) por delante del último dato RBA; nunca entra en ACM, θ ni señal.
 # Las fechas estimadas viajan en inp["est"] (y por tanto en la foto de entrada) → las sesiones se reproducen igual.
-NOWCAST_FILES = {"AUD": ("AUD_NOWCAST.csv", {"nominal": "NOM10", "y2": "NOM2Y"})}
-EST_QUALITY = "EST_AUD_V1"
+NOWCAST_FILES = {"AUD": ("AUD_NOWCAST.csv", {"nominal": "NOM10", "y2": "NOM2Y", "be": "BE10"})}
+EST_QUALITY = "EST_AUD_V2"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -447,7 +447,7 @@ def load_inputs(data_dir):
     for c, (fname, legs) in NOWCAST_FILES.items():                 # P-8: estimación por delante del último dato oficial
         path = os.path.join(data_dir, fname)
         for leg, col in legs.items():
-            key = {"nominal": "nom", "y2": "y2"}[leg]
+            key = {"nominal": "nom", "y2": "y2", "be": "be"}[leg]
             base = inp[key][c]
             last = base[-1][0] if base else None
             ext = [(d, v) for d, v in read_series(path, col=col) if last is None or d > last]

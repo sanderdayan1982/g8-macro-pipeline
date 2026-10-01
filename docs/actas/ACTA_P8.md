@@ -1,4 +1,4 @@
-# ACTA P-8 — Nominales AUD diarios (estimación EST_AUD_V1) en §01, §01-b y §00 (1-oct-2026)
+# ACTA P-8 — AUD diario (estimación EST_AUD_V2: nominal 2Y/10Y, breakeven y real 10Y) en §01, §01-b y §00 (1-oct-2026)
 
 Autorizado por el propietario (1-oct-2026): «quiero los nominales diario por divisa… o sus estimaciones y el cálculo,
 así sección 1 y 1b estarán siempre frescos… ok procede, y que el agente sea capaz de arreglarlo».
@@ -47,10 +47,21 @@ así sección 1 y 1b estarán siempre frescos… ok procede, y que el agente sea
    Compuerta: `scripts/aud_nowcast.py` = AUTO; `sources/nowcast_aud.json` y `tests/test_p8_aud_nowcast.py` = OWNER.
 7. Huellas nuevas autorizadas: `s01b.py`, `dashboard_alerts.py`.
 
+## V2 (1-oct-2026, a petición del propietario: «¿por qué no lo hace la misma fórmula sobre la estimación?»)
+- Breakeven 10Y estimado con la misma fórmula (letra 6M RBA F1 + breakeven 10Y de EE. UU., T10YIE de FRED, del día hábil
+  anterior); real 10Y = nominal − breakeven (identidad). Calibración del 1-oct: β = 0,13 / 0,41, R² 0,29.
+- Fuera de muestra (último año): BE h1 1,8 frente a 2,2 pb; h3 3,1 frente a 3,5; h6 4,6 frente a 5,3 (mejora ~12–15 %, menor que en
+  el nominal). El real implícito (nominal − BE) no se ha medido por separado; como referencia, un modelo directo del real
+  (TIPS de EE. UU. + letra) daba h3 4,5 frente a 6,1 pb.
+- Consumidores: §01 (real y BE también EST), §01-b (ΔBE también, con `CTX_EST`), §00 (nominal, real y BE EST; diferenciales vs
+  USD, z y alertas siguen oficiales). `EST_AUD_V2` sustituye a `EST_AUD_V1` en `AUD_NOWCAST.csv` (las filas viejas lo conservan).
+- Cada estimación parte del último dato RBA publicado; cuando llega un dato nuevo, las siguientes se calculan sobre él.
+- Agente: mapa sección por sección (§00–§10) con ficheros y ritmo normal, y la regla común «dato oficial o estimación etiquetada».
+
 ## Sin cambios
 Fuentes oficiales y su preferencia: el dato RBA siempre sustituye a la estimación en cuanto llega. Tampoco cambian ACM,
 umbrales, z, señal CTF, alertas ni el resto de divisas, que ya tienen nominal oficial diario.
-ΔBE de AUD sigue semanal (los indexados no tienen un driver diario público honesto).
+(V1 dejaba ΔBE semanal; V2 lo estima — ver arriba.)
 
 ## Pruebas
 `tests/test_p8_aud_nowcast.py` (8):
