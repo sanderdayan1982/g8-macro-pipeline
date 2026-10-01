@@ -265,6 +265,13 @@ jobs:
         timeout-minutes: 5
         run: python scripts/tools/g8step.py --name jpy_real --cap 180 -- python scripts/fetch_jpy_real.py
 
+      # ── P-8: estimación diaria AUD 2Y/10Y entre publicaciones semanales de la RBA (EST_AUD_V1). Solo lee el repo
+      # (AUD_NOM_2Y, RY_G8_AUD, AUD_BILL_6M, US_BILL_2Y, RY_G8_USD) → después de todos ellos y antes de s01b y del brief.
+      - name: AUD nowcast (EST_AUD_V1 · acta P-8)
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python scripts/tools/g8step.py --name aud_nowcast --cap 60 -- python scripts/aud_nowcast.py
+
       # ── 5c. Dashboard alerts (Telegram, one message/day only on change) ───
       # v1.0 2026-09-12: reads repo data only (no downloads, $0). State lives in
       # data/alerts/state.json and is committed by the step below (git add data/).

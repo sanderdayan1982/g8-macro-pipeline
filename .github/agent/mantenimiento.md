@@ -20,6 +20,7 @@ Lee primero `CLAUDE.md`: sus reglas mandan sobre todo lo demás.
 
 ## Qué puedes cambiar sin pedir permiso (la compuerta lo integra si los tests pasan)
 - Descargadores: `scripts/fetch_*.py`, `scripts/g8common/cb_direct.py`.
+- Lectura/escritura de la estimación AUD: `scripts/aud_nowcast.py` (no su modelo, que está en `sources/nowcast_aud.json`).
 - Registro de fuentes: `sources/registry.csv` (cuidado: **sin comas sueltas** dentro de un campo).
 - Decisiones de tipo oficial verificadas: `data/manual/policy_decisions.csv`.
 - Rutas del proxy del dashboard: `docs/_redirects`.
@@ -50,11 +51,30 @@ Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo
    Si la hay, añade la fila: fecha efectiva, tipo, fecha del anuncio, fuente con URL del comunicado y «agente <fecha>».
    Nunca pongas como dato una fecha efectiva futura. En el informe, pon una línea por banco: última decisión vista, su
    fecha y si estaba ya recogida. Si no pudiste abrir la página de un banco, dilo.
-4. **Pruebas.** `python -m unittest discover -s tests -p 'test_*.py'` en verde antes de cada commit.
-5. **Acta** `docs/actas/ACTA_AGENTE_<AAAAMMDD>.md` (hallazgo · decisión · sin cambios · pruebas · pendiente de OK) si
+4. **Estimación diaria AUD (EST_AUD_V1, acta P-8) — revísala en cada ejecución.**
+   - Qué es: `scripts/aud_nowcast.py` estima los nominales AUD 2Y/10Y cada día entre publicaciones semanales de la RBA.
+     Insumos: `AUD_NOM_2Y.csv` y `RY_G8_AUD.csv` (RBA F2, semanal), `AUD_BILL_6M.csv` (RBA F1, diario), `US_BILL_2Y.csv` y
+     `RY_G8_USD.csv` (Fed, diario). Salidas: `data/AUD_NOWCAST.csv` (historial que solo crece) y `data/AUD_NOWCAST.json`
+     (estado, betas, error esperado). Consumidores: §01 (`docs/index.html`), §01-b (`scripts/s01b.py`), §00 (`dashboard_alerts.py`).
+   - Comprueba: `data/AUD_NOWCAST.json` → `status` debe ser `OK`; `last_estimate` debe llegar al último día hábil con
+     dato de `AUD_BILL_6M.csv`; el paso `aud_nowcast` del último *Daily Data Update* con rc 0.
+   - Si `status` es `INPUT_MISSING` o `INPUT_STALE`: el fallo está en un insumo. Arregla su **descargador**
+     (`fetch_aud_bills.py`, `fetch_us_bills.py`, …) como cualquier otro feed. Si el insumo es `AUD_NOM_2Y.csv` o
+     `RY_G8_AUD.csv` (los escriben `acm_g8.py` y `real_yields_g8.py`, que no puedes tocar), explica la causa y propón el
+     arreglo en el informe.
+   - Si el fallo está en `scripts/aud_nowcast.py` (lectura de ficheros, formato de fechas, escritura del CSV), puedes
+     arreglarlo: la compuerta lo integra si `tests/test_p8_aud_nowcast.py` y el resto siguen en verde.
+   - **Nunca** cambies `sources/nowcast_aud.json` (drivers, retardos, ventana: es el modelo; requiere OK del propietario)
+     ni el test `tests/test_p8_aud_nowcast.py`.
+   - **Error real** (cada lunes y viernes): para las fechas de `AUD_NOWCAST.csv` que la RBA ya ha publicado, compara
+     NOM2Y/NOM10 estimados con el dato RBA de esa fecha. Pon en el informe el error medio en pb de las últimas 4 semanas
+     frente al esperado (`err_bp_by_h` del JSON). Si durante 2 semanas seguidas el error real es más del doble del
+     esperado, escribe `ESTADO: REQUIERE OK` y propón la recalibración o el cambio de drivers (no lo apliques).
+5. **Pruebas.** `python -m unittest discover -s tests -p 'test_*.py'` en verde antes de cada commit.
+6. **Acta** `docs/actas/ACTA_AGENTE_<AAAAMMDD>.md` (hallazgo · decisión · sin cambios · pruebas · pendiente de OK) si
    cambiaste algo.
-6. **Commit** en la rama actual con mensaje claro. Uno por arreglo.
-7. **Informe** (siempre, aunque no cambies nada) en `.agent/report.md`, en español y corto:
+7. **Commit** en la rama actual con mensaje claro. Uno por arreglo.
+8. **Informe** (siempre, aunque no cambies nada) en `.agent/report.md`, en español y corto:
    - línea 1: `ESTADO: OK` | `ESTADO: ARREGLADO` | `ESTADO: REQUIERE OK` | `ESTADO: FALLO SIN ARREGLO`;
    - feeds revisados con su última fecha y si van en plazo;
    - qué arreglaste (fichero, causa, fuente verificada con URL);

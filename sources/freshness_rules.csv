@@ -38,3 +38,5 @@ OPTIONS,OPTIONS_SURFACE,OPTIONS_SURFACE.json,excluded,,,UTC,excluded,,,EXCLUIDO 
 NOT_INGESTED,RRPONTSYD;SWPT,,not_ingested,,,UTC,none,,,SIN INGESTIÓN (sin referencias fuera del registro),,,SIN_DATOS: toda revisión a confirmación,SIN_FRESCURA,
 GOLD_DEMAND,,OFFICIAL_GOLD_DEMAND.csv,input,MDP,,UTC,monthly,,,DESCONOCIDA (insumo de metales),METALS,,SIN_DATOS: toda revisión a confirmación,PROVISIONAL,
 ECB_CACHE,,usd_factor/ecb_rates.csv;usd_factor/canonical.csv,input,ECB-EXR,TARGET,Europe/Berlin,daily,16:00,0,= USD_FACTOR,USDF,,SIN_DATOS: toda revisión a confirmación,PROVISIONAL,
+AUD_NOWCAST,,AUD_NOWCAST.csv,derived,ACM,,UTC,derived,,,DERIVADO: observación esperada = la de su curva de entrada en la pasada FINAL,FINAL,,SIN_DATOS: toda revisión a confirmación,PROVISIONAL,DERIVADO (acta P-8): estimación diaria AUD; observación esperada = la de sus drivers (RBA F1 6M) en la pasada FINAL
+AUD_NOWCAST_META,,AUD_NOWCAST.json,derived,ACM,,UTC,derived,,,,,,,PROVISIONAL,"metadatos de la estimación AUD (acta P-8): estado, betas, error esperado; sin fecha de observación propia"

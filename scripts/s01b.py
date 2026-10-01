@@ -50,7 +50,7 @@ import re
 import fcntl
 from datetime import date, datetime, timedelta, timezone
 
-VERSION = "s01b v1.3.2" # E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
+VERSION = "s01b v1.3.3" # P-8 (2026-10-01): contexto AUD (nominal, 2Y) prolongado con la estimación diaria EST_AUD_V1, etiquetada; detector y señal intactos · v1.3.2: E2 (2026-09-22/23): evaluación write-once solo en --final y solo desde FINAL_EARLIEST_UTC; runs de mediodía / --final tempranos PROVISIONAL; as-of real del insumo largo ACM (AUD/CAD) · motor CTF intacto
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 DATA = os.path.join(ROOT, "data")
@@ -92,6 +92,11 @@ CONTEXT_QUALITY = {("AUD", "y2"): "RBA_F2_DAILY_TABLE", ("CAD", "y2"): "BOC_VALE
 # an ACM row dated t can therefore carry the curve of an older day. The persisted 2Y of that same connector
 # (AUD_NOM_2Y.csv / CAD_NOM_2Y.csv, E1) tells the true input date. Reading only: never gates anything.
 ACM_INPUT_PROBE = {"AUD": "y2", "CAD": "y2"}
+# P-8 (acta P-8): estimación diaria de los nominales AUD entre publicaciones semanales de la RBA (aud_nowcast.py).
+# Solo prolonga las patas de CONTEXTO (nominal, y2) por delante del último dato RBA; nunca entra en ACM, θ ni señal.
+# Las fechas estimadas viajan en inp["est"] (y por tanto en la foto de entrada) → las sesiones se reproducen igual.
+NOWCAST_FILES = {"AUD": ("AUD_NOWCAST.csv", {"nominal": "NOM10", "y2": "NOM2Y"})}
+EST_QUALITY = "EST_AUD_V1"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -305,7 +310,7 @@ def context_status(ccy, name, ser, t, t0, end, start, dval):
     return out
 
 
-def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx_effective, state_prev):
+def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx_effective, state_prev, est=None):
     """One currency, one session. Returns (row, event) — pure function of its inputs."""
     row = {"ccy": ccy, "t": t.isoformat(), "avail": "OK", "flags": [], "signal": state_prev.get("signal", "OFF"),
            "persist": state_prev.get("persist", 0), "fx_fail_streak": state_prev.get("fx_fail_streak", 0)}
@@ -346,8 +351,17 @@ def evaluate_ccy(ccy, t, cal_pos, calendar, acm, nom, y2, be, fx_r, f_series, fx
     row["context_last"] = {}
     for name, ser, end, start, dval in (("nominal", nom, n1, n0, row["d_nom"]), ("y2", y2, q1, q0, row["d_2y"]), ("be", be, e1, e0, row["d_be"])):
         row["context_last"][name] = context_status(ccy, name, ser, t, t0, end, start, dval)
+        est_dates = set((est or {}).get(name) or [])
+        if est_dates and end is not None and end[0] in est_dates:     # P-8: el extremo de la ventana es una estimación
+            row["context_last"][name]["quality"] = EST_QUALITY
+            row["context_last"][name]["estimate"] = True
+            if "CTX_EST" not in row["flags"]:
+                row["flags"].append("CTX_EST")
     # E2: true as-of of the ACM long-end input (reading only). Probe = the persisted series of the same connector.
     probe = {"y2": y2, "be": be, "nominal": nom}.get(ACM_INPUT_PROBE.get(ccy, ""), None)
+    if probe and est and est.get(ACM_INPUT_PROBE.get(ccy, "")):     # P-8: la sonda mira solo datos oficiales
+        skip = set(est[ACM_INPUT_PROBE[ccy]])
+        probe = [x for x in probe if x[0] not in skip]
     if probe and row.get("acm_asof_t"):
         p1 = asof(probe, date.fromisoformat(row["acm_asof_t"]), max_lag_bd=10 ** 6)
         p0 = asof(probe, date.fromisoformat(row["acm_asof_t0"]), max_lag_bd=10 ** 6)
@@ -429,6 +443,19 @@ def load_inputs(data_dir):
         inp["nom"][c] = read_series(os.path.join(data_dir, NOM_FILES[c]), col="NOM10")
         inp["y2"][c] = read_series(os.path.join(data_dir, Y2_FILES[c])) if c in Y2_FILES else []
         inp["be"][c] = read_series(os.path.join(data_dir, BE_FILES[c]), col="BE10") if c in BE_FILES else []
+    inp["est"] = {}
+    for c, (fname, legs) in NOWCAST_FILES.items():                 # P-8: estimación por delante del último dato oficial
+        path = os.path.join(data_dir, fname)
+        for leg, col in legs.items():
+            key = {"nominal": "nom", "y2": "y2"}[leg]
+            base = inp[key][c]
+            last = base[-1][0] if base else None
+            ext = [(d, v) for d, v in read_series(path, col=col) if last is None or d > last]
+            if ext:
+                inp[key][c] = base + ext
+                inp["est"].setdefault(c, {})[leg] = [d for d, _ in ext]
+        if os.path.exists(path):
+            inp["sha"][fname] = sha256(path)
     can = os.path.join(data_dir, "usd_factor", "canonical.csv")
     inp["calendar"], inp["f"], inp["r"], inp["desfase"] = read_canonical(can)
     if os.path.exists(can):
@@ -473,7 +500,7 @@ def run_session(t, inp, state, fx_effective, final, data_dir):
         fx_r = [fx_map.get(d) for d in calendar]
         f_ser = [f_map.get(d) for d in calendar]
         row, ev = evaluate_ccy(c, t, cal_pos, calendar, inp["acm"][c], inp["nom"][c], inp["y2"][c], inp["be"][c],
-                               fx_r, f_ser, fx_effective, state.get(c, {}))
+                               fx_r, f_ser, fx_effective, state.get(c, {}), est=(inp.get("est") or {}).get(c))
         row["state_before"] = state.get(c, {})
         rows.append(row)
         if ev:

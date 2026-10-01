@@ -1,0 +1,29 @@
+{
+  "model": "EST_AUD_V1",
+  "acta": "docs/actas/ACTA_P8.md",
+  "approved": "propietario, 1-oct-2026 («ok procede»)",
+  "description": "Estimación diaria de los nominales AUD 2Y y 10Y entre publicaciones semanales de la RBA (F2: viernes, datos hasta el miércoles). Último dato RBA + suma de variaciones diarias estimadas por MCO sin constante sobre variaciones diarias de drivers oficiales y públicos. El dato RBA sustituye a la estimación en cuanto se publica.",
+  "targets": {
+    "NOM2Y": {"file": "AUD_NOM_2Y.csv", "col": "Value", "source": "RBA F2 FCMYGBAG2D"},
+    "NOM10": {"file": "RY_G8_AUD.csv", "col": "NOM10", "source": "RBA F2 FCMYGBAG10D (via real_yields_g8.py)"}
+  },
+  "drivers": {
+    "NOM2Y": [
+      {"name": "AU_BILL_6M", "file": "AUD_BILL_6M.csv", "col": "CLOSE", "lag_bd": 0, "source": "RBA F1 FIRMMBAB180D (diaria)"},
+      {"name": "US_2Y", "file": "US_BILL_2Y.csv", "col": "CLOSE", "lag_bd": 1, "source": "FRED DGS2 (cierre de NY del día hábil anterior)"}
+    ],
+    "NOM10": [
+      {"name": "AU_BILL_6M", "file": "AUD_BILL_6M.csv", "col": "CLOSE", "lag_bd": 0, "source": "RBA F1 FIRMMBAB180D (diaria)"},
+      {"name": "US_10Y", "file": "RY_G8_USD.csv", "col": "NOM10", "lag_bd": 1, "source": "FRED DGS10 (cierre de NY del día hábil anterior)"}
+    ]
+  },
+  "calibration_years": 3,
+  "min_obs": 250,
+  "max_horizon_bd": 10,
+  "backtest_1oct2026": {
+    "note": "calibración 2021-10..2024-12, prueba 2025-01..2026-09 (fuera de muestra); error medio cuadrático de la suma de h variaciones diarias, en pb",
+    "NOM2Y": {"h1": [3.5, 4.6], "h3": [5.3, 7.8], "h6": [7.6, 11.3]},
+    "NOM10": {"h1": [3.8, 4.8], "h3": [4.9, 7.6], "h6": [6.6, 10.5]},
+    "columns": ["estimación", "repetir el último dato RBA"]
+  }
+}

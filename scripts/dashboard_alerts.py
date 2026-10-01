@@ -1009,6 +1009,16 @@ def build_book(st):
         be = read_series("RY_G8_%s.csv" % c, col="BE10") if nom else None
         if nom:
             r["nom"], r["real"], r["be"], r["nom_asof"] = nom[-1][1], (real[-1][1] if real else None), (be[-1][1] if be else None), nom[-1][0].isoformat()
+            if c == "AUD":
+                # acta P-8: nominal diario estimado (EST_AUD_V1) por delante del último dato RBA (semanal). Solo se muestra:
+                # diferenciales vs USD, z y alertas siguen sobre datos oficiales (una estimación nunca dispara un aviso).
+                est = [x for x in (read_series("AUD_NOWCAST.csv", col="NOM10") or []) if x[0] > nom[-1][0]]
+                if est:
+                    err = [x for x in (read_series("AUD_NOWCAST.csv", col="ERR10_BP") or []) if x[0] == est[-1][0]]
+                    r["nom_rba"], r["nom_rba_asof"] = r["nom"], r["nom_asof"]
+                    r["nom"], r["nom_asof"], r["nom_est"] = est[-1][1], est[-1][0].isoformat(), True
+                    r["flags"].append("NOM EST %s ±%s pb (RBA %s; vs USD/real/BE con RBA)" % (
+                        est[-1][0].strftime("%d-%m"), ("%.0f" % err[0][1]) if err else "?", nom[-1][0].strftime("%d-%m")))
             if c == "NZD":
                 r["flags"].append("REAL IIB (B2)")
         elif c == "NZD":

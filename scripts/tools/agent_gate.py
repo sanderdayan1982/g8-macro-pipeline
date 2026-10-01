@@ -19,6 +19,7 @@ import sys
 ALLOW = [
     "scripts/fetch_*.py",
     "scripts/g8common/cb_direct.py",
+    "scripts/aud_nowcast.py",              # acta P-8: lectura de insumos y salida; el MODELO vive en sources/nowcast_aud.json
     "sources/registry.csv",
     "data/manual/policy_decisions.csv",
     "docs/_redirects",
@@ -30,7 +31,7 @@ ALLOW = [
 DENY = [
     "scripts/acm_g8.py", "scripts/s01b.py", "scripts/dashboard_alerts.py", "scripts/usd_factor.py",
     "scripts/book_risk.py", "scripts/metals_fairvalue_g8.py", "scripts/nzd_tp_synth.py", "scripts/real_yields_g8.py",
-    "sources/freshness_*.csv", "tests/test_exclusions.py", "tests/test_f3_freshness.py", "tests/frozen_data.py",
+    "sources/freshness_*.csv", "sources/nowcast_aud.json", "tests/test_p8_aud_nowcast.py", "tests/test_exclusions.py", "tests/test_f3_freshness.py", "tests/frozen_data.py",
     ".github/*",
 ]
 

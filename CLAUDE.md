@@ -34,3 +34,5 @@ incluido el agente de mantenimiento.
 - `sources/registry.csv` — registro de fuentes y fallbacks.
 - `.github/agent/mantenimiento.md` — instrucciones del agente de mantenimiento (acta P-6);
   `scripts/tools/agent_gate.py` — lista de ficheros que el agente puede integrar sin OK.
+- `scripts/aud_nowcast.py` + `sources/nowcast_aud.json` — estimación diaria AUD 2Y/10Y entre publicaciones semanales de la
+  RBA (acta P-8). Siempre etiquetada «EST»; el modelo (json) solo se cambia con OK del propietario.

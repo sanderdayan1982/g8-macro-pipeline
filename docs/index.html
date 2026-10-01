@@ -385,6 +385,9 @@
                    NONE = leg not connected / no market («sin feed»). Tooltip = provenance + last observation. */
                 function ctx(v, leg, x) {
                     var cl = v.context_last && v.context_last[leg];
+                    /* P-8: extremo de la ventana estimado (EST_AUD_V1) → número en ámbar con «e» y su origen en el tooltip */
+                    if (nz(x) && cl && cl.estimate) return '<span style="color:' + AMBER + '" title="' + esc('ESTIMACIÓN ' + cl.quality + ' a ' + cl.date + ' (' + cl.value +
+                        ') — último dato RBA + variaciones diarias estimadas (letra 6M RBA F1 + Treasury del día anterior). Acta P-8. El viernes la RBA lo sustituye.') + '">' + bp(x) + 'ᵉ</span>';
                     if (nz(x)) { return cl && cl.quality ? '<span title="' + esc(cl.quality) + '">' + bp(x) + '</span>' : bp(x); }
                     if (!cl) return '·';
                     var tip = (cl.quality ? cl.quality + ' · ' : '') + (cl.date ? 'último ' + cl.date + ' = ' + cl.value + (cl.lag_bd != null ? ' (' + cl.lag_bd + ' d.h.)' : '') : 'sin observación ≤ sesión');
@@ -401,6 +404,9 @@
                 }
                 /* RESID = Δnominal − ΔFIT: blank because the ACM leg is missing (no ΔFIT) is NOT a nominal problem. */
                 function ctxResid(v) {
+                    var cn = v.context_last && v.context_last.nominal;
+                    if (nz(v.resid) && cn && cn.estimate)                      /* P-8: RESID con nominal estimado */
+                        return '<span style="color:' + AMBER + '" title="RESID con el nominal ESTIMADO (' + esc(cn.date) + ', EST_AUD_V1) frente a ΔFIT del ACM (curva RBA arrastrada). Lectura orientativa.">' + bp(v.resid) + 'ᵉ</span>';
                     if (nz(v.resid)) return bp(v.resid);
                     if (!nz(v.d_fit)) return '<span title="sin ΔFIT: ACM ' + esc(v.avail || 'NO_DATA') + '">sin ACM</span>';
                     return ctx(v, 'nominal', null);
@@ -1415,6 +1421,8 @@ var FEED_REGISTRY = {
        Wednesday — git history Jun–Sep 2026). A 5-bd budget flagged it DEGRADED every Thursday by design.
        8 bd = weekly publication + lag, same budget as AUD_RY (iAGS, same table family). */
     AUD_NOM_2Y: repo('AUD_NOM_2Y.csv', 'AUD Nominal 2Y (RBA F2 — weekly publication, via acm_g8)', 'weekly', 8, '01'),
+    /* P-8: estimación diaria AUD 2Y/10Y (EST_AUD_V1) — se recalcula cada día; si se para, §01/§01-b vuelven al dato RBA */
+    AUD_NOWCAST: repo('AUD_NOWCAST.csv', 'AUD Nominal 2Y/10Y ESTIMADO diario (EST_AUD_V1, aud_nowcast.py, acta P-8)', 'daily', 3, '01'),
     CAD_NOM_2Y: repo('CAD_NOM_2Y.csv', 'CAD Nominal 2Y (BoC Valet, via acm_g8)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
@@ -2404,6 +2412,13 @@ function asOfLine(d) {
     var nom = d.nomAsOf, acm = d.acmAsOf;
     if (!nom) return acm || '';
     var h = 'dato ' + nom;
+    if (d.est) {   /* P-8: nominal estimado (EST_AUD_V1) por delante del último dato RBA */
+        h += ' <span style="color:#fdb813" title="Nominal 10Y ESTIMADO (modelo EST_AUD_V1, acta P-8): último dato RBA (' + d.est.rba +
+             ') + variaciones diarias estimadas con la letra a 6 meses (RBA F1) y el Treasury 10Y del día anterior (Fed). Error esperado a ' +
+             d.est.h + ' días: ±' + d.est.err + ' pb (1σ). Real y breakeven siguen con el dato RBA. El viernes la RBA sustituye la estimación.">EST ±' +
+             (isFinite(d.est.err) ? Math.round(d.est.err) : '?') + ' pb · RBA ' + d.est.rba.slice(5) + '</span>';
+        nom = d.est.rba;                       /* la curva del ACM se compara con el último dato OFICIAL */
+    }
     if (acm && acm !== nom) {
         h += acm > nom
             ? ' · <span style="color:#fdb813" title="La fila ACM (' + acm + ') va por delante del último dato de la curva (' + nom +
@@ -2634,6 +2649,20 @@ function init() {
         }
     });
 
+    /* P-8 (acta P-8): AUD nominal 10Y estimado a diario (EST_AUD_V1, aud_nowcast.py) entre publicaciones semanales
+       de la RBA. Opcional: sin fichero, AUD se pinta como antes (dato RBA + marca de atraso). */
+    jobs.push(fetchCsv(RAW + 'AUD_NOWCAST.csv')
+        .then(function (t) {
+            var L = t.trim().split('\n'), h = L[0].split(','), out = [];
+            for (var i = 1; i < L.length; i++) {
+                var v = L[i].split(','), o = {};
+                h.forEach(function (k, j) { o[k] = v[j]; });
+                if (/^\d{8}$/.test(o.DATE) && isFinite(parseFloat(o.NOM10))) out.push(o);
+            }
+            raw.audEst = out;
+        })
+        .catch(function (e) { console.warn('[attr] AUD_NOWCAST', e.message); }));
+
     /* v2.5.8: NZD real ACM (acm_g8.py NZD on B2 1985+) and real linker BE (RY_G8_NZD.csv from
        NZ inflation-indexed bonds). Both optional: 404 → proxy TP / manual BE as before. */
     jobs.push(fetchCsv(RAW + 'ACM_G8_NZD.csv')
@@ -2697,6 +2726,18 @@ function isoDaysAgo(d) {
 function assemble(raw) {
     var data = {};
 
+    /* P-8: AUD — prolonga la serie nominal (solo NOM10) con la estimación diaria posterior al último dato RBA */
+    var audEstInfo = null;
+    if (raw.AUD && raw.AUD.ry && raw.AUD.ry.rows && raw.AUD.ry.rows.length && raw.audEst && raw.audEst.length) {
+        var ryRows = raw.AUD.ry.rows, lastRba = String(ryRows[ryRows.length - 1].DATE);
+        var ext = raw.audEst.filter(function (o) { return o.DATE > lastRba; });
+        if (ext.length) {
+            raw.AUD.ry.rows = ryRows.concat(ext.map(function (o) { return { DATE: Number(o.DATE), NOM10: parseFloat(o.NOM10), REAL10: NaN, BE10: NaN }; }));
+            var lastE = ext[ext.length - 1];
+            audEstInfo = { date: isoNorm(lastE.DATE), err: parseFloat(lastE.ERR10_BP), rba: isoNorm(lastRba), h: lastE.H_BD };
+        }
+    }
+
     /* 6 repo currencies */
     Object.keys(REPO_ACM).forEach(function (c) {
         var d = raw[c];
@@ -2718,6 +2759,7 @@ function assemble(raw) {
             data[c].acmAsOf = isoNorm(data[c].asOf);
             data[c].lagMax = (regRy && regRy.maxStaleness) || 4;
         }
+        if (c === 'AUD' && audEstInfo) data[c].est = audEstInfo;              /* P-8 */
         /* C2: level-confidence flag for the ACM term premium. The TP LEVEL (not its
            shape) is biased when (a) the sample is short — finite-sample bias,
            Bauer-Rudebusch-Wu 2012 — or (b) the gaussian model is misspecified under
