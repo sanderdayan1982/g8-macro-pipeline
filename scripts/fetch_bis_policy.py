@@ -36,6 +36,7 @@ Notes:
 """
 
 import csv
+import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -44,6 +45,7 @@ import io
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
+from g8common import policy_decisions as _pd  # noqa: E402  (Acta P-1: decisiones verificadas por delante del BIS)
 
 requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
@@ -206,20 +208,45 @@ def main() -> int:
     print(f"BIS Dataflow: WS_CBPOL / D.{country} (Daily, {country})")
 
     try:
+        decisions = _pd.load(_ctx.root)
+    except _pd.DecisionError as exc:
+        print(f"ERROR: policy_decisions.csv inválido: {exc}", file=sys.stderr)
+        decisions = []
+
+    bis_rc = 0
+    try:
         rows = fetch_bis_policy_rate(country, date_from, today)
+        if not rows:
+            raise ValueError(f"No {country} policy rows returned from BIS")
     except requests.HTTPError as exc:
         print(f"ERROR: BIS HTTP error for {country}: {exc}", file=sys.stderr)
-        return _ctx.finish(1)
+        rows, bis_rc = None, 1
     except requests.RequestException as exc:
         print(f"ERROR: BIS network error for {country}: {exc}", file=sys.stderr)
-        return _ctx.finish(1)
+        rows, bis_rc = None, 1
     except Exception as exc:
         print(f"ERROR: {country} policy fetch failed: {exc}", file=sys.stderr)
-        return _ctx.finish(1)
+        rows, bis_rc = None, 1
 
-    if not rows:
-        print(f"ERROR: No {country} policy rows returned from BIS", file=sys.stderr)
-        return _ctx.finish(1)
+    if rows is None:
+        # Acta P-1: BIS caído → último CSV publicado + decisiones verificadas. El fallo del BIS sigue en rc=1.
+        rows = _pd.read_published(os.path.join(_ctx.root, "data", output_path.name))
+        rows, added, warns = _pd.apply(rows, country, decisions, today.date())
+        for w in warns:
+            print(f"AVISO: {w}", file=sys.stderr)
+        if added:
+            _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
+            print(f"Publicación {output_path.name} (BIS caído, decisión verificada): {_rep['status']} "
+                  f"{_rep.get('detail', '')} · +{added} filas · último {rows[-1][0]} = {rows[-1][1]:.4f}%")
+        return _ctx.finish(bis_rc)
+
+    bis_last = rows[-1]
+    rows, added, warns = _pd.apply(rows, country, decisions, today.date())
+    for w in warns:
+        print(f"AVISO: {w}", file=sys.stderr)
+    if added:
+        print(f"Decisión verificada por delante del BIS (último BIS {bis_last[0]} = {bis_last[1]:.4f}%): "
+              f"+{added} filas hasta {rows[-1][0]} = {rows[-1][1]:.4f}%")
 
     _rep = _ctx.publish(output_path.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
 

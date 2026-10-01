@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v2.5  (2026-09-22) — §01-b E2: S01B.json PROVISIONAL etiquetado (sin eventos) · v2.4 §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
+G8 Macro Pipeline — dashboard_alerts.py  v2.6  (2026-10-01) — Acta P-1: coherencia tipo a un día ↔ oficial · §01-b E2: S01B.json PROVISIONAL etiquetado (sin eventos) · v2.4 §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -283,6 +283,41 @@ def check_floors(st, lines):
         if chg:
             lines.append("§02 %s %s−%s %+.1f bp · %s" % (ccy, rfr[:-4], ref, last, " · ".join(chg)))
         s[ccy] = {"badge": badge, "zband": zb, "last": round(last, 2), "date": sp[-1][0].isoformat()}
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# §05 coherencia tipo a un día ↔ tipo oficial (Acta P-1, 2026-10-01)
+# ═════════════════════════════════════════════════════════════════════════════
+# El BIS publica los tipos oficiales con retraso: el 24-sep TONA saltó a 1.227 y JP_POLICY siguió en 1.00 una
+# semana, sin que el DQM de frescura lo viera (presupuesto 40 bd). Regla: si el diferencial tipo a un día − oficial
+# se aparta más de POLICY_GAP_BP de su mediana de las POLICY_MED_N observaciones anteriores durante
+# POLICY_GAP_DAYS observaciones seguidas, el tipo oficial es SOSPECHOSO (probable decisión no recogida).
+POLICY_GAP_BP, POLICY_GAP_DAYS, POLICY_MED_N = 15.0, 2, 20
+
+
+def check_policy_coherence(st, lines):
+    s = st.setdefault("policy_coherence", {})
+    for ccy, rfr, flr, ref in FLOORS:
+        a, b = read_series(rfr), read_series(flr)
+        if not a or not b:
+            continue
+        sp = [(d, (va - vb) * 100.0) for d, va, vb in ffill_join(a, b)]
+        if len(sp) < POLICY_MED_N + POLICY_GAP_DAYS:
+            continue
+        base = sorted(v for _, v in sp[-(POLICY_MED_N + POLICY_GAP_DAYS):-POLICY_GAP_DAYS])
+        med = base[len(base) // 2]
+        recent = sp[-POLICY_GAP_DAYS:]
+        bad = all(abs(v - med) > POLICY_GAP_BP for _, v in recent)
+        status = "SUSPECT" if bad else "OK"
+        if bad:
+            note("DQM · %s %s sospechoso: %s − %s %+.1f bp vs mediana %+.1f bp (¿decisión no recogida?)"
+                 % (ccy, flr[:-4], rfr[:-4], flr[:-4], recent[-1][1], med))
+        prev = s.get(ccy, {}).get("status")
+        if prev and prev != status:
+            lines.append("§05 %s %s: %s → %s (%s − oficial %+.1f bp, mediana %+.1f bp)"
+                         % (ccy, flr[:-4], prev, status, rfr[:-4], recent[-1][1], med))
+        s[ccy] = {"status": status, "gap_bp": round(recent[-1][1], 2), "median_bp": round(med, 2),
+                  "date": recent[-1][0].isoformat()}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1231,6 +1266,9 @@ def build_brief(st, wall_lines):
     for fid, s in (st.get("dqm") or {}).items():
         if s in ("STALE", "DEAD"):
             b["dqm"].append({"feed": fid, "status": s})
+    for ccy, s in (st.get("policy_coherence") or {}).items():       # Acta P-1
+        if s.get("status") == "SUSPECT":
+            b["dqm"].append({"feed": "POLICY_" + ccy, "status": "SUSPECT", "gap_bp": s.get("gap_bp")})
     if NOTES:
         b["notes"] = NOTES[:8]
     os.makedirs(os.path.dirname(BRIEF_PATH), exist_ok=True)
@@ -1246,7 +1284,7 @@ def main(argv):
     delivery_ok = True
     first = not st
     lines = []
-    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_s01b, check_metals, check_walls, check_cot, check_factor, check_dqm):
+    for fn in (check_floors, check_policy, check_tp, check_vs_usd, check_real_vs_usd, check_s01b, check_metals, check_walls, check_cot, check_factor, check_dqm, check_policy_coherence):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
