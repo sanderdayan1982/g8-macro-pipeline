@@ -50,11 +50,17 @@ metodología.
 
 ## Pruebas
 `tests/test_p5_mac_schedule.py` (7, incluido el reintento de las 21:00):
-- plist con solo 19:30 y RunAtLoad, aceptado por `render_plist`;
-- ventana del instalador (19:25 / 07:55 / 17:05 bloquean; 12:00 no);
+- plist con 19:30 + 21:00 y RunAtLoad, aceptado por `render_plist`;
+- ventana del instalador (19:25 / 20:55 / 07:55 / 17:05 bloquean; 12:00 no);
 - guarda ejecutada con bash y fetchers falsos: turno de ayer antes de las 19:30 y de hoy desde las 19:30; turno hecho no
-  repite; un fallo no marca y luego reintenta; `G8_FORCE`.
+  repite; un fallo no marca y luego reintenta; `G8_FORCE`; el reintento de las 21:00 no hace nada si las 19:30 salieron
+  bien y completa el turno si fallaron.
 `tests/test_mac_installer.py` (20) sigue en verde con el horario nuevo.
 
+## Instalación final (1-oct-2026 19:56, la ejecuta Claude con el OK del propietario)
+Instalador: validación correcta (las 4 familias NOOP), copia en `backup_lote1_20261001195648`, «Instalado. launchd cargado y
+comprobado». launchd: 19:30 + 21:00 + RunAtLoad. La ejecución de RunAtLoad dio «ya hecho» (turno de las 19:30 terminado
+bien a las 19:43). `pmset -g sched`: «wakepoweron at 7:25PM every day» (lo programó el operador). `executors.csv`: 19:30.
+
 ## Siguiente
-Tras la instalación: `executors.csv` y `schedules.csv` a 19:30 (con `active_from`). Después, punto 5: agente de mantenimiento.
+Punto 5: agente de mantenimiento (acta P-6).
