@@ -21,7 +21,9 @@ incluido el agente de mantenimiento.
   `python -m unittest discover -s tests -p 'test_*.py'`
   (Python 3.11 con `requirements.txt` + `pyyaml`; el Python de Homebrew del Mac no trae las dependencias.)
 - Con acta en `docs/actas/ACTA_<lote>.md`: hallazgo, decisión, sin cambios, pruebas, siguiente.
-- Commit + push a `main` solo con la suite en verde.
+- Antes de subir, las mismas comprobaciones que «Validate (smoke)»: `bash scripts/tools/validate_smoke.sh`
+  (suite, equivalencia s01b, YAML, `registry.csv` bien formado —sin comas sueltas—, JS del dashboard, brief en seco).
+- Commit + push a `main` solo con todo en verde.
 
 ## Mapa rápido
 - `scripts/` — fetchers, `dashboard_alerts.py` (brief.json, DQM, Telegram), `g8common/`.
@@ -30,3 +32,5 @@ incluido el agente de mantenimiento.
 - `docs/index.html` — dashboard (Netlify publica `docs/`); capa de red `G8NET`; proxies en `docs/_redirects`.
 - `mac/` — jobs locales del Mac (feeds que GitHub Actions no alcanza).
 - `sources/registry.csv` — registro de fuentes y fallbacks.
+- `.github/agent/mantenimiento.md` — instrucciones del agente de mantenimiento (acta P-6);
+  `scripts/tools/agent_gate.py` — lista de ficheros que el agente puede integrar sin OK.
