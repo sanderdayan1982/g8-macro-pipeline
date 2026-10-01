@@ -7,3 +7,6 @@
 /proxy/fred/*   https://fred.stlouisfed.org/:splat    200
 /proxy/nyfed/*  https://www.newyorkfed.org/:splat     200
 /proxy/mof/*    https://www.mof.go.jp/:splat          200
+# P-2: respaldo propio de raw.githubusercontent.com (G8NET lo intenta tras el directo,
+# antes de los proxies publicos).
+/proxy/raw/*    https://raw.githubusercontent.com/:splat 200

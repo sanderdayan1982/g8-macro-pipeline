@@ -1194,14 +1194,23 @@ var LOCAL_PROXY_MAP = [
     { origin: 'https://www.mof.go.jp/',        path: '/proxy/mof/'   }
 ];
 
-function localProxy(url) {
+/* P-2 (acta P-2, 1-oct-2026): own Netlify route for the repo's raw files. raw.github answers
+   with CORS, so direct stays FIRST; /proxy/raw/ is the backup tried BEFORE the public proxies
+   (corsproxy.io 403s on prod origins, allorigins/codetabs come and go). */
+var BACKUP_PROXY_MAP = [
+    { origin: 'https://raw.githubusercontent.com/', path: '/proxy/raw/' }
+];
+
+function mapProxy(map, url) {
     if (window.location.protocol === 'file:') return null;   /* only when served by Netlify */
-    for (var i = 0; i < LOCAL_PROXY_MAP.length; i++) {
-        var m = LOCAL_PROXY_MAP[i];
+    for (var i = 0; i < map.length; i++) {
+        var m = map[i];
         if (url.indexOf(m.origin) === 0) return m.path + url.slice(m.origin.length);
     }
     return null;
 }
+function localProxy(url) { return mapProxy(LOCAL_PROXY_MAP, url); }
+function backupProxy(url) { return mapProxy(BACKUP_PROXY_MAP, url); }
 
 /* v2.7.0 (audit 2026-09-24): 60 → 15 min. The pipeline republishes several times a day and a
    60-min localStorage copy already caused a false "JSON is v1.1" incident (17-sep). raw.github
@@ -1241,24 +1250,28 @@ function timeoutSignal(ms) {
 }
 
 /* opts: { corsOk: bool (skip proxies — direct only first, then proxies anyway as safety),
-           binary: bool, noCache: bool, maxAge: ms } */
+           binary: bool, noCache: bool, maxAge: ms,
+           staleOk: bool (P-2: network fully down → return the last cached copy of ANY age,
+                          flagged stale:true + cachedTs; opt-in so no module silently shows old data) } */
 async function fetchAny(url, opts) {
     opts = opts || {};
     if (!opts.noCache) {
         var c = cacheGet(url, opts.maxAge);
         if (c && (opts.binary ? c.b64 : c.text)) {
-            return { ok: true, text: c.text, b64: c.b64, via: c.via + ' (cache)', ms: 0, cached: true };
+            return { ok: true, text: c.text, b64: c.b64, via: c.via + ' (cache)', ms: 0, cached: true, cachedTs: c.ts };
         }
     }
     var chain = opts.corsOk ? [''].concat(PROXIES.slice(1)) : PROXIES;
     var attempts = [];
-    var lp = localProxy(url);
+    var lp = localProxy(url), bp = backupProxy(url);
     if (lp) attempts.push({ u: lp, via: 'netlify-proxy' });
     for (var ci = 0; ci < chain.length; ci++) {
         /* if a netlify mapping exists, skip the doomed direct attempt (saves a CORS error) */
         if (lp && chain[ci] === '' && !opts.corsOk) continue;
         attempts.push({ u: wrap(chain[ci], url),
                         via: chain[ci] ? chain[ci].replace(/^https:\/\//, '').split('/')[0] : 'direct' });
+        /* backup route goes right after direct, ahead of every public proxy */
+        if (bp && chain[ci] === '') attempts.push({ u: bp, via: 'netlify-raw' });
     }
     var lastErr = null;
     for (var i = 0; i < attempts.length; i++) {
@@ -1288,17 +1301,38 @@ async function fetchAny(url, opts) {
             lastErr = e.name === 'AbortError' ? 'timeout ' + TIMEOUT_MS + 'ms' : e.message;
         }
     }
+    if (opts.staleOk) {
+        var s = cacheGet(url, Infinity);
+        if (s && (opts.binary ? s.b64 : s.text)) {
+            return { ok: true, text: s.text, b64: s.b64, via: s.via + ' (cache, sin red)', ms: 0,
+                     cached: true, stale: true, cachedTs: s.ts, error: lastErr };
+        }
+    }
     return { ok: false, error: lastErr || 'all proxies exhausted', via: null, ms: null };
 }
 
 /* Try a chain of distinct URLs (each itself going through the proxy cascade) */
 async function fetchChain(urls, opts) {
+    opts = opts || {};
+    var lastErr = null;
     for (var i = 0; i < urls.length; i++) {
         var u = urls[i];
-        var r = await fetchAny(u.url || u, Object.assign({}, opts, u.opts || {}));
+        /* staleOk only after every url has failed live — a stale copy never beats a live later tier */
+        var r = await fetchAny(u.url || u, Object.assign({}, opts, u.opts || {}, { staleOk: false }));
         if (r.ok) { r.sourceUrl = (u.url || u); r.tier = i; return r; }
+        lastErr = r.error;
     }
-    return { ok: false, error: 'all sources exhausted (' + urls.length + ' urls × proxy cascade)' };
+    if (opts.staleOk) {
+        for (var j = 0; j < urls.length; j++) {
+            var su = urls[j].url || urls[j];
+            var s = cacheGet(su, Infinity);
+            if (s && (opts.binary ? s.b64 : s.text)) {
+                return { ok: true, text: s.text, b64: s.b64, via: s.via + ' (cache, sin red)', ms: 0,
+                         cached: true, stale: true, cachedTs: s.ts, error: lastErr, sourceUrl: su, tier: j };
+            }
+        }
+    }
+    return { ok: false, error: 'all sources exhausted (' + urls.length + ' urls × proxy cascade)' + (lastErr ? ' · ' + lastErr : '') };
 }
 
 function arrayBufferToB64(buf) {
@@ -3338,16 +3372,38 @@ function render(b) {
         links.forEach(function (x) { var t = document.querySelector(x.getAttribute('href')); if (t) io.observe(t); });
     }
 })();
-function init() {
-    var sig = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(10000) : undefined;   /* v2.7.0: no timeout = §00 could hang forever */
-    fetch(RAW_B, { cache: 'no-store', signal: sig }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(render)
-        .catch(function (e) {
-            document.getElementById('brief-body').innerHTML =
-                '<div class="attr-err">brief.json no disponible (' + esc(e.message) + ') — el bloque §00 se genera en el pipeline (dashboard_alerts.py). Loud failure, no fallback.</div>';
-        });
+/* P-2: offline banner — the copy shown is the last one this browser downloaded, with its time. */
+function staleBanner(r) {
+    var d = new Date(r.cachedTs), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    var when = isFinite(d) ? d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) : '—';
+    return '<div class="brief-gate g-bad" id="brief-stale">⚠ SIN RED — §00 muestra la última copia en caché de este navegador, descargada el ' + when +
+           ' (hora local). Error: ' + esc(r.error || '—') + '. Pulsa «↻ datos» cuando vuelva la conexión.</div>';
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+/* P-2: through G8NET (direct → /proxy/raw/ → public proxies, 5 s per attempt) instead of one
+   10 s fetch; network fully down → last cached copy with its time, never a silent old reading. */
+function init(tries) {
+    tries = tries || 0;
+    if (!(window.G8NET && window.G8NET.fetchChain)) {
+        if (tries < 50) return setTimeout(function () { init(tries + 1); }, 120);
+        document.getElementById('brief-body').innerHTML = '<div class="attr-err">G8NET not ready — reload</div>';
+        return;
+    }
+    /* noCache: always live first, as before; a live success still refreshes the cache */
+    window.G8NET.fetchChain([RAW_B], { corsOk: true, noCache: true, staleOk: true }).then(function (r) {
+        if (!r.ok) throw new Error(r.error || 'unreachable');
+        render(JSON.parse(r.text));
+        if (r.stale) {
+            var el = document.getElementById('brief-body');
+            el.insertAdjacentHTML('afterbegin', staleBanner(r));
+            var chips = document.getElementById('asof-chips');
+            if (chips) chips.insertAdjacentHTML('afterbegin', '<span class="g-bad">§00 SIN RED · caché</span>');
+        }
+    }).catch(function (e) {
+        document.getElementById('brief-body').innerHTML =
+            '<div class="attr-err">brief.json no disponible (' + esc(e.message) + ') — el bloque §00 se genera en el pipeline (dashboard_alerts.py). Sin copia en caché en este navegador.</div>';
+    });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { init(); }); else init();
 })();
 </script>
 <script>
