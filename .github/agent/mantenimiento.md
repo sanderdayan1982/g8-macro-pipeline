@@ -43,9 +43,13 @@ Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo
      (`tests/fixtures/agent/`) que falle con el formato viejo y pase con el nuevo.
    - Serie discontinuada: busca la sustituta oficial de la misma institución con la misma definición. Si la definición
      cambia → no la conectes; informe con la propuesta.
-3. **Tipos oficiales.** Revisa si GB, JP, CH, AU o NZ han decidido un cambio desde la última fila de
-   `data/manual/policy_decisions.csv`. Verifícalo en el comunicado oficial del banco central y añade la fila
-   (fecha efectiva, tipo, fecha del anuncio, fuente, «agente <fecha>»). Nunca fechas futuras como dato.
+3. **Tipos oficiales (obligatorio en cada ejecución, no lo omitas).** Para GB, JP, CH, AU y NZ: abre con WebFetch la
+   página oficial de decisiones o comunicados de política monetaria del banco central (dominios bankofengland.co.uk,
+   boj.or.jp, snb.ch, rba.gov.au, rbnz.govt.nz) y mira si hubo una decisión posterior al último dato de
+   `data/<CC>_POLICY.csv` (NZ: `data/NZD_OCR.csv`) que todavía no esté en `data/manual/policy_decisions.csv`.
+   Si la hay, añade la fila: fecha efectiva, tipo, fecha del anuncio, fuente con URL del comunicado y «agente <fecha>».
+   Nunca pongas como dato una fecha efectiva futura. En el informe, pon una línea por banco: última decisión vista, su
+   fecha y si estaba ya recogida. Si no pudiste abrir la página de un banco, dilo.
 4. **Pruebas.** `python -m unittest discover -s tests -p 'test_*.py'` en verde antes de cada commit.
 5. **Acta** `docs/actas/ACTA_AGENTE_<AAAAMMDD>.md` (hallazgo · decisión · sin cambios · pruebas · pendiente de OK) si
    cambiaste algo.
