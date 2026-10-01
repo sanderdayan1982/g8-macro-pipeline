@@ -5,12 +5,14 @@
     <key>Label</key><string>com.g8.nzd-b2</string>
     <key>ProgramArguments</key>
     <array><string>/bin/zsh</string><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/nzd_local_run.sh</string></array>
-    <!-- v1.3: dos ejecuciones diarias (hora local del Mac). 08:00 recoge B2 de NZ y SNB R10 de la víspera;
-         17:00 recoge la curva mensual del SNB el mismo día 1 (publicada ~14:30 hora suiza) y el SARON del RSS. -->
+    <!-- v1.4 (acta P-5, 1-oct-2026): UNA ejecución diaria a las 19:30 hora del Mac (Bata, UTC+1, sin cambio de hora),
+         antes de la ejecución final de Actions (~21:30Z): recoge B2 de NZ, SNB (RSS, curva, zirepo) y TONA del día.
+         RunAtLoad + launchd (si el Mac dormía a las 19:30 lanza al despertar) recuperan la ejecución perdida;
+         nzd_local_run.sh v1.5 no repite si la de este turno ya terminó bien («ya hecho»).
+         Despertar: sudo pmset repeat wakeorpoweron MTWRFSU 19:25:00 (lo ejecuta el operador). -->
     <key>StartCalendarInterval</key>
     <array>
-        <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
-        <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>30</integer></dict>
     </array>
     <key>RunAtLoad</key><true/>
     <key>StandardOutPath</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/logs/launchd.out</string>

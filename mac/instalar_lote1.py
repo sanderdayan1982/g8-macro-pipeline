@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""instalar_lote1.py — v2.0 (revisión 24-sep, hallazgo #2) · instala o revierte el lote 1 del Mac como UN CONJUNTO.
+"""instalar_lote1.py — v2.1 (acta P-5, 1-oct-2026: horario 19:30 + guarda «ya hecho») · instala o revierte el lote 1 del Mac como UN CONJUNTO.
 
 Lo llaman instalar_lote1.command y revertir_lote1.command (carpeta ~/Trading_Sander/g8-nzd). Solo stdlib, Python ≥3.9.
 No guarda credenciales, no muestra el token y no publica nada: la validación usa la simulación (--dry-run).
@@ -11,7 +11,7 @@ Instalación (cada fase aborta sin tocar lo que está en uso si algo falla):
      (sin escribir), comprobación del token y del plist. Bloquea: token ausente/inválido/sin permiso, familia
      INVALID o PUBLISH_FAIL, error inesperado. No bloquea: valores en confirmación (se muestran).
   D. Confirmación («s»). Con «N» se borra la preparación y NADA cambia.
-  E. Activación: fuera de ±10 min de las 08:00/17:00; espera a que no haya ninguna ejecución en curso; toma el
+  E. Activación: fuera de ±10 min de las 19:30 (y de las antiguas 08:00/17:00, aún activas hasta instalar); espera a que no haya ninguna ejecución en curso; toma el
      cerrojo state/run.lock (nzd_local_run.sh v1.4 lo respeta); descarga el trabajo de launchd; copia de
      seguridad COMPLETA (código + plist + estado previo de cada fichero); sustitución por renombrado; verificación
      en su sitio; si falla → restauración automática del conjunto anterior y recarga del plist anterior.
@@ -35,7 +35,8 @@ LABEL = "com.g8.nzd-b2"
 FILES = ["push_nzd_to_github.py", "check_credentials.py", "nzd_local_run.sh", "com.g8.nzd-b2.plist",
          "fetch_nzd_b2.py", "fetch_chf_snb.py", "fetch_tona_mac.py"]     # lote 3B: descargadores en el conjunto
 DIRS = ["g8common"]
-SCHEDULE = [(8, 0), (17, 0)]
+SCHEDULE = [(19, 30)]                       # v2.1 (acta P-5)
+LEGACY_SCHEDULE = [(8, 0), (17, 0)]         # horario del conjunto anterior: también se evita al activar
 WINDOW_MIN = 10
 BUSY_PATTERNS = ["nzd_local_run.sh", "push_nzd_to_github.py", "fetch_nzd_b2.py", "fetch_chf_snb.py", "fetch_tona_mac.py"]
 BLOCKING_ALERTS = ("token:missing", "token:invalid", "token:scope")
@@ -167,7 +168,7 @@ def check_token(env, folder):
 def in_window(env):
     t = datetime.fromtimestamp(env.now())
     m = t.hour * 60 + t.minute
-    for h, mi in SCHEDULE:
+    for h, mi in SCHEDULE + LEGACY_SCHEDULE:
         if abs(m - (h * 60 + mi)) <= WINDOW_MIN:
             return "%02d:%02d" % (h, mi)
     return None
@@ -406,7 +407,7 @@ def install(env, pkg, yes=False, force_window=False):
     except Abort:
         shutil.rmtree(stage, ignore_errors=True)
         raise
-    if not yes and env.ask("D. ¿Instalar y activar el lote 1 (08:00 + 17:00)? [s/N] ") != "s":
+    if not yes and env.ask("D. ¿Instalar y activar el lote 1 (19:30 diario + RunAtLoad)? [s/N] ") != "s":
         shutil.rmtree(stage, ignore_errors=True)
         env.out("Cancelado: no se ha cambiado nada.")
         return "CANCELLED"
