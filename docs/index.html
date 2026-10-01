@@ -2413,7 +2413,7 @@ function asOfLine(d) {
     if (!nom) return acm || '';
     var h = 'dato ' + nom;
     if (d.est) {   /* P-8: nominal estimado (EST_AUD_V1) por delante del último dato RBA */
-        h += ' <span style="color:#fdb813" title="Nominal, breakeven y real 10Y ESTIMADOS (modelo ' + esc(d.est.model || 'EST_AUD') + ', acta P-8): último dato RBA (' + d.est.rba +
+        h += ' <span style="color:#fdb813" title="Nominal, breakeven y real 10Y ESTIMADOS (modelo ' + String(d.est.model || 'EST_AUD').replace(/[<"&]/g, '') + ', acta P-8): último dato RBA (' + d.est.rba +
              ') + variaciones diarias estimadas con la letra a 6 meses (RBA F1) y el Treasury 10Y / breakeven de EE. UU. del día anterior (Fed). Real = nominal − breakeven. Error esperado a ' +
              d.est.h + ' días: nominal ±' + d.est.err + ' pb, breakeven ±' + d.est.errBe + ' pb (1σ). El viernes la RBA sustituye la estimación y las siguientes parten del dato nuevo.">EST ±' +
              (isFinite(d.est.err) ? Math.round(d.est.err) : '?') + ' pb · RBA ' + d.est.rba.slice(5) + '</span>';

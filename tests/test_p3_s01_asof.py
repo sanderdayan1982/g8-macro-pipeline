@@ -114,12 +114,18 @@ class S01AsOf(unittest.TestCase):
             {"nomAsOf": "2026-09-23", "acmAsOf": "2026-09-30"},
             {"nomAsOf": "2026-10-01", "acmAsOf": "2026-09-30"},
             {"nomAsOf": "2026-09-29", "acmAsOf": "2026-09-29"},
+            {"nomAsOf": "2026-09-30", "acmAsOf": "2026-09-30",                 # P-8: AUD con estimación
+             "est": {"date": "2026-09-30", "err": 6.3, "errBe": 3.9, "model": "EST_AUD_V2", "rba": "2026-09-23", "h": "5"}},
         ])
-        aud, eur, usd = o["asof"]
+        aud, eur, usd = o["asof"][:3]
         self.assertTrue(aud.startswith("dato 2026-09-23"))
         self.assertIn("ACM 09-30 ⚠ curva 09-23", aud)
         self.assertEqual(eur, "dato 2026-10-01 · ACM 09-30")
         self.assertEqual(usd, "dato 2026-09-29")
+        est = o["asof"][3]                                                # la línea con estimación se pinta sin errores
+        self.assertIn("EST ±6 pb · RBA 09-23", est)
+        self.assertIn("EST_AUD_V2", est)
+        self.assertIn("ACM 09-30 ⚠ curva 09-23", est)
 
 
 class S01Static(unittest.TestCase):
