@@ -33,12 +33,23 @@ Autorizado por el propietario («pasamos al punto 4», 1-oct-2026).
 - Instalación: el operador abre `instalar_lote1.command` y responde «s» (fuera de 19:20–19:40). Reversión:
   `revertir_lote1.command`.
 
+## Ampliación (1-oct-2026, OK del propietario): reintento a las 21:00
+- Al pasar `sources/schedules.csv` a una sola pasada (19:30), falló la regla de cobertura (`tests/test_f1_config.py`:
+  2 oportunidades de consulta en 24 h; «NZ_B2 publicado 03:04 UTC: solo 1 consulta»). No se rebaja la regla.
+- plist v1.5: 19:30 + **21:00**. La guarda «ya hecho» es por turno (las 19:30 más recientes), así que si las 19:30
+  terminaron bien la ejecución de las 21:00 sale sin hacer nada (sin latido); si fallaron, las repite. Las 21:00 de Bata
+  son las 20:00Z, antes de la ejecución final de Actions.
+- `instalar_lote1.py`: `SCHEDULE = [(19, 30), (21, 0)]`. `schedules.csv`: MAC1 19:30 + MAC2 21:00 (reintento), ACTIVE.
+  `executors.csv` vigila solo el latido de las 19:30 (la de las 21:00 no publica nada si no hay nada que hacer).
+- Instalación del 1-oct 19:43 (solo 19:30): primera ejecución con rc 0, latido publicado, turno marcado. Reinstalación con
+  el reintento: la ejecuta Claude con el OK del propietario, por el mismo instalador (validación + reversión automática).
+
 ## Sin cambios
 Descargadores (`fetch_nzd_b2.py`, `fetch_chf_snb.py`, `fetch_tona_mac.py`), publicador, familias, token, fuentes y
 metodología.
 
 ## Pruebas
-`tests/test_p5_mac_schedule.py` (6):
+`tests/test_p5_mac_schedule.py` (7, incluido el reintento de las 21:00):
 - plist con solo 19:30 y RunAtLoad, aceptado por `render_plist`;
 - ventana del instalador (19:25 / 07:55 / 17:05 bloquean; 12:00 no);
 - guarda ejecutada con bash y fetchers falsos: turno de ayer antes de las 19:30 y de hoy desde las 19:30; turno hecho no

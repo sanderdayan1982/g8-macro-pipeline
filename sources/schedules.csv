@@ -10,5 +10,5 @@ ASIA2,ASIA,intraday_fetch.yml,17 3 * * 1-5,,,PLANNED_F5,"segunda oportunidad Asi
 EU,EU,intraday_fetch.yml,17 13 * * 1-5,,,PLANNED_F5,"€STR, curva BCE, SONIA, curva BoE, SOFR (verano)","€STR 08:00 CET/CEST; curva BCE 12:00 CET; SOFR 08:00 ET = 12:00Z (EDT) / 13:00Z (EST)."
 US,US,intraday_fetch.yml,47 15 * * 1-5,,,PLANNED_F5,"SOFR (invierno) + CORRA + bills CAD + suelos + BIS + NY Fed ACM","Segunda oportunidad de SOFR en invierno; CORRA ~09:00 ET (a verificar)."
 LATE,LATE,intraday_fetch.yml,17 23 * * 1-5,,,PLANNED_F5,"FRED (bills US, RY USD, IORB) tras la actualización de la tarde","FRED/H.15 ~20:15Z verano, ~21:15Z invierno (registro): cubre invierno con margen; segunda oportunidad de FINAL."
-MAC1,MAC,launchd com.g8.nzd-b2,,08:00,Africa/Malabo,ACTIVE,"RBNZ B2, SNB (RSS, curva, zirepo), TONA","Existente. Bata sin cambio de hora (UTC+1)."
-MAC2,MAC,launchd com.g8.nzd-b2,,17:00,Africa/Malabo,PLANNED_INSTALL,"segunda ejecución del Mac","Curva SNB (14:30 hora suiza = 12:30Z/13:30Z) el mismo día 1; SARON del RSS; segunda oportunidad de B2 y R10."
+MAC1,MAC,launchd com.g8.nzd-b2,,19:30,Africa/Malabo,ACTIVE,"RBNZ B2, SNB (RSS, curva, zirepo), TONA","Acta P-5: ejecución diaria a las 19:30 de Bata (UTC+1) + RunAtLoad + guarda «ya hecho»; despertar pmset 19:25. Antes 08:00/17:00."
+MAC2,MAC,launchd com.g8.nzd-b2,,21:00,Africa/Malabo,ACTIVE,"reintento del Mac (mismos feeds que MAC1)","Acta P-5: segunda oportunidad en 24 h. Solo descarga si la de las 19:30 no terminó bien; si terminó bien sale sin hacer nada (y sin latido: executors.csv vigila solo las 19:30)."

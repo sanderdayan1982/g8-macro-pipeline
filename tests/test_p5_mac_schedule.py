@@ -1,11 +1,12 @@
 """Acta P-5 · job del Mac: una ejecución diaria a las 19:30 (Bata) + RunAtLoad + guarda «ya hecho».
 
-S1 plist: un único StartCalendarInterval 19:30, RunAtLoad; el instalador lo acepta (render_plist)
-S2 instalador: no activa a ±10 min de las 19:30 ni de las antiguas 08:00/17:00
+S1 plist: 19:30 + reintento 21:00, RunAtLoad; el instalador lo acepta (render_plist)
+S2 instalador: no activa a ±10 min de las 19:30, 21:00 ni de las antiguas 08:00/17:00
 G1 turno vigente: antes de las 19:30 → el de ayer; desde las 19:30 → el de hoy
 G2 turno ya hecho → no ejecuta nada y lo deja en el log
 G3 todo a 0 → marca el turno; G4 una descarga falla → no lo marca (la siguiente ocasión reintenta)
 G5 G8_FORCE=1 ignora la guarda
+G6 reintento de las 21:00: no hace nada si las 19:30 salieron bien; repite si fallaron
 """
 import os
 import plistlib
@@ -33,9 +34,9 @@ class Plist(unittest.TestCase):
     def test_S1_single_1930_and_run_at_load(self):
         with open(os.path.join(ROOT, "mac", "com.g8.nzd-b2.plist"), "rb") as fh:
             pl = plistlib.load(fh)
-        self.assertEqual([(d["Hour"], d["Minute"]) for d in pl["StartCalendarInterval"]], [(19, 30)])
+        self.assertEqual([(d["Hour"], d["Minute"]) for d in pl["StartCalendarInterval"]], [(19, 30), (21, 0)])
         self.assertTrue(pl["RunAtLoad"])
-        self.assertEqual(I.SCHEDULE, [(19, 30)])
+        self.assertEqual(I.SCHEDULE, [(19, 30), (21, 0)])
         out = plistlib.loads(I.render_plist(os.path.join(ROOT, "mac", "com.g8.nzd-b2.plist"), "/tmp/x"))
         self.assertEqual(out["ProgramArguments"], ["/bin/zsh", "/tmp/x/nzd_local_run.sh"])
 
@@ -43,7 +44,7 @@ class Plist(unittest.TestCase):
         class E:
             def __init__(self, t):
                 self.now = lambda: t
-        for (h, m), want in (((19, 25), "19:30"), ((7, 55), "08:00"), ((17, 5), "17:00"), ((12, 0), None)):
+        for (h, m), want in (((19, 25), "19:30"), ((20, 55), "21:00"), ((7, 55), "08:00"), ((17, 5), "17:00"), ((12, 0), None)):
             self.assertEqual(I.in_window(E(datetime(2026, 10, 1, h, m).timestamp())), want, (h, m))
 
 
@@ -112,6 +113,18 @@ class Guard(unittest.TestCase):
         self.run_at(epoch(2026, 10, 1, 19, 30))
         self.run_at(epoch(2026, 10, 1, 19, 45), force=True)
         self.assertEqual(len(self.ran()), 8)
+
+    def test_G6_retry_at_2100(self):
+        self.run_at(epoch(2026, 10, 1, 19, 30))                      # bien a las 19:30
+        self.run_at(epoch(2026, 10, 1, 21, 0))                       # reintento: no hace nada
+        self.assertEqual(len(self.ran()), 4)
+        self.codes(0, 0, 1, 0)
+        self.run_at(epoch(2026, 10, 2, 19, 30))                      # falla TONA
+        self.assertEqual(self.mark(), str(epoch(2026, 10, 1, 19, 30)))
+        self.codes(0, 0, 0, 0)
+        self.run_at(epoch(2026, 10, 2, 21, 0))                       # el reintento lo completa
+        self.assertEqual(self.mark(), str(epoch(2026, 10, 2, 19, 30)))
+        self.assertEqual(len(self.ran()), 12)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@
 # v1.5 (acta P-5): una ejecución diaria a las 19:30 hora del Mac (com.g8.nzd-b2.plist v1.4) + RunAtLoad. Guarda «ya hecho»:
 #       si la ejecución del turno vigente (las 19:30 más recientes) ya terminó bien, no se repite (p. ej. RunAtLoad tras
 #       reiniciar). Solo se marca hecho con TODO a 0 (descargas y publicador); si algo falló, la siguiente ocasión reintenta.
+#       El plist v1.5 añade un reintento a las 21:00: con el turno ya hecho sale sin hacer nada.
 # Lo lanza launchd; también se puede correr a mano (G8_FORCE=1 ignora la guarda).
 cd "$(dirname "$0")" || exit 1
 mkdir -p data logs state
