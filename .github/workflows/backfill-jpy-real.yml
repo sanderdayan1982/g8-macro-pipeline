@@ -55,5 +55,5 @@ jobs:
             echo "Sin cambios que comitear."
           else
             git commit -m "data: backfill RY_G8_JPY.csv (JGBi on-the-run, JSDA) $(date -u '+%Y-%m-%d')"
-            git push
+            bash scripts/tools/git_push_retry.sh 5   # acta P-7
           fi

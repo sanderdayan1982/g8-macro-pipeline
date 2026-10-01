@@ -34,4 +34,4 @@ jobs:
           git add data/RY_G8_EUR.csv
           git commit -m "EUR real: backfill histórico (Bundesbank DE linkers interp 10Y)" \
             || echo "nada que commitear"
-          git push
+          bash scripts/tools/git_push_retry.sh 5   # acta P-7

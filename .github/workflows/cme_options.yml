@@ -65,7 +65,8 @@ jobs:
             echo "No new session / no alert-state change — nothing to commit."
           else
             git commit -m "chore: options surface update $(date -u +%F)"
-            git push
+            # Acta P-7: integra main y reintenta (el run tarda ~15 min y otros procesos suben entretanto).
+            bash scripts/tools/git_push_retry.sh 5
           fi
 
       # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
