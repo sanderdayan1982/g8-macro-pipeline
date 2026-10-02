@@ -6,21 +6,22 @@
   "GB_POLICY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261001T153658Z_actions_fetch-bis-policy-gb_a0c3:1549899442a3",
+   "download_id": "20261002T005906Z_actions_fetch-bis-policy-gb_ae8e:8581fd147437",
    "dropped_by_source": 0,
    "file": "GB_POLICY.csv",
    "held": [],
-   "new": 0,
+   "new": 2,
    "repo_max": "20260928",
    "revised": [],
-   "src_max": "20260928",
-   "status": "NOOP"
+   "src_max": "20260930",
+   "status": "PUBLISH",
+   "written": true
   }
  },
- "finished_utc": "2026-10-01T15:37:07Z",
- "gh_run_id": "36885540503",
+ "finished_utc": "2026-10-02T00:59:13Z",
+ "gh_run_id": "36948648656",
  "job": "fetch_bis_policy_GB",
- "last_ok_utc": "2026-10-01T15:37:07Z",
+ "last_ok_utc": "2026-10-02T00:59:13Z",
  "not_before": {},
  "rc": 0,
  "requests": [
@@ -30,21 +31,40 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 8.92,
+     "secs": 5.85,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Thu, 01 Oct 2026 15:36:59 GMT",
+   "date_header": "Fri, 02 Oct 2026 00:59:06 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.GB/all?format=csv"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 0.58,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 02 Oct 2026 00:59:13 GMT",
+   "detail": "",
+   "last_modified": null,
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=03%2FOct%2F2021&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
   }
  ],
- "run_id": "20261001T153658Z_actions_fetch-bis-policy-gb_a0c3",
- "started_utc": "2026-10-01T15:36:58Z",
+ "run_id": "20261002T005906Z_actions_fetch-bis-policy-gb_ae8e",
+ "started_utc": "2026-10-02T00:59:06Z",
  "step": "bis_gb"
 }

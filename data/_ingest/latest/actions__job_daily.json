@@ -1,11 +1,17 @@
 {
- "deadline_utc": "2026-10-01T16:04:51Z",
+ "deadline_utc": "2026-10-02T01:26:59Z",
  "executor": "actions",
- "failed": [],
+ "failed": [
+  {
+   "name": "bis_au",
+   "rc": 1,
+   "status": "FAILED"
+  }
+ ],
  "job": "daily",
  "reserve_s": "540",
  "restored": [],
- "run_id": "36885540503",
+ "run_id": "36948648656",
  "steps": [
   {
    "allowed_s": 240.0,
@@ -14,8 +20,8 @@
    "name": "sofr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.5,
-   "started_utc": "2026-10-01T15:36:41Z",
+   "secs": 0.7,
+   "started_utc": "2026-10-02T00:58:51Z",
    "status": "OK"
   },
   {
@@ -26,7 +32,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 2.1,
-   "started_utc": "2026-10-01T15:36:42Z",
+   "started_utc": "2026-10-02T00:58:52Z",
    "status": "OK"
   },
   {
@@ -37,7 +43,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 1.1,
-   "started_utc": "2026-10-01T15:36:44Z",
+   "started_utc": "2026-10-02T00:58:54Z",
    "status": "OK"
   },
   {
@@ -47,8 +53,8 @@
    "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.2,
-   "started_utc": "2026-10-01T15:36:45Z",
+   "secs": 1.3,
+   "started_utc": "2026-10-02T00:58:55Z",
    "status": "OK"
   },
   {
@@ -58,8 +64,8 @@
    "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.6,
-   "started_utc": "2026-10-01T15:36:46Z",
+   "secs": 1.3,
+   "started_utc": "2026-10-02T00:58:57Z",
    "status": "OK"
   },
   {
@@ -69,8 +75,8 @@
    "name": "corra",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.5,
-   "started_utc": "2026-10-01T15:36:48Z",
+   "secs": 0.4,
+   "started_utc": "2026-10-02T00:58:58Z",
    "status": "OK"
   },
   {
@@ -80,8 +86,8 @@
    "name": "bis_ocr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 9.5,
-   "started_utc": "2026-10-01T15:36:49Z",
+   "secs": 8.0,
+   "started_utc": "2026-10-02T00:58:58Z",
    "status": "OK"
   },
   {
@@ -91,8 +97,8 @@
    "name": "bis_gb",
    "phase": "fetch",
    "rc": 0,
-   "secs": 9.3,
-   "started_utc": "2026-10-01T15:36:58Z",
+   "secs": 6.9,
+   "started_utc": "2026-10-02T00:59:06Z",
    "status": "OK"
   },
   {
@@ -102,8 +108,8 @@
    "name": "bis_jp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 59.0,
-   "started_utc": "2026-10-01T15:37:07Z",
+   "secs": 116.2,
+   "started_utc": "2026-10-02T00:59:13Z",
    "status": "OK"
   },
   {
@@ -113,20 +119,24 @@
    "name": "bis_ch",
    "phase": "fetch",
    "rc": 0,
-   "secs": 5.3,
-   "started_utc": "2026-10-01T15:38:07Z",
+   "secs": 4.6,
+   "started_utc": "2026-10-02T01:01:10Z",
    "status": "OK"
   },
   {
    "allowed_s": 240.0,
    "cap_s": 240.0,
    "cmd": "python scripts/fetch_bis_policy.py AU",
+   "kept_valid_outputs": [
+    "_ingest/latest/actions__fetch_bis_policy_AU.json",
+    "_ingest/runs/actions/fetch_bis_policy_AU/2026-10.jsonl"
+   ],
    "name": "bis_au",
    "phase": "fetch",
-   "rc": 0,
-   "secs": 6.7,
-   "started_utc": "2026-10-01T15:38:12Z",
-   "status": "OK"
+   "rc": 1,
+   "secs": 1.6,
+   "started_utc": "2026-10-02T01:01:14Z",
+   "status": "FAILED"
   },
   {
    "allowed_s": 240.0,
@@ -135,8 +145,8 @@
    "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-01T15:38:19Z",
+   "secs": 2.6,
+   "started_utc": "2026-10-02T01:01:16Z",
    "status": "OK"
   },
   {
@@ -146,8 +156,8 @@
    "name": "cad_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-01T15:38:20Z",
+   "secs": 0.5,
+   "started_utc": "2026-10-02T01:01:19Z",
    "status": "OK"
   },
   {
@@ -157,8 +167,8 @@
    "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-01T15:38:20Z",
+   "secs": 1.7,
+   "started_utc": "2026-10-02T01:01:19Z",
    "status": "OK"
   },
   {
@@ -168,8 +178,8 @@
    "name": "eur_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 10.7,
-   "started_utc": "2026-10-01T15:38:21Z",
+   "secs": 35.5,
+   "started_utc": "2026-10-02T01:01:21Z",
    "status": "OK"
   },
   {
@@ -179,8 +189,8 @@
    "name": "gbp_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.4,
-   "started_utc": "2026-10-01T15:38:32Z",
+   "secs": 4.3,
+   "started_utc": "2026-10-02T01:01:56Z",
    "status": "OK"
   },
   {
@@ -190,8 +200,8 @@
    "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.3,
-   "started_utc": "2026-10-01T15:38:35Z",
+   "secs": 2.8,
+   "started_utc": "2026-10-02T01:02:01Z",
    "status": "OK"
   },
   {
@@ -201,8 +211,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.3,
-   "started_utc": "2026-10-01T15:38:37Z",
+   "secs": 3.5,
+   "started_utc": "2026-10-02T01:02:04Z",
    "status": "OK"
   },
   {
@@ -212,8 +222,8 @@
    "name": "acm_tp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.1,
-   "started_utc": "2026-10-01T15:38:39Z",
+   "secs": 1.7,
+   "started_utc": "2026-10-02T01:02:07Z",
    "status": "OK"
   },
   {
@@ -223,8 +233,8 @@
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 0,
-   "secs": 71.0,
-   "started_utc": "2026-10-01T15:38:42Z",
+   "secs": 97.2,
+   "started_utc": "2026-10-02T01:02:09Z",
    "status": "OK"
   },
   {
@@ -234,8 +244,8 @@
    "name": "acm_nzd",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.5,
-   "started_utc": "2026-10-01T15:39:53Z",
+   "secs": 0.6,
+   "started_utc": "2026-10-02T01:03:46Z",
    "status": "OK"
   },
   {
@@ -245,8 +255,8 @@
    "name": "acm_chf",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-10-01T15:39:53Z",
+   "secs": 0.8,
+   "started_utc": "2026-10-02T01:03:47Z",
    "status": "OK"
   },
   {
@@ -257,7 +267,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.1,
-   "started_utc": "2026-10-01T15:39:54Z",
+   "started_utc": "2026-10-02T01:03:48Z",
    "status": "OK"
   },
   {
@@ -267,8 +277,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 14.3,
-   "started_utc": "2026-10-01T15:39:54Z",
+   "secs": 18.0,
+   "started_utc": "2026-10-02T01:03:48Z",
    "status": "OK"
   },
   {
@@ -278,8 +288,8 @@
    "name": "eur_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.6,
-   "started_utc": "2026-10-01T15:40:08Z",
+   "secs": 2.7,
+   "started_utc": "2026-10-02T01:04:06Z",
    "status": "OK"
   },
   {
@@ -289,12 +299,23 @@
    "name": "jpy_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-01T15:40:11Z",
+   "secs": 2.5,
+   "started_utc": "2026-10-02T01:04:09Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 60.0,
+   "cap_s": 60.0,
+   "cmd": "python scripts/aud_nowcast.py",
+   "name": "aud_nowcast",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.5,
+   "started_utc": "2026-10-02T01:04:12Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-01T15:40:12Z"
+ "written_utc": "2026-10-02T01:04:12Z"
 }
