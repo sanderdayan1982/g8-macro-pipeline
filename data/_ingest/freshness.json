@@ -1,26 +1,45 @@
 {
- "at_utc": "2026-10-01T19:01:25Z",
+ "at_utc": "2026-10-02T14:10:34Z",
  "compare_summary": {
-  "ACUERDO": 43,
+  "ACUERDO": 33,
   "FUERA_DE_F3": 2,
-  "NUEVO_MAS_ESTRICTO": 3
+  "NUEVO_MAS_ESTRICTO": 14
  },
  "counts": {
-  "CURRENT": 58,
-  "NOT_MONITORED": 4,
+  "CURRENT": 23,
+  "DUE": 3,
+  "NOT_MONITORED": 5,
   "NO_OBS_DATE": 3,
-  "NO_PUBLICATION": 1,
-  "OVERDUE": 5,
-  "PENDING_TIME_UNKNOWN": 19,
+  "NO_PUBLICATION": 16,
+  "OVERDUE": 27,
+  "PENDING_TIME_UNKNOWN": 13,
+  "STALE": 2,
   "UNKNOWN_SCHEDULE": 9
  },
  "mode": "PARALELO_SIN_AVISOS",
  "official_engine": "dashboard_alerts.py §05 (sin cambios)",
  "outputs": [
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "OFICIAL_GENERAL",
    "calendar": "US_REPO",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -34,8 +53,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:36:42Z",
-      "last_ok_utc": "2026-10-01T15:36:42Z",
+      "finished_utc": "2026-10-02T00:58:52Z",
+      "last_ok_utc": "2026-10-02T00:58:52Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -44,22 +63,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153641Z_actions_fetch-sofr_4039",
+      "run_id": "20261002T005851Z_actions_fetch-sofr_f70b",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:41Z",
+      "started_utc": "2026-10-02T00:58:51Z",
       "where": "actions__fetch_sofr.json"
      },
      "step:sofr": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:41Z",
+      "started_utc": "2026-10-02T00:58:51Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -68,33 +87,55 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:41Z",
+     "started_utc": "2026-10-02T00:58:51Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:sofr"
    },
    "file": "SOFR.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T13:00:00Z",
    "rule_id": "SOFR",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "America/New_York"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -108,8 +149,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:36:44Z",
-      "last_ok_utc": "2026-10-01T15:36:44Z",
+      "finished_utc": "2026-10-02T00:58:54Z",
+      "last_ok_utc": "2026-10-02T00:58:54Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -118,22 +159,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153642Z_actions_fetch-estr_0b0f",
+      "run_id": "20261002T005852Z_actions_fetch-estr_ca55",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:42Z",
+      "started_utc": "2026-10-02T00:58:52Z",
       "where": "actions__fetch_estr.json"
      },
      "step:estr": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:42Z",
+      "started_utc": "2026-10-02T00:58:52Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -142,27 +183,32 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:42Z",
+     "started_utc": "2026-10-02T00:58:52Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:estr"
    },
    "file": "ESTR.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T07:00:00Z",
    "rule_id": "ESTR",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -180,7 +226,7 @@
    "cause": "CONSULTADA_SIN_NOVEDAD",
    "cause_certainty": "registrada",
    "cause_detail": {
-    "downloads": 2,
+    "downloads": 3,
     "evidence_available": true,
     "executed_runs": [
      {
@@ -210,16 +256,34 @@
       "started_utc": "2026-10-01T15:36:44Z"
      },
      {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261002T005854Z_actions_fetch-sonia_c087",
+      "source": "actions",
+      "started_utc": "2026-10-02T00:58:54Z"
+     },
+     {
       "file": null,
       "rc": 0,
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:44Z"
+      "started_utc": "2026-10-02T00:58:54Z"
      }
     ],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
    },
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -233,8 +297,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:36:45Z",
-      "last_ok_utc": "2026-10-01T15:36:45Z",
+      "finished_utc": "2026-10-02T00:58:55Z",
+      "last_ok_utc": "2026-10-02T00:58:55Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -243,22 +307,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153644Z_actions_fetch-sonia_072b",
+      "run_id": "20261002T005854Z_actions_fetch-sonia_c087",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:44Z",
+      "started_utc": "2026-10-02T00:58:54Z",
       "where": "actions__fetch_sonia.json"
      },
      "step:sonia": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:44Z",
+      "started_utc": "2026-10-02T00:58:54Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -267,13 +331,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:44Z",
+     "started_utc": "2026-10-02T00:58:54Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -288,18 +352,19 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
    "missing": [
-    "2026-09-30"
+    "2026-09-30",
+    "2026-10-01"
    ],
    "model": "bd_offset",
    "overdue_since": "2026-10-01T09:00:00Z",
    "rule_id": "SONIA",
-   "state": "OVERDUE",
+   "state": "STALE",
    "timezone": "Europe/London"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -309,12 +374,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:36:48Z",
-      "last_ok_utc": "2026-10-01T15:36:48Z",
+      "finished_utc": "2026-10-02T00:58:58Z",
+      "last_ok_utc": "2026-10-02T00:58:58Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -323,9 +388,9 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153646Z_actions_fetch-tona_9c46",
+      "run_id": "20261002T005857Z_actions_fetch-tona_a7e1",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:46Z",
+      "started_utc": "2026-10-02T00:58:57Z",
       "where": "actions__fetch_tona.json"
      },
      "mac:JP-TONA/tona": {
@@ -361,53 +426,38 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:46Z",
+      "started_utc": "2026-10-02T00:58:57Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
     },
     "latest": {
-     "errors": [],
-     "executor": "mac-primary",
-     "family": "JP-TONA",
-     "family_detail": "",
-     "family_status": "NOOP",
      "file": {
-      "detail": "",
-      "held": 0,
-      "src_max": "2026-09-29",
-      "status": "NOOP",
-      "written": false
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T18:44:25Z",
-     "publish_failed_family": null,
-     "publish_status": "NOOP",
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "detail": "",
-       "status": 200
-      }
-     ],
-     "run_id": "20261001T184323Z_mac-primary_nzchf-tona_1cf6",
-     "source": "mac",
-     "started_utc": "2026-10-01T18:43:23Z",
-     "where": "mac-primary__nzchf-tona.json"
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T00:58:57Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
     },
-    "latest_source": "mac:JP-TONA/tona"
+    "latest_source": "step:tona"
    },
    "file": "TONA.csv",
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "TONA",
@@ -429,7 +479,7 @@
    "cause": "CONSULTADA_SIN_NOVEDAD",
    "cause_certainty": "registrada",
    "cause_detail": {
-    "downloads": 2,
+    "downloads": 3,
     "evidence_available": true,
     "executed_runs": [
      {
@@ -459,16 +509,34 @@
       "started_utc": "2026-10-01T15:36:48Z"
      },
      {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261002T005858Z_actions_fetch-corra_9a90",
+      "source": "actions",
+      "started_utc": "2026-10-02T00:58:58Z"
+     },
+     {
       "file": null,
       "rc": 0,
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:48Z"
+      "started_utc": "2026-10-02T00:58:58Z"
      }
     ],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
    },
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -482,8 +550,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:36:48Z",
-      "last_ok_utc": "2026-10-01T15:36:48Z",
+      "finished_utc": "2026-10-02T00:58:58Z",
+      "last_ok_utc": "2026-10-02T00:58:58Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -492,22 +560,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153648Z_actions_fetch-corra_7b32",
+      "run_id": "20261002T005858Z_actions_fetch-corra_9a90",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:48Z",
+      "started_utc": "2026-10-02T00:58:58Z",
       "where": "actions__fetch_corra.json"
      },
      "step:corra": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:48Z",
+      "started_utc": "2026-10-02T00:58:58Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -516,13 +584,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:48Z",
+     "started_utc": "2026-10-02T00:58:58Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -537,18 +605,19 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
    "missing": [
-    "2026-09-30"
+    "2026-09-30",
+    "2026-10-01"
    ],
    "model": "bd_offset",
    "overdue_since": "2026-10-01T14:00:00Z",
    "rule_id": "CORRA",
-   "state": "OVERDUE",
+   "state": "STALE",
    "timezone": "America/Toronto"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -558,12 +627,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:36:46Z",
-      "last_ok_utc": "2026-10-01T15:36:46Z",
+      "finished_utc": "2026-10-02T00:58:56Z",
+      "last_ok_utc": "2026-10-02T00:58:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -572,22 +641,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153645Z_actions_fetch-aonia_7a75",
+      "run_id": "20261002T005855Z_actions_fetch-aonia_14f0",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:45Z",
+      "started_utc": "2026-10-02T00:58:55Z",
       "where": "actions__fetch_aonia.json"
      },
      "step:aonia": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:45Z",
+      "started_utc": "2026-10-02T00:58:55Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -596,13 +665,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:45Z",
+     "started_utc": "2026-10-02T00:58:55Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -612,17 +681,17 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "AONIA",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -632,12 +701,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-10-01",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-02",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:39Z",
-      "last_ok_utc": "2026-10-01T15:38:39Z",
+      "finished_utc": "2026-10-02T01:02:07Z",
+      "last_ok_utc": "2026-10-02T01:02:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -654,22 +723,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153837Z_actions_fetch-floor-spreads_d333",
+      "run_id": "20261002T010204Z_actions_fetch-floor-spreads_8d25",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -678,13 +747,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:37Z",
+     "started_utc": "2026-10-02T01:02:04Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -694,7 +763,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-10-01",
+   "have_max": "2026-10-02",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "FLOORS",
@@ -704,7 +773,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -718,8 +787,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:39Z",
-      "last_ok_utc": "2026-10-01T15:38:39Z",
+      "finished_utc": "2026-10-02T01:02:07Z",
+      "last_ok_utc": "2026-10-02T01:02:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -736,22 +805,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153837Z_actions_fetch-floor-spreads_d333",
+      "run_id": "20261002T010204Z_actions_fetch-floor-spreads_8d25",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -760,13 +829,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:37Z",
+     "started_utc": "2026-10-02T01:02:04Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -784,9 +853,20 @@
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -800,8 +880,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:39Z",
-      "last_ok_utc": "2026-10-01T15:38:39Z",
+      "finished_utc": "2026-10-02T01:02:07Z",
+      "last_ok_utc": "2026-10-02T01:02:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -818,22 +898,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153837Z_actions_fetch-floor-spreads_d333",
+      "run_id": "20261002T010204Z_actions_fetch-floor-spreads_8d25",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:37Z",
+      "started_utc": "2026-10-02T01:02:04Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -842,13 +922,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:37Z",
+     "started_utc": "2026-10-02T01:02:04Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -861,12 +941,13 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "FLOORS",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/Toronto"
   },
   {
-   "age_days": 3,
+   "age_days": 2,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -879,36 +960,40 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-28",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:37:07Z",
-      "last_ok_utc": "2026-10-01T15:37:07Z",
+      "finished_utc": "2026-10-02T00:59:13Z",
+      "last_ok_utc": "2026-10-02T00:59:13Z",
       "not_before": {},
       "rc": 0,
       "requests": [
        {
         "cls": "OK",
         "status": 200
+       },
+       {
+        "cls": "OK",
+        "status": 200
        }
       ],
-      "run_id": "20261001T153658Z_actions_fetch-bis-policy-gb_a0c3",
+      "run_id": "20261002T005906Z_actions_fetch-bis-policy-gb_ae8e",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:58Z",
+      "started_utc": "2026-10-02T00:59:06Z",
       "where": "actions__fetch_bis_policy_GB.json"
      },
      "step:bis_gb": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:58Z",
+      "started_utc": "2026-10-02T00:59:06Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -917,13 +1002,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:58Z",
+     "started_utc": "2026-10-02T00:59:06Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -933,7 +1018,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-28",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "event",
    "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
@@ -942,7 +1027,7 @@
    "timezone": "UTC"
   },
   {
-   "age_days": 2,
+   "age_days": 3,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -959,8 +1044,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:06Z",
-      "last_ok_utc": "2026-10-01T15:38:06Z",
+      "finished_utc": "2026-10-02T01:01:09Z",
+      "last_ok_utc": "2026-10-02T01:01:09Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -969,22 +1054,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153708Z_actions_fetch-bis-policy-jp_c09d",
+      "run_id": "20261002T005913Z_actions_fetch-bis-policy-jp_31cc",
       "source": "actions",
-      "started_utc": "2026-10-01T15:37:08Z",
+      "started_utc": "2026-10-02T00:59:13Z",
       "where": "actions__fetch_bis_policy_JP.json"
      },
      "step:bis_jp": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:37:07Z",
+      "started_utc": "2026-10-02T00:59:13Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -993,13 +1078,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:37:07Z",
+     "started_utc": "2026-10-02T00:59:13Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1018,7 +1103,7 @@
    "timezone": "UTC"
   },
   {
-   "age_days": 2,
+   "age_days": 3,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -1035,8 +1120,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:12Z",
-      "last_ok_utc": "2026-10-01T15:38:12Z",
+      "finished_utc": "2026-10-02T01:01:14Z",
+      "last_ok_utc": "2026-10-02T01:01:14Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1045,22 +1130,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153807Z_actions_fetch-bis-policy-ch_cc95",
+      "run_id": "20261002T010110Z_actions_fetch-bis-policy-ch_4627",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:07Z",
+      "started_utc": "2026-10-02T01:01:10Z",
       "where": "actions__fetch_bis_policy_CH.json"
      },
      "step:bis_ch": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:07Z",
+      "started_utc": "2026-10-02T01:01:10Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1069,13 +1154,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:07Z",
+     "started_utc": "2026-10-02T01:01:10Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1094,7 +1179,7 @@
    "timezone": "UTC"
   },
   {
-   "age_days": 0,
+   "age_days": 1,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -1103,41 +1188,41 @@
     "by_source": {
      "actions:fetch_bis_policy_AU": {
       "errors": [],
-      "failing_since_utc": null,
+      "failing_since_utc": "2026-10-02T01:01:14Z",
       "file": {
-       "detail": "",
-       "held": 0,
-       "src_max": "2026-10-01",
-       "status": "NOOP",
-       "written": false
+       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:38:19Z",
+      "finished_utc": "2026-10-02T01:01:16Z",
       "last_ok_utc": "2026-10-01T15:38:19Z",
       "not_before": {},
-      "rc": 0,
+      "rc": 1,
       "requests": [
+       {
+        "cls": "OK",
+        "status": 200
+       },
        {
         "cls": "OK",
         "status": 200
        }
       ],
-      "run_id": "20261001T153812Z_actions_fetch-bis-policy-au_d746",
+      "run_id": "20261002T010114Z_actions_fetch-bis-policy-au_57f4",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:12Z",
+      "started_utc": "2026-10-02T01:01:14Z",
       "where": "actions__fetch_bis_policy_AU.json"
      },
      "step:bis_au": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
-      "rc": 0,
+      "rc": 1,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:12Z",
-      "status": "OK",
+      "started_utc": "2026-10-02T01:01:14Z",
+      "status": "FAILED",
       "where": "actions__job_daily.json"
      }
     },
@@ -1145,14 +1230,14 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
-     "rc": 0,
+     "rc": 1,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:12Z",
-     "status": "OK",
+     "started_utc": "2026-10-02T01:01:14Z",
+     "status": "FAILED",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:bis_au"
@@ -1170,7 +1255,7 @@
    "timezone": "UTC"
   },
   {
-   "age_days": 6,
+   "age_days": 7,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -1187,8 +1272,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:36:58Z",
-      "last_ok_utc": "2026-10-01T15:36:58Z",
+      "finished_utc": "2026-10-02T00:59:06Z",
+      "last_ok_utc": "2026-10-02T00:59:06Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1197,22 +1282,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153649Z_actions_fetch-bis-ocr_261c",
+      "run_id": "20261002T005858Z_actions_fetch-bis-ocr_3d64",
       "source": "actions",
-      "started_utc": "2026-10-01T15:36:49Z",
+      "started_utc": "2026-10-02T00:58:58Z",
       "where": "actions__fetch_bis_ocr.json"
      },
      "step:bis_ocr": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:36:49Z",
+      "started_utc": "2026-10-02T00:58:58Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1221,13 +1306,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:36:49Z",
+     "started_utc": "2026-10-02T00:58:58Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1250,16 +1335,16 @@
     "episodes": [],
     "limitation": null,
     "lower_bound": null,
-    "obs_date": "2026-09-30",
+    "obs_date": "2026-10-01",
     "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
     "upper_bound": null,
     "version": null
    },
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -1269,12 +1354,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:18Z",
+      "last_ok_utc": "2026-10-02T01:01:18Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1295,22 +1380,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153819Z_actions_fetch-us-bills_371f",
+      "run_id": "20261002T010116Z_actions_fetch-us-bills_299c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "where": "actions__fetch_us_bills.json"
      },
      "step:us_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1319,13 +1404,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:19Z",
+     "started_utc": "2026-10-02T01:01:16Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1335,10 +1420,10 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "US_BILLS",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
@@ -1348,16 +1433,16 @@
     "episodes": [],
     "limitation": null,
     "lower_bound": null,
-    "obs_date": "2026-09-30",
+    "obs_date": "2026-10-01",
     "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
     "upper_bound": null,
     "version": null
    },
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -1367,12 +1452,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:18Z",
+      "last_ok_utc": "2026-10-02T01:01:18Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1393,22 +1478,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153819Z_actions_fetch-us-bills_371f",
+      "run_id": "20261002T010116Z_actions_fetch-us-bills_299c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "where": "actions__fetch_us_bills.json"
      },
      "step:us_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1417,13 +1502,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:19Z",
+     "started_utc": "2026-10-02T01:01:16Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1433,10 +1518,10 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "US_BILLS",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
@@ -1446,16 +1531,16 @@
     "episodes": [],
     "limitation": null,
     "lower_bound": null,
-    "obs_date": "2026-09-30",
+    "obs_date": "2026-10-01",
     "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
     "upper_bound": null,
     "version": null
    },
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -1465,12 +1550,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:18Z",
+      "last_ok_utc": "2026-10-02T01:01:18Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1491,22 +1576,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153819Z_actions_fetch-us-bills_371f",
+      "run_id": "20261002T010116Z_actions_fetch-us-bills_299c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "where": "actions__fetch_us_bills.json"
      },
      "step:us_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1515,13 +1600,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:19Z",
+     "started_utc": "2026-10-02T01:01:16Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1531,10 +1616,10 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "US_BILLS",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
@@ -1544,16 +1629,16 @@
     "episodes": [],
     "limitation": null,
     "lower_bound": null,
-    "obs_date": "2026-09-30",
+    "obs_date": "2026-10-01",
     "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
     "upper_bound": null,
     "version": null
    },
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -1563,12 +1648,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:18Z",
+      "last_ok_utc": "2026-10-02T01:01:18Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1589,22 +1674,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153819Z_actions_fetch-us-bills_371f",
+      "run_id": "20261002T010116Z_actions_fetch-us-bills_299c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "where": "actions__fetch_us_bills.json"
      },
      "step:us_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:19Z",
+      "started_utc": "2026-10-02T01:01:16Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1613,13 +1698,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:19Z",
+     "started_utc": "2026-10-02T01:01:16Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -1629,18 +1714,35 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "US_BILLS",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -1654,8 +1756,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1684,22 +1786,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1708,33 +1810,56 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_3M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -1748,8 +1873,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1778,22 +1903,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1802,33 +1927,56 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_6M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -1842,8 +1990,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1872,22 +2020,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1896,33 +2044,56 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_1Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -1936,8 +2107,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1966,22 +2137,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -1990,33 +2161,56 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -2030,8 +2224,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2060,22 +2254,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2084,33 +2278,56 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_5Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -2124,8 +2341,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:32Z",
-      "last_ok_utc": "2026-10-01T15:38:32Z",
+      "finished_utc": "2026-10-02T01:01:56Z",
+      "last_ok_utc": "2026-10-02T01:01:56Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2154,22 +2371,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153822Z_actions_fetch-eur-bills_f6e8",
+      "run_id": "20261002T010121Z_actions_fetch-eur-bills_7d7c",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:22Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "where": "actions__fetch_eur_bills.json"
      },
      "step:eur_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:21Z",
+      "started_utc": "2026-10-02T01:01:21Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2178,33 +2395,50 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:21Z",
+     "started_utc": "2026-10-02T01:01:21Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_10Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T11:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-01T23:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -2215,11 +2449,11 @@
        "detail": "",
        "held": 0,
        "src_max": "2026-09-30",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-10-01T15:38:34Z",
-      "last_ok_utc": "2026-10-01T15:38:34Z",
+      "finished_utc": "2026-10-02T01:02:01Z",
+      "last_ok_utc": "2026-10-02T01:02:01Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2232,22 +2466,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153832Z_actions_fetch-gbp-bills_0afd",
+      "run_id": "20261002T010157Z_actions_fetch-gbp-bills_cef3",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:57Z",
       "where": "actions__fetch_gbp_bills.json"
      },
      "step:gbp_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:56Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2256,13 +2490,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:32Z",
+     "started_utc": "2026-10-02T01:01:56Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2275,14 +2509,26 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T23:00:00Z",
    "rule_id": "GBP_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-01T23:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -2293,11 +2539,11 @@
        "detail": "",
        "held": 0,
        "src_max": "2026-09-30",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-10-01T15:38:34Z",
-      "last_ok_utc": "2026-10-01T15:38:34Z",
+      "finished_utc": "2026-10-02T01:02:01Z",
+      "last_ok_utc": "2026-10-02T01:02:01Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2310,22 +2556,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153832Z_actions_fetch-gbp-bills_0afd",
+      "run_id": "20261002T010157Z_actions_fetch-gbp-bills_cef3",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:57Z",
       "where": "actions__fetch_gbp_bills.json"
      },
      "step:gbp_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:56Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2334,13 +2580,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:32Z",
+     "started_utc": "2026-10-02T01:01:56Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2353,14 +2599,26 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T23:00:00Z",
    "rule_id": "GBP_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-01T23:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -2371,11 +2629,11 @@
        "detail": "",
        "held": 0,
        "src_max": "2026-09-30",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-10-01T15:38:34Z",
-      "last_ok_utc": "2026-10-01T15:38:34Z",
+      "finished_utc": "2026-10-02T01:02:01Z",
+      "last_ok_utc": "2026-10-02T01:02:01Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2388,22 +2646,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153832Z_actions_fetch-gbp-bills_0afd",
+      "run_id": "20261002T010157Z_actions_fetch-gbp-bills_cef3",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:57Z",
       "where": "actions__fetch_gbp_bills.json"
      },
      "step:gbp_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:56Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2412,13 +2670,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:32Z",
+     "started_utc": "2026-10-02T01:01:56Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2431,14 +2689,26 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T23:00:00Z",
    "rule_id": "GBP_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-01T23:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -2449,11 +2719,11 @@
        "detail": "",
        "held": 0,
        "src_max": "2026-09-30",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-10-01T15:38:34Z",
-      "last_ok_utc": "2026-10-01T15:38:34Z",
+      "finished_utc": "2026-10-02T01:02:01Z",
+      "last_ok_utc": "2026-10-02T01:02:01Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2466,22 +2736,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153832Z_actions_fetch-gbp-bills_0afd",
+      "run_id": "20261002T010157Z_actions_fetch-gbp-bills_cef3",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:57Z",
       "where": "actions__fetch_gbp_bills.json"
      },
      "step:gbp_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:56Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2490,13 +2760,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:32Z",
+     "started_utc": "2026-10-02T01:01:56Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2509,14 +2779,26 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T23:00:00Z",
    "rule_id": "GBP_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-01",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-01T23:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -2527,11 +2809,11 @@
        "detail": "",
        "held": 0,
        "src_max": "2026-09-30",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-10-01T15:38:34Z",
-      "last_ok_utc": "2026-10-01T15:38:34Z",
+      "finished_utc": "2026-10-02T01:02:01Z",
+      "last_ok_utc": "2026-10-02T01:02:01Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2544,22 +2826,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153832Z_actions_fetch-gbp-bills_0afd",
+      "run_id": "20261002T010157Z_actions_fetch-gbp-bills_cef3",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:57Z",
       "where": "actions__fetch_gbp_bills.json"
      },
      "step:gbp_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:32Z",
+      "started_utc": "2026-10-02T01:01:56Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2568,13 +2850,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:32Z",
+     "started_utc": "2026-10-02T01:01:56Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2587,24 +2869,14 @@
    "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T23:00:00Z",
    "rule_id": "GBP_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/London"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -2615,12 +2887,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2633,22 +2905,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2657,13 +2929,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2673,28 +2945,16 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -2705,12 +2965,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2723,22 +2983,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2747,13 +3007,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2763,28 +3023,16 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -2795,12 +3043,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2813,22 +3061,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2837,13 +3085,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2853,28 +3101,16 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -2885,12 +3121,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2903,22 +3139,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -2927,13 +3163,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -2943,28 +3179,16 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -2975,12 +3199,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -2993,22 +3217,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3017,13 +3241,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3033,28 +3257,16 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-01",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-01",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
@@ -3065,12 +3277,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:37Z",
-      "last_ok_utc": "2026-10-01T15:38:37Z",
+      "finished_utc": "2026-10-02T01:02:03Z",
+      "last_ok_utc": "2026-10-02T01:02:03Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3083,22 +3295,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153835Z_actions_fetch-jpy-bills_9758",
+      "run_id": "20261002T010201Z_actions_fetch-jpy-bills_a547",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "where": "actions__fetch_jpy_bills.json"
      },
      "step:jpy_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:35Z",
+      "started_utc": "2026-10-02T01:02:01Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3107,13 +3319,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:35Z",
+     "started_utc": "2026-10-02T01:02:01Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3123,12 +3335,11 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -3143,9 +3354,67 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "CONSULTADA_SIN_NOVEDAD",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 3,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T135118Z_actions_fetch-cad-bills_0f49",
+      "source": "actions",
+      "started_utc": "2026-10-01T13:51:18Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "source": "actions",
+      "started_utc": "2026-10-01T15:38:20Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
+      "source": "actions",
+      "started_utc": "2026-10-02T01:01:19Z"
+     },
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:01:19Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3159,8 +3428,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:19Z",
+      "last_ok_utc": "2026-10-02T01:01:19Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3169,22 +3438,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3193,28 +3462,33 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:cad_bills"
    },
    "file": "CAD_BILL_3M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_CONSULTADA_SIN_NOVEDAD",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_since": "2026-10-02T04:00:00Z",
    "rule_id": "CAD_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
@@ -3229,9 +3503,67 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "CONSULTADA_SIN_NOVEDAD",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 3,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T135118Z_actions_fetch-cad-bills_0f49",
+      "source": "actions",
+      "started_utc": "2026-10-01T13:51:18Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "source": "actions",
+      "started_utc": "2026-10-01T15:38:20Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
+      "source": "actions",
+      "started_utc": "2026-10-02T01:01:19Z"
+     },
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:01:19Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3245,8 +3577,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:19Z",
+      "last_ok_utc": "2026-10-02T01:01:19Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3255,22 +3587,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3279,28 +3611,33 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:cad_bills"
    },
    "file": "CAD_BILL_6M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_CONSULTADA_SIN_NOVEDAD",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_since": "2026-10-02T04:00:00Z",
    "rule_id": "CAD_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
@@ -3315,9 +3652,67 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "CONSULTADA_SIN_NOVEDAD",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 3,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T135118Z_actions_fetch-cad-bills_0f49",
+      "source": "actions",
+      "started_utc": "2026-10-01T13:51:18Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "source": "actions",
+      "started_utc": "2026-10-01T15:38:20Z"
+     },
+     {
+      "file": {
+       "detail": "",
+       "held": 0,
+       "src_max": "2026-09-29",
+       "status": "NOOP",
+       "written": false
+      },
+      "rc": 0,
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
+      "source": "actions",
+      "started_utc": "2026-10-02T01:01:19Z"
+     },
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:01:19Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3331,8 +3726,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:38:20Z",
-      "last_ok_utc": "2026-10-01T15:38:20Z",
+      "finished_utc": "2026-10-02T01:01:19Z",
+      "last_ok_utc": "2026-10-02T01:01:19Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3341,22 +3736,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-cad-bills_70d0",
+      "run_id": "20261002T010119Z_actions_fetch-cad-bills_7289",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3365,36 +3760,60 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:cad_bills"
    },
    "file": "CAD_BILL_1Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_CONSULTADA_SIN_NOVEDAD",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_since": "2026-10-02T04:00:00Z",
    "rule_id": "CAD_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:02:09Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3402,13 +3821,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3417,34 +3836,39 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "CAD_NOM_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_since": "2026-10-02T04:00:00Z",
    "rule_id": "CAD_CURVE",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3454,12 +3878,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:21Z",
-      "last_ok_utc": "2026-10-01T15:38:21Z",
+      "finished_utc": "2026-10-02T01:01:21Z",
+      "last_ok_utc": "2026-10-02T01:01:21Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3468,22 +3892,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-aud-bills_abd3",
+      "run_id": "20261002T010119Z_actions_fetch-aud-bills_72c5",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_aud_bills.json"
      },
      "step:aud_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3492,13 +3916,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3508,17 +3932,17 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3528,12 +3952,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:21Z",
-      "last_ok_utc": "2026-10-01T15:38:21Z",
+      "finished_utc": "2026-10-02T01:01:21Z",
+      "last_ok_utc": "2026-10-02T01:01:21Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3542,22 +3966,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-aud-bills_abd3",
+      "run_id": "20261002T010119Z_actions_fetch-aud-bills_72c5",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_aud_bills.json"
      },
      "step:aud_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3566,13 +3990,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3582,17 +4006,17 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3602,12 +4026,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-30",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-01",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:21Z",
-      "last_ok_utc": "2026-10-01T15:38:21Z",
+      "finished_utc": "2026-10-02T01:01:21Z",
+      "last_ok_utc": "2026-10-02T01:01:21Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3616,22 +4040,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153820Z_actions_fetch-aud-bills_abd3",
+      "run_id": "20261002T010119Z_actions_fetch-aud-bills_72c5",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "where": "actions__fetch_aud_bills.json"
      },
      "step:aud_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:20Z",
+      "started_utc": "2026-10-02T01:01:19Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3640,13 +4064,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:20Z",
+     "started_utc": "2026-10-02T01:01:19Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3656,17 +4080,25 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-23",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3674,13 +4106,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:54Z",
+      "started_utc": "2026-10-02T01:03:48Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3689,33 +4121,47 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:54Z",
+     "started_utc": "2026-10-02T01:03:48Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:real_yields"
    },
    "file": "RY_G8_AUD.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-23",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "weekly_before:2",
+   "overdue_since": "2026-10-02T05:00:00Z",
    "rule_id": "AUD_F2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "AU",
-   "expected_obs": "2026-09-23",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3723,13 +4169,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3738,35 +4184,41 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "AUD_NOM_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-23",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "weekly_before:2",
+   "overdue_since": "2026-10-02T05:00:00Z",
    "rule_id": "AUD_F2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Australia/Sydney"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3774,13 +4226,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:54Z",
+      "started_utc": "2026-10-02T01:03:48Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3789,13 +4241,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:54Z",
+     "started_utc": "2026-10-02T01:03:48Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3805,10 +4257,10 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "USD_RY",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
@@ -3816,9 +4268,28 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "GB",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-09-30T23:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:03:48Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3826,13 +4297,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:54Z",
+      "started_utc": "2026-10-02T01:03:48Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3841,36 +4312,60 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:54Z",
+     "started_utc": "2026-10-02T01:03:48Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:real_yields"
    },
    "file": "RY_G8_GBP.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-01T23:00:00Z",
+   "overdue_since": "2026-10-01T23:00:00Z",
    "rule_id": "GBP_RY",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "Europe/London"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+   "cause_certainty": "registrada",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [
+     {
+      "file": null,
+      "rc": 0,
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:03:48Z"
+     }
+    ],
+    "scheduled_passes": [
+     [
+      "FINAL",
+      "2026-10-01T21:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -3878,13 +4373,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:54Z",
+      "started_utc": "2026-10-02T01:03:48Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3893,34 +4388,50 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:54Z",
+     "started_utc": "2026-10-02T01:03:48Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:real_yields"
    },
    "file": "RY_G8_CAD.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
-   "missing": [],
+   "missing": [
+    "2026-09-30"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_since": "2026-10-02T04:00:00Z",
    "rule_id": "CAD_RY",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-10-02",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-09-30",
+   "due_obs": "2026-10-02",
+   "due_since": "2026-10-01T22:00:00Z",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3934,8 +4445,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-10-01T15:40:11Z",
-      "last_ok_utc": "2026-10-01T15:40:11Z",
+      "finished_utc": "2026-10-02T01:04:09Z",
+      "last_ok_utc": "2026-10-02T01:04:09Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3948,22 +4459,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T154009Z_actions_fetch-eur-real_bec4",
+      "run_id": "20261002T010406Z_actions_fetch-eur-real_43e1",
       "source": "actions",
-      "started_utc": "2026-10-01T15:40:09Z",
+      "started_utc": "2026-10-02T01:04:06Z",
       "where": "actions__fetch_eur_real.json"
      },
      "step:eur_real": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:40:08Z",
+      "started_utc": "2026-10-02T01:04:06Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -3972,13 +4483,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:40:08Z",
+     "started_utc": "2026-10-02T01:04:06Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -3991,24 +4502,14 @@
    "have_max": "2026-10-01",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-10-02T22:00:00Z",
    "rule_id": "EUR_RY",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/Berlin"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-10-02",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "due_obs": "2026-10-02",
-   "due_since": "2026-10-01T15:00:00Z",
    "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
@@ -4019,12 +4520,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-10-01",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-10-02",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
-      "last_ok_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:11Z",
+      "last_ok_utc": "2026-10-02T01:04:11Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -4033,63 +4534,51 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T154011Z_actions_fetch-jpy-real_a826",
+      "run_id": "20261002T010409Z_actions_fetch-jpy-real_eed0",
       "source": "actions",
-      "started_utc": "2026-10-01T15:40:11Z",
+      "started_utc": "2026-10-02T01:04:09Z",
       "where": "actions__fetch_jpy_real.json"
      },
      "step:jpy_real": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:40:11Z",
+      "started_utc": "2026-10-02T01:04:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
     },
     "latest": {
-     "errors": [],
-     "failing_since_utc": null,
      "file": {
-      "detail": "",
-      "held": 0,
-      "src_max": "2026-10-01",
-      "status": "NOOP",
-      "written": false
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
-     "last_ok_utc": "2026-10-01T15:40:12Z",
-     "not_before": {},
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "status": 200
-      }
-     ],
-     "run_id": "20261001T154011Z_actions_fetch-jpy-real_a826",
-     "source": "actions",
-     "started_utc": "2026-10-01T15:40:11Z",
-     "where": "actions__fetch_jpy_real.json"
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T01:04:09Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
     },
-    "latest_source": "actions:fetch_jpy_real"
+    "latest_source": "step:jpy_real"
    },
    "file": "RY_G8_JPY.csv",
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-10-01",
+   "have_max": "2026-10-02",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "JPY_RY",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -4097,16 +4586,16 @@
     "episodes": [],
     "limitation": null,
     "lower_bound": null,
-    "obs_date": "2026-09-30",
+    "obs_date": "2026-10-01",
     "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
     "upper_bound": null,
     "version": null
    },
    "basis": "PROVISIONAL",
    "calendar": "US",
-   "due_obs": "2026-09-30",
-   "due_since": "2026-10-01T04:00:00Z",
-   "expected_obs": "2026-09-29",
+   "due_obs": "2026-10-01",
+   "due_since": "2026-10-02T04:00:00Z",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -4116,12 +4605,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-09-29",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-09-30",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-10-01T15:38:41Z",
-      "last_ok_utc": "2026-10-01T15:38:41Z",
+      "finished_utc": "2026-10-02T01:02:09Z",
+      "last_ok_utc": "2026-10-02T01:02:09Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -4130,22 +4619,22 @@
         "status": 200
        }
       ],
-      "run_id": "20261001T153840Z_actions_fetch-acm_72ea",
+      "run_id": "20261002T010208Z_actions_fetch-acm_ffda",
       "source": "actions",
-      "started_utc": "2026-10-01T15:38:40Z",
+      "started_utc": "2026-10-02T01:02:08Z",
       "where": "actions__fetch_acm.json"
      },
      "step:acm_tp": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:39Z",
+      "started_utc": "2026-10-02T01:02:07Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -4154,13 +4643,13 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:39Z",
+     "started_utc": "2026-10-02T01:02:07Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
@@ -4170,10 +4659,10 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T04:00:00Z",
+   "overdue_at": "2026-10-03T04:00:00Z",
    "rule_id": "ACM_TP",
    "state": "PENDING_TIME_UNKNOWN",
    "timezone": "America/New_York"
@@ -4181,7 +4670,15 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4247,20 +4744,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_30D.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4326,20 +4837,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_60D.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4405,20 +4930,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BILL_90D.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4484,20 +5023,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_1Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4563,20 +5116,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4642,20 +5209,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_5Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4721,20 +5302,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_BOND_10Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4800,20 +5395,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2030.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4879,20 +5488,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2035.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -4958,20 +5581,34 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2040.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-30",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -5037,18 +5674,24 @@
     "latest_source": "mac:NZ-B2/nzd"
    },
    "file": "NZD_IIB_2050.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
-   "missing": [],
+   "missing": [
+    "2026-10-01"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-10-02T04:04:00Z",
    "rule_id": "NZ_B2",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "Pacific/Auckland"
   },
   {
-   "age_days": 2,
+   "age_days": 3,
    "basis": "PROVISIONAL",
    "calendar": "NZ",
    "expected_obs": null,
@@ -5211,7 +5854,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "CH",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -5310,7 +5953,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "CH",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -5502,7 +6145,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -5601,7 +6244,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -5700,7 +6343,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -5799,7 +6442,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -5898,7 +6541,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -5997,7 +6640,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6096,7 +6739,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6195,7 +6838,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6294,7 +6937,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6393,7 +7036,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6492,7 +7135,7 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6591,13 +7234,13 @@
    "missing": [],
    "model": "prev_month_end",
    "rule_id": "CH_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Europe/Zurich"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "",
-   "expected_obs": "2026-09-28",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -6605,13 +7248,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -6620,44 +7263,44 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "ACM_G8_USD.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN",
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-29",
+   "have_max": "2026-09-30",
    "inputs_max_at_final": {
-    "US_BILL_1Y.csv": "2026-09-28",
-    "US_BILL_2Y.csv": "2026-09-28",
-    "US_BILL_3M.csv": "2026-09-28",
-    "US_BILL_6M.csv": "2026-09-28"
+    "US_BILL_1Y.csv": "2026-09-29",
+    "US_BILL_2Y.csv": "2026-09-29",
+    "US_BILL_3M.csv": "2026-09-29",
+    "US_BILL_6M.csv": "2026-09-29"
    },
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
    "state": "CURRENT",
    "timezone": "UTC",
-   "written_at": "2026-10-01T00:45:56Z"
+   "written_at": "2026-10-02T01:04:15Z"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "",
-   "expected_obs": "2026-09-28",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -6665,13 +7308,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -6680,20 +7323,20 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "ACM_G8_EUR.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
@@ -6701,12 +7344,12 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
    "inputs_max_at_final": {
-    "EUR_BILL_10Y.csv": "2026-09-28",
-    "EUR_BILL_1Y.csv": "2026-09-28",
-    "EUR_BILL_2Y.csv": "2026-09-28",
-    "EUR_BILL_3M.csv": "2026-09-28",
-    "EUR_BILL_5Y.csv": "2026-09-28",
-    "EUR_BILL_6M.csv": "2026-09-28"
+    "EUR_BILL_10Y.csv": "2026-09-30",
+    "EUR_BILL_1Y.csv": "2026-09-30",
+    "EUR_BILL_2Y.csv": "2026-09-30",
+    "EUR_BILL_3M.csv": "2026-09-30",
+    "EUR_BILL_5Y.csv": "2026-09-30",
+    "EUR_BILL_6M.csv": "2026-09-30"
    },
    "missing": [],
    "model": "derived",
@@ -6718,7 +7361,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -6726,13 +7369,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -6741,45 +7384,45 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "ACM_G8_JPY.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN",
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
+   "have_max": "2026-10-01",
    "inputs_max_at_final": {
-    "JPY_BILL_10Y.csv": "2026-09-29",
-    "JPY_BILL_1Y.csv": "2026-09-29",
-    "JPY_BILL_2Y.csv": "2026-09-29",
-    "JPY_BILL_3Y.csv": "2026-09-29",
-    "JPY_BILL_5Y.csv": "2026-09-29"
+    "JPY_BILL_10Y.csv": "2026-09-30",
+    "JPY_BILL_1Y.csv": "2026-09-30",
+    "JPY_BILL_2Y.csv": "2026-09-30",
+    "JPY_BILL_3Y.csv": "2026-09-30",
+    "JPY_BILL_5Y.csv": "2026-09-30"
    },
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
    "state": "CURRENT",
    "timezone": "UTC",
-   "written_at": "2026-10-01T00:45:56Z"
+   "written_at": "2026-10-02T01:04:15Z"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "",
-   "expected_obs": "2026-09-28",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -6787,13 +7430,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -6802,20 +7445,20 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "ACM_G8_GBP.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
@@ -6823,11 +7466,11 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
    "inputs_max_at_final": {
-    "GBP_BILL_10Y.csv": "2026-09-28",
-    "GBP_BILL_1Y.csv": "2026-09-28",
-    "GBP_BILL_2Y.csv": "2026-09-28",
-    "GBP_BILL_5Y.csv": "2026-09-28",
-    "GBP_BILL_6M.csv": "2026-09-28"
+    "GBP_BILL_10Y.csv": "2026-09-30",
+    "GBP_BILL_1Y.csv": "2026-09-30",
+    "GBP_BILL_2Y.csv": "2026-09-30",
+    "GBP_BILL_5Y.csv": "2026-09-30",
+    "GBP_BILL_6M.csv": "2026-09-30"
    },
    "missing": [],
    "model": "derived",
@@ -6839,7 +7482,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "",
-   "expected_obs": "2026-09-28",
+   "expected_obs": "2026-09-29",
    "facts": {
     "available": true,
     "by_source": {
@@ -6847,13 +7490,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -6862,20 +7505,20 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
+     "started_utc": "2026-10-02T01:02:09Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_g8"
    },
    "file": "ACM_G8_CAD.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN",
     "EXTERNAL_INPUTS_UNVERSIONED"
@@ -6884,127 +7527,9 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-29",
    "inputs_max_at_final": {
-    "CAD_BILL_1Y.csv": "2026-09-28",
-    "CAD_BILL_3M.csv": "2026-09-28",
-    "CAD_BILL_6M.csv": "2026-09-28"
-   },
-   "missing": [],
-   "model": "derived",
-   "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
-   "timezone": "UTC",
-   "written_at": "2026-10-01T15:40:14Z"
-  },
-  {
-   "basis": "PROVISIONAL",
-   "calendar": "",
-   "expected_obs": "2026-09-29",
-   "facts": {
-    "available": true,
-    "by_source": {
-     "step:acm_g8": {
-      "file": {
-       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
-      },
-      "finished_utc": "2026-10-01T15:40:12Z",
-      "job": "daily",
-      "rc": 0,
-      "restored": [],
-      "run_id": "36885540503",
-      "source": "step",
-      "started_utc": "2026-10-01T15:38:42Z",
-      "status": "OK",
-      "where": "actions__job_daily.json"
-     }
-    },
-    "latest": {
-     "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
-     },
-     "finished_utc": "2026-10-01T15:40:12Z",
-     "job": "daily",
-     "rc": 0,
-     "restored": [],
-     "run_id": "36885540503",
-     "source": "step",
-     "started_utc": "2026-10-01T15:38:42Z",
-     "status": "OK",
-     "where": "actions__job_daily.json"
-    },
-    "latest_source": "step:acm_g8"
-   },
-   "file": "ACM_G8_AUD.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED"
-   ],
-   "g_min": "60",
-   "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
-   "inputs_max_at_final": {
-    "AUD_BILL_3M.csv": "2026-09-29",
-    "AUD_BILL_6M.csv": "2026-09-29"
-   },
-   "missing": [],
-   "model": "derived",
-   "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
-   "timezone": "UTC",
-   "written_at": "2026-10-01T15:40:14Z"
-  },
-  {
-   "basis": "PROVISIONAL",
-   "calendar": "",
-   "expected_obs": "2026-09-29",
-   "facts": {
-    "available": true,
-    "by_source": {
-     "step:acm_nzd": {
-      "file": {
-       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
-      },
-      "finished_utc": "2026-10-01T15:40:12Z",
-      "job": "daily",
-      "rc": 0,
-      "restored": [],
-      "run_id": "36885540503",
-      "source": "step",
-      "started_utc": "2026-10-01T15:39:53Z",
-      "status": "OK",
-      "where": "actions__job_daily.json"
-     }
-    },
-    "latest": {
-     "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
-     },
-     "finished_utc": "2026-10-01T15:40:12Z",
-     "job": "daily",
-     "rc": 0,
-     "restored": [],
-     "run_id": "36885540503",
-     "source": "step",
-     "started_utc": "2026-10-01T15:39:53Z",
-     "status": "OK",
-     "where": "actions__job_daily.json"
-    },
-    "latest_source": "step:acm_nzd"
-   },
-   "file": "ACM_G8_NZD.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
-   "flags": [
-    "INPUT_VERSION_UNKNOWN"
-   ],
-   "g_min": "60",
-   "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
-   "inputs_max_at_final": {
-    "NZD_BILL_90D.csv": "2026-09-29",
-    "NZD_BOND_10Y.csv": "2026-09-29",
-    "NZD_BOND_1Y.csv": "2026-09-29",
-    "NZD_BOND_2Y.csv": "2026-09-29",
-    "NZD_BOND_5Y.csv": "2026-09-29"
+    "CAD_BILL_1Y.csv": "2026-09-29",
+    "CAD_BILL_3M.csv": "2026-09-29",
+    "CAD_BILL_6M.csv": "2026-09-29"
    },
    "missing": [],
    "model": "derived",
@@ -7020,17 +7545,17 @@
    "facts": {
     "available": true,
     "by_source": {
-     "step:acm_chf": {
+     "step:acm_g8": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:53Z",
+      "started_utc": "2026-10-02T01:02:09Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -7039,20 +7564,138 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:53Z",
+     "started_utc": "2026-10-02T01:02:09Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
+    },
+    "latest_source": "step:acm_g8"
+   },
+   "file": "ACM_G8_AUD.csv",
+   "final_ref": "2026-10-01T21:30:00Z",
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED"
+   ],
+   "g_min": "60",
+   "g_status": "PROVISIONAL",
+   "have_max": "2026-09-30",
+   "inputs_max_at_final": {
+    "AUD_BILL_3M.csv": "2026-09-30",
+    "AUD_BILL_6M.csv": "2026-09-30"
+   },
+   "missing": [],
+   "model": "derived",
+   "rule_id": "ACM_DERIVED",
+   "state": "CURRENT",
+   "timezone": "UTC",
+   "written_at": "2026-10-01T15:40:14Z"
+  },
+  {
+   "basis": "PROVISIONAL",
+   "calendar": "",
+   "expected_obs": "2026-09-30",
+   "facts": {
+    "available": true,
+    "by_source": {
+     "step:acm_nzd": {
+      "file": {
+       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      },
+      "finished_utc": "2026-10-02T01:04:12Z",
+      "job": "daily",
+      "rc": 0,
+      "restored": [],
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:03:46Z",
+      "status": "OK",
+      "where": "actions__job_daily.json"
+     }
+    },
+    "latest": {
+     "file": {
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+     },
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
+     "rc": 0,
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T01:03:46Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
+    },
+    "latest_source": "step:acm_nzd"
+   },
+   "file": "ACM_G8_NZD.csv",
+   "final_ref": "2026-10-01T21:30:00Z",
+   "flags": [
+    "INPUT_VERSION_UNKNOWN"
+   ],
+   "g_min": "60",
+   "g_status": "PROVISIONAL",
+   "have_max": "2026-09-30",
+   "inputs_max_at_final": {
+    "NZD_BILL_90D.csv": "2026-09-30",
+    "NZD_BOND_10Y.csv": "2026-09-30",
+    "NZD_BOND_1Y.csv": "2026-09-30",
+    "NZD_BOND_2Y.csv": "2026-09-30",
+    "NZD_BOND_5Y.csv": "2026-09-30"
+   },
+   "missing": [],
+   "model": "derived",
+   "rule_id": "ACM_DERIVED",
+   "state": "CURRENT",
+   "timezone": "UTC",
+   "written_at": "2026-10-01T15:40:14Z"
+  },
+  {
+   "basis": "PROVISIONAL",
+   "calendar": "",
+   "expected_obs": "2026-10-01",
+   "facts": {
+    "available": true,
+    "by_source": {
+     "step:acm_chf": {
+      "file": {
+       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      },
+      "finished_utc": "2026-10-02T01:04:12Z",
+      "job": "daily",
+      "rc": 0,
+      "restored": [],
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:03:47Z",
+      "status": "OK",
+      "where": "actions__job_daily.json"
+     }
+    },
+    "latest": {
+     "file": {
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+     },
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
+     "rc": 0,
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T01:03:47Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:acm_chf"
    },
    "file": "ACM_G8_CHF.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
@@ -7060,7 +7703,7 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-10-01",
    "inputs_max_at_final": {
-    "CHF_NOM_10Y.csv": "2026-09-30"
+    "CHF_NOM_10Y.csv": "2026-10-01"
    },
    "missing": [],
    "model": "derived",
@@ -7072,7 +7715,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "NZ",
-   "expected_obs": "2026-09-29",
+   "expected_obs": "2026-09-30",
    "facts": {
     "available": true,
     "by_source": {
@@ -7080,13 +7723,13 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-10-01T15:40:12Z",
+      "finished_utc": "2026-10-02T01:04:12Z",
       "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "36885540503",
+      "run_id": "36948648656",
       "source": "step",
-      "started_utc": "2026-10-01T15:39:54Z",
+      "started_utc": "2026-10-02T01:03:48Z",
       "status": "OK",
       "where": "actions__job_daily.json"
      }
@@ -7095,20 +7738,20 @@
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-10-01T15:40:12Z",
+     "finished_utc": "2026-10-02T01:04:12Z",
      "job": "daily",
      "rc": 0,
      "restored": [],
-     "run_id": "36885540503",
+     "run_id": "36948648656",
      "source": "step",
-     "started_utc": "2026-10-01T15:39:54Z",
+     "started_utc": "2026-10-02T01:03:48Z",
      "status": "OK",
      "where": "actions__job_daily.json"
     },
     "latest_source": "step:real_yields"
    },
    "file": "RY_G8_NZD.csv",
-   "final_ref": "2026-09-30T21:30:00Z",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
@@ -7116,7 +7759,7 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-09-30",
    "inputs_max_at_final": {
-    "NZD_BOND_10Y.csv": "2026-09-29"
+    "NZD_BOND_10Y.csv": "2026-09-30"
    },
    "missing": [],
    "model": "derived",
@@ -7128,42 +7771,23 @@
   {
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "USDF1",
-      "2026-10-01T15:30Z"
-     ],
-     [
-      "USDF2",
-      "2026-10-01T17:30Z"
-     ]
-    ]
-   },
+   "due_obs": "2026-10-02",
+   "due_since": "2026-10-02T14:00:00Z",
    "expected_obs": "2026-10-01",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "USD_FACTOR.json",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
-   "missing": [
-    "2026-10-01"
-   ],
+   "have_max": "2026-10-01",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-10-01T15:00:00Z",
+   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "USD_FACTOR",
-   "state": "OVERDUE",
+   "state": "DUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -7178,7 +7802,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "APROBADO",
-   "have_max": "2026-10-01",
+   "have_max": "2026-10-02",
    "missing": [],
    "model": "not_monitored",
    "reason": "EXCLUIDO_DE_CAMBIOS_F6: solo se muestra su fecha",
@@ -7202,7 +7826,7 @@
    "missing": [],
    "model": "weekly_before:3",
    "rule_id": "COT",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "America/New_York"
   },
   {
@@ -7360,7 +7984,7 @@
    "timezone": "UTC"
   },
   {
-   "age_days": 31,
+   "age_days": 32,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -7383,86 +8007,152 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "USDF1",
-      "2026-10-01T15:30Z"
-     ],
-     [
-      "USDF2",
-      "2026-10-01T17:30Z"
-     ]
-    ]
-   },
+   "due_obs": "2026-10-02",
+   "due_since": "2026-10-02T14:00:00Z",
    "expected_obs": "2026-10-01",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/ecb_rates.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
-   "missing": [
-    "2026-10-01"
-   ],
+   "have_max": "2026-10-01",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-10-01T15:00:00Z",
+   "overdue_at": "2026-10-02T15:00:00Z",
    "rule_id": "ECB_CACHE",
-   "state": "OVERDUE",
+   "state": "DUE",
    "timezone": "Europe/Berlin"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "USDF1",
-      "2026-10-01T15:30Z"
-     ],
-     [
-      "USDF2",
-      "2026-10-01T17:30Z"
-     ]
-    ]
-   },
+   "due_obs": "2026-10-02",
+   "due_since": "2026-10-02T14:00:00Z",
    "expected_obs": "2026-10-01",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/canonical.csv",
+   "flags": [],
+   "g_min": "60",
+   "g_status": "PROVISIONAL",
+   "have_max": "2026-10-01",
+   "missing": [],
+   "model": "bd_offset",
+   "overdue_at": "2026-10-02T15:00:00Z",
+   "rule_id": "ECB_CACHE",
+   "state": "DUE",
+   "timezone": "Europe/Berlin"
+  },
+  {
+   "basis": "PROVISIONAL",
+   "calendar": "",
+   "expected_obs": "2026-09-30",
+   "facts": {
+    "available": true,
+    "by_source": {
+     "step:aud_nowcast": {
+      "file": {
+       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      },
+      "finished_utc": "2026-10-02T01:04:12Z",
+      "job": "daily",
+      "rc": 0,
+      "restored": [],
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:04:12Z",
+      "status": "OK",
+      "where": "actions__job_daily.json"
+     }
+    },
+    "latest": {
+     "file": {
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+     },
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
+     "rc": 0,
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T01:04:12Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
+    },
+    "latest_source": "step:aud_nowcast"
+   },
+   "file": "AUD_NOWCAST.csv",
+   "final_ref": "2026-10-01T21:30:00Z",
    "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
+    "INPUT_VERSION_UNKNOWN"
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-09-30",
-   "missing": [
-    "2026-10-01"
-   ],
-   "model": "bd_offset",
-   "overdue_since": "2026-10-01T15:00:00Z",
-   "rule_id": "ECB_CACHE",
-   "state": "OVERDUE",
-   "timezone": "Europe/Berlin"
+   "have_max": "2026-10-01",
+   "inputs_max_at_final": {
+    "AUD_BILL_6M.csv": "2026-09-30"
+   },
+   "missing": [],
+   "model": "derived",
+   "rule_id": "AUD_NOWCAST",
+   "state": "CURRENT",
+   "timezone": "UTC",
+   "written_at": "2026-10-02T01:04:15Z"
+  },
+  {
+   "basis": "PROVISIONAL",
+   "calendar": "",
+   "expected_obs": null,
+   "facts": {
+    "available": true,
+    "by_source": {
+     "step:aud_nowcast": {
+      "file": {
+       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      },
+      "finished_utc": "2026-10-02T01:04:12Z",
+      "job": "daily",
+      "rc": 0,
+      "restored": [],
+      "run_id": "36948648656",
+      "source": "step",
+      "started_utc": "2026-10-02T01:04:12Z",
+      "status": "OK",
+      "where": "actions__job_daily.json"
+     }
+    },
+    "latest": {
+     "file": {
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+     },
+     "finished_utc": "2026-10-02T01:04:12Z",
+     "job": "daily",
+     "rc": 0,
+     "restored": [],
+     "run_id": "36948648656",
+     "source": "step",
+     "started_utc": "2026-10-02T01:04:12Z",
+     "status": "OK",
+     "where": "actions__job_daily.json"
+    },
+    "latest_source": "step:aud_nowcast"
+   },
+   "file": "AUD_NOWCAST.json",
+   "flags": [],
+   "g_min": null,
+   "g_status": "PROVISIONAL",
+   "have_max": null,
+   "missing": [],
+   "model": "not_monitored",
+   "reason": "Metadatos de AUD_NOWCAST.csv (acta P-8): solo se muestra su fecha",
+   "rule_id": "AUD_NOWCAST_META",
+   "state": "NOT_MONITORED",
+   "timezone": "UTC"
   }
  ],
  "schema": "g8-freshness/2"
