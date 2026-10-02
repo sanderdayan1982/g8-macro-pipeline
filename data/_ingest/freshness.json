@@ -1,17 +1,16 @@
 {
- "at_utc": "2026-10-02T14:10:34Z",
+ "at_utc": "2026-10-02T16:18:11Z",
  "compare_summary": {
-  "ACUERDO": 33,
+  "ACUERDO": 32,
   "FUERA_DE_F3": 2,
-  "NUEVO_MAS_ESTRICTO": 14
+  "NUEVO_MAS_ESTRICTO": 15
  },
  "counts": {
-  "CURRENT": 23,
-  "DUE": 3,
+  "CURRENT": 15,
   "NOT_MONITORED": 5,
   "NO_OBS_DATE": 3,
-  "NO_PUBLICATION": 16,
-  "OVERDUE": 27,
+  "NO_PUBLICATION": 24,
+  "OVERDUE": 30,
   "PENDING_TIME_UNKNOWN": 13,
   "STALE": 2,
   "UNKNOWN_SCHEDULE": 9
@@ -461,7 +460,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "TONA",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -2877,7 +2876,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -2949,13 +2948,13 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3027,13 +3026,13 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3105,13 +3104,13 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3183,13 +3182,13 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3261,13 +3260,13 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "facts": {
     "available": true,
     "by_source": {
@@ -3339,7 +3338,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -4510,7 +4509,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-10-01",
+   "expected_obs": "2026-10-02",
    "facts": {
     "available": true,
     "by_source": {
@@ -4578,7 +4577,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "JPY_RY",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -7771,23 +7770,38 @@
   {
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "due_obs": "2026-10-02",
-   "due_since": "2026-10-02T14:00:00Z",
-   "expected_obs": "2026-10-01",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-10-02T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-10-02",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "USD_FACTOR.json",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-10-01",
-   "missing": [],
+   "missing": [
+    "2026-10-02"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
+   "overdue_since": "2026-10-02T15:00:00Z",
    "rule_id": "USD_FACTOR",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -8007,45 +8021,77 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-10-02",
-   "due_since": "2026-10-02T14:00:00Z",
-   "expected_obs": "2026-10-01",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-10-02T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-10-02",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/ecb_rates.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-10-01",
-   "missing": [],
+   "missing": [
+    "2026-10-02"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
+   "overdue_since": "2026-10-02T15:00:00Z",
    "rule_id": "ECB_CACHE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-10-02",
-   "due_since": "2026-10-02T14:00:00Z",
-   "expected_obs": "2026-10-01",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "USDF1",
+      "2026-10-02T15:30Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-10-02",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
    },
    "file": "usd_factor/canonical.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-10-01",
-   "missing": [],
+   "missing": [
+    "2026-10-02"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-10-02T15:00:00Z",
+   "overdue_since": "2026-10-02T15:00:00Z",
    "rule_id": "ECB_CACHE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
