@@ -1,14 +1,14 @@
 {
  "model": "EST_AUD_V2",
- "generated_utc": "2026-10-02T01:04:12Z",
+ "generated_utc": "2026-10-03T00:43:46Z",
  "config": "sources/nowcast_aud.json",
  "status": "OK",
  "warnings": [],
  "targets": {
   "NOM2Y": {
    "source": "RBA F2 FCMYGBAG2D",
-   "base_date": "2026-09-23",
-   "base_value": 4.947,
+   "base_date": "2026-09-30",
+   "base_value": 4.942,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -18,18 +18,18 @@
     {
      "name": "US_2Y",
      "lag_bd": 1,
-     "last": "2026-09-30"
+     "last": "2026-10-01"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.8954,
-    "US_2Y": 0.3019
+    "AU_BILL_6M": 0.8968,
+    "US_2Y": 0.2961
    },
-   "r2": 0.453,
+   "r2": 0.449,
    "n_obs": 756,
    "window": [
-    "2023-09-25",
-    "2026-09-23"
+    "2023-10-03",
+    "2026-09-30"
    ],
    "err_bp_by_h": {
     "1": 3.6,
@@ -39,17 +39,17 @@
     "5": 7.1,
     "6": 7.9,
     "7": 8.5,
-    "8": 9.0,
-    "9": 9.5,
-    "10": 10.0
+    "8": 9.1,
+    "9": 9.6,
+    "10": 10.1
    },
    "drivers_reach": "2026-10-01",
    "last_estimate": "2026-10-01"
   },
   "NOM10": {
    "source": "RBA F2 FCMYGBAG10D (via real_yields_g8.py)",
-   "base_date": "2026-09-23",
-   "base_value": 5.245,
+   "base_date": "2026-09-30",
+   "base_value": 5.344,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -59,38 +59,38 @@
     {
      "name": "US_10Y",
      "lag_bd": 1,
-     "last": "2026-09-30"
+     "last": "2026-10-01"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.56,
-    "US_10Y": 0.5406
+    "AU_BILL_6M": 0.563,
+    "US_10Y": 0.5359
    },
-   "r2": 0.462,
+   "r2": 0.46,
    "n_obs": 756,
    "window": [
-    "2023-09-25",
-    "2026-09-23"
+    "2023-10-03",
+    "2026-09-30"
    ],
    "err_bp_by_h": {
     "1": 3.8,
     "2": 4.7,
-    "3": 5.3,
+    "3": 5.2,
     "4": 5.9,
     "5": 6.3,
     "6": 6.9,
-    "7": 7.3,
+    "7": 7.4,
     "8": 7.7,
-    "9": 8.0,
-    "10": 8.4
+    "9": 8.1,
+    "10": 8.5
    },
    "drivers_reach": "2026-10-01",
    "last_estimate": "2026-10-01"
   },
   "BE10": {
    "source": "RBA F2 (10Y nominal − indexado FCMYGBAGID, via real_yields_g8.py)",
-   "base_date": "2026-09-23",
-   "base_value": 2.383,
+   "base_date": "2026-09-30",
+   "base_value": 2.402,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -100,18 +100,18 @@
     {
      "name": "US_BE10",
      "lag_bd": 1,
-     "last": "2026-09-30"
+     "last": "2026-10-01"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.1341,
-    "US_BE10": 0.4053
+    "AU_BILL_6M": 0.1353,
+    "US_BE10": 0.4075
    },
-   "r2": 0.288,
+   "r2": 0.289,
    "n_obs": 756,
    "window": [
-    "2023-09-25",
-    "2026-09-23"
+    "2023-10-03",
+    "2026-09-30"
    ],
    "err_bp_by_h": {
     "1": 1.6,
@@ -129,5 +129,5 @@
    "last_estimate": "2026-10-01"
   }
  },
- "rows_estimated_now": 6
+ "rows_estimated_now": 1
 }
