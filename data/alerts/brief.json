@@ -1,9 +1,9 @@
 {
- "generated_utc": "2026-10-02T21:24:43Z",
+ "generated_utc": "2026-10-03T00:24:27Z",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-10-02",
-  "cot": "2026-09-22",
+  "cot": "2026-09-29",
   "options": "2026-10-01",
   "metals": "2026-09-22",
   "s01b": "2026-10-02",
@@ -16,10 +16,10 @@
   },
   "pos_twin": {
    "status": "PASSED",
-   "label": "POS twin-test: PASSED (50 barras, 5.0 sem)",
-   "bars": 50,
+   "label": "POS twin-test: PASSED (60 barras, 5.6 sem)",
+   "bars": 60,
    "from": "2026-08-25",
-   "to": "2026-09-22"
+   "to": "2026-09-29"
   }
  },
  "bullets": [
@@ -45,7 +45,7 @@
   },
   {
    "sec": "§09 COT",
-   "text": "AUD STRETCH+ (LF z +1.88) · CHF STRETCH- (LF z -1.71)"
+   "text": "EUR STRETCH- (LF z -1.54) · GBP STRETCH- (LF z -1.72) · AUD STRETCH+ (LF z +1.91) · CAD divergencia LF/AM"
   },
   {
    "sec": "§01-b CTF",
@@ -294,7 +294,7 @@
    "vs_usd_bp": null,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
-   "lf_z": 0.04,
+   "lf_z": 0.31,
    "cot_state": "NEUTRAL"
   },
   {
@@ -316,8 +316,8 @@
    "vs_usd_bp": -168.8,
    "real_vs_usd_bp": -161.4,
    "real_vs_usd_z": -2.66,
-   "lf_z": -1.08,
-   "cot_state": "NEUTRAL"
+   "lf_z": -1.54,
+   "cot_state": "STRETCH-"
   },
   {
    "ccy": "GBP",
@@ -338,8 +338,8 @@
    "vs_usd_bp": 12.1,
    "real_vs_usd_bp": -91.6,
    "real_vs_usd_z": -2.91,
-   "lf_z": -1.21,
-   "cot_state": "NEUTRAL"
+   "lf_z": -1.72,
+   "cot_state": "STRETCH-"
   },
   {
    "ccy": "JPY",
@@ -360,14 +360,15 @@
    "vs_usd_bp": -219.9,
    "real_vs_usd_bp": -203.2,
    "real_vs_usd_z": -2.99,
-   "lf_z": 1.45,
+   "lf_z": 0.85,
    "cot_state": "NEUTRAL"
   },
   {
    "ccy": "AUD",
    "flags": [
     "NOM/REAL/BE EST 01-10 ±7 pb (RBA 23-09; vs USD y alertas con RBA)",
-    "TP curva arrastrada (ffill)"
+    "TP curva arrastrada (ffill)",
+    "COT DIV LF/AM"
    ],
    "nom": 5.4458,
    "real": 3.0453,
@@ -385,7 +386,7 @@
    "vs_usd_bp": 13.5,
    "real_vs_usd_bp": 10.2,
    "real_vs_usd_z": -1.73,
-   "lf_z": 1.88,
+   "lf_z": 1.91,
    "cot_state": "STRETCH+"
   },
   {
@@ -409,7 +410,7 @@
    "vs_usd_bp": -25.0,
    "real_vs_usd_bp": -14.7,
    "real_vs_usd_z": -2.64,
-   "lf_z": 0.0,
+   "lf_z": 0.34,
    "cot_state": "NEUTRAL"
   },
   {
@@ -417,6 +418,7 @@
    "flags": [
     "REAL vs USD z suelo",
     "vs USD z suelo",
+    "COT DIV LF/AM",
     "walls PROXY"
    ],
    "nom": 4.3,
@@ -432,7 +434,7 @@
    "vs_usd_bp": -96.0,
    "real_vs_usd_bp": -93.0,
    "real_vs_usd_z": -3.18,
-   "lf_z": 0.37,
+   "lf_z": -0.67,
    "cot_state": "NEUTRAL"
   },
   {
@@ -457,8 +459,8 @@
    "vs_usd_bp": -465.1,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
-   "lf_z": -1.71,
-   "cot_state": "STRETCH-"
+   "lf_z": -1.31,
+   "cot_state": "NEUTRAL"
   }
  ]
 }
