@@ -434,6 +434,13 @@ def main():
     ccys = args or default
     failed, warned = [], []
     for ccy in ccys:
+        if ccy == "GBP":
+            # Same official BoE 10Y spot curves; atomic publication with history preservation.
+            # Do not let the old IADB writer overwrite a newer workbook observation.
+            import fetch_gbp_real
+            if fetch_gbp_real.main():
+                failed.append(ccy)
+            continue
         if ccy in NOT_AVAILABLE:
             print(f"\n[{ccy}] N/A in v1 — {NOT_AVAILABLE[ccy]}")
             continue

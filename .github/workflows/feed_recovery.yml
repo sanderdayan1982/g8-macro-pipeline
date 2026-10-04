@@ -1,0 +1,63 @@
+name: Feed recovery (one-off)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['docs/actas/ACTA_RECOVERY_20261004.md']
+permissions:
+  contents: write
+concurrency:
+  group: g8-shared-data-alerts
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      G8_NO_SEND: '1'
+      G8_JOB: recovery
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Japan official policy (API plus verified BIS bulk fallback)
+        id: japan
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python scripts/fetch_bis_policy.py JP
+      - name: GBP official real curve (BoE workbooks plus IADB fallback)
+        id: gbp
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python scripts/fetch_gbp_real.py
+      - name: Recover latest elapsed CTF session without historical backfill
+        id: final
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python scripts/tools/finalize_session.py
+      - name: Refresh dashboard snapshots (no messaging or delivery-state changes)
+        run: |
+          python scripts/tools/refresh_brief_snapshot.py
+          python scripts/health_monitor.py
+      - name: Publish validated outputs and diagnostic state
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          git add data/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore: verified feed recovery and dashboard snapshots'
+          for i in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 5
+          done
+          exit 1
+      - name: Keep partial recovery visible as failure
+        if: always() && (steps.japan.outcome == 'failure' || steps.gbp.outcome == 'failure' || steps.final.outcome == 'failure')
+        run: exit 1

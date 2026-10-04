@@ -48,6 +48,8 @@ def build(root, now, report=None):
     for r in registry:
         if r["primary_access"].startswith("data/"):
             regs.setdefault(r["primary_access"][5:], []).append(r)
+    with (root / "sources/freshness_rules.csv").open() as f:
+        cadence = {name: r['frequency'] for r in csv.DictReader(f) for name in r['files'].split(';') if name}
     items = []
     for row in report["outputs"]:
         item = {k: row.get(k) for k in ("file", "state", "have_max", "expected_obs", "calendar", "basis", "reason", "cause")}
@@ -90,6 +92,10 @@ def build(root, now, report=None):
                 item.update(status="MISSING", reason="Sin observación legible para un feed del registro")
         if "LAST_FETCH_FAILED" in item["flags"]:
             item["status"] = "ERROR"
+        item['publication_frequency'] = cadence.get(row['file'], 'unknown')
+        item['slow_fallback'] = item['publication_frequency'].startswith(('monthly', 'quarterly'))
+        if row['file'] == 'ACM_G8_CHF.csv':
+            item['frequency_note'] = 'Salida diaria estimada; curva oficial mensual + nominal 10Y diario (NOWCAST)'
         items.append(item)
     # A recently generated provisional JSON does not prove that CTF was evaluated.
     # 4h operational deadline allows observed scheduler delays; visible separately
@@ -125,12 +131,14 @@ def build(root, now, report=None):
         age = (now.date() - parsed).days if parsed else None
         status = "MISSING" if age is None or entry.get("value") is None else "LATE" if age > float(reg["manual_expiry_days"]) else "UNKNOWN"
         items.append({"file": "manual/" + reg["feed_id"], "status": status, "state": "MANUAL",
-                      "have_max": entry.get("date"), "expected_obs": None, "flags": ["MANUAL"],
-                      "reason": "Constante manual; caducidad %s días; no es una observación diaria" % reg["manual_expiry_days"]})
+                      "have_max": entry.get("date"), "expected_obs": None, "flags": ["MANUAL"], "publication_frequency": "excluded" if entry.get("disabled") else reg.get("frequency", "unknown"), "slow_fallback": False,
+                      "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual" if entry.get("disabled") else "Constante manual; caducidad %s días; no es una observación diaria" % reg["manual_expiry_days"]})
     issues = [x for x in items if x["status"] in ("LATE", "ERROR", "MISSING")]
     unknown = [x for x in items if x["status"] == "UNKNOWN"]
     return {"schema": "G8_HEALTH/1", "generated_utc": now.isoformat().replace("+00:00", "Z"),
             "status": "DEGRADED" if issues else "UNVERIFIED" if unknown else "CURRENT",
+            "slow_fallbacks": [x["file"] for x in items if x.get("slow_fallback")],
+            "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
             "needs_repair": bool(issues), "issues": issues, "unknown_count": len(unknown), "feeds": items,
             "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."}
 

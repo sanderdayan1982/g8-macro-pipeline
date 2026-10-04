@@ -5,7 +5,7 @@
     function applyHeader() {
         var r = lastReport, age = r ? (Date.now() - Date.parse(r.generated_utc)) / 3600000 : NaN;
         var warning = !isFinite(age) || age > 56 || age < -0.1 ? 'SIN VERIFICAR' :
-            r.issues.length ? r.issues.length + ' INCIDENCIAS' : r.unknown_count ? 'VERIFICACIÓN PARCIAL' : '';
+            r.issues.length ? r.issues.length + ' INCIDENCIAS' : r.unknown_count ? 'VERIFICACIÓN PARCIAL' : (r.slow_fallbacks || []).length ? 'RESPALDOS LENTOS' : '';
         if (!warning) return;
         var count = document.getElementById('status-count'), dots = document.getElementById('status-dots');
         if (count) count.textContent = warning;
@@ -29,15 +29,15 @@
         box.appendChild(title);
         var stamp = document.createElement('p');
         stamp.textContent = 'Comprobación UTC: ' + (report.generated_utc || 'desconocida') +
-            ' · fecha del dato ≠ fecha de descarga · EST nunca equivale a dato oficial.';
+            ' · Prioridad: diario → semanal → mensual solo como último recurso. Respaldos lentos: ' + (report.slow_fallbacks || []).length + ' · EST no es dato oficial.';
         box.appendChild(stamp);
         var details = document.createElement('details'), summary = document.createElement('summary');
         summary.textContent = 'Ver fuentes, observaciones y evaluación definitiva CTF';
         details.appendChild(summary);
         var table = document.createElement('table');
         table.className = 'attr-table';
-        var rows = [['Fuente / salida', 'Estado', 'Última observación', 'Esperada']].concat(
-            (report.feeds || []).map(function (x) { return [x.file, x.status, x.have_max || '—', x.expected_obs || 'sin calendario exacto']; }));
+        var rows = [['Fuente / salida', 'Estado', 'Última observación', 'Esperada', 'Publicación / respaldo']].concat(
+            (report.feeds || []).map(function (x) { return [x.file, x.status, x.have_max || '—', x.expected_obs || 'sin calendario exacto', (x.publication_frequency || '—') + (x.slow_fallback ? ' · ÚLTIMO RECURSO' : '') + (x.frequency_note ? ' · ' + x.frequency_note : '')]; }));
         rows.forEach(function (r, i) {
             var tr = document.createElement('tr');
             r.forEach(function (value) { var td = document.createElement(i ? 'td' : 'th'); td.textContent = value; tr.appendChild(td); });
