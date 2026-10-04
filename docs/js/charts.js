@@ -586,6 +586,7 @@
             for (let i = 0; i < failCount; i++) dots += '<span class="dot-fail">●</span>';
             dotsEl.innerHTML = dots;
         }
+        if (global.G8PublicationHealth) global.G8PublicationHealth.applyHeader();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

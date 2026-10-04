@@ -96,7 +96,7 @@ class States(unittest.TestCase):
         self.assertEqual((r["state"], r["facts"]), ("CURRENT", facts))
 
     def test_provisional_rule_is_flagged(self):
-        r = ev("SONIA.csv", T("2026-09-23T12:00Z"), ["2026-09-18"])
+        r = ev("CORRA.csv", T("2026-09-23T12:00Z"), ["2026-09-18"])
         self.assertIn("RULE_PROVISIONAL", r["flags"])
         self.assertNotIn("RULE_PROVISIONAL", ev("ESTR.csv", T("2026-09-23T12:00Z"), ["2026-09-18"])["flags"])
 
@@ -104,7 +104,7 @@ class States(unittest.TestCase):
 
 # ── C3-1 · la causa sale de lo EJECUTADO, nunca de un cron programado ─────────────────────────────────────────
 class Cause(unittest.TestCase):
-    """ESTR: la obs del 21-sep se publica el 22-sep 06:00Z; la única pasada activa del grupo es la FINAL (21:30Z)."""
+    """ESTR: la obs del 21-sep se publica el 22-sep 06:00Z; las pasadas activas son EU (13:17Z) y FINAL (21:30Z)."""
     NOW = T("2026-09-22T22:00Z")                                     # la FINAL ya estaba programada (21:30Z)
 
     def cause(self, runs=None, downloads=None, now=None, evidence_available=True):
@@ -115,7 +115,7 @@ class Cause(unittest.TestCase):
     def test_scheduled_cron_without_recorded_run_is_uncertain_not_a_query(self):
         c, cert, r = self.cause()
         self.assertEqual((c, cert), ("PROGRAMADA_SIN_EJECUCION_REGISTRADA", "incierta"))
-        self.assertEqual(r["cause_detail"]["scheduled_passes"], [("FINAL", "2026-09-22T21:30Z")])
+        self.assertEqual(r["cause_detail"]["scheduled_passes"], [("EU", "2026-09-22T13:17Z"), ("FINAL", "2026-09-22T21:30Z")])
         self.assertEqual(r["cause_detail"]["executed_runs"], [])
         self.assertFalse([f for f in r["flags"] if "CONSULTADA" in f])   # nunca «consultada» sin ejecución
 

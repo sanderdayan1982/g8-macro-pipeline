@@ -1,7 +1,7 @@
 rule_id,model,g_min,g_basis,g_status,notes
 SOFR,bd_offset,60,Hora oficial (NY Fed ~08:00 ET); 60 min = propuesta operativa sin evidencia medida de variabilidad,PROVISIONAL,
 ESTR,bd_offset,60,Hora oficial (BCE 08:00 CET); 60 min = propuesta operativa sin evidencia medida de variabilidad,PROVISIONAL,
-SONIA,bd_offset,60,Hora de la web del BoE (09:00 Londres); endpoint IADB no documentado; 60 min = propuesta operativa,PROVISIONAL,
+SONIA,bd_offset,60,IADB público T+2 10:00 Londres (BoE §Access verificado 2026-10-04); margen operativo 60 min,PROVISIONAL,Se distingue expresamente el retraso del canal gratuito de la primera publicación T+1; no se cambia la definición de SONIA
 TONA,bd_offset,60,Manual de la API del BoJ (~08:50 JST); 60 min = propuesta operativa,PROVISIONAL,
 CORRA,bd_offset,60,Hora habitual A_VERIFICAR (09:00 Toronto); 60 min = propuesta operativa,PROVISIONAL,
 AONIA,bd_offset,60,La hora es una COTA SUPERIOR medida una vez (presente 23:53Z); 60 min = propuesta operativa,PROVISIONAL,

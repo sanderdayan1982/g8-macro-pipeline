@@ -1,28 +1,42 @@
-# .github/workflows/maintenance_agent.yml — acta P-6: agente de mantenimiento (Claude Code, suscripción Pro).
-# Lunes, miércoles y viernes 19:00 UTC = 20:00 Bata (UTC+1, sin cambio de hora), y a mano.
-#   job «agent»: Claude Code (instrucciones .github/agent/mantenimiento.md + CLAUDE.md) diagnostica la frescura y
-#     arregla o sustituye fuentes con commits locales. Token de SOLO LECTURA y checkout sin credenciales: no puede
-#     escribir en el repo. Entrega sus commits como git bundle + informe (artefacto).
-#   job «gate»: la compuerta (no el agente) decide con scripts/tools/agent_gate.py + scripts/tools/validate_smoke.sh:
-#     AUTO (solo descargadores/registro/decisiones/proxy/actas y tests del agente) y smoke verde → integra en main;
-#     OWNER (cualquier otro fichero), smoke rojo o integración fallida → PR para el propietario. Telegram siempre.
-# Secreto necesario: CLAUDE_CODE_OAUTH_TOKEN (lo genera el propietario con `claude setup-token`).
+# Institutional repair: classify from trusted base; execute candidate tests without write credentials.
 name: Maintenance agent
-
 on:
   schedule:
-    - cron: "0 19 * * 1,3,5"
+    - cron: '17 1,5,9,13,17,21 * * *'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: maintenance-agent
   cancel-in-progress: false
-
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.due.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/health_monitor.py --out .agent/health.json
+      - id: due
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            python scripts/tools/maintenance_due.py --manual >> "$GITHUB_OUTPUT"
+          else
+            python scripts/tools/maintenance_due.py >> "$GITHUB_OUTPUT"
+          fi
+
   agent:
+    needs: preflight
+    if: needs.preflight.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     permissions:
@@ -36,69 +50,48 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt pyyaml
-
-      - name: Base commit
-        id: base
+          cache: pip
+      - run: pip install -r requirements.txt pyyaml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - id: base
         run: |
-          git config user.name "g8-maintenance-agent"
-          git config user.email "g8-maintenance-agent@users.noreply.github.com"
+          git config user.name g8-maintenance-agent
+          git config user.email g8-maintenance-agent@users.noreply.github.com
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           mkdir -p .agent
-
       - name: Claude Code (maintenance)
         id: claude
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}          # solo lectura (gh run list/view)
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
-            Lee .github/agent/mantenimiento.md y CLAUDE.md y ejecuta el procedimiento de mantenimiento de hoy
-            (fecha: `date -u`). Haz commits en la rama actual; no hagas push. Termina siempre escribiendo .agent/report.md.
+            Lee CLAUDE.md y .github/agent/mantenimiento.md. Revisa TODAS las secciones y la frescura real.
+            Busca alternativas oficiales equivalentes para cada API rota o feed atrasado. Verifica fuente,
+            definición, unidades, fechas, solapamiento e ingestión antes de cambiar nada. No cambies modelos.
+            Haz commits locales sin push. Escribe siempre .agent/report.md con evidencia y pendientes.
           claude_args: |
             --max-turns 80
-            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(node:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*)"
             --disallowedTools "Bash(git push:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh secret:*),Bash(gh workflow:*)"
-
-      - name: Claude result line (diagnostic, no secrets)
+      - name: Package work
         if: always()
+        env:
+          BASE: ${{ steps.base.outputs.sha }}
         run: |
           mkdir -p .agent
-          f="$RUNNER_TEMP/claude-execution-output.json"
-          if [ -f "$f" ]; then
-            python - "$f" <<'EOF' | tee .agent/claude_result.txt
-          import json, sys
-          try:
-              data = json.load(open(sys.argv[1]))
-          except Exception as e:
-              print("no se pudo leer la salida de Claude: %s" % type(e).__name__); sys.exit(0)
-          res = [m for m in (data if isinstance(data, list) else [data]) if isinstance(m, dict) and m.get("type") == "result"]
-          r = res[-1] if res else {}
-          print("is_error=%s turns=%s cost_usd=%s result=%s" % (r.get("is_error"), r.get("num_turns"), r.get("total_cost_usd"),
-                str(r.get("result") or r.get("errors") or "")[:400].replace("\n", " ")))
-          EOF
+          if [ -n "$BASE" ] && [ "$(git rev-list --count "$BASE..HEAD")" -gt 0 ]; then
+            git bundle create .agent/work.bundle "$BASE..HEAD"
           fi
-
-      - name: Package work (bundle + report)
-        if: always()
-        run: |
-          mkdir -p .agent
-          base="${{ steps.base.outputs.sha }}"
-          if [ "$(git rev-list --count "$base..HEAD")" -gt 0 ]; then
-            git bundle create .agent/work.bundle "$base..HEAD"
-          fi
-          [ -f .agent/report.md ] || echo "ESTADO: FALLO SIN ARREGLO — el agente no dejó informe (paso de Claude: ${{ steps.claude.outcome }}; $(cat .agent/claude_result.txt 2>/dev/null))" > .agent/report.md
-
+          [ -f .agent/report.md ] || echo 'ESTADO: FALLO SIN ARREGLO — agente sin informe' > .agent/report.md
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -106,136 +99,170 @@ jobs:
           path: |
             .agent/report.md
             .agent/work.bundle
-          if-no-files-found: warn
-          retention-days: 30
           include-hidden-files: true
+          retention-days: 30
 
-  gate:
+  verify:
     needs: agent
-    if: always()
+    if: always() && needs.agent.result != 'skipped'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
-      contents: write
-      pull-requests: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      contents: read
+    outputs:
+      decision: ${{ steps.gate.outputs.decision }}
+      smoke: ${{ steps.smoke.outcome }}
+      head: ${{ steps.load.outputs.head }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.agent.outputs.base }}
           fetch-depth: 0
-
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt pyyaml
-
+      - name: Trusted gate and dependencies (before candidate checkout)
+        run: |
+          cp scripts/tools/agent_gate.py "$RUNNER_TEMP/trusted_gate.py"
+          cp scripts/tools/validate_smoke.sh "$RUNNER_TEMP/trusted_smoke.sh"
+          pip install -r requirements.txt pyyaml
       - uses: actions/download-artifact@v4
         with:
           name: agent-work
           path: .agent
-        continue-on-error: true
-
-      - name: Load agent commits
-        id: load
+      - id: load
         run: |
-          git config user.name "g8-maintenance-agent"
-          git config user.email "g8-maintenance-agent@users.noreply.github.com"
-          branch="agent/maint-$(date -u +%Y%m%d)-${{ github.run_id }}"
-          echo "branch=$branch" >> "$GITHUB_OUTPUT"
-          base="${{ needs.agent.outputs.base }}"
-          if [ -f .agent/work.bundle ] && [ -n "$base" ]; then
-            git checkout -q "$base"
-            git fetch -q .agent/work.bundle "HEAD:refs/heads/$branch"
-            git checkout -q "$branch"
-            echo "has=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "has=0" >> "$GITHUB_OUTPUT"
+          if [ -f .agent/work.bundle ]; then
+            git fetch .agent/work.bundle HEAD:refs/heads/candidate
+            git checkout candidate
+            echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Gate — classify changes
-        id: gate
+      - id: gate
+        env:
+          BASE: ${{ needs.agent.outputs.base }}
         run: |
-          if [ "${{ steps.load.outputs.has }}" != "1" ]; then echo "decision=NADA" >> "$GITHUB_OUTPUT"; exit 0; fi
           set +e
-          python scripts/tools/agent_gate.py --base "${{ needs.agent.outputs.base }}" > .agent/gate.json
+          python "$RUNNER_TEMP/trusted_gate.py" --base "$BASE" > .agent/gate.json
           rc=$?
           set -e
           cat .agent/gate.json
           case $rc in 0) d=AUTO;; 3) d=OWNER;; 4) d=NADA;; *) d=ERROR;; esac
           echo "decision=$d" >> "$GITHUB_OUTPUT"
-
-      - name: Gate — smoke checks on the agent branch
+      - name: Candidate tests — no repository write token, no Telegram or provider secrets
         id: smoke
-        if: steps.gate.outputs.decision == 'AUTO' || steps.gate.outputs.decision == 'OWNER'
+        if: steps.gate.outputs.decision == 'AUTO'
         continue-on-error: true
+        env:
+          G8_NO_SEND: '1'
         run: bash scripts/tools/validate_smoke.sh > .agent/smoke.log 2>&1 || { tail -80 .agent/smoke.log; exit 1; }
 
-      - name: Integrate into main (AUTO + smoke green)
-        id: merge
-        if: steps.gate.outputs.decision == 'AUTO' && steps.smoke.outcome == 'success'
+  publish:
+    needs: [agent, verify]
+    if: always() && needs.agent.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: agent-work
+          path: .agent
+        continue-on-error: true
+      - name: Publish verified changes (never execute candidate code here)
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE: ${{ needs.agent.outputs.base }}
+          VERIFIED_HEAD: ${{ needs.verify.outputs.head }}
+          DECISION: ${{ needs.verify.outputs.decision }}
+          SMOKE: ${{ needs.verify.outputs.smoke }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+          AGENT_RESULT: ${{ needs.agent.result }}
         run: |
-          head=$(git rev-parse HEAD)
-          for i in 1 2 3; do
-            git fetch -q origin main
-            if git rebase -q origin/main && bash scripts/tools/validate_smoke.sh > .agent/smoke2.log 2>&1 \
-               && git push origin "HEAD:main"; then
-              echo "result=MERGED" >> "$GITHUB_OUTPUT"; exit 0
+          git config user.name g8-maintenance-agent
+          git config user.email g8-maintenance-agent@users.noreply.github.com
+          cp scripts/tools/agent_gate.py "$RUNNER_TEMP/trusted_gate.py"
+          result=NO_CHANGES
+          if [ "$VERIFY_RESULT" = failure ] || [ "$AGENT_RESULT" = failure ]; then result=FAILED; fi
+          if [ -f .agent/work.bundle ] && [ -n "$VERIFIED_HEAD" ]; then
+            git fetch .agent/work.bundle HEAD:refs/heads/candidate
+            test "$(git rev-parse candidate)" = "$VERIFIED_HEAD"
+            git checkout candidate
+            # Reclassify independently with trusted main code, no imports from candidate.
+            set +e
+            python "$RUNNER_TEMP/trusted_gate.py" --base "$BASE" > .agent/gate-final.json
+            gate_rc=$?
+            set -e
+            if [ "$DECISION" = AUTO ] && [ "$gate_rc" = 0 ] && [ "$SMOKE" = success ]; then
+              git fetch origin main
+              # If code changed since BASE, a new verification is needed. Data-only
+              # changes may be merged without silently resolving any conflict.
+              code_changes=$(git diff --name-only "$BASE" origin/main -- . ':!data/**')
+              if [ -z "$code_changes" ] && git merge --no-edit origin/main && git push origin HEAD:main; then
+                result=MERGED
+              else
+                git merge --abort 2>/dev/null || true
+                result=REVIEW
+              fi
+            else
+              result=REVIEW
             fi
+            if [ "$result" = REVIEW ]; then
+              branch="agent/maint-${{ github.run_id }}"
+              git push origin "HEAD:refs/heads/$branch"
+              [ -f .agent/report.md ] || echo 'Revisar logs: no hay informe.' > .agent/report.md
+              gh pr create --base main --head "$branch" --title 'Mantenimiento G8 — revisión requerida' --body-file .agent/report.md
+            fi
+          fi
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+          git checkout main
+          git pull --ff-only origin main
+          # Trusted code from main, not the unmerged candidate, records attempts.
+          python scripts/tools/maintenance_due.py --record "$result"
+          git add data/_ingest/maintenance_state.json
+          git commit -m 'chore: record maintenance attempt'
+          for i in 1 2 3; do
+            if git pull --rebase origin main && git push origin main; then break; fi
             git rebase --abort 2>/dev/null || true
-            git reset -q --hard "$head"
-            sleep 20
+            if [ "$i" = 3 ]; then exit 1; fi
+            sleep 5
           done
-          echo "result=MERGE_FAILED" >> "$GITHUB_OUTPUT"
-
-      - name: Open PR for the owner
-        id: pr
-        if: >-
-          steps.gate.outputs.decision == 'OWNER' || steps.gate.outputs.decision == 'ERROR' ||
-          (steps.gate.outputs.decision == 'AUTO' && (steps.smoke.outcome != 'success' || steps.merge.outputs.result == 'MERGE_FAILED'))
-        run: |
-          branch="${{ steps.load.outputs.branch }}"
-          git push -q origin "HEAD:refs/heads/$branch"
-          why=$(python -c 'import json;d=json.load(open(".agent/gate.json"));print("fuera de la lista permitida: " + (", ".join(d["outside"]) or "—"))' 2>/dev/null || echo "compuerta sin clasificar")
-          [ "${{ steps.smoke.outcome }}" != "success" ] && why="$why · smoke ROJO (ver log del workflow)"
-          [ "${{ steps.merge.outputs.result }}" = "MERGE_FAILED" ] && why="$why · no se pudo integrar sobre main"
-          {
-            echo "Agente de mantenimiento — requiere tu OK ($why)."
-            echo
-            cat .agent/report.md
-            echo
-            echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
-          } > .agent/pr_body.md
-          url=$(gh pr create --base main --head "$branch" --title "agente: mantenimiento $(date -u +%Y-%m-%d) — requiere OK" --body-file .agent/pr_body.md)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-
-      - name: Report (job summary + Telegram)
+          if [ "$result" = MERGED ]; then
+            gh workflow run validate.yml --ref main
+            gh workflow run daily_update.yml --ref main
+          fi
+      - name: Report outcome
         if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RESULT: ${{ steps.publish.outputs.result }}
+          AGENT_RESULT: ${{ needs.agent.outputs.claude }}
         run: |
-          d="${{ steps.gate.outputs.decision }}"; m="${{ steps.merge.outputs.result }}"; pr="${{ steps.pr.outputs.url }}"
-          case "$d" in
-            NADA)  res="sin cambios en el repo";;
-            AUTO)  if [ "$m" = "MERGED" ]; then res="arreglo integrado en main"; else res="arreglo NO integrado → PR $pr"; fi;;
-            OWNER) res="cambios que requieren tu OK → PR $pr";;
-            *)     res="compuerta con error → PR $pr";;
-          esac
-          [ "${{ needs.agent.outputs.claude }}" != "success" ] && res="$res · ⚠ el paso de Claude falló (¿CLAUDE_CODE_OAUTH_TOKEN o límite de uso del plan?)"
-          [ -f .agent/report.md ] || echo "(sin informe del agente)" > .agent/report.md
-          { echo "## Agente de mantenimiento"; echo; echo "**Resultado:** $res"; echo; head -c 6000 .agent/report.md; } >> "$GITHUB_STEP_SUMMARY"
-          python - "$res" <<'EOF'
+          git checkout main
+          python - <<'PY'
           import html, os, sys
-          sys.path.insert(0, "scripts")
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
           import notify_telegram as N
-          rep = open(".agent/report.md", encoding="utf-8").read()[:3000]
-          run = "%s/%s/actions/runs/%s" % (os.environ["GITHUB_SERVER_URL"], os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"])
-          N.send("<b>G8 · agente de mantenimiento</b>\n%s\n\n%s\n%s" % (html.escape(sys.argv[1]), html.escape(rep), run))
-          EOF
+          p = Path('.agent/report.md')
+          report = p.read_text()[:2800] if p.exists() else 'Agente sin informe: revisar Actions.'
+          message = 'G8 mantenimiento · integración: %s · agente: %s\n%s' % (os.environ['RESULT'], os.environ['AGENT_RESULT'], report)
+          print(message)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f: f.write(message)
+          if not N.send(html.escape(message)):
+              raise SystemExit('Aviso de mantenimiento no entregado')
+          PY

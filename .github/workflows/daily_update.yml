@@ -288,7 +288,7 @@ jobs:
       - name: S01B (22-session reading + CTF — the one evaluation per session, after acm_g8)
         if: always()
         timeout-minutes: 3
-        run: python scripts/tools/g8step.py --name s01b_final --phase post --cap 120 --min 5 -- python scripts/s01b.py --final
+        run: python scripts/tools/g8step.py --name s01b_final --phase post --cap 120 --min 5 -- python scripts/tools/finalize_session.py
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true

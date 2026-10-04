@@ -4,17 +4,15 @@
 # (data/_ingest/latest/*) tras cada ejecución programada y que sus familias se publican; y la
 # caducidad de las credenciales registradas (sources/credentials.csv). Solo AVISA (Telegram):
 # la recuperación automática (respaldo residencial) es F9, no instalada.
-# Horarios: el Mac corre a las 08:00 de Bata (07:00 UTC, sin cambio de hora). Plazo de aviso 45 min
-# (sources/executors.csv). Los cron de GitHub se disparan con retraso (2–4 h observadas), por eso hay
+# Vigilancia cada cuatro horas; el horario del Mac se lee de sources/executors.csv.
+# Los cron de GitHub se disparan con retraso (2–4 h observadas), por eso hay
 # varias oportunidades en el día; además el paso se repite dentro de Daily Data Update y USD Factor.
 # ============================================================================
 name: Ingest Watch
 
 on:
   schedule:
-    - cron: '53 7 * * *'
-    - cron: '23 10 * * *'
-    - cron: '43 13 * * *'
+    - cron: '13 1,5,9,13,17,21 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -52,12 +50,22 @@ jobs:
           git fetch --quiet --shallow-since="$(date -u -d '10 days ago' +%Y-%m-%d)" origin main || true
           python scripts/freshness_report.py
 
+      - name: Publication health (local calendars + definitive CTF + alerts)
+        if: always()
+        timeout-minutes: 3
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/health_monitor.py --notify
+
       - name: Commit watch state
+        if: always()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/_ingest/watch_state.json 2>/dev/null || true
           git add data/_ingest/freshness.json data/_ingest/freshness_compare/ 2>/dev/null || true
+          git add data/_ingest/health.json data/_ingest/health_alert_state.json 2>/dev/null || true
           if git diff --cached --quiet; then echo "sin cambios de estado"; exit 0; fi
           git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3 4 5; do

@@ -76,6 +76,8 @@ class GitIntegration(unittest.TestCase):
     def test_C4_rc(self):
         self.assertEqual(self.gate()[0], 4)
         self.write("scripts/fetch_x.py", "print(1)")
+        self.write("tests/test_agent_x.py", "# regression")
+        self.write("docs/actas/ACTA_AGENTE_x.md", "Source evidence")
         self.git("add", ".")
         self.git("commit", "-qm", "fix")
         self.assertEqual(self.gate()[0], 0)
@@ -102,15 +104,15 @@ class Workflow(unittest.TestCase):
         cl = [s for s in agent["steps"] if str(s.get("uses", "")).startswith("anthropics/claude-code-action")][0]
         self.assertIn("Bash(git push:*)", cl["with"]["claude_args"].split("--disallowedTools")[1])
         self.assertNotIn("Bash(git push", cl["with"]["claude_args"].split("--disallowedTools")[0])
-        gate = wf["jobs"]["gate"]
-        self.assertEqual(gate["permissions"], {"contents": "write", "pull-requests": "write"})
+        gate = wf["jobs"]["publish"]
+        self.assertEqual(gate["permissions"], {"contents": "write", "pull-requests": "write", "actions": "write"})
         self.assertFalse([s for s in gate["steps"] if "claude-code-action" in str(s.get("uses", ""))])
         self.assertNotIn("secrets.CLAUDE_CODE_OAUTH_TOKEN", json.dumps(gate))       # el agente no corre donde se escribe
 
     def test_W2_schedule_and_auth(self):
         wf = self.load("maintenance_agent.yml")
         on = wf.get("on", wf.get(True))
-        self.assertEqual(on["schedule"], [{"cron": "0 19 * * 1,3,5"}])
+        self.assertEqual(on["schedule"], [{"cron": "17 1,5,9,13,17,21 * * *"}])
         self.assertIn("workflow_dispatch", on)
         cl = [s for s in wf["jobs"]["agent"]["steps"] if str(s.get("uses", "")).startswith("anthropics/claude-code-action")][0]
         self.assertEqual(cl["uses"], "anthropics/claude-code-action@v1")

@@ -336,6 +336,7 @@
         </div>
     </div>
 </header>
+    <aside id="publication-health" class="dqm-attn" style="margin:12px 24px;overflow-x:auto" aria-live="polite">Comprobando frescura por publicación…</aside>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
     <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
     <span class="desk-nav-hint">teclas 0–9 · u</span>
@@ -1849,6 +1850,7 @@ function syncHeader() {
         });
         if (best) upEl.textContent = best;
     }
+    if (window.G8PublicationHealth) window.G8PublicationHealth.applyHeader();
     persistAudit(h);
 }
 
@@ -2527,7 +2529,8 @@ function build(data) {
     html += '<tr class="attr-spread-head"><td colspan="7">Spreads vs USD (pp) — positive = currency yields above USD · level = date-aligned at last common date (legB forward-filled onto legA grid; ~ = no overlap, last-of-each fallback) · z = spread vs its own history (60M monthly / 252D daily) · Δz = leg-z fallback when overlap thin</td></tr>';
     CCYS.forEach(function (c) {
         if (c === 'USD' || !data[c] || !usd) return;
-        var d = data[c];
+        /* Same official inputs as §00/alerts. EST is confined to the level card. */
+        var d = data[c].official ? Object.assign({}, data[c], data[c].official) : data[c];
         function sp(a, b) {
             if (!a || !b) return '<span class="attr-na">—</span>';
             /* window matched to series frequency: 60M for monthly, 252D for daily */
@@ -2589,7 +2592,7 @@ function build(data) {
             ? ' <span class="attr-mix" title="CHF fell back to the frozen SNB-cube ACM (2025-07) — FRED 10Y fetch failed this load; spread is vs a >1-year-old level, informative only">FROZEN</span>'
             : '';
         html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + frozenFlag + '</td>' +
-            '<td>' + sp(d.nom, usd.nom) + '</td>' +
+            '<td>' + sp(d.nom, usd.nom) + (data[c].official ? ' <span class="attr-z attr-z-lo">OFICIAL</span>' : '') + '</td>' +
             '<td>' + sp(d.tp, usd.tp) + '</td>' +
             '<td>' + sp(d.rny, usd.rny) + '</td>' +
             '<td>' + sp(d.real, usd.real) + '</td>' +
@@ -2725,6 +2728,14 @@ function isoDaysAgo(d) {
 
 function assemble(raw) {
     var data = {};
+    /* Rendering must be pure: retain official rows separately on every render.
+       Otherwise editing a manual input removes EST while the estimate stays. */
+    raw = Object.assign({}, raw);
+    if (raw.AUD && raw.AUD.ry) {
+        raw.AUD = Object.assign({}, raw.AUD);
+        raw.AUD.ry = Object.assign({}, raw.AUD.ry, { rows: raw.AUD.ry.rows.slice() });
+    }
+    var audOfficial = raw.AUD && raw.AUD.ry ? raw.AUD.ry.rows.slice() : null;
 
     /* P-8: AUD — prolonga la serie nominal (solo NOM10) con la estimación diaria posterior al último dato RBA */
     var audEstInfo = null;
@@ -2764,7 +2775,13 @@ function assemble(raw) {
             data[c].acmAsOf = isoNorm(data[c].asOf);
             data[c].lagMax = (regRy && regRy.maxStaleness) || 4;
         }
-        if (c === 'AUD' && audEstInfo) data[c].est = audEstInfo;              /* P-8 */
+        if (c === 'AUD' && audEstInfo) {
+            data[c].est = audEstInfo;
+            data[c].official = {
+                nom: statsCol(audOfficial, 'NOM10'), real: statsCol(audOfficial, 'REAL10'),
+                be: statsCol(audOfficial, 'BE10')
+            };
+        }
         /* C2: level-confidence flag for the ACM term premium. The TP LEVEL (not its
            shape) is biased when (a) the sample is short — finite-sample bias,
            Bauer-Rudebusch-Wu 2012 — or (b) the gaussian model is misspecified under
@@ -4110,5 +4127,6 @@ document.addEventListener('DOMContentLoaded', function() {
     G8Dashboard.init();
 });
 </script>
+<script src="js/health.js"></script>
 </body>
 </html>
