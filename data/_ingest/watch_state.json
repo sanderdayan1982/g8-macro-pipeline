@@ -1,8 +1,12 @@
 {
  "active": {
-  "actions:fetch_bis_policy_JP:fail": {
-   "sent_ts": 1791120591.8884432,
-   "text": "Actions fetch_bis_policy_JP: el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla). Se conserva lo publicado; el dato no se actualizó."
+  "actions:fetch_bis_policy_JP:degraded": {
+   "sent_ts": 1791144429.3921254,
+   "text": "Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
+  },
+  "actions:job:daily:step:bis_jp": {
+   "sent_ts": 1791144429.3921254,
+   "text": "Actions daily: el paso bis_jp terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   }
  },
  "pending": []
