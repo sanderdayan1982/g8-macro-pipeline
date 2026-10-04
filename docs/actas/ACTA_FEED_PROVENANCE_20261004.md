@@ -34,7 +34,9 @@ contiene celdas sin dato. No se inventan observaciones para esas celdas.
   certificación. Fecha de observación de deuda corregida antes del arrastre.
 - Publicación de metales completa o conservación de la anterior. Errores y
   timeouts quedan en ledger; un intento fallido posterior invalida el estado
-  verde anterior. Fallo de un metal devuelve rc=1. Workflow restaura salidas
+  verde anterior. Fallo de cálculo de un metal devuelve rc=1. Una salida válida
+  con calidad REVIEW sigue publicándose con su etiqueta; no se confunde calidad
+  de señal con fallo de datos. Workflow restaura salidas
   antes de refrescar brief si el paso falla. Concurrencia compartida evita
   carreras con otros snapshots. No mensajes desde este workflow.
 - Límite operativo de entradas en el corte semanal: 7 días para publicaciones
@@ -46,7 +48,9 @@ contiene celdas sin dato. No se inventan observaciones para esas celdas.
 - Metales vence al terminar el sábado UTC, ventana de su ejecución semanal;
   no se exige un precio diario a una salida que el modelo calcula semanalmente.
 - Cash exige descarga sin retención ni fallo, publicación coherente y consulta
-  posterior al último horario B2 exigible (15:00 Auckland, calendario NZ).
+  posterior al último horario B2 exigible (15:00 Auckland, calendario NZ),
+  con fecha actual del bono diario 10Y del mismo libro para descartar un XLSX
+  sin actualizar aunque el servidor responda correctamente.
   Si aparece otra publicación después de la descarga, vuelve a sin verificar.
 - Opciones: validación de solo lectura de estado, 12 archivos canónicos y
   recomputación de métricas con el constructor existente. El colector y sus

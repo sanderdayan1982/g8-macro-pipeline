@@ -1014,10 +1014,10 @@ def main():
         PROVENANCE.metal = name
         try:
             ok = build_metal(name, tuesdays, fixed_delta, bridge, log)
-            if not ok:
+            if name not in bridge:
                 raise RuntimeError("Metal computation returned no output")
             PROVENANCE.validate(name)
-            ok_count += 1
+            ok_count += int(ok)
         except Exception as e:                                  # noqa: BLE001
             import traceback
             errors.append(f"{name}: {e}")
@@ -1028,7 +1028,7 @@ def main():
             for line in log:
                 print(f"  · {line}")
 
-    if errors or ok_count != len(targets):
+    if errors or any(name not in bridge for name in targets):
         MP.restore(Path(DATA_DIR), before)
         MP.manifest(Path(DATA_DIR), PROVENANCE, targets, error="; ".join(errors) or "Incomplete outputs")
         print("METALS FAILED: last complete publication preserved")

@@ -115,13 +115,29 @@ class Provenance(unittest.TestCase):
         import shutil
         shutil.copytree(ROOT/'sources',self.root/'sources')
         (self.data/'NZD_CASH_ON.csv').write_text('Date,Value\n2026-10-01,2.84\n')
-        report={'fetch_detail':{'nzd':{'rc':0,'finished_utc':'2026-10-04T18:30:08Z','files':{'NZD_CASH_ON.csv':{'status':'WRITTEN','max_date':'20261001'}}}},'families':{'NZ-B2':{'download_kind':'FRESH','status':'NOOP','files':{'NZD_CASH_ON.csv':{'status':'NOOP','src_max':'20261001'}}}}}
+        report={'fetch_detail':{'nzd':{'rc':0,'finished_utc':'2026-10-04T18:30:08Z','files':{'NZD_CASH_ON.csv':{'status':'WRITTEN','max_date':'20261001'},'NZD_BOND_10Y.csv':{'max_date':'20261001'}}}},'families':{'NZ-B2':{'download_kind':'FRESH','status':'NOOP','files':{'NZD_CASH_ON.csv':{'status':'NOOP','src_max':'20261001'}}}}}
         item={'file':'NZD_CASH_ON.csv','status':'UNKNOWN'}
         H.cash(self.root,self.now,item,lambda p:report);self.assertEqual(item['status'],'CURRENT')
         H.cash(self.root,datetime(2026,10,5,3,tzinfo=timezone.utc),item,lambda p:report);self.assertEqual(item['status'],'UNKNOWN')
+        # HTTP success after release time does not prove the workbook was updated.
+        report['fetch_detail']['nzd']['finished_utc']='2026-10-05T03:00:00Z'
+        H.cash(self.root,datetime(2026,10,5,4,tzinfo=timezone.utc),item,lambda p:report);self.assertEqual(item['status'],'UNKNOWN')
+        report['fetch_detail']['nzd']['files']['NZD_BOND_10Y.csv']['max_date']='20261002'
+        H.cash(self.root,datetime(2026,10,5,4,tzinfo=timezone.utc),item,lambda p:report);self.assertEqual(item['status'],'CURRENT')
 
     def test_model_math_and_calibration_unchanged(self):
         expected={'asof_weekly': '21719fd555bbca49d5a3282bdf59b037e9b86ee39e4302ca980f395f7f6ba9e8', 'load_slope': 'e1701e96bd0ab9b52a1b4877a2cb38402804b6509b760fb961aad81a62fbb4a4', 'forward_returns': '038777f6d89c8b38399985d676a6e3b3c46e7ad63ebf150d1f8a840f35094506', 'evaluate_delta': '6589da9050cc724411c2c1a43923d6cc1779e0e549f7e80c087abd15725576e0', 'calibrate_delta': 'd940dc3a21f7df4e6b216679f8f298bf21d301374c66bdab88e70d4dbfe468e3', 'cot_activation': 'ebb3884f8aacc54c6a37f08dbc44054d08f05e8f72252cba87fbd8030464a9f6', 'build_panel_xau': 'e6e4ac5fbc5ced916c6e9a44fb6f592cd3019caa080c90f43a45595c5bdae7e5', 'build_panel_xag': '8245f9f45e96b2e75491d8850a6addd711f0ecdbbdd0080faec4be5c171bd7f0', 'build_metal': '5dd4126338c8702440da957704fceec1bc55337e1dde5ef46f74ed893f547f5b'}
         tree=ast.parse((ROOT/'scripts/metals_fairvalue_g8.py').read_text())
         actual={n.name:hashlib.sha256(ast.dump(n,include_attributes=False).encode()).hexdigest() for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in expected}
         self.assertEqual(actual,expected)
+
+    def test_valid_review_signal_is_published_without_changing_quality(self):
+        def review(name, tuesdays, delta, bridge, log):
+            (self.data/f'MFV_G8_{name}.csv').write_text('DATE,PX\n20260929,2\n')
+            (self.data/f'MFV_G8_walkforward_{name}.csv').write_text('delta,score\n0.9,-1\n')
+            bridge[name]={'quality':'REVIEW','cot_as_of':'20260929'}
+            return False  # existing build_metal reports quality, not execution success
+        with patch.object(M,'DATA_DIR',str(self.data)),patch.object(M,'build_metal',side_effect=review),patch.object(P.Evidence,'validate',return_value={}),patch.object(sys,'argv',['metals']),contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(M.main(),0)
+        self.assertEqual(read_json(self.data/'MFV_G8_state.json')['metals']['XAU']['quality'],'REVIEW')
+        self.assertEqual(read_json(self.data/'_ingest/metals_provenance.json')['status'],'VERIFIED')

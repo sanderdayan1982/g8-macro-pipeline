@@ -25,6 +25,9 @@ def cash(root, now, item, read_json):
         due=local.replace(hour=15,minute=0,second=0,microsecond=0)
         cals=SC.load_calendars(str(root))
         while due>local or not SC.is_bd(cals,'NZ',due.date()): due-=timedelta(days=1)
+        expected_book=due.date()-timedelta(days=1)
+        while not SC.is_bd(cals,'NZ',expected_book): expected_book-=timedelta(days=1)
+        book_date=_parse_date(fetch['files']['NZD_BOND_10Y.csv']['max_date'])
         finished=timestamp(fetch['finished_utc'])
         dates=obs_dates_from_bytes((root/'data/NZD_CASH_ON.csv').read_bytes())
         latest=max(dates) if dates else None
@@ -33,7 +36,8 @@ def cash(root, now, item, read_json):
                and publication['status'] in ('PUBLISH','PUBLISHED','NOOP') and not publication.get('held')
                and accepted['status'] in ('PUBLISH','NOOP') and not accepted.get('held')
                and latest==_parse_date(file['max_date'])==_parse_date(accepted['src_max'])
-               and latest<=now.date() and due<=finished<=now)
+               and latest<=now.date() and due<=finished<=now
+               and book_date is not None and expected_book<=book_date<=now.date())
         item['verified_download_utc']=fetch['finished_utc']
         if valid:
             item.update(status='CURRENT',state='VERIFIED_SPARSE',have_max=latest.isoformat(),
