@@ -1,14 +1,29 @@
 {
  "errors": [],
  "executor": "actions",
- "failing_since_utc": "2026-10-03T00:36:16Z",
- "files": {},
- "finished_utc": "2026-10-03T00:36:17Z",
- "gh_run_id": "37082707921",
+ "failing_since_utc": null,
+ "files": {
+  "JP_POLICY.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20261004T191403Z_actions_fetch-bis-policy-jp_7bd6:6111f277f39b",
+   "dropped_by_source": 2,
+   "file": "JP_POLICY.csv",
+   "held": [],
+   "new": 0,
+   "repo_max": "20260929",
+   "revised": [],
+   "src_max": "20260929",
+   "status": "PUBLISH",
+   "written": true
+  }
+ },
+ "finished_utc": "2026-10-04T19:15:09Z",
+ "gh_run_id": "37227461147",
  "job": "fetch_bis_policy_JP",
- "last_ok_utc": "2026-10-02T01:01:09Z",
+ "last_ok_utc": "2026-10-04T19:15:09Z",
  "not_before": {},
- "rc": 1,
+ "rc": 0,
  "requests": [
   {
    "attempts": [
@@ -16,12 +31,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 0.58,
+     "secs": 66.29,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Sat, 03 Oct 2026 00:36:16 GMT",
+   "date_header": "Sun, 04 Oct 2026 19:14:03 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
@@ -30,7 +45,7 @@
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.JP/all?format=csv"
   }
  ],
- "run_id": "20261003T003616Z_actions_fetch-bis-policy-jp_2cfd",
- "started_utc": "2026-10-03T00:36:16Z",
- "step": "bis_jp"
+ "run_id": "20261004T191403Z_actions_fetch-bis-policy-jp_7bd6",
+ "started_utc": "2026-10-04T19:14:03Z",
+ "step": null
 }
