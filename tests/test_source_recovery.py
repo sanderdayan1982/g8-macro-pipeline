@@ -95,3 +95,29 @@ class FrequencyLimit(unittest.TestCase):
         self.assertNotIn("NZD_BE_MANUAL: manualConst",text)
         self.assertIn("quarterly fallback prohibited",text)
         self.assertFalse((ROOT/'scripts/fetch_snb_forecast.py').exists())
+
+class RecoveryEvidence(unittest.TestCase):
+    def test_later_validated_publication_closes_old_wrapper_failure(self):
+        from health_monitor import outstanding_fetch_failure as failed
+        facts={'step':{'rc':1,'finished_utc':'2026-10-03T12:00:00Z'},
+               'actions':{'rc':0,'finished_utc':'2026-10-04T19:15:09Z','files':{'JP_POLICY.csv':{'status':'PUBLISH','written':True}}}}
+        self.assertFalse(failed(facts,'JP_POLICY.csv'))
+        self.assertTrue(failed(facts,'OTHER.csv'))
+        facts['actions']['files']['JP_POLICY.csv']['status']='INVALID'
+        self.assertTrue(failed(facts,'JP_POLICY.csv'))
+
+    def test_newer_failure_is_not_closed_by_older_success(self):
+        from health_monitor import outstanding_fetch_failure as failed
+        facts={'step':{'rc':1,'finished_utc':'2026-10-04T20:00:00Z'},
+               'actions':{'rc':0,'finished_utc':'2026-10-04T19:15:09Z','files':{'JP_POLICY.csv':{'status':'NOOP'}}}}
+        self.assertTrue(failed(facts,'JP_POLICY.csv'))
+        facts['step'].pop('finished_utc')
+        self.assertTrue(failed(facts,'JP_POLICY.csv'))
+
+    def test_scoped_report_requires_actual_publication(self):
+        from health_monitor import outstanding_fetch_failure as failed
+        facts={'step':{'rc':1,'finished_utc':'2026-10-03T12:00:00Z','file':{'status':'SIN_RESULTADO_PARA_ESTE_FICHERO'}},
+               'actions':{'rc':0,'finished_utc':'2026-10-04T19:15:09Z','file':{'status':'PUBLISH','written':True}}}
+        self.assertFalse(failed(facts,'JP_POLICY.csv'))
+        facts['actions']['file']['written']=False
+        self.assertTrue(failed(facts,'JP_POLICY.csv'))

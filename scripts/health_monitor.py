@@ -37,6 +37,26 @@ def business_age(start, end, calendar, cals):
     return n
 
 
+def outstanding_fetch_failure(facts, filename):
+    """A newer validated publication closes an older attempt, never the reverse."""
+    records = list(facts.values())
+    for failed in records:
+        if failed.get('rc') in (None, 0):
+            continue
+        failed_at = failed.get('finished_utc') or failed.get('started_utc')
+        recovered = False
+        for ok in records:
+            published_at = ok.get('finished_utc') or ok.get('started_utc')
+            output = ok.get('file') or (ok.get('files') or {}).get(filename) or {}
+            if (ok.get('rc') == 0 and output.get('status') in ('PUBLISH', 'NOOP')
+                    and (output.get('status') == 'NOOP' or output.get('written') is True)
+                    and failed_at and published_at and published_at > failed_at):
+                recovered = True
+        if not recovered:
+            return True
+    return False
+
+
 def build(root, now, report=None):
     root = Path(root)
     src = F.TreeSource(str(root))
@@ -61,9 +81,8 @@ def build(root, now, report=None):
             item["status"] = "EXCLUDED"
         # An HTTP success cannot close an outstanding error without a published
         # output; existing ingest_watch also checks these facts independently.
-        for fact in (row.get("facts", {}).get("by_source") or {}).values():
-            if fact.get("rc") not in (None, 0):
-                item["flags"] = item["flags"] + ["LAST_FETCH_FAILED"]
+        if outstanding_fetch_failure(row.get("facts", {}).get("by_source") or {}, row['file']):
+            item["flags"] = item["flags"] + ["LAST_FETCH_FAILED"]
         for reg in regs.get(row["file"], []):
             # Monthly/manual budgets stay as registered. The calendar is LOCAL.
             d = row.get("have_max")
