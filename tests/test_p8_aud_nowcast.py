@@ -229,7 +229,7 @@ class Consumers(unittest.TestCase):
             self.assertLess(i, next(k for k, n in enumerate(names) if n.startswith("Dashboard alerts")))
             self.assertIn("g8step.py --name aud_nowcast", steps[i]["run"])
         import agent_gate as G
-        self.assertEqual(G.classify(["scripts/aud_nowcast.py"])["decision"], "AUTO")
+        self.assertEqual(G.classify(["scripts/aud_nowcast.py"])["decision"], "OWNER")
         self.assertEqual(G.classify(["sources/nowcast_aud.json"])["decision"], "OWNER")
 
 
