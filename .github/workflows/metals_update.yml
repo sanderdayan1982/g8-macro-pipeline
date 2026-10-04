@@ -10,10 +10,13 @@ on:
     # Saturdays 07:00 UTC — after Friday's CFTC COT release; the model anchors to
     # the Tuesday-COT grid, so once a week keeps §06/§07 within their weekly budget.
     - cron: '0 7 * * 6'
+  push:
+    branches: [main]
+    paths: ['docs/actas/ACTA_FEED_PROVENANCE_20261004.md']
   workflow_dispatch:   # manual "Run workflow" button
 
 concurrency:
-  group: metals-update
+  group: g8-shared-data-alerts
   cancel-in-progress: false
 
 permissions:
@@ -24,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
+      G8_NO_SEND: '1'
+      G8_STEP_LOG: ${{ runner.temp }}/metals_steps.jsonl
       G8_JOB: metals        # revisión 24-sep (#5): aplazamientos Retry-After en data/_ingest/not_before/metals.json
     steps:
       - name: Checkout repository
@@ -42,11 +47,22 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Compute metals fair value (XAU + XAG)
+        id: compute
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}   # optional; keyless FRED CSV fallback if unset
         timeout-minutes: 20
         run: python scripts/tools/g8step.py --name metals_fairvalue --cap 1080 -- python scripts/metals_fairvalue_g8.py
+
+      - name: Record computation outcome and refresh read-only snapshots
+        if: always()
+        run: |
+          if [ "${{ steps.compute.outcome }}" != "success" ]; then
+            git restore -- data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv
+          fi
+          python scripts/tools/g8step.py --ledger metals
+          python scripts/tools/refresh_brief_snapshot.py
+          python scripts/health_monitor.py
 
       - name: Commit updated metals data
         if: always()
@@ -54,9 +70,14 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # only the metals outputs — never touch other pipelines' files
-          git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json 2>/dev/null || true
-          git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv 2>/dev/null || true
+          # A failed/partial computation must never publish a mixed cohort.
+          if [ "${{ steps.compute.outcome }}" = "success" ]; then
+            git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json
+            git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv
+          fi
+          git add data/_ingest/metals_provenance.json 2>/dev/null || true
+          git add data/_ingest/latest/actions__job_metals.json
+          git add data/_ingest/health.json data/alerts/brief.json
           git add data/_ingest/not_before/metals.json 2>/dev/null || true
 
           if git diff --staged --quiet; then
@@ -67,10 +88,14 @@ jobs:
 
           for attempt in 1 2 3 4 5; do
             echo "Push attempt $attempt"
-            git pull --rebase origin main
-            if git push origin main; then
+            if git pull --rebase origin main && git push origin HEAD:main; then
               echo "✓ pushed on attempt $attempt"; exit 0
             fi
+            git rebase --abort 2>/dev/null || true
             sleep $((attempt * 5))
           done
           echo "✗ push failed after 5 attempts"; exit 1
+
+      - name: Fail visibly when computation failed
+        if: always() && steps.compute.outcome != 'success'
+        run: exit 1

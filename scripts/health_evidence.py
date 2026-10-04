@@ -4,6 +4,7 @@ import json
 import math
 from datetime import datetime, timedelta
 from g8common.freshness import _parse_date
+import health_derivatives as HD
 
 
 def read_json(path):
@@ -46,11 +47,14 @@ def refine(root, now, item, policy):
                     reason='Diagnóstico de calibración; no es una serie de mercado ni prueba de frescura. No se le atribuye una fecha de observación.')
         return
     if name == 'NZD_CASH_ON.csv':
-        item['reason'] = 'RBNZ B2 se publica diariamente, pero contiene casillas cash sin observación. No se rellenan; calendario exacto de observaciones aún sin certificar.'
+        HD.cash(root, now, item, read_json)
+        return
     if name == 'OPTIONS_SURFACE.json':
-        item['reason'] = 'Fecha de sesión visible; colector CME/Databento fuera del alcance de esta validación. No certificado como fresco por este monitor.'
+        HD.options(root, now, item, read_json)
+        return
     if name.startswith('MFV_G8_'):
-        item['reason'] = 'Salida semanal derivada: falta certificar conjuntamente COT y precios externos. La fecha de ejecución no prueba frescura de todas las entradas.'
+        HD.metals(root, now, item, read_json)
+        return
     if name == 'FLOOR_USD.csv':
         observations = rate_rows(root / 'data' / name, now.date())
         if observations:

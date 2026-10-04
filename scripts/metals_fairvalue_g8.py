@@ -42,7 +42,7 @@ DRIVERS MMT (consenso ronda 2)
 ------------------------------
   ORO:  log(XAU) = α_t + β_t·[ BE10 + slope(10Y−EFFR) + log(NFA_total) ]
                  + γ·DXY (beta FIJA, fuera del TVP) + ε_t
-        NFA_total = FDHBFIN + WRESBAL − WTREGEN   (métrica Mosler exacta del desorden)
+        NFA_total = DebtToPenny + WRESBAL − WTREGEN   (métrica Mosler exacta del desorden)
         slope     = DGS10 − EFFR                  (libre de modelo; reemplaza TP10 ACM)
         challenger OOS: TP10 ACM (si añade IC sobre slope en walk-forward, se adopta)
   PLATA: XAG = βm_t·XAU + βi_t·HG_orth(cobre⊥oro) + ε_t  (dual: monetario + industrial)
@@ -59,7 +59,7 @@ FUENTES (local-first; calca real_yields_g8.py / acm_g8.py)
   XAU/XAG precio       CSV TradingView (~/Downloads, xau_price.csv/xag_price.csv)
   BE10                 data/RY_G8_USD.csv (real_yields_g8) → fallback FRED T10YIE
   slope = DGS10−EFFR   FRED DGS10, EFFR (o FEDFUNDS)
-  NFA_total            FRED FDHBFIN + WRESBAL − WTREGEN  (las 3 ya en USD-LCC)
+  NFA_total            Treasury DebtToPenny + FRED WRESBAL − WTREGEN  (las 3 ya en USD-LCC)
   DXY (broad)          FRED DTWEXBGS
   TP10 (challenger)    data/ACM_G8.csv (acm_g8) col TP10 → opcional
   Cobre (plata)        CSV TradingView (~/Downloads, hg_price.csv); ausente→degrada
@@ -86,6 +86,10 @@ import sys
 import json
 import time
 import glob
+from pathlib import Path
+import metals_provenance as MP
+
+PROVENANCE = MP.Evidence()
 import ssl
 import urllib.request
 
@@ -149,7 +153,6 @@ FRED_DGS10 = "DGS10"          # nominal 10Y (para slope)
 FRED_EFFR  = "EFFR"           # effective fed funds (para slope); fallback FEDFUNDS
 FRED_FF    = "FEDFUNDS"
 FRED_DXY   = "DTWEXBGS"       # broad USD
-FRED_FDHBFIN = "FDHBFIN"      # deuda federal en manos del público (NFA stock)
 FRED_WRESBAL = "WRESBAL"      # reservas bancarias (NFA)
 FRED_TGA     = "WTREGEN"      # Treasury General Account (NFA, se RESTA)
 
@@ -174,6 +177,8 @@ def fetch_fred(series_id, start=START, freq=None):
     """FRED con API key opcional (FRED_API_KEY) + fallback CSV sin key. Idéntico
     en convención a real_yields_g8.py. Devuelve Series diaria indexada por fecha.
     freq: si se da ('d','w','m','q'), pide a FRED esa frecuencia."""
+    if series_id in {"GFDEBTN", "FDHBFIN"} or freq not in (None, "d", "w", "m"):
+        raise ValueError("Quarterly or slower inputs prohibited")
     api_key = os.environ.get("FRED_API_KEY", "").strip()
     fq = f"&frequency={freq}" if freq else ""
     raw = None
@@ -204,7 +209,7 @@ def fetch_fred(series_id, start=START, freq=None):
         s = pd.to_numeric(df.set_index("DATE")["VAL"], errors="coerce").dropna()
     print(f"    [FRED {series_id}{'@'+freq if freq else ''}] {len(s)} obs  "
           f"{s.index[0].date()} → {s.index[-1].date()}")
-    return s.sort_index()
+    return PROVENANCE.record(series_id, s.sort_index(), "FRED:" + series_id, MP.FREQUENCIES.get(series_id, "unknown"))
 
 
 def load_ry_usd():
@@ -278,7 +283,7 @@ def fetch_price_network(name):
             if len(s) > 250:
                 print(f"    [precio {name}] yfinance {sym}: {len(s)} obs  "
                       f"{s.index[0].date()}→{s.index[-1].date()}")
-                return s, f"yfinance:{sym}"
+                return PROVENANCE.record("price:"+name, s, "yfinance:"+sym, "daily"), f"yfinance:{sym}"
     except Exception as e:                        # noqa: BLE001
         print(f"    [precio {name}] yfinance {sym} falló ({e}) — pruebo Stooq")
     # 2) Stooq CSV (Date,Open,High,Low,Close,Volume)
@@ -293,7 +298,7 @@ def fetch_price_network(name):
             if len(s) > 250:
                 print(f"    [precio {name}] Stooq {ss}: {len(s)} obs  "
                       f"{s.index[0].date()}→{s.index[-1].date()}")
-                return s, f"stooq:{ss}"
+                return PROVENANCE.record("price:"+name, s, "stooq:"+ss, "unverified"), f"stooq:{ss}"
     except Exception as e:                        # noqa: BLE001
         print(f"    [precio {name}] Stooq falló ({e})")
     return None, None
@@ -307,7 +312,7 @@ def find_local_price(name):
     if fixed and os.path.exists(fixed):
         s = load_tv_csv(fixed)
         if s is not None:
-            return s, fixed
+            return PROVENANCE.record("price:"+name, s, os.path.basename(fixed), "unverified"), fixed
     dl = os.path.expanduser("~/Downloads")
     cands = []
     for pat in cfg.get("globs", []):
@@ -316,7 +321,7 @@ def find_local_price(name):
     for c in cands:
         s = load_tv_csv(c)
         if s is not None:
-            return s, c
+            return PROVENANCE.record("price:"+name, s, os.path.basename(c), "unverified"), c
     # sin export local -> descarga automática (modo desatendido / CI)
     return fetch_price_network(name)
 
@@ -360,7 +365,7 @@ def load_be10():
                 df["DATE"] = pd.to_datetime(df["DATE"].astype(str), format="%Y%m%d", errors="coerce")
                 s = pd.to_numeric(df.set_index("DATE")["BE10"], errors="coerce").dropna()
                 print(f"    [BE10] {len(s)} obs de RY_G8_USD (PRIMARY)")
-                return s.sort_index()
+                return PROVENANCE.record("BE10", s.sort_index(), "data/RY_G8_USD.csv:BE10", "daily")
         except Exception:
             pass
     s = fetch_fred(FRED_BE)
@@ -415,34 +420,16 @@ def _fetch_debt_to_penny():
 
 
 def _fetch_debt_public():
-    """Deuda federal para el NFA, cascada por FRECUENCIA (lo más fino disponible,
-    para que el fair value semanal no quede rezagado):
-      1) Debt to the Penny  — DIARIA   (Tesoro Fiscal Data) ★ ideal
-      2) GFDEBTN @ semanal  — SEMANAL  (FRED resamplea, alinea con martes-COT)
-      3) GFDEBTN @ mensual  — MENSUAL  (FRED)
-      4) FDHBFIN            — TRIMESTRAL (FRED, último recurso)
-    Devuelve (Series, etiqueta_fuente). Se exige un mínimo de observaciones en cada
-    nivel para no aceptar una serie degenerada (p.ej. GFDEBTN anual con 80 puntos)."""
-    # 1) diario (Tesoro)
+    """Only verified daily total public debt. Quarterly sources are prohibited.
+
+    GFDEBTN is natively quarterly: requesting weekly/monthly does not change
+    its publication cadence. FDHBFIN is also quarterly, a different debt concept
+    and in billions rather than millions. Neither is an admissible fallback.
+    """
     s = _fetch_debt_to_penny()
     if s is not None and len(s) > 500:
-        return s, "DebtToPenny(diaria)"
-    # 2) semanal (FRED resampleado) — exige densidad semanal real (>600 en ~20y)
-    try:
-        w = fetch_fred("GFDEBTN", freq="w")
-        if w is not None and len(w) > 600:
-            return w, "GFDEBTN(semanal)"
-    except Exception:
-        pass
-    # 3) mensual (FRED) — exige densidad mensual real (>180 en ~20y)
-    try:
-        m = fetch_fred("GFDEBTN", freq="m")
-        if m is not None and len(m) > 180:
-            return m, "GFDEBTN(mensual)"
-    except Exception:
-        pass
-    # 4) trimestral (último recurso)
-    return fetch_fred(FRED_FDHBFIN), "FDHBFIN(trimestral)"
+        return PROVENANCE.record("NFA_DEBT", s, "Treasury:DebtToPenny", "daily"), "DebtToPenny(diaria)"
+    raise RuntimeError("Daily Treasury debt unavailable; no verified weekly/monthly equivalent. Quarterly fallback prohibited.")
 
 
 def load_nfa_total():
@@ -451,6 +438,7 @@ def load_nfa_total():
     (Debt to the Penny) cuando está disponible → el fair value respira a frecuencia
     semanal sin rezago. WRESBAL/WTREGEN son semanales. Forward-fill sin look-ahead."""
     debt, dsrc = _fetch_debt_public()
+    original_debt_asof = debt.dropna().index[-1].date()
     wr = fetch_fred(FRED_WRESBAL)        # reservas bancarias (semanal)
     tg = fetch_fred(FRED_TGA)            # TGA (semanal), se RESTA
     lo = max(debt.index[0], wr.index[0], tg.index[0])
@@ -463,10 +451,10 @@ def load_nfa_total():
     nfa = nfa.replace([np.inf, -np.inf], np.nan)
     bad = (~np.isfinite(nfa)) | (nfa <= 0)
     nfa = nfa[~bad].dropna().rename("NFA")
-    last_debt = debt.dropna().index[-1].date() if len(debt.dropna()) else "—"
+    last_debt = original_debt_asof
     # D1: registrar la fuente de deuda y su frescura para exponerla en el state.json.
     # El operador DEBE saber qué nivel de la cascada está activo: si el Tesoro cae y
-    # degrada a mensual/trimestral, el régimen del oro puede cambiar sin aviso.
+    # falla, se conserva la salida anterior y se informa; no se admiten datos trimestrales.
     global NFA_DEBT_SRC, NFA_DEBT_ASOF
     NFA_DEBT_SRC = dsrc
     NFA_DEBT_ASOF = str(last_debt)
@@ -509,7 +497,7 @@ def load_cot_mm(name):
                     df["DATE"] = pd.to_datetime(df["DATE"].astype(str), format="%Y%m%d", errors="coerce")
                     s = pd.to_numeric(df.set_index("DATE")[col], errors="coerce").dropna()
                     print(f"    [COT {name}] {len(s)} obs de {fn}")
-                    return s.sort_index()
+                    return PROVENANCE.record("COT:"+name, s.sort_index(), "data/"+fn, "weekly")
             except Exception:
                 pass
     return None
@@ -631,7 +619,7 @@ def load_real10():
                 df["DATE"] = pd.to_datetime(df["DATE"].astype(str), format="%Y%m%d", errors="coerce")
                 s = pd.to_numeric(df.set_index("DATE")["REAL10"], errors="coerce").dropna()
                 print(f"    [REAL10] {len(s)} obs de RY_G8_USD (PRIMARY)")
-                return s.sort_index()
+                return PROVENANCE.record("REAL10", s.sort_index(), "data/RY_G8_USD.csv:REAL10", "daily")
         except Exception:
             pass
     s = fetch_fred("DFII10")
@@ -640,28 +628,10 @@ def load_real10():
 
 
 def load_official_demand():
-    """DEMANDA OFICIAL (bancos centrales) como stock acumulado de tenencias oficiales
-    de oro (base ~2005 + compras netas World Gold Council). PRIMARY
-    data/OFFICIAL_GOLD_DEMAND.csv (DATE,CUM_TONNES). Es el bid estructural que
-    reprecio el oro desde 2022 (des-dolarización) y que el modelo puramente financiero
-    no capturaba. None si el CSV no existe -> el driver 'official' no entra (spec base).
-    Se interpola/forward-fill as-of martes en el panel."""
-    path = os.path.join(DATA_DIR, "OFFICIAL_GOLD_DEMAND.csv")
-    if not os.path.exists(path):
-        return None
-    try:
-        df = pd.read_csv(path, comment="#")
-        df.columns = [c.strip().upper() for c in df.columns]
-        col = "CUM_TONNES" if "CUM_TONNES" in df.columns else ("VALUE" if "VALUE" in df.columns else None)
-        if "DATE" not in df.columns or col is None:
-            return None
-        df["DATE"] = pd.to_datetime(df["DATE"].astype(str), errors="coerce")
-        s = pd.to_numeric(df.set_index("DATE")[col], errors="coerce").dropna().sort_index()
-        s = s[s > 0]
-        print(f"    [OFFICIAL] {len(s)} pts de OFFICIAL_GOLD_DEMAND.csv (WGC cum tonnes)")
-        return s if len(s) >= 8 else None
-    except Exception:
-        return None
+    """Retired annual/estimated source. No verified monthly replacement exists."""
+    if os.path.exists(os.path.join(DATA_DIR, "OFFICIAL_GOLD_DEMAND.csv")):
+        raise RuntimeError("Retired annual gold input reappeared; publication blocked")
+    return None
 
 
 # ================================================================ build per-metal
@@ -1029,24 +999,40 @@ def main():
     end = pd.Timestamp.today().normalize()
     tuesdays = cot_tuesdays(START, end)
     bridge = {}
+    before = MP.snapshot(Path(DATA_DIR))
+    global PROVENANCE
+    PROVENANCE = MP.Evidence()
+    PROVENANCE.anchor = tuesdays[-1].date()
     ok_count = 0
+    errors = []
     for name in targets:
         print("\n" + "=" * 78)
         print(f"  {name}  (modelo MMT: {'+'.join(MODELS[name]['drivers_tvp'])}"
               f"{' + DXY[fijo]' if MODELS[name]['fixed'] else ''}  ·  Z-{MODELS[name]['z_window']}w)")
         print("=" * 78)
         log = []
+        PROVENANCE.metal = name
         try:
             ok = build_metal(name, tuesdays, fixed_delta, bridge, log)
+            if name not in bridge:
+                raise RuntimeError("Metal computation returned no output")
+            PROVENANCE.validate(name)
             ok_count += int(ok)
         except Exception as e:                                  # noqa: BLE001
             import traceback
+            errors.append(f"{name}: {e}")
             print(f"[{name}] FAILED: {e}")
             traceback.print_exc()
             ok = False
         finally:
             for line in log:
                 print(f"  · {line}")
+
+    if errors or any(name not in bridge for name in targets):
+        MP.restore(Path(DATA_DIR), before)
+        MP.manifest(Path(DATA_DIR), PROVENANCE, targets, error="; ".join(errors) or "Incomplete outputs")
+        print("METALS FAILED: last complete publication preserved")
+        return 1
 
     if bridge:
         bpath = os.path.join(DATA_DIR, "MFV_G8_state.json")
@@ -1055,8 +1041,10 @@ def main():
                        "metals": bridge}, f, indent=2)
         print(f"\n  bridge : {bpath}")
 
+    MP.manifest(Path(DATA_DIR), PROVENANCE, targets)
     print(f"\nSummary: {ok_count} clean of {len(targets)}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
