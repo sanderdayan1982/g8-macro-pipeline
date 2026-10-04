@@ -36,8 +36,8 @@
         details.appendChild(summary);
         var table = document.createElement('table');
         table.className = 'attr-table';
-        var rows = [['Fuente / salida', 'Estado', 'Última observación', 'Esperada', 'Publicación / respaldo']].concat(
-            (report.feeds || []).map(function (x) { return [x.file, x.status, x.have_max || '—', x.expected_obs || 'sin calendario exacto', (x.publication_frequency || '—') + (x.slow_fallback ? ' · ÚLTIMO RECURSO' : '') + (x.frequency_note ? ' · ' + x.frequency_note : '')]; }));
+        var rows = [['Fuente / salida', 'Estado', 'Última observación', 'Esperada', 'Publicación / respaldo', 'Motivo / evidencia']].concat(
+            (report.feeds || []).map(function (x) { return [x.file, x.status, x.have_max || '—', x.expected_obs || 'sin calendario exacto', (x.publication_frequency || '—') + (x.slow_fallback ? ' · ÚLTIMO RECURSO' : '') + (x.frequency_note ? ' · ' + x.frequency_note : ''), (x.reason || '—') + (x.evidence_expires_utc ? ' · Verificar antes de ' + x.evidence_expires_utc : '')]; }));
         rows.forEach(function (r, i) {
             var tr = document.createElement('tr');
             r.forEach(function (value) { var td = document.createElement(i ? 'td' : 'th'); td.textContent = value; tr.appendChild(td); });

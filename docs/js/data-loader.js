@@ -423,8 +423,13 @@
     // v5: NEW
     async function loadAllPolicy() {
         const out = {};
+        const today = new Date().toISOString().slice(0, 10);
         const promises = Object.entries(POLICY_FEEDS).map(async ([key, cfg]) => {
-            const rows = await loadCSV(cfg.file);
+            const rawRows = await loadCSV(cfg.file);
+            const rows = rawRows && rawRows.filter(r => {
+                const d = parseDate(r.date);
+                return d && !isNaN(d.getTime()) && d.toISOString().slice(0, 10) <= today;
+            });
             out[key] = { ...cfg, rows, series: rows ? normalizeOHLCV(rows) : null };
         });
         await Promise.all(promises);

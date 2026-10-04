@@ -2967,7 +2967,7 @@ function getCsv(name) {
                 var d = r.DATE != null ? r.DATE : r.Date, v = r.CLOSE != null ? r.CLOSE : r.Value;
                 return { d: String(d == null ? '' : d).replace(/-/g, '').slice(0, 8), v: v };
             })
-            .filter(function (r) { return /^\d{8}$/.test(r.d) && isFinite(r.v); })
+            .filter(function (r) { return /^\d{8}$/.test(r.d) && r.d <= new Date().toISOString().slice(0, 10).replace(/-/g, '') && r.v !== null && r.v !== '' && isFinite(r.v); })
             .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     });
 }
