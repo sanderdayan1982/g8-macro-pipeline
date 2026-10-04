@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-04T19:15:12.492626Z",
+ "generated_utc": "2026-10-04T19:27:32.367507Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -20,23 +20,6 @@
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
  "needs_repair": true,
  "issues": [
-  {
-   "file": "JP_POLICY.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-09-29",
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 3,
-   "publication_frequency": "event",
-   "slow_fallback": false
-  },
   {
    "file": "manual/CHF_BE_MANUAL",
    "status": "MISSING",
@@ -64,7 +47,7 @@
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
   }
  ],
- "unknown_count": 14,
+ "unknown_count": 15,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -225,10 +208,8 @@
    "basis": "PROVISIONAL",
    "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "UNKNOWN",
    "age_business_days": 3,
    "publication_frequency": "event",
    "slow_fallback": false
@@ -1575,7 +1556,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-04T19:15:11Z",
+   "have_max": "2026-10-04T19:27:31Z",
    "flags": []
   },
   {
