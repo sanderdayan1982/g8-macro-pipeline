@@ -126,9 +126,11 @@ class Provenance(unittest.TestCase):
         H.cash(self.root,datetime(2026,10,5,4,tzinfo=timezone.utc),item,lambda p:report);self.assertEqual(item['status'],'CURRENT')
 
     def test_model_math_and_calibration_unchanged(self):
-        expected={'asof_weekly': '21719fd555bbca49d5a3282bdf59b037e9b86ee39e4302ca980f395f7f6ba9e8', 'load_slope': 'e1701e96bd0ab9b52a1b4877a2cb38402804b6509b760fb961aad81a62fbb4a4', 'forward_returns': '038777f6d89c8b38399985d676a6e3b3c46e7ad63ebf150d1f8a840f35094506', 'evaluate_delta': '6589da9050cc724411c2c1a43923d6cc1779e0e549f7e80c087abd15725576e0', 'calibrate_delta': 'd940dc3a21f7df4e6b216679f8f298bf21d301374c66bdab88e70d4dbfe468e3', 'cot_activation': 'ebb3884f8aacc54c6a37f08dbc44054d08f05e8f72252cba87fbd8030464a9f6', 'build_panel_xau': 'e6e4ac5fbc5ced916c6e9a44fb6f592cd3019caa080c90f43a45595c5bdae7e5', 'build_panel_xag': '8245f9f45e96b2e75491d8850a6addd711f0ecdbbdd0080faec4be5c171bd7f0', 'build_metal': '5dd4126338c8702440da957704fceec1bc55337e1dde5ef46f74ed893f547f5b'}
-        tree=ast.parse((ROOT/'scripts/metals_fairvalue_g8.py').read_text())
-        actual={n.name:hashlib.sha256(ast.dump(n,include_attributes=False).encode()).hexdigest() for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in expected}
+        # Compare original function text, independent of Python AST schema/version.
+        expected={'asof_weekly': '710c0541c78e4157480bebdcd5bdb2ffbaff899c30d7cd12d91dbf2ce5f7ee0e', 'load_slope': 'b1df9dff041602608adb44331cad482dddbb7317035e40e42d90aab53248ce99', 'forward_returns': '8befbd22911e00b29c1d954d8c7e07531b31701fa8362d41b3a90ee29b1d7ea8', 'evaluate_delta': '2157aae522bd200d83e2242ec3716f0fea0702d701d3000221cbefe897ad47ed', 'calibrate_delta': 'f32662c7168d26e05b9c7b3d4fa8f4a861f0938703fa862856b9359d850892ee', 'cot_activation': '54498f07ed1a6fa30e4660d418613230d9623809ac6b7085025c887cf7061055', 'build_panel_xau': 'e026467b1208e73286b42482c4e76ef26eaaba0444b88651bd36171b0db5182d', 'build_panel_xag': 'f25055e6de03240c33c3162b11cfcf432006c63e7ca2932bdd6b21c830e101f6', 'build_metal': '91acad1d9a3b5244566d43e364c7f880974cda08796e8b9529dcbc7f61ce46a5'}
+        source=(ROOT/'scripts/metals_fairvalue_g8.py').read_text()
+        tree=ast.parse(source)
+        actual={n.name:hashlib.sha256(ast.get_source_segment(source,n).encode()).hexdigest() for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in expected}
         self.assertEqual(actual,expected)
 
     def test_valid_review_signal_is_published_without_changing_quality(self):

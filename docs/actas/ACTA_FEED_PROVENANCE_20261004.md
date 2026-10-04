@@ -63,7 +63,8 @@ contiene celdas sin dato. No se inventan observaciones para esas celdas.
 ## Sin cambios
 
 Kalman, calibraciones, señales, drivers algebraicos, ventanas y resampling sin
-cambios. Prueba de hashes AST para nueve funciones matemáticas existentes.
+cambios. Prueba de huellas del texto original de nueve funciones matemáticas existentes,
+independiente de la representación AST de Python 3.11/3.12.
 Vigilancia y agente: un día sí y otro no. Colector de opciones y sus horarios
 intactos; sin llamadas nuevas a Databento ni compras de datos. Metales conserva
 su cron semanal; el acta dispara solo una comprobación extraordinaria con las
