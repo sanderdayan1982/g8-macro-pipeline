@@ -28,9 +28,11 @@ jobs:
     timeout-minutes: 25
     env:
       G8_NO_SEND: '1'
-      G8_STEP_LOG: ${{ runner.temp }}/metals_steps.jsonl
       G8_JOB: metals        # revisión 24-sep (#5): aplazamientos Retry-After en data/_ingest/not_before/metals.json
     steps:
+      - name: Initialize step ledger path
+        run: echo "G8_STEP_LOG=$RUNNER_TEMP/metals_steps.jsonl" >> "$GITHUB_ENV"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:

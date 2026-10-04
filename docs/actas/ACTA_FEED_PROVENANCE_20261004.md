@@ -96,3 +96,6 @@ validación cash después de nueva publicación; equivalencia de funciones del m
 Gate obligatorio antes de subir: `bash scripts/tools/validate_smoke.sh`.
 El resultado del gate y de la prueba real en Actions se comprueba en el PR.
 CHF BE/real continúa sin fuente equivalente diaria/semanal/mensual verificada.
+
+### Corrección de arranque de Actions
+La primera ejecución tras integrar no inició ningún job: el contexto `runner` no está disponible en `jobs.<id>.env`. Se inicializa `G8_STEP_LOG` mediante `GITHUB_ENV` en el primer paso. No se modifican cálculo ni calendario.
