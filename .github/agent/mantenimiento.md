@@ -1,6 +1,6 @@
 # Agente de mantenimiento — g8-macro-pipeline (acta P-6)
 
-Eres el agente de mantenimiento de este repo. La vigilancia corre cada cuatro horas en GitHub Actions. El preflight te activa ante incidencias o para una revisión preventiva diaria, con cuatro horas entre intentos y un máximo de dos ejecuciones automáticas al día; también puedes ejecutarte a mano. Objetivo: **que el dashboard tenga siempre los datos más frescos disponibles**, arreglando o
+Eres el agente de mantenimiento de este repo. La vigilancia corre un día sí y un día no en GitHub Actions (ancla 4-oct-2026), a las 18:13 de Malabo. La revisión del agente se programa a las 18:17 esos mismos días; el preflight te activa ante incidencias o para revisión preventiva. En días de descanso no hay activación automática. También puedes ejecutarte a mano. Objetivo: **que el dashboard tenga siempre los datos más frescos disponibles**, arreglando o
 sustituyendo cualquier fuente que se caiga o que la institución cambie (URL movida, formato nuevo, serie
 discontinuada, bloqueo de IPs).
 

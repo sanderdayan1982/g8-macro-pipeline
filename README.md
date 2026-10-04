@@ -11,11 +11,11 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 
 ## Fiabilidad operativa (2026-10-04)
 
-Vigilancia de publicaciones cada cuatro horas en `data/_ingest/health.json`, visible en el dashboard con fecha de observación, publicación esperada e incidencias. Las fuentes sin calendario confirmado figuran como UNKNOWN; las estimaciones no sustituyen al dato oficial. Se mantienen los límites de frescura del registro.
+Vigilancia de publicaciones un día sí y un día no (ancla 4-oct-2026), a las 18:13 de Malabo en `data/_ingest/health.json`, visible en el dashboard con fecha de observación, publicación esperada e incidencias. Las fuentes sin calendario confirmado figuran como UNKNOWN; las estimaciones no sustituyen al dato oficial. Se mantienen los límites de frescura del registro.
 
 Recogidas adicionales gratuitas: Asia 00:23/03:17, Europa 13:17, América 15:47 y cierre 23:17 UTC laborables, además del proceso diario. GitHub puede retrasar los cron. El cierre CTF conserva la sesión correcta cuando el proceso termina después de medianoche.
 
-El mantenimiento se evalúa cada cuatro horas: revisión preventiva diaria o reparación ante incidencias, con máximo de dos intentos automáticos al día. Prueba los cambios sin credenciales de escritura y los clasifica desde una copia confiable de la compuerta. Solo integra reparaciones permitidas con pruebas; cambios de modelo, calendarios o definiciones requieren revisión. Las alternativas deben aportar evidencia oficial, unidades, fechas y comparación de al menos 20 observaciones equivalentes.
+El mantenimiento se evalúa en los mismos días alternos, a las 18:17 de Malabo: revisión preventiva o reparación ante incidencias. No se activa automáticamente en los días de descanso. El informe de vigilancia caduca a las 56 horas (48 horas de intervalo y 8 de margen operativo). Prueba los cambios sin credenciales de escritura y los clasifica desde una copia confiable de la compuerta. Solo integra reparaciones permitidas con pruebas; cambios de modelo, calendarios o definiciones requieren revisión. Las alternativas deben aportar evidencia oficial, unidades, fechas y comparación de al menos 20 observaciones equivalentes.
 
 Persisten dependencias del Mac para fuentes bloqueadas en Actions y entradas manuales. Este control detecta y comunica problemas; no garantiza publicaciones de terceros ni completa automáticamente calendarios desconocidos. Véase [acta de auditoría y cambios](docs/actas/ACTA_RELIABILITY_20261004.md).
 

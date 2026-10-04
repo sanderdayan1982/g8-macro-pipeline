@@ -4,7 +4,7 @@
 # (data/_ingest/latest/*) tras cada ejecución programada y que sus familias se publican; y la
 # caducidad de las credenciales registradas (sources/credentials.csv). Solo AVISA (Telegram):
 # la recuperación automática (respaldo residencial) es F9, no instalada.
-# Vigilancia cada cuatro horas; el horario del Mac se lee de sources/executors.csv.
+# Vigilancia en días alternos (ancla 2026-10-04); el horario del Mac se lee de sources/executors.csv.
 # Los cron de GitHub se disparan con retraso (2–4 h observadas), por eso hay
 # varias oportunidades en el día; además el paso se repite dentro de Daily Data Update y USD Factor.
 # ============================================================================
@@ -12,7 +12,7 @@ name: Ingest Watch
 
 on:
   schedule:
-    - cron: '13 1,5,9,13,17,21 * * *'
+    - cron: '13 17 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -23,7 +23,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  cadence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.cadence.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: cadence
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: python3 scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
   watch:
+    needs: cadence
+    if: needs.cadence.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:

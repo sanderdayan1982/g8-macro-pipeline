@@ -2,7 +2,7 @@
 name: Maintenance agent
 on:
   schedule:
-    - cron: '17 1,5,9,13,17,21 * * *'
+    - cron: '17 17 * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,8 +23,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python scripts/health_monitor.py --out .agent/health.json
+      - id: cadence
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: python scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+      - if: steps.cadence.outputs.run == 'true'
+        run: python scripts/health_monitor.py --out .agent/health.json
       - id: due
+        if: steps.cadence.outputs.run == 'true'
         env:
           EVENT_NAME: ${{ github.event_name }}
         run: |

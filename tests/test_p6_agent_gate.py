@@ -112,7 +112,7 @@ class Workflow(unittest.TestCase):
     def test_W2_schedule_and_auth(self):
         wf = self.load("maintenance_agent.yml")
         on = wf.get("on", wf.get(True))
-        self.assertEqual(on["schedule"], [{"cron": "17 1,5,9,13,17,21 * * *"}])
+        self.assertEqual(on["schedule"], [{"cron": "17 17 * * *"}])
         self.assertIn("workflow_dispatch", on)
         cl = [s for s in wf["jobs"]["agent"]["steps"] if str(s.get("uses", "")).startswith("anthropics/claude-code-action")][0]
         self.assertEqual(cl["uses"], "anthropics/claude-code-action@v1")

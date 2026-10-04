@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Bound repair loops: health every 4h, at most two automatic agent runs/day.
-One preventive review/day when there is no incident. Manual dispatch is explicit.
+"""Bound repair loops within the alternate-day workflow; defensive attempt limits.
+One preventive review on each scheduled active day when there is no incident. Manual dispatch is explicit.
 State records attempts (including failed ones), never a claim of repaired feeds.
 """
 import argparse
@@ -22,8 +22,8 @@ def decide(health, state, now, manual=False):
     if last and now - datetime.fromisoformat(last.replace("Z", "+00:00")) < timedelta(hours=4):
         return False, "cooldown 4h"
     if health.get("needs_repair") or not attempts:
-        return True, "incidencias" if health.get("needs_repair") else "revisión preventiva diaria"
-    return False, "revisión diaria ya realizada"
+        return True, "incidencias" if health.get("needs_repair") else "revisión preventiva del día activo"
+    return False, "revisión del día activo ya realizada"
 
 
 def main():

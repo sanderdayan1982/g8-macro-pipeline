@@ -4,7 +4,7 @@
     var lastReport = null;
     function applyHeader() {
         var r = lastReport, age = r ? (Date.now() - Date.parse(r.generated_utc)) / 3600000 : NaN;
-        var warning = !isFinite(age) || age > 8 || age < -0.1 ? 'SIN VERIFICAR' :
+        var warning = !isFinite(age) || age > 56 || age < -0.1 ? 'SIN VERIFICAR' :
             r.issues.length ? r.issues.length + ' INCIDENCIAS' : r.unknown_count ? 'VERIFICACIÓN PARCIAL' : '';
         if (!warning) return;
         var count = document.getElementById('status-count'), dots = document.getElementById('status-dots');
@@ -18,7 +18,7 @@
         if (!box) return;
         box.replaceChildren();
         var age = (now - Date.parse(report.generated_utc)) / 3600000;
-        var old = !isFinite(age) || age > 8 || age < -0.1;
+        var old = !isFinite(age) || age > 56 || age < -0.1;
         var issues = report.issues || [];
         var title = document.createElement('strong');
         title.textContent = old ? 'VIGILANCIA SIN ACTUALIZAR — no se puede confirmar la frescura' :
