@@ -333,6 +333,9 @@ def check_policy(st, lines):
     s = st.setdefault("policy", {})
     for ccy, f, label in POLICY:
         ser = read_series(f)
+        # Official sources can preannounce effective dates (e.g. FRED IORB).
+        # Retain source history, but never report a future rate as current.
+        ser = [(d, v) for d, v in (ser or []) if d <= datetime.now(timezone.utc).date()]
         if not ser:
             continue
         last_d, last_v = ser[-1]

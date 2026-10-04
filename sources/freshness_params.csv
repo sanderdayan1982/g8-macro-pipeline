@@ -27,7 +27,7 @@ JPY_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
 ACM_TP,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
 FLOORS,bd_offset,,Serie diaria por salida y jurisdicción; hora DESCONOCIDA (misma regla),PROVISIONAL,Cada salida con su calendario (freshness_outputs.csv)
 BIS_POLICY,event,,Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE,PROVISIONAL,Se muestran fecha y antigüedad
-GOLD_DEMAND,event,,Mensual con hora y desfase desconocidos → UNKNOWN_SCHEDULE,PROVISIONAL,
+GOLD_DEMAND,not_monitored,,RETIRADO: histórico anual con estimaciones; prohibido como feed mensual,APROBADO,Conservado fuera del circuito activo en docs/actas/evidence
 NZ_CASH,none,,Serie dispersa (fechas no diarias en los datos) → cadencia no establecida → UNKNOWN_SCHEDULE,PROVISIONAL,Más permisivo que el motor actual: se señala en la comparación para tu decisión
 ACM_DERIVED,derived,60,Derivado calculado en la pasada FINAL (21:30Z); 60 min tras la hora programada = propuesta operativa,PROVISIONAL,Exigible = mínimo de las fechas de sus entradas del repo en la última FINAL
 RY_NZD,derived,60,= ACM_DERIVED,PROVISIONAL,

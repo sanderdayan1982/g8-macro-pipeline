@@ -120,3 +120,19 @@ Sé conservador: si no estás seguro de que un cambio es correcto y verificado, 
 ## Prioridad de frecuencia — instrucción del propietario 4-oct-2026
 
 Busca primero fuentes DIARIAS; si no existe una equivalente verificable, SEMANALES. MENSUAL solo como último recurso, documentando por qué las anteriores no sirven. Una descarga diaria de una publicación mensual no es dato diario. Separa fecha de observación, frecuencia de publicación y fecha de extracción. Las decisiones de tipos siguen siendo por evento. No reemplaces un concepto por otro más frecuente: curvas spot no son par yields; previsiones CPI no son breakevens negociados. PROHIBIDO usar fuentes trimestrales o más lentas, incluso como respaldo. El máximo permitido es MENSUAL. Si no existe alternativa equivalente dentro de ese límite, marcar NO DISPONIBLE; nunca fabricar una serie diaria con un dato trimestral. Una nueva degradación de frecuencia requiere revisión.
+
+## Evidencia de vigencia (acta FRESHNESS_COMPLETION_20261004)
+
+En cada vigilancia autorizada (un día sí y otro no), contrasta los cinco tipos de
+`sources/policy_evidence.json` con su decisión oficial y próxima reunión. Nunca
+renueves `verified_at`/`expires_at` por el mero éxito del workflow ni por repetir
+un CSV: adjunta URL y comprobación en el acta. El monitor limita la evidencia a
+siete días y a la próxima reunión, aunque se escriba una caducidad más larga.
+Una discordancia exige investigar la decisión más reciente, no forzar el valor.
+El calendario no excluye decisiones extraordinarias: la comprobación periódica
+sigue siendo necesaria. La compuerta existente conserva revisión para ese JSON.
+
+`OFFICIAL_GOLD_DEMAND.csv` está RETIRADO: era anual y estimado. Su copia en
+`docs/actas/evidence/` es exclusivamente documental. No restaurarla ni usarla
+como fallback. CHF BE continúa sin equivalente verificado; ni CPI mensual ni
+swaps nominales equivalen a un breakeven CHF 10Y. No introducir un modelo nuevo.

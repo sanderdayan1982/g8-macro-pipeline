@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import freshness_report as F
+import health_evidence as E
 from g8common import freshness as FR, schedule as SC, series, notify
 from tools.finalize_session import session_due
 
@@ -70,6 +71,7 @@ def build(root, now, report=None):
             regs.setdefault(r["primary_access"][5:], []).append(r)
     with (root / "sources/freshness_rules.csv").open() as f:
         cadence = {name: r['frequency'] for r in csv.DictReader(f) for name in r['files'].split(';') if name}
+    policy = E.read_json(root / "sources/policy_evidence.json").get("policies", {})
     items = []
     for row in report["outputs"]:
         item = {k: row.get(k) for k in ("file", "state", "have_max", "expected_obs", "calendar", "basis", "reason", "cause")}
@@ -115,6 +117,7 @@ def build(root, now, report=None):
         item['slow_fallback'] = item['publication_frequency'].startswith(('monthly', 'quarterly'))
         if row['file'] == 'ACM_G8_CHF.csv':
             item['frequency_note'] = 'Salida diaria estimada; curva oficial mensual + nominal 10Y diario (NOWCAST)'
+        E.refine(root, now, item, policy)
         items.append(item)
     # A recently generated provisional JSON does not prove that CTF was evaluated.
     # 4h operational deadline allows observed scheduler delays; visible separately
@@ -126,6 +129,13 @@ def build(root, now, report=None):
     items.append({"file": "s01b/state.json", "state": "CURRENT" if ok else "FINAL_MISSING",
                   "status": "CURRENT" if ok else "LATE", "have_max": state.get("t"), "expected_obs": target,
                   "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre", "flags": []})
+    for item in items:
+        if item['file'] == 'S01B.json':
+            snapshot = read_json(root / 'data/S01B.json')
+            same_session = snapshot.get('as_of') == state.get('t') and snapshot.get('as_of', '') >= target
+            if item['status'] != 'ERROR':
+                item.update(status='CURRENT' if ok and same_session else 'LATE', expected_obs=target,
+                            reason='Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.')
     # The per-section metadata files are checked for presence without pretending
     # that their write timestamp is the observation timestamp.
     for name, key in (("alerts/brief.json", "generated_utc"), ("BOOK_RISK.json", "as_of")):
