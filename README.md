@@ -9,6 +9,10 @@ front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netli
 > contexto de composición (long-end, fontanería, metales, walls, COT) al formar tesis de
 > long-end y en la revisión semanal. Ninguna sección es una señal de entrada.
 
+## Prioridad de fuentes
+
+Diario primero, semanal como segunda opción y mensual solo como último recurso documentado. Consultar diariamente una serie mensual no la convierte en diaria. Mensual es el máximo permitido. Fuentes trimestrales o más lentas quedan excluidas, incluso como respaldo. Si falta una alternativa equivalente admisible, se muestra NO DISPONIBLE. La aplicación del modelo ACM es diaria; su muestra de estimación mensual no es la frecuencia de publicación. Se corrige el registro de ACM y se aplica un límite operativo de cuatro días hábiles (el calendario de publicación puede detectar retrasos antes).
+
 ## Fiabilidad operativa (2026-10-04)
 
 Vigilancia de publicaciones un día sí y un día no (ancla 4-oct-2026), a las 18:13 de Malabo en `data/_ingest/health.json`, visible en el dashboard con fecha de observación, publicación esperada e incidencias. Las fuentes sin calendario confirmado figuran como UNKNOWN; las estimaciones no sustituyen al dato oficial. Se mantienen los límites de frescura del registro.
@@ -102,17 +106,13 @@ Cada uno de esos ficheros está en `sources/registry.csv` con presupuesto de fre
 - **CHF NOWCAST** (`QUALITY=ACM_K3_NOWCAST_PARALLEL`): entre la última curva publicada por el SNB
   (fin de mes) y hoy, la última curva ajustada se desplaza en paralelo por el 10Y diario del RSS.
   Solo factor nivel; las filas se sustituyen por curva real el día 1. Badge "lvl" mientras dure.
-- **BE sin linker**: CHF no tiene bonos indexados → BE = pronóstico condicional de CPI del SNB
-  (`manual_inputs.json` `CHF_BE_MANUAL`, se refresca en cada MPA trimestral; caduca a 95 días).
-  NZD usa linkers reales (IIB interpolados a 10 años, `RY_G8_NZD.csv`, `PROXY_THIN_MARKET`);
-  `NZD_BE_MANUAL` (encuesta RBNZ 2 años) queda solo como fallback.
+- **BE/REAL sin fuente admisible**: las constantes trimestrales CHF y NZD están desactivadas. CHF queda NO DISPONIBLE para estas dos patas. NZD conserva sus IIB diarios; si faltan o están atrasados, BE/REAL queda NO DISPONIBLE. No se sustituye un breakeven por inflación CPI observada.
 - **Convención de usuario en walls**: USD/JPY, USD/CAD, USD/CHF se muestran invertidos (1/k) con
   call↔put intercambiados respecto al contrato CME; §00 y §08 comparten esa conversión (INV).
 
 ## Inputs manuales (principio 6 — una sola fuente)
 
-`data/manual/manual_inputs.json` es la fuente primaria de las constantes manuales (BE de NZD y CHF,
-nominal NZD como fallback). `index.html` y `dashboard_alerts.py` leen las **mismas claves**
+`data/manual/manual_inputs.json` conserva el nominal NZD como fallback. Las claves BE de NZD y CHF están desactivadas, sin valor ni fecha, porque sus fuentes trimestrales están prohibidas. `index.html` y `dashboard_alerts.py` leen las **mismas claves**
 (`NZD_BE_MANUAL`, `CHF_BE_MANUAL`, `NZD_NOM_RBNZ`); el valor tecleado en el navegador (localStorage)
 solo manda si su fecha es más reciente. Expiry por feed en `sources/registry.csv`.
 

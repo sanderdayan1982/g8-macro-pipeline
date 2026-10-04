@@ -1,0 +1,27 @@
+name: Official source diagnostics
+on:
+  workflow_dispatch:
+  push:
+    branches: ['repair/remaining-20261004']
+    paths: ['scripts/tools/probe_sources.py', '.github/workflows/source_diagnostics.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python scripts/tools/probe_sources.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-probes
+          path: source-probes/
+          retention-days: 7

@@ -24,6 +24,7 @@ from urllib.parse import urlparse
 ALLOW = [
     "scripts/fetch_*.py",
     "scripts/g8common/cb_direct.py",
+    "scripts/g8common/bis_bulk.py",
     "sources/registry.csv",
     "data/manual/policy_decisions.csv",
     "docs/_redirects",
@@ -109,6 +110,9 @@ def validate_diff(base, result):
                 raise ValueError("verification not current")
             if m.get("same_definition") is not True or int(m.get("overlap_count", 0)) < 20 or float(m.get("max_abs_diff", -1)) != 0:
                 raise ValueError("equivalence needs review")
+            cadence = str(m['frequency']).lower()
+            if not (cadence.startswith('daily') or cadence.startswith('weekly') or cadence == 'event'):
+                raise ValueError('monthly or slower source is last resort and needs review')
             verified_urls.add(m["new_url"])
         except (ValueError, TypeError, KeyError) as exc:
             reasons.append("source evidence %s: %s" % (path, exc))

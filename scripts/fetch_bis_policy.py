@@ -46,6 +46,7 @@ import io
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
 from g8common import policy_decisions as _pd  # noqa: E402  (Acta P-1: decisiones verificadas por delante del BIS)
+from g8common import bis_bulk as _bulk
 from g8common import cb_direct as _cb  # noqa: E402  (Acta P-4: banco central directo por delante del BIS)
 
 requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
@@ -228,6 +229,18 @@ def main() -> int:
     except Exception as exc:
         print(f"ERROR: {country} policy fetch failed: {exc}", file=sys.stderr)
         rows, bis_rc = None, 1
+
+    if rows is None:
+        try:
+            response = _ctx.requests(provider='bis', max_attempts=1).get(_bulk.URL, timeout=60)
+            backup = _bulk.parse(response.content, country, date_from.date().isoformat(), today.date().isoformat())
+            published = _pd.read_published(os.path.join(_ctx.root, 'data', output_path.name))
+            overlap = _bulk.verify_overlap(backup, published)
+            rows = backup
+            _ctx.degraded('BIS API failed; official WS_CBPOL bulk fallback verified on %d observations' % overlap)
+            print('BIS bulk fallback: %d observations; latest %s' % (len(rows), rows[-1][0]))
+        except Exception as exc:
+            _ctx.fail('BIS bulk fallback unavailable: %s' % exc)
 
     # Acta P-4: banco central directo (RBA F1 / BoE IADB) donde Actions llega, DESPUÉS del BIS (el BIS conserva su
     # presupuesto y sus reintentos) y con un solo intento. Caída → aviso, se sigue con BIS + decisiones.

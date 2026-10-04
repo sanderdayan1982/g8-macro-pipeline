@@ -32,3 +32,4 @@ scripts/cme_options_collector.py,actions,cme_options.yml,OPTIONS_SURFACE.json,EX
 scripts/fx_futures_collector.py,actions,fx_futures_backfill.yml + g8_port_run.yml,data/futures/,EXCLUIDO,,,,Databento: exclusión acordada
 scripts/fetch_saron.py,ninguno,ninguno,SARON*.csv (no existen),INACTIVO,requests propio,escritura propia,,Ningún workflow lo ejecuta y data/ no tiene sus salidas: SARON llega por fetch_chf_snb (Mac)
 scripts/notify_telegram.py,actions,varios,mensaje Telegram,NO_ES_DESCARGADOR,,,,Notificador
+scripts/fetch_gbp_real.py,actions,daily_update.yml + feed_recovery.yml,RY_G8_GBP.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_gbp_real.json + ingest_watch,BoE daily spot workbook with IADB fallback

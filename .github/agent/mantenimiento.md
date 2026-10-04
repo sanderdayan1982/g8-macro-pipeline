@@ -116,3 +116,7 @@ Sé conservador: si no estás seguro de que un cambio es correcto y verificado, 
 - El estado ARREGLADO exige código probado y prueba real de la descarga. Una propuesta o un PR es REQUIERE OK/PENDIENTE, no recuperación. Tras integrar, el workflow diario vuelve a recoger datos; `health.json` verifica si la incidencia se resolvió.
 - Revisa siempre todos los feeds; los UNKNOWN son deuda de cobertura que debes investigar, no salud confirmada. Prioriza las incidencias que afectan §00/§01/§01-b/§02 y después el resto.
 - No cambies metodología, contrates proveedores, generes estimaciones nuevas ni elimines datos históricos. Un límite del proveedor debe seguir visible con una alternativa investigada y su resultado.
+
+## Prioridad de frecuencia — instrucción del propietario 4-oct-2026
+
+Busca primero fuentes DIARIAS; si no existe una equivalente verificable, SEMANALES. MENSUAL solo como último recurso, documentando por qué las anteriores no sirven. Una descarga diaria de una publicación mensual no es dato diario. Separa fecha de observación, frecuencia de publicación y fecha de extracción. Las decisiones de tipos siguen siendo por evento. No reemplaces un concepto por otro más frecuente: curvas spot no son par yields; previsiones CPI no son breakevens negociados. PROHIBIDO usar fuentes trimestrales o más lentas, incluso como respaldo. El máximo permitido es MENSUAL. Si no existe alternativa equivalente dentro de ese límite, marcar NO DISPONIBLE; nunca fabricar una serie diaria con un dato trimestral. Una nueva degradación de frecuencia requiere revisión.
