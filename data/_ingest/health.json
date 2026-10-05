@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-05T05:51:42.227358Z",
+ "generated_utc": "2026-10-05T10:25:53.334812Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -19,6 +19,40 @@
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
  "needs_repair": true,
  "issues": [
+  {
+   "file": "ESTR.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-01",
+   "expected_obs": "2026-10-02",
+   "calendar": "TARGET",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "SONIA.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-09-30",
+   "expected_obs": "2026-10-01",
+   "calendar": "GB",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "LATE",
+   "age_business_days": 3,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
   {
    "file": "NZD_BILL_30D.csv",
    "state": "OVERDUE",
@@ -256,30 +290,34 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-10-01",
-   "expected_obs": "2026-10-01",
+   "expected_obs": "2026-10-02",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "SONIA.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-09-30",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "calendar": "GB",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "LATE",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -523,7 +561,7 @@
   },
   {
    "file": "EUR_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -531,13 +569,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -545,13 +583,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -559,13 +597,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -573,13 +611,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -587,13 +625,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-01",
    "expected_obs": "2026-10-01",
    "calendar": "TARGET",
@@ -601,7 +639,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1204,7 +1242,7 @@
    "file": "CHF_NOM_10Y.csv",
    "state": "CURRENT",
    "have_max": "2026-10-02",
-   "expected_obs": "2026-10-01",
+   "expected_obs": "2026-10-02",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1219,7 +1257,7 @@
    "file": "CHF_SARON.csv",
    "state": "CURRENT",
    "have_max": "2026-10-01",
-   "expected_obs": "2026-09-30",
+   "expected_obs": "2026-10-01",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2067,7 +2105,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-05T05:51:41Z",
+   "have_max": "2026-10-05T10:25:52Z",
    "flags": []
   },
   {
