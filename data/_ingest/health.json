@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-05T21:12:39.835417Z",
+ "generated_utc": "2026-10-05T22:13:48.776795Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -20,20 +20,19 @@
  "needs_repair": true,
  "issues": [
   {
-   "file": "OPTIONS_SURFACE.json",
+   "file": "S01B.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-10-01",
+   "have_max": "2026-10-05",
    "expected_obs": "2026-10-02",
-   "calendar": "",
-   "basis": "EXCLUIDO",
-   "reason": "Falta una sesión tras la ventana del colector (último intento 17 UTC + margen operativo 4 h). Revisar disponibilidad del proveedor.",
+   "calendar": "TARGET",
+   "basis": "EXCLUIDO_DE_CAMBIOS_F6",
+   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
    "cause": null,
    "flags": [],
    "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false,
-   "expected_publication_utc": "2026-10-05T21:00:00+00:00"
+   "age_business_days": 0,
+   "publication_frequency": "derived",
+   "slow_fallback": false
   },
   {
    "file": "manual/CHF_BE_MANUAL",
@@ -168,13 +167,13 @@
    "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false,
-   "announced_max": "2026-10-05"
+   "announced_max": "2026-10-06"
   },
   {
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-10-05",
-   "expected_obs": "2026-10-01",
+   "expected_obs": "2026-10-02",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -761,15 +760,15 @@
   },
   {
    "file": "RY_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-05",
-   "expected_obs": "2026-10-02",
+   "expected_obs": "2026-10-05",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1367,15 +1366,15 @@
   {
    "file": "S01B.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-10-02",
+   "have_max": "2026-10-05",
    "expected_obs": "2026-10-02",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "LATE",
+   "age_business_days": 0,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1759,16 +1758,16 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "NOT_MONITORED",
-   "have_max": "2026-10-01",
+   "state": "VERIFIED_CANONICAL",
+   "have_max": "2026-10-02",
    "expected_obs": "2026-10-02",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Falta una sesión tras la ventana del colector (último intento 17 UTC + margen operativo 4 h). Revisar disponibilidad del proveedor.",
+   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
    "cause": null,
    "flags": [],
-   "status": "LATE",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "expected_publication_utc": "2026-10-05T21:00:00+00:00"
@@ -1859,7 +1858,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-05T21:12:38Z",
+   "have_max": "2026-10-05T22:13:47Z",
    "flags": []
   },
   {
