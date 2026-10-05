@@ -1,3 +1,4 @@
+# Acta FREQUENCY_CEILING_20261005: only build_book removes prohibited quarterly fallback; all signal functions unchanged.
 # Acta FRESHNESS_COMPLETION_20261004: policy presentation ignores not-yet-effective rows; no signal/model change.
 """Exclusiones y componentes intactos: opciones CME / Databento / S01B (F6 pendiente) / motor de alertas actual /
 factor USD. Deben seguir byte a byte como en main ed9ed64 y no importar g8common.
@@ -13,7 +14,7 @@ import os
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-FROZEN = [('scripts/cme_options_collector.py', '61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9'), ('scripts/build_options_summary.py', 'f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019'), ('scripts/fx_futures_collector.py', '3aeb126b7889d03530ccf4f0548e5a233b980c229d701866c51d480fbf335e83'), ('.github/workflows/cme_options.yml', '281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab'), ('.github/workflows/fx_futures_backfill.yml', '5e2310241db474367876158e5e1f6128c424a361b8aa3dd5ce3862cbe7392089'), ('scripts/dashboard_alerts.py', '2c319f474e70592e01d934f5fbc93e47d4641e5a565196038bea1c5441a2e5e6'), ('scripts/s01b.py', '0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5'), ('scripts/usd_factor.py', 'd96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3'), ('scripts/book_risk.py', '78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50')]
+FROZEN = [('scripts/cme_options_collector.py', '61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9'), ('scripts/build_options_summary.py', 'f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019'), ('scripts/fx_futures_collector.py', '3aeb126b7889d03530ccf4f0548e5a233b980c229d701866c51d480fbf335e83'), ('.github/workflows/cme_options.yml', '281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab'), ('.github/workflows/fx_futures_backfill.yml', '5e2310241db474367876158e5e1f6128c424a361b8aa3dd5ce3862cbe7392089'), ('scripts/dashboard_alerts.py', '3273cbd616571b28e5e946368a3949c944927f9feebaa75406fb7c0ecfb2f192'), ('scripts/s01b.py', '0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5'), ('scripts/usd_factor.py', 'd96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3'), ('scripts/book_risk.py', '78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50')]
 
 
 class Exclusions(unittest.TestCase):

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['docs/actas/ACTA_RECOVERY_20261004.md']
+    paths: ['docs/actas/ACTA_RECOVERY_20261004.md', 'docs/actas/ACTA_FREQUENCY_CEILING_20261005.md']
 permissions:
   contents: write
 concurrency:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   recover:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       G8_NO_SEND: '1'
       G8_JOB: recovery
@@ -25,16 +25,29 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Japan official policy (API plus verified BIS bulk fallback)
-        id: japan
+      - name: Refresh official daily feeds
+        id: daily
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          G8_STEP_LOG: ${{ runner.temp }}/recovery_daily.jsonl
+        run: python scripts/tools/refresh_feeds.py ALL
+      - name: Attempt current RBNZ B2 without historical downloads
+        id: nzd
         continue-on-error: true
         timeout-minutes: 4
-        run: python scripts/fetch_bis_policy.py JP
-      - name: GBP official real curve (BoE workbooks plus IADB fallback)
-        id: gbp
+        run: python scripts/tools/g8step.py --name recovery_nzd --cap 180 -- python scripts/fetch_nzd_b2.py --no-hist
+      - name: Refresh daily NZ linker calculation
+        id: nzreal
+        continue-on-error: true
+        run: python scripts/real_yields_g8.py NZD
+      - name: Refresh ECB daily currency observations and existing factor
+        id: factor
         continue-on-error: true
         timeout-minutes: 4
-        run: python scripts/fetch_gbp_real.py
+        run: |
+          python scripts/usd_factor.py
+          python scripts/book_risk.py
       - name: Recover latest elapsed CTF session without historical backfill
         id: final
         continue-on-error: true
@@ -59,5 +72,5 @@ jobs:
           done
           exit 1
       - name: Keep partial recovery visible as failure
-        if: always() && (steps.japan.outcome == 'failure' || steps.gbp.outcome == 'failure' || steps.final.outcome == 'failure')
+        if: always() && (steps.daily.outcome == 'failure' || steps.nzd.outcome == 'failure' || steps.nzreal.outcome == 'failure' || steps.factor.outcome == 'failure' || steps.final.outcome == 'failure')
         run: exit 1

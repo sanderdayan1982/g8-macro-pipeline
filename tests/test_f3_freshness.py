@@ -1,3 +1,4 @@
+# Acta FREQUENCY_CEILING_20261005: quarterly manual fallback removed from presentation only.
 """F3 — motor de frescura en paralelo (g8common/freshness.py, scripts/freshness_report.py): criterios A1–A5 de la
 propuesta v3. Solo local: calendarios y reglas reales del repo, datos sintéticos o el historial de git (ed9ed64)."""
 import csv
@@ -1006,7 +1007,7 @@ class Report(unittest.TestCase):
     def test_official_engine_untouched_and_workflow_step_non_blocking(self):
         with open(os.path.join(ROOT, "scripts", "dashboard_alerts.py"), "rb") as fh:
             self.assertEqual(hashlib.sha256(fh.read()).hexdigest(),
-                             "2c319f474e70592e01d934f5fbc93e47d4641e5a565196038bea1c5441a2e5e6")
+                             "3273cbd616571b28e5e946368a3949c944927f9feebaa75406fb7c0ecfb2f192")
         with open(os.path.join(ROOT, ".github", "workflows", "ingest_watch.yml"), encoding="utf-8") as fh:
             wf = fh.read()
         step = wf[wf.index("scripts/freshness_report.py") - 400: wf.index("scripts/freshness_report.py") + 60]

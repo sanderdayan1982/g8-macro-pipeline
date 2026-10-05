@@ -29,9 +29,8 @@ v1.1: formato en bloques legibles (varios mensajes si hace falta); walls desde l
       pin · call wall · put wall · corredor · top-OI · distancias · DTE · Δ vs sesión
       anterior · siguiente mensual cuando el front vence en ≤7 días.
 
-v1.6: libro G8 — NZD/CHF REAL y BE en el brief: BE = constante manual de
-      data/manual/manual_inputs.json (NZD_BE_MANUAL / CHF_BE_MANUAL, la misma que
-      pinta §01), REAL = NOM − BE. Flag "BE manual …" (SYNTH); "(caducado)" > 95 d.
+v1.6 (corregido 2026-10-05): constantes trimestrales NZD/CHF retiradas del brief.
+      Sin fuente admisible, BE/REAL quedan no disponibles; máximo mensual.
       Cuando existe RY_G8_NZD.csv (linkers NZ IIB, real_yields_g8.py v1.1) NZD entra por la
       vía genérica (flag "REAL IIB (B2)"); TP flag según el fichero ACM (real K=3 o SYNTH).
       Walls del brief = la fila de §08 (strikes C/P OI≥100, front OI + Δ1D, top-3 walls)
@@ -1045,24 +1044,10 @@ def build_book(st):
             else:
                 r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
                 r["flags"].append("NOM NA (SNB)" + (" (rancio)" if chn else ""))
-        # v1.6: NZD/CHF no tienen linker → BE = constante manual (misma fuente que §01:
-        # manual_inputs.json NZD_BE_MANUAL / CHF_BE_MANUAL) y REAL = NOM − BE (SYNTH).
-        # Presupuesto de la constante: registry manual_expiry_days = 95 (trimestral).
+        # Quarterly survey/forecast constants are prohibited even if a legacy
+        # manual file is restored with non-null values or disabled=False.
         if c in ("NZD", "CHF") and r.get("be") is None:
-            be_e = man.get("%s_BE_MANUAL" % c) or {}
-            try:
-                be_v = float(be_e.get("value"))
-                be_d = date.fromisoformat(str(be_e.get("date"))[:10])
-            except (TypeError, ValueError):
-                be_v, be_d = None, None
-            if be_v is not None:
-                r["be"] = be_v
-                r["real"] = round(r["nom"] - be_v, 4) if r.get("nom") is not None else None
-                stale = be_d is None or (TODAY - be_d).days > 95
-                r["flags"].append("BE manual %s%s" % ("SoE 2Y" if c == "NZD" else "SNB fcst",
-                                                       " (caducado)" if stale else ""))
-            else:
-                r["flags"].append("BE manual ausente")
+            r["flags"].append("BE/REAL no disponible: respaldo trimestral excluido")
         tp = read_series("ACM_G8_%s.csv" % c, col="TP10")
         if tp:
             vals = [v for _, v in tp]
