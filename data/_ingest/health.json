@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-06T18:20:10.313491Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-10-06T18:26:49.957011Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,24 +18,8 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "S01B.json",
-   "state": "NOT_MONITORED",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-05",
-   "calendar": "TARGET",
-   "basis": "EXCLUIDO_DE_CAMBIOS_F6",
-   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
-   "cause": null,
-   "flags": [],
-   "status": "LATE",
-   "age_business_days": 0,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 1,
  "feeds": [
   {
@@ -1378,10 +1362,10 @@
    "expected_obs": "2026-10-05",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
-   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
+   "reason": "Vista PROVISIONAL de la sesión 2026-10-06; el cierre definitivo llega con su pasada programada. Último cierre 2026-10-05 al día.",
    "cause": null,
    "flags": [],
-   "status": "LATE",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1881,7 +1865,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-06T18:20:09Z",
+   "have_max": "2026-10-06T18:26:49Z",
    "flags": []
   },
   {
