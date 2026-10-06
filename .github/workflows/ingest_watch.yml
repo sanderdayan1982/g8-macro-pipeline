@@ -45,6 +45,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main       # acta P-11: tip of main when the job starts, not the SHA frozen while queued
 
       - uses: actions/setup-python@v5
         with:
@@ -85,12 +87,7 @@ jobs:
           git add data/_ingest/health.json data/_ingest/health_alert_state.json 2>/dev/null || true
           if git diff --cached --quiet; then echo "sin cambios de estado"; exit 0; fi
           git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ)"
-          for i in 1 2 3 4 5; do
-            if git pull --rebase origin main && git push origin main; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep $((i * 5))
-          done
-          echo "push fallido tras 5 intentos"; exit 1
+          bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
 
       - name: Telegram no entregado → job en rojo (GitHub envía email)
         if: always()

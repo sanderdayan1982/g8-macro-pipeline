@@ -81,6 +81,11 @@ def build(root, now, report=None):
             item["status"] = "PENDING"
         if row["state"] == "NOT_MONITORED":
             item["status"] = "EXCLUDED"
+        # Acta P-11: one observation behind and no scheduled pass yet since it became due is a wait, not an
+        # incident (e.g. NZD only arrives with the Mac's evening pass). Two missing (STALE) or over the registry
+        # budget (checked below) is still LATE.
+        if row["state"] == "OVERDUE" and row.get("cause") == "SIN_PASADA_PROGRAMADA":
+            item.update(status="PENDING", reason="Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)")
         # An HTTP success cannot close an outstanding error without a published
         # output; existing ingest_watch also checks these facts independently.
         if outstanding_fetch_failure(row.get("facts", {}).get("by_source") or {}, row['file']):
@@ -159,6 +164,8 @@ def build(root, now, report=None):
         parsed = FR._parse_date(str(entry.get("date") or ""))
         age = (now.date() - parsed).days if parsed else None
         status = "MISSING" if age is None or entry.get("value") is None else "LATE" if age > float(reg["manual_expiry_days"]) else "UNKNOWN"
+        if entry.get("disabled"):
+            status = "EXCLUDED"     # acta P-11: switched off by the owner's decision, not a missing input
         items.append({"file": "manual/" + reg["feed_id"], "status": status, "state": "MANUAL",
                       "have_max": entry.get("date"), "expected_obs": None, "flags": ["MANUAL"], "publication_frequency": "excluded" if entry.get("disabled") else reg.get("frequency", "unknown"), "slow_fallback": False,
                       "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual" if entry.get("disabled") else "Constante manual; caducidad %s días; no es una observación diaria" % reg["manual_expiry_days"]})

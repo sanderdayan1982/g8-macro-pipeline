@@ -106,10 +106,7 @@ jobs:
             git reset -q
           else
             git commit -m "g8-port: state update $(date -u +%Y-%m-%dT%H:%MZ) [POS]"
-            for i in 1 2 3; do
-              git pull --rebase -q && git push && break
-              sleep 10
-            done
+            bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7): the old loop never failed the job
           fi
 
       # ── principle 9: any failure above → Telegram ───────────────────────────

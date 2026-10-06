@@ -18,6 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main       # acta P-11: tip of main when the job starts, not the SHA frozen while queued
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -35,9 +36,4 @@ jobs:
           git add data/alerts/brief.json data/_ingest/health.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'chore: refresh verified dashboard freshness evidence'
-          for attempt in 1 2 3; do
-            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          exit 1
+          bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)

@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main       # acta P-11: tip of main when the job starts, not the SHA frozen while queued
 
       - uses: actions/setup-python@v5
         with:
@@ -78,8 +80,7 @@ jobs:
             echo "No new BCE date / no change — nothing to commit."
           else
             git commit -m "chore: usd factor update $(date -u +%F)"
-            git pull --rebase origin main
-            git push origin main
+            bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7): was a single pull+push, no retry
           fi
 
       - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)

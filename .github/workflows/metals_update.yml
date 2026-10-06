@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main       # acta P-11: tip of main when the job starts, not the SHA frozen while queued
           fetch-depth: 0
 
       - name: Set up Python 3.11
@@ -87,16 +88,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore: weekly metals fair value update $(date -u '+%Y-%m-%d')"
-
-          for attempt in 1 2 3 4 5; do
-            echo "Push attempt $attempt"
-            if git pull --rebase origin main && git push origin HEAD:main; then
-              echo "✓ pushed on attempt $attempt"; exit 0
-            fi
-            git rebase --abort 2>/dev/null || true
-            sleep $((attempt * 5))
-          done
-          echo "✗ push failed after 5 attempts"; exit 1
+          bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
 
       - name: Fail visibly when computation failed
         if: always() && steps.compute.outcome != 'success'

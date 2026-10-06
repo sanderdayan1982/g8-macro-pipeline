@@ -1,0 +1,4 @@
+# Acta P-11: registros de ingestión de solo alta (una línea JSON por descarga/ejecución). Si dos ejecuciones
+# añaden líneas a la vez, git conserva las de ambas en vez de abortar el rebase; los lectores ordenan por fecha.
+data/_ingest/evidence/*.jsonl merge=union
+data/_ingest/runs/**/*.jsonl merge=union

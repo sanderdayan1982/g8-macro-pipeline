@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main       # acta P-11: tip of main when the job starts, not the SHA frozen while queued
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -65,12 +66,7 @@ jobs:
           git add data/
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'chore: verified feed recovery and dashboard snapshots'
-          for i in 1 2 3; do
-            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          exit 1
+          bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
       - name: Keep partial recovery visible as failure
         if: always() && (steps.daily.outcome == 'failure' || steps.nzd.outcome == 'failure' || steps.nzreal.outcome == 'failure' || steps.factor.outcome == 'failure' || steps.final.outcome == 'failure')
         run: exit 1
