@@ -1,101 +1,69 @@
 {
- "deadline_utc": "2026-10-06T03:16:59Z",
+ "deadline_utc": "2026-10-06T06:50:13Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "aud_nowcast",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "37406588499",
+ "run_id": "37424046306",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
-   "name": "us_bills",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_tona.py",
+   "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-10-06T02:56:59Z",
+   "secs": 1.5,
+   "started_utc": "2026-10-06T06:30:13Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_floor_spreads.py",
-   "name": "floors",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aonia.py",
+   "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.1,
-   "started_utc": "2026-10-06T02:57:01Z",
+   "secs": 1.1,
+   "started_utc": "2026-10-06T06:30:15Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py USD AUD",
-   "name": "real_yields",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aud_bills.py",
+   "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 16.0,
-   "started_utc": "2026-10-06T02:57:05Z",
+   "secs": 1.1,
+   "started_utc": "2026-10-06T06:30:16Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
-   "name": "acm_g8",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_bills.py",
+   "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 92.2,
-   "started_utc": "2026-10-06T02:57:21Z",
+   "secs": 7.7,
+   "started_utc": "2026-10-06T06:30:17Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py NZD",
-   "name": "acm_nzd",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_real.py",
+   "name": "jpy_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-06T02:58:53Z",
+   "secs": 3.7,
+   "started_utc": "2026-10-06T06:30:25Z",
    "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py CHF",
-   "name": "acm_chf",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-10-06T02:58:53Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.16/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/aud_nowcast.py",
-   "kept_valid_outputs": [
-    "AUD_NOWCAST.csv",
-    "AUD_NOWCAST.json"
-   ],
-   "name": "aud_nowcast",
-   "phase": "fetch",
-   "rc": 1,
-   "secs": 0.5,
-   "started_utc": "2026-10-06T02:58:54Z",
-   "status": "FAILED"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-06T02:58:55Z"
+ "written_utc": "2026-10-06T06:30:29Z"
 }
