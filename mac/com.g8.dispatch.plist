@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.g8.dispatch</string>
+    <!-- v1.0 (acta P-12, 6-oct-2026): lanzador de workflows a su hora nominal (dispatch_workflows.py). Cada 5 min:
+         el propio script decide qué turno toca (UTC, mismo cron que el workflow) y lo lanza una sola vez.
+         Independiente de com.g8.nzd-b2 (no comparte cerrojo ni ficheros). Requiere ~/.g8/github_dispatch_token. -->
+    <key>ProgramArguments</key>
+    <array><string>/usr/bin/python3</string><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/dispatch_workflows.py</string></array>
+    <key>WorkingDirectory</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd</string>
+    <key>StartInterval</key><integer>300</integer>
+    <key>RunAtLoad</key><true/>
+    <key>StandardOutPath</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/logs/dispatch_launchd.out</string>
+    <key>StandardErrorPath</key><string>/Users/sanderbignotte/Trading_Sander/g8-nzd/logs/dispatch_launchd.err</string>
+</dict>
+</plist>

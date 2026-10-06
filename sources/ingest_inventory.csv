@@ -34,3 +34,4 @@ scripts/fetch_saron.py,ninguno,ninguno,SARON*.csv (no existen),INACTIVO,requests
 scripts/notify_telegram.py,actions,varios,mensaje Telegram,NO_ES_DESCARGADOR,,,,Notificador
 scripts/fetch_gbp_real.py,actions,daily_update.yml + feed_recovery.yml,RY_G8_GBP.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_gbp_real.json + ingest_watch,BoE daily spot workbook with IADB fallback
 scripts/fetch_chf_cpi.py,actions,daily_update.yml + intraday_fetch.yml,CHF_CPI_YOY.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_chf_cpi.json + ingest_watch,acta P-10: IPC a/a oficial BFS (cc-e-05.02.08) para el real ex post CHF
+mac/dispatch_workflows.py,mac,launchd com.g8.dispatch,workflow_dispatch de GitHub Actions,NO_ES_DESCARGADOR,g8http (GitHub API),,logs/ALERTAS.log,Lanzador de workflows a su hora (acta P-12)

@@ -1,0 +1,19 @@
+{
+ "_doc": "acta P-12 · turnos que el Mac lanza con workflow_dispatch a su hora nominal (UTC). Mismas expresiones cron que los workflows (tests/test_p12_mac_dispatch.py lo comprueba); el cron de GitHub queda como segundo intento. Excluidos: ingest_watch y maintenance_agent (un lanzamiento manual se salta su calendario de días alternos), cme_options (Databento es de pago: un segundo run duplicaría consultas).",
+ "repo": "sanderdayan1982/g8-macro-pipeline",
+ "ref": "main",
+ "catchup_hours": 3,
+ "slots": [
+  {"id": "intraday_asia_1", "workflow": "intraday_fetch.yml", "cron": "23 0 * * 1-5",  "inputs": {"group": "ASIA"}},
+  {"id": "intraday_asia_2", "workflow": "intraday_fetch.yml", "cron": "17 3 * * 1-5",  "inputs": {"group": "ASIA"}},
+  {"id": "intraday_eu",     "workflow": "intraday_fetch.yml", "cron": "17 13 * * 1-5", "inputs": {"group": "EU"}},
+  {"id": "intraday_us",     "workflow": "intraday_fetch.yml", "cron": "47 15 * * 1-5", "inputs": {"group": "US"}},
+  {"id": "intraday_late",   "workflow": "intraday_fetch.yml", "cron": "17 23 * * 1-5", "inputs": {"group": "LATE"}},
+  {"id": "usd_factor_1",    "workflow": "usd_factor.yml",     "cron": "30 15 * * 1-5"},
+  {"id": "usd_factor_2",    "workflow": "usd_factor.yml",     "cron": "30 17 * * 1-5"},
+  {"id": "daily",           "workflow": "daily_update.yml",   "cron": "30 21 * * 1-5"},
+  {"id": "g8_port_fri",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 5"},
+  {"id": "g8_port_sat",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 6"},
+  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"}
+ ]
+}
