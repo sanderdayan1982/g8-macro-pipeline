@@ -1044,6 +1044,13 @@ def build_book(st):
             else:
                 r["nom"] = r["real"] = r["be"] = None; r["nom_asof"] = None
                 r["flags"].append("NOM NA (SNB)" + (" (rancio)" if chn else ""))
+        if c == "CHF" and r.get("nom") is not None:
+            # acta P-10: Suiza no emite bonos indexados → no hay breakeven de mercado. Con OK del propietario se muestra el
+            # REAL ex post = nominal 10Y (SNB) − IPC a/a oficial (BFS, mensual); «be» lleva el IPC a/a, NO un breakeven.
+            cpi = read_series("CHF_CPI_YOY.csv") or []
+            if cpi and (TODAY.year - cpi[-1][0].year) * 12 + TODAY.month - cpi[-1][0].month <= 2:
+                r["be"], r["real"] = cpi[-1][1], round(r["nom"] - cpi[-1][1], 4)
+                r["flags"].append("REAL ex post (nom − IPC a/a BFS %s); BE = IPC a/a, no breakeven" % cpi[-1][0].strftime("%m/%Y"))
         # Quarterly survey/forecast constants are prohibited even if a legacy
         # manual file is restored with non-null values or disabled=False.
         if c in ("NZD", "CHF") and r.get("be") is None:

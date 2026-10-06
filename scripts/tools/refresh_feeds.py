@@ -13,7 +13,8 @@ GROUPS = {
              ("aud_bills", "fetch_aud_bills.py"), ("jpy_bills", "fetch_jpy_bills.py"), ("jpy_real", "fetch_jpy_real.py")],
     "EU": [("estr", "fetch_estr.py"), ("sonia", "fetch_sonia.py"),
            ("eur_bills", "fetch_eur_bills.py"), ("gbp_bills", "fetch_gbp_bills.py"),
-           ("eur_real", "fetch_eur_real.py"), ("real_yields", "real_yields_g8.py", "GBP")],
+           ("eur_real", "fetch_eur_real.py"), ("real_yields", "real_yields_g8.py", "GBP"),
+           ("chf_cpi", "fetch_chf_cpi.py")],              # acta P-10: IPC suizo (BFS publica ~06:30Z)
     "US": [("sofr", "fetch_sofr.py"), ("corra", "fetch_corra.py"),
            ("cad_bills", "fetch_cad_bills.py"), ("floors", "fetch_floor_spreads.py"),
            ("acm_tp", "fetch_acm.py"), ("bis_gb", "fetch_bis_policy.py", "GB"),

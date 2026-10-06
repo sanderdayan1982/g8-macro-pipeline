@@ -1423,6 +1423,8 @@ var FEED_REGISTRY = {
        8 bd = weekly publication + lag, same budget as AUD_RY (iAGS, same table family). */
     AUD_NOM_2Y: repo('AUD_NOM_2Y.csv', 'AUD Nominal 2Y (RBA F2 — weekly publication, via acm_g8)', 'weekly', 8, '01'),
     /* P-8: estimación diaria AUD 2Y/10Y (EST_AUD_V1) — se recalcula cada día; si se para, §01/§01-b vuelven al dato RBA */
+    /* P-10: IPC suizo oficial (BFS, mensual): base del REAL ex post CHF; presupuesto 25 d.h. (publicación mensual + margen) */
+    CHF_CPI_YOY: repo('CHF_CPI_YOY.csv', 'CHF IPC interanual (BFS · real ex post CHF, no breakeven · acta P-10)', 'monthly', 25, '01'),
     AUD_NOWCAST: repo('AUD_NOWCAST.csv', 'AUD Nominal 2Y/10Y ESTIMADO diario (EST_AUD_V1, aud_nowcast.py, acta P-8)', 'daily', 3, '01'),
     CAD_NOM_2Y: repo('CAD_NOM_2Y.csv', 'CAD Nominal 2Y (BoC Valet, via acm_g8)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
@@ -2406,6 +2408,12 @@ function asOfLine(d) {
     return h;
 }
 
+/* P-10: CHF — etiqueta de las celdas REAL/BE calculadas con el IPC mensual (no son linkers ni breakeven de mercado) */
+function cpiTag(label, month) {
+    return '<span class="attr-z attr-z-md" title="' + label + ': Suiza no emite bonos ligados a la inflación. REAL ex post = nominal 10Y (SNB) − inflación interanual del IPC (BFS, ' +
+        month + '). La columna BE muestra el IPC a/a, que NO es un breakeven de mercado (inflación pasada, no esperada). Acta P-10.">' + label + ' · ' + month.slice(2).replace('-', '/') + '</span>';
+}
+
 function cell(valHtml, deltaHtml, zHtml) {
     return '<td><span class="attr-val">' + valHtml + '</span>' + (zHtml || '') + (deltaHtml || '') + '</td>';
 }
@@ -2501,8 +2509,8 @@ function build(data) {
             nomCell +
             cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
-            cell(fmtVal(d.real), fmtDelta(d.real), staleTag(d.real)) +
-            cell(fmtVal(d.be), fmtDelta(d.be), staleTag(d.be)) +
+            cell(fmtVal(d.real), fmtDelta(d.real), d.cpiMonth ? cpiTag('REAL ex post', d.cpiMonth) : staleTag(d.real)) +
+            cell(fmtVal(d.be), fmtDelta(d.be), d.cpiMonth ? cpiTag('IPC a/a', d.cpiMonth) : staleTag(d.be)) +
             '<td>' + ryBadge(c, d.quality, d.qkind) + '</td></tr>';
     });
 
@@ -2654,6 +2662,15 @@ function init() {
         .then(function (t) { raw.NZD = raw.NZD || {}; raw.NZD.ry = parseRy(t); })
         .catch(function (e) { console.warn('[attr] RY NZD (pending IIB fetch)', e.message); }));
 
+    /* P-10 (acta P-10): inflación interanual oficial suiza (IPC, BFS, mensual) → real ex post = nominal − IPC a/a.
+       Suiza no emite bonos indexados: NO es un breakeven y se etiqueta así. Opcional: sin fichero, CHF BE/REAL = NO DISPONIBLE. */
+    jobs.push(fetchCsv(RAW + 'CHF_CPI_YOY.csv')
+        .then(function (t) {
+            raw.chfCpi = t.trim().split('\n').slice(1).map(function (l) { var v = l.split(','); return { d: isoNorm(v[0]), v: parseFloat(v[4]) }; })
+                .filter(function (x) { return /^\d{4}-\d{2}-\d{2}$/.test(x.d) && isFinite(x.v); });
+        })
+        .catch(function (e) { console.warn('[attr] CHF_CPI_YOY', e.message); }));
+
     /* v2.5.9: CHF nominal 10Y spot from the SNB (curve month-end + RSS daily) — local-fetch feed */
     var chfSnbJob = fetchCsv(RAW + 'CHF_NOM_10Y.csv')
         .then(function (t) {
@@ -2803,7 +2820,9 @@ function assemble(raw) {
         var chfNomS = chSnb.map(function (r) { return { d: r.d, v: r.v }; });
         var chTp = chAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.TP10 }; });
         var chRny = chAcm.map(function (r) { var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.RNY10 }; });
-        var chBe = [];
+        /* P-10: «BE» de CHF = IPC a/a (BFS, mensual) solo si es del mes en curso o el anterior (regla: nada más viejo que mensual) */
+        var chCpi = raw.chfCpi && raw.chfCpi.length && monthsBehind(raw.chfCpi[raw.chfCpi.length - 1].d) <= 2 ? raw.chfCpi : null;
+        var chBe = chCpi ? chCpi : [];
         var chQ = String(chAcmLast.QUALITY), chNow = /NOWCAST/i.test(chQ);
         var nowN = chAcm.filter(function (r) { return /NOWCAST/i.test(String(r.QUALITY || '')); }).length;
         data.CHF = {
@@ -2814,8 +2833,11 @@ function assemble(raw) {
             real: statsS(minusSeries(chfNomS, chBe)),
             quality: 'LIVE (SNB) + ACM K=3' + (chNow ? ' nowcast' : ''), qkind: 'proxy',
             asOf: chSnbLast.d + ' · SNB ' + (chSnbLast.src === 'rss' ? 'RSS daily' : 'curve') + (chNow ? ' · curve to ' + (function () { var c = chAcm.filter(function (r) { return !/NOWCAST/i.test(String(r.QUALITY || '')); }); var d = String(c[c.length - 1].DATE); return d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8); })() : ''),
-            formula: 'NOM=SNB 10Y spot (rendeiduebd + RSS R10) · TP=own ACM K=3 (SNB zero curve 1J–10J, 1988+)' + (chNow ? ' · ' + nowN + ' NOWCAST rows (parallel shift on daily 10Y)' : '') + ' · BE/REAL unavailable: quarterly source excluded; maximum monthly'
+            formula: 'NOM=SNB 10Y spot (rendeiduebd + RSS R10) · TP=own ACM K=3 (SNB zero curve 1J–10J, 1988+)' + (chNow ? ' · ' + nowN + ' NOWCAST rows (parallel shift on daily 10Y)' : '') +
+                     (chCpi ? ' · REAL = ex post (NOM − IPC a/a BFS ' + chCpi[chCpi.length - 1].d.slice(0, 7) + ') · columna BE = IPC a/a, NO breakeven (Suiza no emite bonos indexados)'
+                            : ' · BE/REAL unavailable: no Swiss linkers; CPI not current')
         };
+        if (chCpi) data.CHF.cpiMonth = chCpi[chCpi.length - 1].d.slice(0, 7);
         if (chNow) data.CHF.tpConf = { lo: true, why: 'Last ' + nowN + ' rows are NOWCAST: SNB publishes the daily curve monthly; until then the last fitted curve is shifted in parallel by the daily 10Y spot (RSS). Level factor only — replaced by real curve rows on the 1st.' };
         G8DQM.report('CHF_NOM_SNB', { lastDate: chSnbLast.d.replace(/-/g, ''), value: chSnbLast.v, via: 'data/CHF_NOM_10Y.csv (SNB local fetch, ' + chSnbLast.src + ')' });
     } else if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm &&

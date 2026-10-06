@@ -33,3 +33,4 @@ scripts/fx_futures_collector.py,actions,fx_futures_backfill.yml + g8_port_run.ym
 scripts/fetch_saron.py,ninguno,ninguno,SARON*.csv (no existen),INACTIVO,requests propio,escritura propia,,Ningún workflow lo ejecuta y data/ no tiene sus salidas: SARON llega por fetch_chf_snb (Mac)
 scripts/notify_telegram.py,actions,varios,mensaje Telegram,NO_ES_DESCARGADOR,,,,Notificador
 scripts/fetch_gbp_real.py,actions,daily_update.yml + feed_recovery.yml,RY_G8_GBP.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_gbp_real.json + ingest_watch,BoE daily spot workbook with IADB fallback
+scripts/fetch_chf_cpi.py,actions,daily_update.yml + intraday_fetch.yml,CHF_CPI_YOY.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_chf_cpi.json + ingest_watch,acta P-10: IPC a/a oficial BFS (cc-e-05.02.08) para el real ex post CHF

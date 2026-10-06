@@ -35,7 +35,7 @@ class F1Config(unittest.TestCase):
         self.assertEqual(sorted(set(feeds) - set(seen)), [], "feeds sin regla")
         self.assertEqual({f: v for f, v in seen.items() if len(v) > 1}, {}, "feed en varias reglas")
         self.assertEqual(sorted(set(seen) - set(feeds)), [], "regla con feed inexistente")
-        self.assertEqual(len(feeds), 54)                        # 51 feeds + CFTC_TFF (alias) + RRPONTSYD/SWPT (sin ingestión)
+        self.assertEqual(len(feeds), 55)                        # 52 feeds (P-10: + CHF_CPI_YOY) + CFTC_TFF (alias) + RRPONTSYD/SWPT (sin ingestión)
 
     def test_every_data_file_is_covered(self):
         files = {os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}

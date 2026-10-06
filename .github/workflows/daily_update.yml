@@ -265,6 +265,12 @@ jobs:
         timeout-minutes: 5
         run: python scripts/tools/g8step.py --name jpy_real --cap 180 -- python scripts/fetch_jpy_real.py
 
+      # ── P-10: IPC suizo oficial (BFS, mensual) → real ex post CHF en §01/§00 (Suiza no emite bonos indexados)
+      - name: Fetch CHF CPI y/y (BFS · acta P-10)
+        continue-on-error: true
+        timeout-minutes: 3
+        run: python scripts/tools/g8step.py --name chf_cpi --cap 120 -- python scripts/fetch_chf_cpi.py
+
       # ── P-8: estimación diaria AUD 2Y/10Y entre publicaciones semanales de la RBA (EST_AUD_V1). Solo lee el repo
       # (AUD_NOM_2Y, RY_G8_AUD, AUD_BILL_6M, US_BILL_2Y, RY_G8_USD) → después de todos ellos y antes de s01b y del brief.
       - name: AUD nowcast (EST_AUD_V1 · acta P-8)

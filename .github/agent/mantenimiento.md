@@ -155,5 +155,9 @@ sigue siendo necesaria. La compuerta existente conserva revisión para ese JSON.
 
 `OFFICIAL_GOLD_DEMAND.csv` está RETIRADO: era anual y estimado. Su copia en
 `docs/actas/evidence/` es exclusivamente documental. No restaurarla ni usarla
-como fallback. CHF BE continúa sin equivalente verificado; ni CPI mensual ni
-swaps nominales equivalen a un breakeven CHF 10Y. No introducir un modelo nuevo.
+como fallback. CHF BE continúa sin equivalente de mercado (Suiza no emite bonos indexados); ni CPI mensual ni
+swaps nominales equivalen a un breakeven CHF 10Y. Desde el acta P-10 (OK del propietario 6-oct-2026) §01 y §00 muestran
+el **REAL ex post** = nominal 10Y SNB − IPC a/a oficial (BFS, `scripts/fetch_chf_cpi.py` → `data/CHF_CPI_YOY.csv`, mensual)
+y en la columna BE el «IPC a/a», siempre etiquetado como tal y NUNCA como breakeven. Si la BFS cambia el fichero
+(nº de pedido cc-e-05.02.08, hoja Index_m, columna «% m-12»), arregla `fetch_chf_cpi.py` con su test y acta. No uses el
+IPC para ninguna otra divisa ni como breakeven.
