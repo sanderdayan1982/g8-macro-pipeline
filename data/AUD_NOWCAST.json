@@ -1,9 +1,13 @@
 {
  "model": "EST_AUD_V2",
- "generated_utc": "2026-10-03T00:43:46Z",
+ "generated_utc": "2026-10-06T02:58:55Z",
  "config": "sources/nowcast_aud.json",
- "status": "OK",
- "warnings": [],
+ "status": "INPUT_STALE",
+ "warnings": [
+  "NOM2Y: los drivers diarios llegan solo al 2026-10-01",
+  "NOM10: los drivers diarios llegan solo al 2026-10-01",
+  "BE10: los drivers diarios llegan solo al 2026-10-01"
+ ],
  "targets": {
   "NOM2Y": {
    "source": "RBA F2 FCMYGBAG2D",
@@ -18,7 +22,7 @@
     {
      "name": "US_2Y",
      "lag_bd": 1,
-     "last": "2026-10-01"
+     "last": "2026-10-02"
     }
    ],
    "beta": {
@@ -59,7 +63,7 @@
     {
      "name": "US_10Y",
      "lag_bd": 1,
-     "last": "2026-10-01"
+     "last": "2026-10-02"
     }
    ],
    "beta": {
@@ -100,7 +104,7 @@
     {
      "name": "US_BE10",
      "lag_bd": 1,
-     "last": "2026-10-01"
+     "last": "2026-10-02"
     }
    ],
    "beta": {
