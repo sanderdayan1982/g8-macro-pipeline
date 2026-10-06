@@ -138,7 +138,14 @@ def build(root, now, report=None):
         if item['file'] == 'S01B.json':
             snapshot = read_json(root / 'data/S01B.json')
             same_session = snapshot.get('as_of') == state.get('t') and snapshot.get('as_of', '') >= target
-            if item['status'] != 'ERROR':
+            # Acta P-11: the afternoon usd_factor run publishes a PROVISIONAL preview of a session newer than the last
+            # final; with that final on time it is waiting for its scheduled close, not late.
+            preview = snapshot.get('provisional') is True and snapshot.get('as_of', '') > state.get('t', '')
+            if item['status'] != 'ERROR' and ok and preview:
+                item.update(status='PENDING', expected_obs=target,
+                            reason='Vista PROVISIONAL de la sesión %s; el cierre definitivo llega con su pasada programada. Último cierre %s al día.'
+                                   % (snapshot.get('as_of'), state.get('t')))
+            elif item['status'] != 'ERROR':
                 item.update(status='CURRENT' if ok and same_session else 'LATE', expected_obs=target,
                             reason='Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.')
     # The per-section metadata files are checked for presence without pretending

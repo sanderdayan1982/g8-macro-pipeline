@@ -163,6 +163,25 @@ class Health(unittest.TestCase):
         self.assertNotIn("manual/CHF_BE_MANUAL", issues)
         self.assertNotEqual(feeds["manual/NZD_BE_MANUAL"]["status"], "EXCLUDED")   # activo: sigue su caducidad
 
+    def s01b(self, final_ok):
+        now = datetime(2026, 10, 6, 18, 20, tzinfo=timezone.utc)            # tras el Factor USD, antes del cierre 21:30Z
+        state = {"t": "2026-10-05" if final_ok else "2026-10-02"}
+        log = {"t": "2026-10-05", "final_run": True} if final_ok else {}
+        snap = {"as_of": "2026-10-06", "provisional": True}
+        def fake(p):
+            p = str(p)
+            return state if p.endswith("s01b/state.json") else log if "/s01b/log/" in p else snap if p.endswith("S01B.json") else {}
+        row = {"file": "S01B.json", "state": "NOT_MONITORED", "have_max": "2026-10-06", "facts": {}}
+        with patch.object(HM, "read_json", side_effect=fake):
+            out = HM.build(ROOT, now, {"outputs": [row]})
+        return next(x for x in out["feeds"] if x["file"] == "S01B.json")["status"]
+
+    def test_H5_provisional_preview_with_final_on_time_is_pending(self):
+        self.assertEqual(self.s01b(final_ok=True), "PENDING")
+
+    def test_H6_provisional_preview_without_final_is_late(self):
+        self.assertEqual(self.s01b(final_ok=False), "LATE")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -37,6 +37,10 @@ con §05 en 47/47. Desglose con evidencia:
 3. **`OVERDUE` + `SIN_PASADA_PROGRAMADA` → `PENDING`** («Publicada; espera la próxima pasada programada»). Sigue siendo
    incidencia (`LATE`) si faltan 2+ observaciones (`STALE`), si supera el presupuesto del registro o si la causa es
    otra (programada sin ejecución, ejecutada con fallo, retenida…). La fila sigue visible con su fecha en «Ver fuentes».
+   Mismo criterio para `S01B.json`: tras el Factor USD de la tarde el panel es un PROVISIONAL (`provisional: true`) de
+   una sesión **más nueva** que el último cierre; si ese cierre es el que toca (`s01b/state.json` y su log definitivo),
+   queda `PENDING` hasta la pasada de las 21:30Z. Visto el 6-oct 18:20Z (único aviso tras los cambios anteriores).
+   Sin cierre al día sigue siendo `LATE`.
 
 ## §01-b (revisado a petición del propietario)
 - En vivo tras el relanzamiento: as-of **2026-10-05**, las 8 divisas con entradas del 2 o 5-oct (CHF `NO_QUAL` por
@@ -51,17 +55,18 @@ s01b (detector, umbrales, estado, historial), ACM, fórmulas, umbrales de alerta
 reglas de `freshness_rules.csv`, `health.js`, horarios de cron, job del Mac.
 
 ## Pruebas
-`tests/test_p11_concurrent_push_health.py` (7):
+`tests/test_p11_concurrent_push_health.py` (9):
 - U1/U2 repo temporal con el `.gitattributes` real: Daily con checkout anterior al intradía → push OK, `.jsonl` con las
   líneas de ambas ejecuciones y sin marcadores, foto `latest` de esta ejecución;
 - W1 los 8 workflows suben con el helper (sin `pull --rebase` ni `git push` sueltos); W2 checkout `ref: main` en el
   grupo compartido (salvo jobs de solo lectura);
 - H1 `OVERDUE`+sin pasada → `PENDING`; H2 `STALE` o fuera de presupuesto → `LATE`; H3 otra causa → `LATE`;
-  H4 manual desactivada → `EXCLUDED`, activa no.
+  H4 manual desactivada → `EXCLUDED`, activa no; H5 §01-b provisional más nuevo con cierre al día → `PENDING`;
+  H6 provisional sin cierre al día → `LATE`.
+- Con los datos del 6-oct 18:20Z: 19 incidencias (10:17Z) → **0**; 11 NZD y `S01B.json` en `PENDING`.
 Suite completa y `scripts/tools/validate_smoke.sh` en verde antes de subir.
 
 ## Siguiente
-- Con los datos de las 17:52Z la cabecera bajaría a 16 con la regla antigua; con P-11, a las incidencias reales
-  (Factor USD si su cron de 15:30Z sigue sin ejecutarse). Se verá tras la próxima pasada del vigilante.
+- El Factor USD (cron 15:30Z) se ejecutaba ~6 h tarde; relanzado a mano el 6-oct (run 37509794815).
 - Si el propietario quiere que ESTR deje de esperar al Daily: añadir `fetch_estr.py` al grupo EU del intradía
   (13:17Z). No incluido: no se pidió.
