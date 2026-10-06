@@ -1,12 +1,12 @@
 {
  "schema": "s01b-1",
  "version": "s01b v1.3.3",
- "run_id": "2026-10-06T202701ZP",
+ "run_id": "2026-10-06T213523Z",
  "as_of": "2026-10-06",
  "fx_effective": "2026-10-06",
- "generated_utc": "2026-10-06T20:27:01Z",
+ "generated_utc": "2026-10-06T21:35:23Z",
  "status": "CONTEXT",
- "note": "compatible con tensión fiscal — CONTEXT, sin voto · umbral expanding a t−1 (P80 firmado, ΔTP>0, histéresis p60) · FX ≤ −0,5 % log sobre la misma ventana · CHF solo lectura · PROVISIONAL: vista previa de mediodía, la sesión se evalúa en el run --final (write-once)",
+ "note": "compatible con tensión fiscal — CONTEXT, sin voto · umbral expanding a t−1 (P80 firmado, ΔTP>0, histéresis p60) · FX ≤ −0,5 % log sobre la misma ventana · CHF solo lectura",
  "currencies": {
   "USD": {
    "ccy": "USD",
@@ -14,59 +14,59 @@
    "avail": "OK",
    "flags": [],
    "signal": "OFF",
-   "persist": 5,
+   "persist": 6,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
-   "acm_asof_t": "2026-10-02",
+   "acm_asof_t": "2026-10-05",
    "acm_asof_t0": "2026-09-04",
-   "d_rny": 14.22,
-   "d_tp": 37.06,
-   "tp_t": 1.7925,
-   "tp_t0": 1.4219,
-   "rny_t": 3.4654,
-   "rny_t0": 3.3232,
-   "fit_t": 5.2578,
+   "d_rny": 13.42,
+   "d_tp": 40.34,
+   "tp_t": 1.8266,
+   "tp_t0": 1.4232,
+   "rny_t": 3.4562,
+   "rny_t0": 3.322,
+   "fit_t": 5.2827,
    "fit_t0": 4.7451,
    "quality_t": "ACM_K3_538m",
    "quality_t0": "ACM_K3_538m",
-   "d_fit": 51.27,
-   "d_nom": 50.0,
-   "resid": -1.27,
-   "d_2y": 46.0,
+   "d_fit": 53.76,
+   "d_nom": 53.0,
+   "resid": -0.76,
+   "d_2y": 47.0,
    "d_be": 1.0,
    "context_asof": {
     "nominal": {
-     "t": "2026-10-02",
+     "t": "2026-10-05",
      "t0": "2026-09-04"
     },
     "y2": {
-     "t": "2026-10-02",
+     "t": "2026-10-05",
      "t0": "2026-09-04"
     },
     "be": {
-     "t": "2026-10-02",
+     "t": "2026-10-05",
      "t0": "2026-09-04"
     }
    },
    "context_last": {
     "nominal": {
-     "date": "2026-10-02",
-     "value": 5.28,
-     "lag_bd": 2,
+     "date": "2026-10-05",
+     "value": 5.31,
+     "lag_bd": 1,
      "quality": null,
      "status": "OK"
     },
     "y2": {
-     "date": "2026-10-02",
-     "value": 4.83,
-     "lag_bd": 2,
+     "date": "2026-10-05",
+     "value": 4.84,
+     "lag_bd": 1,
      "quality": null,
      "status": "OK"
     },
     "be": {
-     "date": "2026-10-02",
+     "date": "2026-10-05",
      "value": 2.36,
-     "lag_bd": 2,
+     "lag_bd": 1,
      "quality": null,
      "status": "OK"
     }
@@ -75,12 +75,11 @@
    "fx_asof_t0": "2026-09-04",
    "d_fx": 2.814,
    "n_pop": 1257,
-   "theta": 19.42,
+   "theta": 19.43,
    "theta_off": 6.77,
-   "theta95": 44.11,
+   "theta95": 44.1,
    "colour": "amber",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "EUR": {
    "ccy": "EUR",
@@ -88,7 +87,7 @@
    "avail": "OK",
    "flags": [],
    "signal": "OFF",
-   "persist": 5,
+   "persist": 6,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
    "acm_asof_t": "2026-10-05",
@@ -153,8 +152,7 @@
    "theta_off": 9.74,
    "theta95": 42.17,
    "colour": "white",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "GBP": {
    "ccy": "GBP",
@@ -162,7 +160,7 @@
    "avail": "OK",
    "flags": [],
    "signal": "OFF",
-   "persist": 5,
+   "persist": 6,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
    "acm_asof_t": "2026-10-05",
@@ -227,16 +225,15 @@
    "theta_off": 11.25,
    "theta95": 44.41,
    "colour": "white",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "JPY": {
    "ccy": "JPY",
    "t": "2026-10-06",
    "avail": "OK",
    "flags": [],
-   "signal": "OFF",
-   "persist": 4,
+   "signal": "ON",
+   "persist": 1,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
    "acm_asof_t": "2026-10-05",
@@ -301,8 +298,7 @@
    "theta_off": 6.92,
    "theta95": 24.59,
    "colour": "amber",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "AUD": {
    "ccy": "AUD",
@@ -313,7 +309,7 @@
     "ACM_FFILL"
    ],
    "signal": "ON",
-   "persist": 3,
+   "persist": 4,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
    "acm_asof_t": "2026-10-02",
@@ -383,8 +379,7 @@
    "theta_off": 7.85,
    "theta95": 32.75,
    "colour": "white",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "NZD": {
    "ccy": "NZD",
@@ -394,29 +389,29 @@
     "SHORT"
    ],
    "signal": "ON",
-   "persist": 4,
+   "persist": 5,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
-   "acm_asof_t": "2026-10-02",
+   "acm_asof_t": "2026-10-05",
    "acm_asof_t0": "2026-09-04",
-   "d_rny": 1.72,
-   "d_tp": 26.22,
-   "tp_t": 2.0574,
-   "tp_t0": 1.7952,
-   "rny_t": 3.0248,
-   "rny_t0": 3.0076,
-   "fit_t": 5.0822,
+   "d_rny": 1.7,
+   "d_tp": 25.12,
+   "tp_t": 2.0468,
+   "tp_t0": 1.7956,
+   "rny_t": 3.0242,
+   "rny_t0": 3.0072,
+   "fit_t": 5.071,
    "fit_t0": 4.8028,
    "quality_t": "ACM_K3_SHORT_SAMPLE_137m",
    "quality_t0": "ACM_K3_SHORT_SAMPLE_137m",
-   "d_fit": 27.94,
-   "d_nom": 26.0,
-   "resid": -1.94,
+   "d_fit": 26.82,
+   "d_nom": 25.0,
+   "resid": -1.82,
    "d_2y": 21.0,
-   "d_be": 1.69,
+   "d_be": -0.17,
    "context_asof": {
     "nominal": {
-     "t": "2026-10-02",
+     "t": "2026-10-05",
      "t0": "2026-09-04"
     },
     "y2": {
@@ -424,15 +419,15 @@
      "t0": "2026-09-04"
     },
     "be": {
-     "t": "2026-10-02",
+     "t": "2026-10-05",
      "t0": "2026-09-04"
     }
    },
    "context_last": {
     "nominal": {
-     "date": "2026-10-02",
-     "value": 5.05,
-     "lag_bd": 2,
+     "date": "2026-10-05",
+     "value": 5.04,
+     "lag_bd": 1,
      "quality": null,
      "status": "OK"
     },
@@ -444,9 +439,9 @@
      "status": "OK"
     },
     "be": {
-     "date": "2026-10-02",
-     "value": 2.237,
-     "lag_bd": 2,
+     "date": "2026-10-05",
+     "value": 2.2184,
+     "lag_bd": 1,
      "quality": "IIB_PROXY_THIN_MARKET",
      "status": "OK"
     }
@@ -459,8 +454,7 @@
    "theta_off": 9.11,
    "theta95": 45.82,
    "colour": "amber",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "CAD": {
    "ccy": "CAD",
@@ -468,7 +462,7 @@
    "avail": "OK",
    "flags": [],
    "signal": "OFF",
-   "persist": 5,
+   "persist": 6,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
    "acm_asof_t": "2026-10-05",
@@ -535,8 +529,7 @@
    "theta_off": 7.69,
    "theta95": 34.15,
    "colour": "white",
-   "emitter": true,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": true
   },
   "CHF": {
    "ccy": "CHF",
@@ -549,21 +542,21 @@
    "persist": 0,
    "fx_fail_streak": 0,
    "t0": "2026-09-04",
-   "acm_asof_t": "2026-10-05",
+   "acm_asof_t": "2026-10-06",
    "acm_asof_t0": "2026-09-04",
-   "d_rny": 7.27,
-   "d_tp": -0.8,
-   "tp_t": -0.0575,
+   "d_rny": 6.86,
+   "d_tp": -0.98,
+   "tp_t": -0.0593,
    "tp_t0": -0.0495,
-   "rny_t": 0.6155,
+   "rny_t": 0.6114,
    "rny_t0": 0.5428,
-   "fit_t": 0.5581,
+   "fit_t": 0.5521,
    "fit_t0": 0.4933,
    "quality_t": "ACM_K3_NOWCAST_PARALLEL",
    "quality_t0": "ACM_K3_465m",
-   "d_fit": 6.48,
+   "d_fit": 5.88,
    "d_nom": 5.4,
-   "resid": -1.08,
+   "resid": -0.48,
    "d_2y": null,
    "d_be": null,
    "context_asof": {
@@ -609,11 +602,22 @@
    "theta_off": 5.17,
    "theta95": 36.94,
    "colour": "white",
-   "emitter": false,
-   "signal_note": "provisional · estado del último run --final (2026-10-05), sin evaluar"
+   "emitter": false
   }
  },
- "events": [],
- "baseline": false,
- "provisional": true
+ "events": [
+  {
+   "ccy": "JPY",
+   "t": "2026-10-06",
+   "type": "ON",
+   "baseline": false,
+   "d_tp": 15.07,
+   "theta": 13.52,
+   "d_fx": -1.172,
+   "acm_asof_t": "2026-10-05",
+   "flags": [],
+   "signal": "ON"
+  }
+ ],
+ "baseline": false
 }
