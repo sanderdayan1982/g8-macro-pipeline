@@ -84,9 +84,11 @@ jobs:
             Busca alternativas oficiales equivalentes para cada API rota o feed atrasado. Verifica fuente,
             definición, unidades, fechas, solapamiento e ingestión antes de cambiar nada. No cambies modelos.
             Haz commits locales sin push. Escribe siempre .agent/report.md con evidencia y pendientes.
+            Si un workflow de datos falló o una fuente publicó después de su pasada, pide el relanzamiento en
+            .agent/recovery.json (formato y lista cerrada en mantenimiento.md); la compuerta lo ejecuta.
           claude_args: |
             --max-turns 80
-            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(node:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(node:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*),Bash(bash scripts/tools/validate_smoke.sh:*)"
             --disallowedTools "Bash(git push:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh secret:*),Bash(gh workflow:*)"
       - name: Package work
         if: always()
@@ -105,6 +107,7 @@ jobs:
           path: |
             .agent/report.md
             .agent/work.bundle
+            .agent/recovery.json
           include-hidden-files: true
           retention-days: 30
 
@@ -112,7 +115,7 @@ jobs:
     needs: agent
     if: always() && needs.agent.result != 'skipped'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     outputs:
@@ -250,6 +253,15 @@ jobs:
             gh workflow run validate.yml --ref main
             gh workflow run daily_update.yml --ref main
           fi
+      - name: Recovery dispatch requested by the agent (trusted main code · acta P-9)
+        id: recovery
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -q main
+          python scripts/tools/agent_recovery.py .agent/recovery.json | tee .agent/recovery_result.json
+          python -c "import json;d=json.load(open('.agent/recovery_result.json'));print('n=%d' % len([x for x in d['dispatched'] if x.get('result')=='DISPATCHED']))" >> "$GITHUB_OUTPUT"
       - name: Report outcome
         if: always()
         env:
@@ -265,8 +277,14 @@ jobs:
           sys.path.insert(0, 'scripts')
           import notify_telegram as N
           p = Path('.agent/report.md')
-          report = p.read_text()[:2800] if p.exists() else 'Agente sin informe: revisar Actions.'
-          message = 'G8 mantenimiento · integración: %s · agente: %s\n%s' % (os.environ['RESULT'], os.environ['AGENT_RESULT'], report)
+          report = p.read_text()[:2600] if p.exists() else 'Agente sin informe: revisar Actions.'
+          rec = Path('.agent/recovery_result.json')
+          relaunch = ''
+          if rec.exists():
+              import json as _j
+              d = _j.loads(rec.read_text() or '{}')
+              relaunch = ''.join('\n↻ relanzado %s (%s): %s' % (x['workflow'], x.get('result'), x.get('reason', '')[:120]) for x in d.get('dispatched', []))
+          message = 'G8 mantenimiento · integración: %s · agente: %s%s\n%s' % (os.environ['RESULT'], os.environ['AGENT_RESULT'], relaunch, report)
           print(message)
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f: f.write(message)
           if not N.send(html.escape(message)):

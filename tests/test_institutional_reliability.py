@@ -114,7 +114,12 @@ class WorkflowSeparation(unittest.TestCase):
     def test_new_collection_never_runs_paid_collectors(self):
         from tools.refresh_feeds import GROUPS
         scripts = [job[1] for group in GROUPS.values() for job in group]
-        self.assertFalse(any('options' in x or 'futures' in x or 'acm_g8' in x for x in scripts))
+        self.assertFalse(any('options' in x or 'futures' in x for x in scripts))
+        # Acta P-9 (OK del propietario 6-oct-2026): el ACM se recalcula también en la pasada LATE, para que §01/§04
+        # sigan a sus entradas el mismo día. Solo ahí; las pasadas ASIA/EU/US siguen sin recalcular ACM.
+        for group, jobs in GROUPS.items():
+            if group != 'LATE':
+                self.assertFalse(any('acm_g8' in job[1] for job in jobs), group)
 
 
 if __name__ == '__main__':

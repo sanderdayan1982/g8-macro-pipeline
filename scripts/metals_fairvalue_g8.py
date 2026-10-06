@@ -58,7 +58,7 @@ FUENTES (local-first; calca real_yields_g8.py / acm_g8.py)
 ----------------------------------------------------------
   XAU/XAG precio       CSV TradingView (~/Downloads, xau_price.csv/xag_price.csv)
   BE10                 data/RY_G8_USD.csv (real_yields_g8) → fallback FRED T10YIE
-  slope = DGS10−EFFR   FRED DGS10, EFFR (o FEDFUNDS)
+  slope = DGS10−EFFR   FRED DGS10, EFFR (respaldo: EFFR diario del NY Fed, acta P-9)
   NFA_total            Treasury DebtToPenny + FRED WRESBAL − WTREGEN  (las 3 ya en USD-LCC)
   DXY (broad)          FRED DTWEXBGS
   TP10 (challenger)    data/ACM_G8.csv (acm_g8) col TP10 → opcional
@@ -86,6 +86,7 @@ import sys
 import json
 import time
 import glob
+from datetime import datetime, timezone
 from pathlib import Path
 import metals_provenance as MP
 
@@ -150,8 +151,11 @@ def min_varratio(n_drivers):
 # FRED series
 FRED_BE    = "T10YIE"         # breakeven 10Y (fallback si no hay RY_G8_USD)
 FRED_DGS10 = "DGS10"          # nominal 10Y (para slope)
-FRED_EFFR  = "EFFR"           # effective fed funds (para slope); fallback FEDFUNDS
-FRED_FF    = "FEDFUNDS"
+FRED_EFFR  = "EFFR"           # effective fed funds (para slope)
+# acta P-9: respaldo DIARIO en la fuente primaria (NY Fed, historia completa desde 2006, verificado 6-oct-2026)
+# en lugar del FEDFUNDS mensual de FRED. Regla del propietario: diario > semanal > mensual.
+NYFED_EFFR_URL = ("https://markets.newyorkfed.org/api/rates/unsecured/effr/search.json"
+                  "?startDate={start}&endDate={end}")
 FRED_DXY   = "DTWEXBGS"       # broad USD
 FRED_WRESBAL = "WRESBAL"      # reservas bancarias (NFA)
 FRED_TGA     = "WTREGEN"      # Treasury General Account (NFA, se RESTA)
@@ -373,6 +377,19 @@ def load_be10():
     return s
 
 
+def fetch_nyfed_effr(start=START):
+    """EFFR diario directamente del NY Fed (administrador del tipo). JSON refRates[effectiveDate, percentRate]."""
+    url = NYFED_EFFR_URL.format(start=start, end=datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    raw = _http_get(url, timeout=90)
+    rows = (json.loads(raw) if raw else {}).get("refRates") or []
+    s = pd.Series({pd.Timestamp(r["effectiveDate"]): float(r["percentRate"]) for r in rows
+                   if r.get("effectiveDate") and r.get("percentRate") is not None}).sort_index()
+    if len(s) < 500:
+        raise RuntimeError("NY Fed EFFR: %d observaciones" % len(s))
+    print(f"    [NYFED EFFR] {len(s)} obs  {s.index[0].date()} → {s.index[-1].date()}")
+    return PROVENANCE.record("NYFED_EFFR", s.rename("EFFR"), "NYFed:EFFR", MP.FREQUENCIES["NYFED_EFFR"])
+
+
 def load_slope():
     """slope = DGS10 − EFFR (prima de plazo OBSERVABLE, libre de modelo afín ACM).
     Lectura MMT: compensación que el mercado exige por encima de la tasa que fija el
@@ -381,8 +398,8 @@ def load_slope():
     try:
         effr = fetch_fred(FRED_EFFR)
     except Exception:
-        effr = fetch_fred(FRED_FF)
-        print(f"    [slope] EFFR no disponible → uso {FRED_FF}")
+        effr = fetch_nyfed_effr()
+        print("    [slope] FRED EFFR no disponible → EFFR diario del NY Fed (fuente primaria)")
     df = pd.concat([dgs10.rename("DGS10"), effr.rename("EFFR")], axis=1, sort=True).ffill().dropna()
     slope = (df["DGS10"] - df["EFFR"]).rename("slope")
     print(f"    [slope] {len(slope)} obs  DGS10−EFFR  "

@@ -487,11 +487,22 @@
                 out[key].source = synth ? 'SYNTH (AUD anchor, proxy)' : 'G8 ACM K=3 (RBNZ B2 1985+)';
                 out[key].label  = synth ? 'NZD 10Y TP (SYNTH)' : 'NZD ACM 10Y TP';
             }
-            // v5.5: CHF — frozen 2025-07 file (no QUALITY column) vs real fit on the SNB zero curve
+            // v5.5: CHF — real fit on the SNB zero curve. P-9 (acta P-9): the frozen 2025-07 file (no QUALITY
+            // column) is no longer plotted — owner rule: nothing older than monthly → NO DISPONIBLE.
             if (key === 'chf' && rows && rows.length) {
                 const q = String(rows[rows.length - 1].quality || '');
-                if (!q) { out[key].source = 'own ACM K=5 (SNB cube frozen 2025-07)'; out[key].label = 'CHF ACM 10Y TP (FROZEN)'; }
+                if (!q) { out[key].series = null; out[key].source = 'NO DISPONIBLE (sin ajuste SNB vigente)'; out[key].label = 'CHF ACM 10Y TP — NO DISPONIBLE'; }
                 else { out[key].source = 'G8 ACM K=3 (SNB rendeiduebd 1988+)' + (/nowcast/i.test(q) ? ' · nowcast tail' : ''); out[key].label = 'CHF ACM 10Y TP'; }
+            }
+            // P-9: ninguna serie ACM cuyo último dato tenga más de un mes se pinta como vigente
+            const ser = out[key].series;
+            if (ser && ser.dates && ser.dates.length) {
+                const last = new Date(ser.dates[ser.dates.length - 1]);
+                if (!isNaN(last) && (Date.now() - last.getTime()) / 864e5 > 35) {
+                    out[key].series = null;
+                    out[key].source = 'NO DISPONIBLE (último dato ' + last.toISOString().slice(0, 10) + ', más de un mes)';
+                    out[key].label = (cfg.label || key) + ' — NO DISPONIBLE';
+                }
             }
         });
         await Promise.all(promises);

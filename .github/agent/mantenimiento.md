@@ -24,7 +24,25 @@ Lee primero `CLAUDE.md`: sus reglas mandan sobre todo lo demás.
 - Decisiones de tipo oficial verificadas: `data/manual/policy_decisions.csv`.
 - Rutas del proxy del dashboard: `docs/_redirects`.
 - Tus actas y tests: `docs/actas/ACTA_AGENTE_<AAAAMMDD>.md`, `tests/test_agent_*.py`, `tests/fixtures/agent/**`.
+- **Presentación del dashboard** (acta P-9): `docs/index.html`, `docs/js/*.js` (salvo `health.js`). Para que se integre solo:
+  1. `bash scripts/tools/validate_smoke.sh` en verde, incluida la **prueba de renderizado en Chromium**
+     (`scripts/tools/dashboard_render_check.cjs`: los paneles se pintan con los datos de tu rama, sin excepciones JS ni
+     «Render error»). Ejecútala tú antes de hacer commit;
+  2. no tocar ninguna **función de cálculo protegida** (`PROTECTED_JS` en `scripts/tools/agent_gate.py`: z-scores,
+     diferenciales, estadísticas, frescura, salud…). Si el arreglo exige cambiarlas → PR para el propietario;
+  3. un acta `ACTA_AGENTE_*` que explique qué se veía mal, por qué y cómo lo comprobaste.
 Cualquier otro fichero → la compuerta abrirá un PR para el propietario. Hazlo solo si de verdad es necesario y explícalo.
+
+## Relanzar workflows de datos (acta P-9) — sin pedir permiso
+Si un workflow de datos falló (p. ej. push rechazado, fuente caída que ya volvió) o una fuente publicó DESPUÉS de su pasada
+programada (festivos, retrasos), pide el relanzamiento escribiendo `.agent/recovery.json` (no se comitea):
+```json
+[{"workflow": "cme_options.yml", "reason": "run 123 falló: push rechazado; sesión 2026-10-02 sin guardar"},
+ {"workflow": "intraday_fetch.yml", "inputs": {"group": "ASIA"}, "reason": "RBA F1 publicó a las 22:15Z del 05-oct"}]
+```
+Lista cerrada: `daily_update.yml`, `intraday_fetch.yml` (group ASIA/EU/US/LATE/ALL), `cme_options.yml`, `metals_update.yml`,
+`usd_factor.yml`. Máximo 3 por pasada, cada uno con su motivo y evidencia. La compuerta (código de main) los valida, no
+relanza lo que ya está en marcha y te lo confirma en Telegram. Comprueba en la siguiente pasada que el dato llegó.
 
 ## Mapa del dashboard: qué revisar en cada sección
 Regla común (acta P-8): **dato oficial lo más fresco posible; si la fuente es más lenta que el resto, estimación etiquetada
@@ -119,7 +137,10 @@ Sé conservador: si no estás seguro de que un cambio es correcto y verificado, 
 
 ## Prioridad de frecuencia — instrucción del propietario 4-oct-2026
 
-Busca primero fuentes DIARIAS; si no existe una equivalente verificable, SEMANALES. MENSUAL solo como último recurso, documentando por qué las anteriores no sirven. Una descarga diaria de una publicación mensual no es dato diario. Separa fecha de observación, frecuencia de publicación y fecha de extracción. Las decisiones de tipos siguen siendo por evento. No reemplaces un concepto por otro más frecuente: curvas spot no son par yields; previsiones CPI no son breakevens negociados. PROHIBIDO usar fuentes trimestrales o más lentas, incluso como respaldo. El máximo permitido es MENSUAL. Si no existe alternativa equivalente dentro de ese límite, marcar NO DISPONIBLE; nunca fabricar una serie diaria con un dato trimestral. Una nueva degradación de frecuencia requiere revisión.
+Busca primero fuentes DIARIAS; si no existe una equivalente verificable, SEMANALES. MENSUAL solo como último recurso, documentando por qué las anteriores no sirven. Una descarga diaria de una publicación mensual no es dato diario. Separa fecha de observación, frecuencia de publicación y fecha de extracción. Las decisiones de tipos siguen siendo por evento. No reemplaces un concepto por otro más frecuente: curvas spot no son par yields; previsiones CPI no son breakevens negociados. PROHIBIDO usar fuentes trimestrales o más lentas, incluso como respaldo. El máximo permitido es MENSUAL.
+Antigüedad (acta P-9): ningún dato pintado en el dashboard puede tener más de un mes; si su fuente no da nada más reciente,
+la celda queda NO DISPONIBLE (ya no existe el respaldo congelado CHF de 2025-07 ni el FEDFUNDS mensual de metales; el CHF 10Y
+mensual de la OCDE solo vale si es del mes en curso o del anterior). Si no existe alternativa equivalente dentro de ese límite, marcar NO DISPONIBLE; nunca fabricar una serie diaria con un dato trimestral. Una nueva degradación de frecuencia requiere revisión.
 
 ## Evidencia de vigencia (acta FRESHNESS_COMPLETION_20261004)
 

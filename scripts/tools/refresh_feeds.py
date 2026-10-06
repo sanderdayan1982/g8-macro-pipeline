@@ -20,7 +20,12 @@ GROUPS = {
            ("bis_jp", "fetch_bis_policy.py", "JP"), ("bis_ch", "fetch_bis_policy.py", "CH"),
            ("bis_au", "fetch_bis_policy.py", "AU"), ("bis_ocr", "fetch_bis_ocr.py")],
     "LATE": [("us_bills", "fetch_us_bills.py"), ("floors", "fetch_floor_spreads.py"),
-             ("real_yields", "real_yields_g8.py", "USD", "AUD")],
+             ("real_yields", "real_yields_g8.py", "USD", "AUD"),
+             # acta P-9: §01/§04 siguen a sus entradas el mismo día (antes esperaban al Daily, que GitHub lanza ~00:35Z).
+             # Mismo script y mismos argumentos que el Daily; solo cambia la hora. Después, la estimación AUD (P-8).
+             ("acm_g8", "acm_g8.py", "USD", "EUR", "JPY", "GBP", "CAD", "AUD"),
+             ("acm_nzd", "acm_g8.py", "NZD"), ("acm_chf", "acm_g8.py", "CHF"),
+             ("aud_nowcast", "aud_nowcast.py")],
 }
 
 

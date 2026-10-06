@@ -1049,6 +1049,10 @@ def build_book(st):
         if c in ("NZD", "CHF") and r.get("be") is None:
             r["flags"].append("BE/REAL no disponible: respaldo trimestral excluido")
         tp = read_series("ACM_G8_%s.csv" % c, col="TP10")
+        if tp and ((c == "CHF" and not _acm_quality("ACM_G8_CHF.csv")) or (TODAY - tp[-1][0]).days > 35):
+            # acta P-9: nada más viejo que mensual (ni el respaldo congelado CHF de 2025-07) → TP NO DISPONIBLE
+            r["flags"].append("TP NO DISPONIBLE (último %s)" % tp[-1][0].isoformat())
+            tp = None
         if tp:
             vals = [v for _, v in tp]
             r["tp"], r["tp_z"], r["tp_asof"] = vals[-1], zscore(vals), tp[-1][0].isoformat()
@@ -1058,9 +1062,7 @@ def build_book(st):
             if c == "CHF":
                 # v1.7: real fit from acm_g8.py CHF carries a QUALITY column; the frozen 2025-07 file has none
                 q = _acm_quality("ACM_G8_CHF.csv")
-                if not q:
-                    r["flags"].append("TP FROZEN 2025-07")
-                elif "NOWCAST" in q.upper():
+                if "NOWCAST" in q.upper():
                     r["flags"].append("TP ACM K=3 (nowcast 10Y)")
                 else:
                     r["flags"].append("TP ACM K=3 (SNB curve)")

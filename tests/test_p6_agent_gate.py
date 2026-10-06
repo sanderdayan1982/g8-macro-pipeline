@@ -36,7 +36,7 @@ class Classify(unittest.TestCase):
     def test_C2_owner(self):
         for p in ("scripts/acm_g8.py", "scripts/s01b.py", "scripts/dashboard_alerts.py", "scripts/usd_factor.py",
                   "sources/freshness_rules.csv", "tests/test_exclusions.py", ".github/workflows/daily_update.yml",
-                  "docs/index.html", "scripts/g8common/ingest.py", "data/AUD_POLICY.csv", "CLAUDE.md"):
+                  "docs/js/health.js", "scripts/g8common/ingest.py", "data/AUD_POLICY.csv", "CLAUDE.md"):
             r = G.classify(["scripts/fetch_aonia.py", p])
             self.assertEqual((r["decision"], r["outside"]), ("OWNER", [p]), p)
 

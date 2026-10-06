@@ -6,8 +6,8 @@
 AUTO  : todos los ficheros cambiados entre <base> y HEAD están en la lista permitida (descargadores, registro de
         fuentes, decisiones verificadas, proxy del dashboard, actas y tests del agente). El workflow los integra en
         main si además la suite y las comprobaciones de Validate pasan.
-OWNER : algún fichero fuera de la lista (modelos, umbrales, motor de alertas, workflows, dashboard…) → PR para el
-        propietario. Nunca se integra solo.
+OWNER : algún fichero fuera de la lista (modelos, umbrales, motor de alertas, workflows…), o un cambio del dashboard
+        que toque una función de cálculo protegida (PROTECTED_JS) → PR para el propietario. Nunca se integra solo.
 NADA  : el agente no hizo commits.
 """
 import argparse
@@ -32,12 +32,42 @@ ALLOW = [
     "tests/test_agent_*.py",
     "tests/fixtures/agent/*",
     "sources/alternatives/*.json",
+    # acta P-9: presentación del dashboard. Solo AUTO si la prueba de renderizado en Chromium pasa (validate_smoke.sh)
+    # y ninguna función de cálculo/frescura protegida cambia (PROTECTED_JS); cualquier cambio en ellas → OWNER.
+    "docs/index.html",
+    "docs/js/*.js",
 ]
+PROTECTED_JS = {
+    "docs/index.html": ["zScore", "deltaBps", "spreadStats", "spreadSeries", "statsS", "statsCol", "proxyTP", "minusSeries",
+                        "anchorToManual", "valueAt", "computeStaleness", "calBusinessDays", "localDay", "isG8Holiday",
+                        "briefAge", "healthScore", "feedWeight", "monthsBehind", "lagTag", "staleTag", "extractLastDate"],
+    "docs/js/data-loader.js": ["staleStatus", "businessDaysSince", "daysSince", "isG8Holiday", "forwardFillSeries", "parseACMG8"],
+    "docs/js/charts.js": ["computeXCCYBasis"],
+}
+PROTECTED_JS_FILES = ["docs/js/health.js"]          # lógica de salud: siempre OWNER
+
+
+def js_functions(text, names):
+    """{nombre: [cuerpos]} — cuerpo = desde «function nombre(» hasta su llave de cierre (todas las apariciones)."""
+    out = {}
+    for name in names:
+        bodies = []
+        for m in re.finditer(r"function\s+%s\s*\(" % re.escape(name), text):
+            i = text.find("{", m.end())
+            depth, j = 0, i
+            while j < len(text):
+                depth += {"{": 1, "}": -1}.get(text[j], 0)
+                if depth == 0:
+                    break
+                j += 1
+            bodies.append(text[m.start():j + 1])
+        out[name] = bodies
+    return out
 # Nunca AUTO aunque un patrón de ALLOW lo cubriera (metodología o huellas congeladas).
 DENY = [
     "scripts/acm_g8.py", "scripts/s01b.py", "scripts/dashboard_alerts.py", "scripts/usd_factor.py",
     "scripts/book_risk.py", "scripts/metals_fairvalue_g8.py", "scripts/nzd_tp_synth.py", "scripts/real_yields_g8.py",
-    "scripts/aud_nowcast.py", "scripts/tools/*", "scripts/health_monitor.py",
+    "scripts/aud_nowcast.py", "scripts/tools/*", "scripts/health_monitor.py", "docs/js/health.js",
     "sources/freshness_*.csv", "sources/nowcast_aud.json", "tests/test_p8_aud_nowcast.py", "tests/test_exclusions.py", "tests/test_f3_freshness.py", "tests/frozen_data.py",
     ".github/*",
 ]
@@ -84,7 +114,18 @@ def validate_diff(base, result):
             old[k].get(col) != new[k].get(col) for k in old.keys() & new.keys() for col in old[k] if col not in editable
         ):
             reasons.append("registry semantics/budgets changed")
+    docs = [p for p in result["changed"] if p in PROTECTED_JS or fnmatch.fnmatch(p, "docs/js/*.js")]
+    for path in docs:                                                  # acta P-9: candado de cálculo en el dashboard
+        old_text = git("show", base + ":" + path) if git("ls-tree", "--name-only", base, "--", path).strip() else ""
+        new_text = git("show", "HEAD:" + path)
+        names = PROTECTED_JS.get(path, [])
+        a, b = js_functions(old_text, names), js_functions(new_text, names)
+        touched = [n for n in names if a.get(n) != b.get(n)]
+        if touched:
+            reasons.append("protected calculation changed in %s: %s" % (path, ", ".join(touched)))
     code = [p for p in result["changed"] if p.startswith("scripts/") or p == "sources/registry.csv"]
+    if docs and not any(p.startswith("docs/actas/ACTA_AGENTE_") for p in result["changed"]):
+        reasons.append("dashboard repair needs an acta")
     if code:
         if not any(p.startswith("tests/test_agent_") for p in result["changed"]):
             reasons.append("repair needs a regression test")
@@ -116,7 +157,7 @@ def validate_diff(base, result):
             verified_urls.add(m["new_url"])
         except (ValueError, TypeError, KeyError) as exc:
             reasons.append("source evidence %s: %s" % (path, exc))
-    for path in code:
+    for path in code + docs:
         old_text = git("show", base + ":" + path) if git("ls-tree", "--name-only", base, "--", path).strip() else ""
         new_text = git("show", "HEAD:" + path)
         urls = lambda text: set(re.findall(r'https://[^\s\"\'<>),]+', text))

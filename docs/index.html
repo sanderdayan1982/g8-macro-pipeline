@@ -1429,7 +1429,7 @@ var FEED_REGISTRY = {
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
     NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '04'),
     /* v2.5.9: CHF ACM on the SNB zero curve (Mac local fetch); frozen 2025-07 file until then */
-    CHF_ACM: repo('ACM_G8_CHF.csv', 'CHF ACM 10Y (K=3 on SNB rendeiduebd; frozen K=5 fallback)', 'daily', 7, '04'),
+    CHF_ACM: repo('ACM_G8_CHF.csv', 'CHF ACM 10Y (K=3 on SNB rendeiduebd + NOWCAST diario; sin respaldo congelado, acta P-9)', 'daily', 7, '04'),
     CHF_SARON: repo('CHF_SARON.csv', 'CHF SARON (SNB zirepo + RSS, local fetch)', 'daily', 7, '02'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
@@ -1475,7 +1475,7 @@ var FEED_REGISTRY = {
        freshness; monthly cadence so the budget spans ~2 months. (audit 2026-08) */
     CHF_NOM_SNB: Object.assign({
         name: 'CHF Nominal 10Y (SNB spot via Mac local fetch · FRED OECD fallback)',
-        urls: [], source: 'SNB rendeiduebd 10J + RSS R10 → data/CHF_NOM_10Y.csv; fallback FRED OECD monthly / frozen cube',
+        urls: [], source: 'SNB rendeiduebd 10J + RSS R10 → data/CHF_NOM_10Y.csv; último recurso FRED OECD mensual (solo si es del mes en curso o el anterior)',
         frequency: 'daily', maxStaleness: 5, section: '01', liveCcy: 'CHF',
         manualLink: 'https://fred.stlouisfed.org/series/IRLTLT01CHM156N'
     }, { externalReport: true }),
@@ -1490,17 +1490,8 @@ var FEED_REGISTRY = {
         manualLink: 'https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates'
     }, { externalReport: true }),
 
-    /* ── 01 — USD TP external fallback chain (NY Fed reference) ────────── */
-    USD_TP_MIRROR: {
-        name: 'USD ACM TP10 (NY Fed mirror — fallback)',
-        urls: ['https://eco3min.fr/dataset/us-term-premium.csv'],
-        source: 'eco3min.fr (NY Fed ACMTP10 mirror, weekly)', corsOk: false, frequency: 'weekly', maxStaleness: 45, section: '01',
-        /* v2.7.0: no section consumes this mirror (§01 reads ACM_G8_USD.csv). As an always-on row it
-           counted ×2 (section 01) in the header and put "1 DEAD" on a green board whenever
-           eco3min/the proxy hiccuped. On-demand = checked only by RUN ALL. */
-        onDemand: true,
-        manualLink: 'https://www.newyorkfed.org/research/data_indicators/term-premia-tabs'
-    },
+    /* acta P-9: USD_TP_MIRROR (espejo semanal de terceros, eco3min) retirado: ninguna sección lo usaba y aparecía sin fecha.
+       §01/§04 USD leen ACM_G8_USD.csv (diario) y el gráfico de referencia ACM_TP_10Y.csv (NY Fed). */
 
     /* v2.6.2 (17-sep-2026): the three on-demand FRED fallback rows (DGS10 / DFII10 /
        T10YIE) were REMOVED. fred.stlouisfed.org no longer answers the Netlify
@@ -2457,6 +2448,13 @@ function anchorToManual(anchorSeries, manualV, manualDate) {
     return out;
 }
 
+/* P-9: meses de diferencia entre una fecha de observación y el mes en curso (0 = este mes, 1 = el anterior). */
+function monthsBehind(d) {
+    var iso = isoNorm(d), now = new Date();
+    if (!/^\d{4}-\d{2}/.test(iso)) return 99;
+    return (now.getFullYear() - +iso.slice(0, 4)) * 12 + (now.getMonth() + 1 - +iso.slice(5, 7));
+}
+
 function isoNorm(d) {
     d = String(d);
     if (/^\d{8}$/.test(d)) return d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8);
@@ -2571,9 +2569,7 @@ function build(data) {
             ? ' <span class="attr-mix" title="legs sampled on different dates: ' + uniq.join(', ') +
               ' — cross-leg arithmetic (NOM−REAL=BE) mixes vintages">⚠ mixed as-of</span>'
             : '';
-        var frozenFlag = (c === 'CHF' && d.frozen)
-            ? ' <span class="attr-mix" title="CHF fell back to the frozen SNB-cube ACM (2025-07) — FRED 10Y fetch failed this load; spread is vs a >1-year-old level, informative only">FROZEN</span>'
-            : '';
+        var frozenFlag = '';   /* P-9: respaldo congelado retirado */
         html += '<tr><td><span class="attr-ccy" style="color:#5d8aa8">' + c + '−USD</span>' + mixFlag + frozenFlag + '</td>' +
             '<td>' + sp(d.nom, usd.nom) + (data[c].official ? ' <span class="attr-z attr-z-lo">OFICIAL</span>' : '') + '</td>' +
             '<td>' + sp(d.tp, usd.tp) + '</td>' +
@@ -2790,8 +2786,8 @@ function assemble(raw) {
 
     /* CHF — LIVE from FRED OECD 10Y (IRLTLT01CHM156N, monthly) + EUR anchor-proxy TP.
        Revives CHF from the frozen SNB cube (2025-07): NOM is the fetched monthly yield,
-       TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR), real=NOM−BE_const. Falls back to the frozen
-       own-ACM K=5 (flagged FROZEN) if the FRED fetch failed. (audit 2026-08) */
+       TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR), real=NOM−BE_const. P-9: the frozen own-ACM K=5
+       fallback is retired (owner rule: nothing older than monthly) → NO DISPONIBLE. */
     /* v2.5.9: CHF LIVE from the SNB — NOM = 10Y spot (curve month-end + RSS daily, local fetch),
        TP/RNY = own ACM K=3 on the rendeiduebd zero curve 1988+ (acm_g8.py CHF; QUALITY column;
        NOWCAST rows = last curve shifted by the daily 10Y until the SNB publishes the month).
@@ -2822,7 +2818,8 @@ function assemble(raw) {
         };
         if (chNow) data.CHF.tpConf = { lo: true, why: 'Last ' + nowN + ' rows are NOWCAST: SNB publishes the daily curve monthly; until then the last fitted curve is shifted in parallel by the daily 10Y spot (RSS). Level factor only — replaced by real curve rows on the 1st.' };
         G8DQM.report('CHF_NOM_SNB', { lastDate: chSnbLast.d.replace(/-/g, ''), value: chSnbLast.v, via: 'data/CHF_NOM_10Y.csv (SNB local fetch, ' + chSnbLast.src + ')' });
-    } else if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm) {
+    } else if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm &&
+               monthsBehind(raw.chfFred[raw.chfFred.length - 1].d) <= 1) {   /* P-9: mensual solo si es del mes anterior o actual */
         var chfNom = raw.chfFred;
         var eurNomRy = raw.EUR.ry ? raw.EUR.ry.rows.map(function (r) {
             var d = String(r.DATE); return { d: d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8), v: r.NOM10 };
@@ -2841,17 +2838,12 @@ function assemble(raw) {
             formula: 'NOM=FRED OECD 10Y (monthly) · TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE/REAL unavailable: quarterly source excluded'
         };
         G8DQM.report('CHF_NOM_SNB', { lastDate: chfLast.replace(/-/g, ''), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'FRED CH10Y (OECD)' });
-    } else if (data.CHF && raw.CHF && raw.CHF.acm) {
-        /* fallback: frozen own-ACM K=5 (honest lag, flagged FROZEN in spreads) */
-        var chfNomHist = raw.CHF.acm.map(function (r) { return { d: String(r.DATE), v: r.Y10_FIT }; });
-        data.CHF.be = statsS([]);
-        data.CHF.real = statsS(minusSeries(chfNomHist, []));
-        data.CHF.quality = 'ACM K=5';
-        data.CHF.qkind = 'synth';
-        data.CHF.asOf = '2025-07 · SNB frozen';
-        data.CHF.frozen = true;
-        data.CHF.formula = 'NOM/RNY/TP = own ACM K=5 · BE/REAL unavailable: quarterly source excluded · as-of SNB frozen 2025-07';
-        G8DQM.report('CHF_NOM_SNB', { status: 'SYNTHETIC', lastDate: String(raw.CHF.acm[raw.CHF.acm.length - 1].DATE), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'ACM fitted (own K=5, frozen)' });
+    } else {
+        /* P-9 (acta P-9, regla del propietario: ningún dato más viejo que mensual): sin SNB vigente ni respaldo mensual
+           reciente, CHF queda NO DISPONIBLE. Se retira el respaldo congelado (ACM K=5 del cubo SNB de 2025-07). */
+        delete data.CHF;
+        G8DQM.report('CHF_NOM_SNB', { status: 'DEAD', lastDate: chSnbLast ? chSnbLast.d.replace(/-/g, '') : null, value: null,
+                                      via: 'NO DISPONIBLE: SNB sin dato vigente y sin respaldo mensual reciente (acta P-9)' });
     }
 
     /* NZD — nominal 10Y LIVE from RBNZ B2 (v2.5.6) with manual fallback; AUD-anchored TP + manual BE */

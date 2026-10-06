@@ -85,3 +85,15 @@ for name in ('acm_g8', 'real_yields_g8', 'nzd_tp_synth', 'fetch_nzd_b2', 'fetch_
         print('IMPORT FAILED', name, e); sys.exit(1)
 EOF
 echo '::endgroup::'
+
+echo '::group::Dashboard render (Chromium · acta P-9)'
+# El dashboard se pinta de verdad con los datos de ESTA rama: sin excepciones JS, sin «Render error», paneles llenos.
+PW_DIR="${G8_PW_DIR:-${RUNNER_TEMP:-/tmp}/g8pw}"
+if [ ! -d "$PW_DIR/node_modules/playwright" ]; then
+  mkdir -p "$PW_DIR"
+  ( cd "$PW_DIR" && npm init -y >/dev/null && npm i -s playwright@1.48.2 >/dev/null )
+  if [ "$(uname)" = "Linux" ]; then ( cd "$PW_DIR" && npx playwright install --with-deps chromium >/dev/null ); \
+  else ( cd "$PW_DIR" && npx playwright install chromium >/dev/null ); fi
+fi
+NODE_PATH="$PW_DIR/node_modules" node scripts/tools/dashboard_render_check.cjs
+echo '::endgroup::'

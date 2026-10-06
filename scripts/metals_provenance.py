@@ -9,7 +9,7 @@ from g8common.series import write_atomic
 
 OUTPUTS = ['MFV_G8_XAU.csv', 'MFV_G8_XAG.csv', 'MFV_G8_state.json',
            'MFV_G8_walkforward_XAU.csv', 'MFV_G8_walkforward_XAG.csv']
-FREQUENCIES = {'DGS10':'daily','EFFR':'daily','FEDFUNDS':'monthly','T10YIE':'daily',
+FREQUENCIES = {'DGS10':'daily','EFFR':'daily','NYFED_EFFR':'daily','T10YIE':'daily',   # acta P-9: FEDFUNDS (mensual) retirado
                'DFII10':'daily','DTWEXBGS':'weekly','WRESBAL':'weekly','WTREGEN':'weekly'}
 
 
@@ -37,7 +37,7 @@ class Evidence:
         present = set(inputs)
         if 'T10YIE' in present: present.add('BE10')
         if 'DFII10' in present: present.add('REAL10')
-        if metal == 'XAU' and not ({'EFFR','FEDFUNDS'} & present):
+        if metal == 'XAU' and not ({'EFFR','NYFED_EFFR'} & present):
             raise ValueError('Missing effective-rate evidence')
         if required - present:
             raise ValueError('Missing input evidence: ' + ','.join(sorted(required-present)))
