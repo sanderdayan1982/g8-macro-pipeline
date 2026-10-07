@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-07T19:20:43.556863Z",
+ "generated_utc": "2026-10-07T20:49:49.028160Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -273,7 +273,7 @@
    "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false,
-   "announced_max": "2026-10-07"
+   "announced_max": "2026-10-08"
   },
   {
    "file": "FLOOR_EUR.csv",
@@ -900,16 +900,16 @@
   },
   {
    "file": "ACM_TP_10Y.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-05",
+   "state": "CURRENT",
+   "have_max": "2026-10-06",
    "expected_obs": "2026-10-05",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1874,16 +1874,16 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "AWAITING_PUBLICATION",
-   "have_max": "2026-10-05",
+   "state": "VERIFIED_CANONICAL",
+   "have_max": "2026-10-06",
    "expected_obs": "2026-10-06",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-10-07T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
+   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "expected_publication_utc": "2026-10-07T21:00:00+00:00"
@@ -1989,7 +1989,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-07T19:20:42Z",
+   "have_max": "2026-10-07T20:49:48Z",
    "flags": []
   },
   {
