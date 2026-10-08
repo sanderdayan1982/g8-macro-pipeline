@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-08T16:22:58.812976Z",
+ "generated_utc": "2026-10-08T19:16:58.039272Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -21,28 +21,11 @@
  "needs_repair": true,
  "issues": [
   {
-   "file": "USD_FACTOR.json",
+   "file": "NZD_BILL_30D.csv",
    "state": "OVERDUE",
-   "have_max": "2026-10-07",
-   "expected_obs": "2026-10-08",
-   "calendar": "TARGET",
-   "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
-   "status": "LATE",
-   "age_business_days": 1,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "usd_factor/ecb_rates.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-07",
-   "expected_obs": "2026-10-08",
-   "calendar": "TARGET",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
@@ -55,11 +38,168 @@
    "slow_fallback": false
   },
   {
-   "file": "usd_factor/canonical.csv",
+   "file": "NZD_BILL_60D.csv",
    "state": "OVERDUE",
-   "have_max": "2026-10-07",
-   "expected_obs": "2026-10-08",
-   "calendar": "TARGET",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_BILL_90D.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_BOND_1Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_BOND_2Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_BOND_5Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_BOND_10Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_IIB_2030.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_IIB_2035.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_IIB_2040.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "NZD_IIB_2050.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-06",
+   "expected_obs": "2026-10-07",
+   "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
@@ -821,13 +961,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -838,13 +978,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -855,13 +995,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -873,13 +1013,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -890,13 +1030,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -907,13 +1047,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -925,13 +1065,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -943,13 +1083,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -960,13 +1100,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -978,13 +1118,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -995,13 +1135,13 @@
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1394,33 +1534,31 @@
   },
   {
    "file": "USD_FACTOR.json",
-   "state": "OVERDUE",
-   "have_max": "2026-10-07",
+   "state": "CURRENT",
+   "have_max": "2026-10-08",
    "expected_obs": "2026-10-08",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
-   "status": "LATE",
-   "age_business_days": 1,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "S01B.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-10-07",
+   "have_max": "2026-10-08",
    "expected_obs": "2026-10-07",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
-   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
+   "reason": "Vista PROVISIONAL de la sesión 2026-10-08; el cierre definitivo llega con su pasada programada. Último cierre 2026-10-07 al día.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "PENDING",
+   "age_business_days": 0,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1834,35 +1972,29 @@
   },
   {
    "file": "usd_factor/ecb_rates.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-07",
+   "state": "CURRENT",
+   "have_max": "2026-10-08",
    "expected_obs": "2026-10-08",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "usd_factor/canonical.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-07",
+   "state": "CURRENT",
+   "have_max": "2026-10-08",
    "expected_obs": "2026-10-08",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1925,14 +2057,14 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-08T16:22:58Z",
+   "have_max": "2026-10-08T19:16:57Z",
    "flags": []
   },
   {
    "file": "BOOK_RISK.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-07",
+   "have_max": "2026-10-08",
    "flags": []
   },
   {
