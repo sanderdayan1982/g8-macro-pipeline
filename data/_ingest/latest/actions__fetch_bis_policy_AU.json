@@ -1,17 +1,12 @@
 {
- "errors": [
-  {
-   "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
-   "kind": "DEGRADED"
-  }
- ],
+ "errors": [],
  "executor": "actions",
  "failing_since_utc": null,
  "files": {
   "AU_POLICY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261008T213555Z_actions_fetch-bis-policy-au_f43d:9aaaa96d3c23",
+   "download_id": "20261008T221412Z_actions_fetch-bis-policy-au_9556:9aaaa96d3c23",
    "dropped_by_source": 0,
    "file": "AU_POLICY.csv",
    "held": [],
@@ -22,10 +17,10 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-10-08T21:36:06Z",
- "gh_run_id": "37847772262",
+ "finished_utc": "2026-10-08T22:14:22Z",
+ "gh_run_id": "37852043469",
  "job": "fetch_bis_policy_AU",
- "last_ok_utc": "2026-10-08T21:36:06Z",
+ "last_ok_utc": "2026-10-08T22:14:22Z",
  "not_before": {},
  "rc": 0,
  "requests": [
@@ -35,12 +30,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 0.52,
+     "secs": 3.28,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Thu, 08 Oct 2026 21:35:54 GMT",
+   "date_header": "Thu, 08 Oct 2026 22:14:13 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
@@ -54,31 +49,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 3.93,
+     "secs": 5.65,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Thu, 08 Oct 2026 21:35:56 GMT",
-   "detail": "",
-   "last_modified": "Wed, 07 Oct 2026 09:45:28 GMT",
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 200,
-   "url": "https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "OK",
-     "detail": "",
-     "n": 1,
-     "secs": 0.53,
-     "status": 200
-    }
-   ],
-   "cls": "OK",
-   "date_header": "Thu, 08 Oct 2026 21:36:06 GMT",
+   "date_header": "Thu, 08 Oct 2026 22:14:21 GMT",
    "detail": "",
    "last_modified": "Wed, 07 Oct 2026 22:01:35 GMT",
    "not_before_epoch": null,
@@ -87,7 +63,7 @@
    "url": "https://www.rba.gov.au/statistics/tables/csv/f1-data.csv"
   }
  ],
- "run_id": "20261008T213555Z_actions_fetch-bis-policy-au_f43d",
- "started_utc": "2026-10-08T21:35:55Z",
+ "run_id": "20261008T221412Z_actions_fetch-bis-policy-au_9556",
+ "started_utc": "2026-10-08T22:14:12Z",
  "step": "bis_au"
 }
