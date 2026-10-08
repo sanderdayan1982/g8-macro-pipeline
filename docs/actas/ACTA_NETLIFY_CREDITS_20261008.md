@@ -8,6 +8,6 @@ El resto son commits de bots/datos (`data/`, `mac/`, workflows) que el dashboard
 
 **Sin cambios.** Metodología, fuentes, datos, workflows y el dashboard.
 
-**Pruebas.** `bash scripts/tools/validate_smoke.sh`. Efecto real: comprobar en Netlify → Deploys que los commits de datos salen como «Skipped».
+**Pruebas.** `bash scripts/tools/validate_smoke.sh` en verde (2026-10-08, Python 3.11.15 vía uv en el Mac): 753 tests OK (5 skipped), equivalencia S01B, YAML, registry.csv, JS y render del dashboard OK. Efecto real: comprobar en Netlify → Deploys que los commits de datos salen «Skipped».
 
 **Siguiente.** Aplicar lo equivalente en mesa-macro-fx (publica la raíz y lee `/data` de su propio sitio; requiere decisión del propietario).
