@@ -13,6 +13,9 @@ cron). El cron de GitHub se queda como segundo intento: llega horas después y e
     la respuesta 2xx de GitHub; un fallo se reintenta en la pasada siguiente dentro de la ventana.
   · Credencial: ~/.g8/github_dispatch_token — token fine-grained de ESTE repo con «Actions: Read and write» y nada más
     (no es el token de datos). Nunca se imprime. Sin token, inválido o caduca en ≤ 7 días → logs/ALERTAS.log.
+  · Otros repos (acta NETLIFY_CREDITS, 8-oct-2026): cada dispatch_schedule_<nombre>.json junto a este script es un horario
+    más, con su "repo" y su "token_path" (token propio de ese repo). Los id de turno son únicos entre horarios (mismo
+    state). Sin token de un horario → se avisa y se salta solo ese horario.
 Uso: python3 dispatch_workflows.py [--dry-run] [--check] [--now 2026-10-06T13:20:00Z]
 Salida: 0 bien · 1 sin token / token inválido / algún lanzamiento fallido · 2 (--check) el token caduca en ≤ 7 días.
 """
@@ -110,8 +113,8 @@ def write_json(path, obj):
     os.replace(tmp, path)
 
 
-def read_token(path=TOKEN_PATH):
-    t = os.environ.get("G8_DISPATCH_TOKEN", "").strip()
+def read_token(path=TOKEN_PATH, use_env=True):
+    t = os.environ.get("G8_DISPATCH_TOKEN", "").strip() if use_env else ""   # el env solo vale para el repo principal
     if t:
         return t
     try:
@@ -161,6 +164,20 @@ def check_token(schedule, token, now, transport=None):
     return res.ok, res.cls, days_left(res.headers, now)
 
 
+def load_schedules(root):
+    """dispatch_schedule.json (obligatorio) + dispatch_schedule_<nombre>.json (opcionales, orden alfabético)."""
+    main_s = read_json(os.path.join(root, "dispatch_schedule.json"), None)
+    if not main_s:
+        return None
+    out = [main_s]
+    for n in sorted(os.listdir(root)):
+        if n.startswith("dispatch_schedule_") and n.endswith(".json"):
+            extra = read_json(os.path.join(root, n), None)
+            if extra and extra.get("repo") and extra.get("token_path") and extra.get("slots"):   # nunca el token principal
+                out.append(extra)
+    return out
+
+
 def main(argv=None, now=None, transport=None, root=HERE, token_path=TOKEN_PATH):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="muestra qué lanzaría, sin llamar a GitHub ni guardar")
@@ -171,11 +188,22 @@ def main(argv=None, now=None, transport=None, root=HERE, token_path=TOKEN_PATH):
         now = datetime.strptime(a.now, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     now = now or utcnow()
     log = Log(root, now)
-    schedule = read_json(os.path.join(root, "dispatch_schedule.json"), None)
-    if not schedule:
+    schedules = load_schedules(root)
+    if not schedules:
         log.alert("falta o es ilegible dispatch_schedule.json — no se lanza nada")
         return 1
     state_path = os.path.join(root, "state", "dispatch_state.json")
+    rc = 0
+    for i, schedule in enumerate(schedules):
+        # el horario principal usa token_path (parámetro); los demás, su propio "token_path"
+        tp = token_path if i == 0 else schedule["token_path"]
+        r = run_schedule(a, schedule, state_path, now, log, transport, tp, primary=(i == 0))
+        if r == 1 or (r == 2 and rc == 0):
+            rc = r
+    return rc
+
+
+def run_schedule(a, schedule, state_path, now, log, transport, token_path, primary=True):
     state = read_json(state_path, {})
     due = due_slots(schedule, state, now)
 
@@ -186,7 +214,7 @@ def main(argv=None, now=None, transport=None, root=HERE, token_path=TOKEN_PATH):
             log.info("DRY nada pendiente")
         return 0
 
-    token = read_token(token_path)
+    token = read_token(token_path, use_env=primary)
     if not token:
         if a.check or due:
             log.alert("no hay token (%s): los workflows esperan al cron de GitHub (4–8 h tarde)" % token_path)
@@ -194,8 +222,8 @@ def main(argv=None, now=None, transport=None, root=HERE, token_path=TOKEN_PATH):
 
     if a.check:
         ok, cls, left = check_token(schedule, token, now, transport)
-        log.info("token %s · caduca en %s días · %d turnos" % ("válido" if ok else "NO válido (%s)" % cls,
-                                                               "?" if left is None else left, len(schedule["slots"])))
+        log.info("%s · token %s · caduca en %s días · %d turnos" % (schedule["repo"], "válido" if ok else "NO válido (%s)" % cls,
+                                                                    "?" if left is None else left, len(schedule["slots"])))
         for s in schedule["slots"]:
             log.info("  %-16s %-20s %-14s %s" % (s["id"], s["workflow"], s["cron"], json.dumps(s.get("inputs") or {})))
         if not ok:

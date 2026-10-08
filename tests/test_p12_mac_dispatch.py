@@ -9,6 +9,7 @@ D5 sin token → no llama a GitHub y avisa; nunca se escribe el token en logs
 D6 horario = crons de los workflows (sin desvíos); grupo intradía = el que el workflow asigna a ese cron;
    todo workflow con cron está en el horario o excluido con motivo
 D7 plantilla launchd y compatibilidad con el Python 3.9 del Mac
+M1–M6 horario adicional de mesa-macro-fx (acta NETLIFY_CREDITS): su repo, su token, sin bloquear a g8, crons y lanes
 """
 import ast
 import json
@@ -184,6 +185,95 @@ class Consistency(unittest.TestCase):
         self.assertTrue(pl["ProgramArguments"][1].endswith("/dispatch_workflows.py"))
         with open(os.path.join(ROOT, "mac", "dispatch_workflows.py"), encoding="utf-8") as fh:
             ast.parse(fh.read(), feature_version=(3, 9))
+
+
+MESA_TOKEN = "github_pat_SECRET_MESA_do_not_print"
+
+
+class MesaSchedule(Base):
+    """Acta NETLIFY_CREDITS · horario adicional dispatch_schedule_mesa.json (otro repo, su propio token)."""
+    def setUp(self):
+        Base.setUp(self)
+        with open(os.path.join(ROOT, "mac", "dispatch_schedule_mesa.json"), encoding="utf-8") as fh:
+            sched = json.load(fh)
+        self.mesa_tok = os.path.join(self.root, "token_mesa")
+        sched["token_path"] = self.mesa_tok
+        with open(os.path.join(self.root, "dispatch_schedule_mesa.json"), "w", encoding="utf-8") as fh:
+            json.dump(sched, fh)
+        with open(self.mesa_tok, "w") as fh:
+            fh.write(MESA_TOKEN + "\n")
+
+    def test_M1_mesa_slot_uses_its_repo_token_and_lane(self):
+        rc, f = self.run_at("2026-10-06T20:22")                       # martes 20:20 → USD daily de mesa
+        self.assertEqual(rc, 0)
+        mesa = [c for c in f.calls if "/mesa-macro-fx/" in c[1]]
+        self.assertEqual(len(mesa), 1)
+        method, url, body, auth = mesa[0]
+        self.assertTrue(url.endswith("/repos/sanderdayan1982/mesa-macro-fx/actions/workflows/refresh-usd.yml/dispatches"), url)
+        self.assertEqual(body, {"ref": "main", "inputs": {"lane": "daily", "backfill": "false"}})
+        self.assertEqual(auth, "Bearer " + MESA_TOKEN)
+        self.assertEqual(self.state()["done"]["mesa_usd_daily_1"], "2026-10-06T20:20Z")
+        rc, f2 = self.run_at("2026-10-06T20:27", Fake())
+        self.assertEqual([c for c in f2.calls if "/mesa-macro-fx/" in c[1]], [])
+
+    def test_M2_missing_mesa_token_does_not_block_g8(self):
+        os.remove(self.mesa_tok)
+        rc, f = self.run_at("2026-10-06T21:31")                       # g8 daily 21:30 + mesa usd 20:20/21:20 vencidos
+        self.assertEqual(rc, 1)
+        self.assertTrue(all("/g8-macro-pipeline/" in c[1] for c in f.calls) and f.calls)
+        self.assertEqual(self.state()["done"]["daily"], "2026-10-06T21:30Z")
+        self.assertIn("no hay token (%s)" % self.mesa_tok, self.logs())
+
+    def test_M3_env_token_never_used_for_mesa(self):
+        os.remove(self.mesa_tok)
+        os.environ["G8_DISPATCH_TOKEN"] = TOKEN
+        try:
+            rc, f = self.run_at("2026-10-06T20:22")
+        finally:
+            os.environ.pop("G8_DISPATCH_TOKEN", None)
+        self.assertEqual([c for c in f.calls if "/mesa-macro-fx/" in c[1]], [])
+
+    def test_M4_extra_schedule_without_token_path_is_ignored(self):
+        p = os.path.join(self.root, "dispatch_schedule_mesa.json")
+        sched = D.read_json(p, {})
+        sched.pop("token_path")
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(sched, fh)
+        rc, f = self.run_at("2026-10-06T20:22")
+        self.assertEqual([c for c in f.calls if "/mesa-macro-fx/" in c[1]], [])
+
+
+class MesaConsistency(unittest.TestCase):
+    """Turnos de mesa = crons de sus workflows y el lane que el workflow asigna a ese cron.
+    Necesita una copia de mesa-macro-fx (MESA_REPO_DIR o ../_clones/mesa-macro-fx); si no está, se salta."""
+    def setUp(self):
+        with open(os.path.join(ROOT, "mac", "dispatch_schedule_mesa.json"), encoding="utf-8") as fh:
+            self.sched = json.load(fh)
+
+    def test_M5_ids_unique_and_parseable(self):
+        with open(os.path.join(ROOT, "mac", "dispatch_schedule.json"), encoding="utf-8") as fh:
+            g8 = json.load(fh)
+        ids = [s["id"] for s in g8["slots"] + self.sched["slots"]]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertTrue(self.sched["token_path"] != D.TOKEN_PATH)
+        for s in self.sched["slots"]:
+            D.parse_cron(s["cron"])
+            self.assertEqual(s["inputs"]["backfill"], "false", s["id"])
+
+    def test_M6_crons_and_lanes_match_mesa_workflows(self):
+        repo = os.environ.get("MESA_REPO_DIR") or os.path.join(ROOT, "..", "_clones", "mesa-macro-fx")
+        wdir = os.path.join(repo, ".github", "workflows")
+        if not os.path.isdir(wdir):
+            self.skipTest("sin copia local de mesa-macro-fx")
+        for s in self.sched["slots"]:
+            with open(os.path.join(wdir, s["workflow"]), encoding="utf-8") as fh:
+                y = fh.read()
+            self.assertIn('- cron: "%s"' % s["cron"], y, s["id"])
+            lanes = {}
+            for left, lane in re.findall(r'^\s*(".+?")\)\s+echo "lane=(\w+)"', y, re.M):
+                for cron in re.findall(r'"([^"]+)"', left):
+                    lanes[cron] = lane
+            self.assertEqual(s["inputs"]["lane"], lanes.get(s["cron"]), s["id"])
 
 
 if __name__ == "__main__":
