@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-08T19:16:58.039272Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-10-08T20:54:31.188288Z",
+ "status": "CURRENT",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,201 +18,9 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "NZD_BILL_30D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BILL_60D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BILL_90D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BOND_1Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BOND_2Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BOND_5Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_BOND_10Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_IIB_2030.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_IIB_2035.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_IIB_2040.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_IIB_2050.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
-   "expected_obs": "2026-10-07",
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  }
- ],
- "unknown_count": 1,
+ "needs_repair": false,
+ "issues": [],
+ "unknown_count": 0,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -941,225 +749,192 @@
   },
   {
    "file": "ACM_TP_10Y.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-06",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_30D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_60D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_90D.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_1Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_2Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_5Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_10Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2030.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2035.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 2,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2040.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2050.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-06",
+   "state": "CURRENT",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "UNKNOWN_SCHEDULE",
+   "state": "VERIFIED_SPARSE",
    "have_max": "2026-10-01",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
+   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
    "cause": null,
    "flags": [],
-   "status": "UNKNOWN",
+   "status": "CURRENT",
    "age_business_days": 5,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "verified_download_utc": "2026-10-07T18:30:08Z"
+   "verified_download_utc": "2026-10-08T20:00:09Z"
   },
   {
    "file": "NZD_IIB_2025.csv",
@@ -1178,7 +953,7 @@
   {
    "file": "CHF_NOM_10Y.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-07",
+   "have_max": "2026-10-08",
    "expected_obs": "2026-10-07",
    "calendar": "CH",
    "basis": "PROVISIONAL",
@@ -1186,14 +961,14 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "CHF_SARON.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-06",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-06",
    "calendar": "CH",
    "basis": "PROVISIONAL",
@@ -1201,7 +976,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 2,
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1942,16 +1717,16 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "AWAITING_PUBLICATION",
-   "have_max": "2026-10-06",
+   "state": "VERIFIED_CANONICAL",
+   "have_max": "2026-10-07",
    "expected_obs": "2026-10-07",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-10-08T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
+   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "expected_publication_utc": "2026-10-08T21:00:00+00:00"
@@ -2057,7 +1832,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-08T19:16:57Z",
+   "have_max": "2026-10-08T20:54:30Z",
    "flags": []
   },
   {
