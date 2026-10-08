@@ -7,8 +7,9 @@
   publish = "docs"
   command = ""
   # Skip the deploy (and its 15 credits) unless the published site changed.
-  # Exit 0 = skip build, exit 1 = build. Data/bot commits don't touch docs/.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs netlify.toml"
+  # Exit 0 = skip build, exit 1 = build. Data/bot commits don't touch docs/;
+  # docs/actas/ are records, not part of the dashboard.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs ':!docs/actas' netlify.toml"
 
 # ----------------------------------------------------------------------------
 # Headers — security + caching
