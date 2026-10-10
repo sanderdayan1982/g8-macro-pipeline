@@ -1,17 +1,11 @@
 {
- "deadline_utc": "2026-10-09T23:38:36Z",
+ "deadline_utc": "2026-10-10T02:38:39Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "acm_g8",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "38003726151",
+ "run_id": "38016465435",
  "steps": [
   {
    "allowed_s": 180.0,
@@ -20,8 +14,8 @@
    "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.3,
-   "started_utc": "2026-10-09T23:18:36Z",
+   "secs": 2.0,
+   "started_utc": "2026-10-10T02:18:39Z",
    "status": "OK"
   },
   {
@@ -32,7 +26,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 3.1,
-   "started_utc": "2026-10-09T23:18:40Z",
+   "started_utc": "2026-10-10T02:18:41Z",
    "status": "OK"
   },
   {
@@ -42,28 +36,20 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 17.9,
-   "started_utc": "2026-10-09T23:18:43Z",
+   "secs": 15.3,
+   "started_utc": "2026-10-10T02:18:44Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
    "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
-   "kept_valid_outputs": [
-    "ACM_G8_CAD.csv",
-    "ACM_G8_EUR.csv",
-    "ACM_G8_GBP.csv",
-    "ACM_G8_JPY.csv",
-    "ACM_G8_USD.csv",
-    "CAD_NOM_2Y.csv"
-   ],
    "name": "acm_g8",
    "phase": "fetch",
-   "rc": 1,
-   "secs": 167.1,
-   "started_utc": "2026-10-09T23:19:01Z",
-   "status": "FAILED"
+   "rc": 0,
+   "secs": 80.2,
+   "started_utc": "2026-10-10T02:18:59Z",
+   "status": "OK"
   },
   {
    "allowed_s": 180.0,
@@ -72,8 +58,8 @@
    "name": "acm_nzd",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-10-09T23:21:48Z",
+   "secs": 0.6,
+   "started_utc": "2026-10-10T02:20:19Z",
    "status": "OK"
   },
   {
@@ -83,8 +69,8 @@
    "name": "acm_chf",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-10-09T23:21:49Z",
+   "secs": 0.8,
+   "started_utc": "2026-10-10T02:20:20Z",
    "status": "OK"
   },
   {
@@ -95,11 +81,11 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.5,
-   "started_utc": "2026-10-09T23:21:50Z",
+   "started_utc": "2026-10-10T02:20:21Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-09T23:21:50Z"
+ "written_utc": "2026-10-10T02:20:22Z"
 }

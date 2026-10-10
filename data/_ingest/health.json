@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-09T23:21:52.335690Z",
+ "generated_utc": "2026-10-10T02:20:23.641312Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -21,149 +21,20 @@
  "needs_repair": true,
  "issues": [
   {
-   "file": "CAD_NOM_2Y.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-07",
-   "calendar": "CA",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "AUD_NOM_2Y.csv",
-   "state": "NO_PUBLICATION",
-   "have_max": "2026-10-07",
-   "expected_obs": "2026-10-07",
-   "calendar": "AU",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "weekly:FRI",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_USD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-07",
+   "file": "JP_POLICY.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-10-09",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": null,
+   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
     "LAST_FETCH_FAILED"
    ],
    "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_EUR.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_JPY.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_GBP.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_CAD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_AUD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
+   "age_business_days": 0,
+   "publication_frequency": "event",
    "slow_fallback": false
   }
  ],
@@ -262,7 +133,7 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-09",
+   "have_max": "2026-10-10",
    "expected_obs": "2026-10-07",
    "calendar": "US",
    "basis": "PROVISIONAL",
@@ -278,7 +149,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-10-09",
+   "have_max": "2026-10-10",
    "expected_obs": "2026-10-08",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -325,21 +196,20 @@
   },
   {
    "file": "JP_POLICY.csv",
-   "state": "VERIFIED_POLICY",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-09",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Tipo vigente contrastado con decisión oficial; verificación limitada a siete días y a la próxima reunión. No es una nueva observación diaria.",
+   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
    "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
    "age_business_days": 0,
    "publication_frequency": "event",
-   "slow_fallback": false,
-   "evidence_source": "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/k260918a.pdf",
-   "evidence_expires_utc": "2026-10-11T20:00:00+00:00",
-   "next_decision": "2026-10-29T00:00:00+09:00"
+   "slow_fallback": false
   },
   {
    "file": "CH_POLICY.csv",
@@ -741,10 +611,8 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -815,10 +683,8 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1311,10 +1177,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1329,10 +1194,9 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
+    "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1348,10 +1212,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1366,10 +1229,9 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
+    "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1385,10 +1247,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1404,10 +1265,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1483,7 +1343,7 @@
    "file": "S01B.json",
    "state": "NOT_MONITORED",
    "have_max": "2026-10-09",
-   "expected_obs": "2026-10-08",
+   "expected_obs": "2026-10-09",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
@@ -1874,19 +1734,19 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "VERIFIED_CANONICAL",
+   "state": "AWAITING_PUBLICATION",
    "have_max": "2026-10-08",
-   "expected_obs": "2026-10-08",
+   "expected_obs": "2026-10-09",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
+   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-10-12T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "expected_publication_utc": "2026-10-09T21:00:00+00:00"
+   "expected_publication_utc": "2026-10-12T21:00:00+00:00"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -1981,7 +1841,7 @@
    "state": "CURRENT",
    "status": "CURRENT",
    "have_max": "2026-10-09",
-   "expected_obs": "2026-10-08",
+   "expected_obs": "2026-10-09",
    "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre",
    "flags": []
   },
@@ -1989,7 +1849,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-09T23:21:51Z",
+   "have_max": "2026-10-10T02:20:22Z",
    "flags": []
   },
   {
