@@ -1,8 +1,20 @@
 {
  "active": {
+  "actions:fetch_bis_policy_AU:degraded": {
+   "sent_ts": 1791594523.3679187,
+   "text": "Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
+  },
+  "actions:fetch_bis_policy_JP:JP_POLICY.csv:regression_blocked": {
+   "sent_ts": 1791594523.3679187,
+   "text": "Actions fetch_bis_policy_JP → JP_POLICY.csv: REGRESSION_BLOCKED, se conserva lo publicado — la descarga termina en 20261006 y lo publicado en 20261009"
+  },
   "actions:held:JP_POLICY.csv": {
    "sent_ts": 1791581870.159334,
    "text": "Actions JP_POLICY.csv: 433 valor(es) retenido(s) en confirmación, se conserva el último válido: 20250127=0.25 (antes 0.5; corrección histórica (fuera de la ventana revisable); id 81161d6fe55e); 20250128=0.25 (antes 0.5; corrección histórica (fuera de la ventana revisable); id 930918510bab); 20250129=0.25 (antes 0.5; corrección histórica (fuera de la ventana revisable); id caf0d6b322a6); 20250130=0.25 (antes 0.5; corrección histórica (fuera de la ventana revisable); id 3a3286b0dfa2) …. Se aceptan si otra descarga correcta los confirma, o por decisión en data/_ingest/decisions/JP_POLICY.csv/"
+  },
+  "actions:job:intraday:step:acm_g8": {
+   "sent_ts": 1791594523.3679187,
+   "text": "Actions intraday: el paso acm_g8 terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:job:metals:silence": {
    "sent_ts": 1791582568.1828651,
