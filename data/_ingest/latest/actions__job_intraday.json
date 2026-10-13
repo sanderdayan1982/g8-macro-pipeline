@@ -1,69 +1,91 @@
 {
- "deadline_utc": "2026-10-13T03:38:42Z",
+ "deadline_utc": "2026-10-13T03:51:40Z",
  "executor": "actions",
  "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "38341068926",
+ "run_id": "38342096385",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_tona.py",
-   "name": "tona",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
+   "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.8,
-   "started_utc": "2026-10-13T03:18:42Z",
+   "secs": 1.6,
+   "started_utc": "2026-10-13T03:31:40Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aonia.py",
-   "name": "aonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 4.7,
-   "started_utc": "2026-10-13T03:18:44Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aud_bills.py",
-   "name": "aud_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-13T03:18:49Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_bills.py",
-   "name": "jpy_bills",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_floor_spreads.py",
+   "name": "floors",
    "phase": "fetch",
    "rc": 0,
    "secs": 2.9,
-   "started_utc": "2026-10-13T03:18:51Z",
+   "started_utc": "2026-10-13T03:31:42Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_real.py",
-   "name": "jpy_real",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py USD AUD",
+   "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 4.8,
-   "started_utc": "2026-10-13T03:18:54Z",
+   "secs": 17.2,
+   "started_utc": "2026-10-13T03:31:45Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
+   "name": "acm_g8",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 76.4,
+   "started_utc": "2026-10-13T03:32:02Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py NZD",
+   "name": "acm_nzd",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.7,
+   "started_utc": "2026-10-13T03:33:18Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py CHF",
+   "name": "acm_chf",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.9,
+   "started_utc": "2026-10-13T03:33:19Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/aud_nowcast.py",
+   "name": "aud_nowcast",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.5,
+   "started_utc": "2026-10-13T03:33:20Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-13T03:18:59Z"
+ "written_utc": "2026-10-13T03:33:20Z"
 }
