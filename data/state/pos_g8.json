@@ -4,9 +4,9 @@
     "question": "Who is already inside the trade? Speculative COT positioning (LF/MM) vs structural (AM), per G8 currency and metals.",
     "pine_version": "v1_1_3_EN",
     "py_version": "0.1.0",
-    "generated_at": "2026-10-10T15:14:12+00:00",
-    "run_id": "38062755903",
-    "commit": "a88047df2dbc",
+    "generated_at": "2026-10-16T21:06:19+00:00",
+    "run_id": "38966951087",
+    "commit": "4a37969c6ad0",
     "schema_version": "1.0",
     "twin_test": {
       "status": "PASSED",
@@ -40,7 +40,7 @@
       "ccy": "GLOBAL",
       "metric": "tff",
       "value": 9.0,
-      "data_date": "2026-10-06",
+      "data_date": "2026-10-13",
       "age_bd": 3,
       "quality": "LIVE",
       "source_used": "PRIMARY",
@@ -50,16 +50,16 @@
   ],
   "outputs": {
     "regime": {
-      "label": "STRETCHED",
-      "since": "2026-09-01",
-      "changed_this_run": false
+      "label": "CROWDED",
+      "since": "2026-10-13",
+      "changed_this_run": true
     },
     "per_ccy": {
       "EUR": {
-        "score": -1.7,
-        "state": "STRETCH-",
-        "percentile": 5.8,
-        "z": -1.7,
+        "score": -2.53,
+        "state": "CROWD SHORT",
+        "percentile": 0.6,
+        "z": -2.53,
         "window_bars": 156,
         "thresholds_frozen": {
           "warn": 1.5,
@@ -67,49 +67,24 @@
           "z_cap": 3.0
         },
         "components": {
-          "lf_net": -44261.0,
-          "lf_cot_index": 17.3,
-          "lf_pct_oi": -5.1,
-          "d_print": -4996.0,
-          "d_4w": -10976.0,
-          "d_13w": 1200.0,
-          "am_net": 189881.0,
-          "am_z": -1.48,
-          "time_in_state": 2,
-          "divergence": false
-        },
-        "na_reason": null
-      },
-      "GBP": {
-        "score": -1.22,
-        "state": "NEUTRAL",
-        "percentile": 10.3,
-        "z": -1.22,
-        "window_bars": 156,
-        "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
-          "z_cap": 3.0
-        },
-        "components": {
-          "lf_net": 12432.0,
-          "lf_cot_index": 25.7,
-          "lf_pct_oi": 4.7,
-          "d_print": 7826.0,
-          "d_4w": -22195.0,
-          "d_13w": -5547.0,
-          "am_net": -145442.0,
-          "am_z": -2.03,
+          "lf_net": -68001.0,
+          "lf_cot_index": 0.0,
+          "lf_pct_oi": -7.8,
+          "d_print": -23740.0,
+          "d_4w": -39845.0,
+          "d_13w": -14310.0,
+          "am_net": 199918.0,
+          "am_z": -1.32,
           "time_in_state": 1,
           "divergence": false
         },
         "na_reason": null
       },
-      "JPY": {
-        "score": 0.55,
+      "GBP": {
+        "score": -1.33,
         "state": "NEUTRAL",
-        "percentile": 71.8,
-        "z": 0.55,
+        "percentile": 9.6,
+        "z": -1.33,
         "window_bars": 156,
         "thresholds_frozen": {
           "warn": 1.5,
@@ -117,124 +92,24 @@
           "z_cap": 3.0
         },
         "components": {
-          "lf_net": -25043.0,
-          "lf_cot_index": 58.7,
-          "lf_pct_oi": -6.8,
-          "d_print": -10882.0,
-          "d_4w": 24055.0,
-          "d_13w": 65040.0,
-          "am_net": 67795.0,
-          "am_z": 1.01,
-          "time_in_state": 3,
-          "divergence": false
-        },
-        "na_reason": null
-      },
-      "AUD": {
-        "score": 1.66,
-        "state": "STRETCH+",
-        "percentile": 91.7,
-        "z": 1.66,
-        "window_bars": 156,
-        "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
-          "z_cap": 3.0
-        },
-        "components": {
-          "lf_net": 54133.0,
-          "lf_cot_index": 85.9,
-          "lf_pct_oi": 16.5,
-          "d_print": -6459.0,
-          "d_4w": 4354.0,
-          "d_13w": 24450.0,
-          "am_net": -101428.0,
-          "am_z": -1.71,
-          "time_in_state": 9,
-          "divergence": true
-        },
-        "na_reason": null
-      },
-      "NZD": {
-        "score": 0.37,
-        "state": "NEUTRAL",
-        "percentile": 59.0,
-        "z": 0.37,
-        "window_bars": 156,
-        "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
-          "z_cap": 3.0
-        },
-        "components": {
-          "lf_net": -787.0,
-          "lf_cot_index": 63.3,
-          "lf_pct_oi": -0.6,
-          "d_print": 279.0,
-          "d_4w": 16563.0,
-          "d_13w": 26414.0,
-          "am_net": -32534.0,
-          "am_z": -0.52,
-          "time_in_state": 5,
-          "divergence": false
-        },
-        "na_reason": null
-      },
-      "CAD": {
-        "score": -1.11,
-        "state": "NEUTRAL",
-        "percentile": 17.3,
-        "z": -1.11,
-        "window_bars": 156,
-        "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
-          "z_cap": 3.0
-        },
-        "components": {
-          "lf_net": -79625.0,
-          "lf_cot_index": 25.9,
-          "lf_pct_oi": -21.5,
-          "d_print": -9981.0,
-          "d_4w": -24177.0,
-          "d_13w": 6332.0,
-          "am_net": -35806.0,
-          "am_z": 0.52,
-          "time_in_state": 7,
-          "divergence": true
-        },
-        "na_reason": null
-      },
-      "CHF": {
-        "score": -0.88,
-        "state": "NEUTRAL",
-        "percentile": 23.1,
-        "z": -0.88,
-        "window_bars": 156,
-        "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
-          "z_cap": 3.0
-        },
-        "components": {
-          "lf_net": -11350.0,
-          "lf_cot_index": 42.2,
-          "lf_pct_oi": -8.3,
-          "d_print": 2645.0,
-          "d_4w": 2090.0,
-          "d_13w": -4132.0,
-          "am_net": -37379.0,
-          "am_z": -0.53,
+          "lf_net": 10313.0,
+          "lf_cot_index": 23.5,
+          "lf_pct_oi": 3.8,
+          "d_print": -2119.0,
+          "d_4w": -8565.0,
+          "d_13w": -18228.0,
+          "am_net": -145735.0,
+          "am_z": -2.0,
           "time_in_state": 2,
           "divergence": false
         },
         "na_reason": null
       },
-      "USD": {
-        "score": 0.33,
+      "JPY": {
+        "score": 0.31,
         "state": "NEUTRAL",
-        "percentile": null,
-        "z": 0.33,
+        "percentile": 66.0,
+        "z": 0.31,
         "window_bars": 156,
         "thresholds_frozen": {
           "warn": 1.5,
@@ -242,17 +117,142 @@
           "z_cap": 3.0
         },
         "components": {
-          "lf_net": 94501.0,
+          "lf_net": -33673.0,
+          "lf_cot_index": 53.1,
+          "lf_pct_oi": -9.0,
+          "d_print": -8630.0,
+          "d_4w": -56843.0,
+          "d_13w": 56788.0,
+          "am_net": 65819.0,
+          "am_z": 0.96,
+          "time_in_state": 4,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "AUD": {
+        "score": 1.52,
+        "state": "STRETCH+",
+        "percentile": 89.1,
+        "z": 1.52,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": 50591.0,
+          "lf_cot_index": 82.8,
+          "lf_pct_oi": 14.9,
+          "d_print": -3542.0,
+          "d_4w": -10544.0,
+          "d_13w": 23369.0,
+          "am_net": -115920.0,
+          "am_z": -2.1,
+          "time_in_state": 10,
+          "divergence": true
+        },
+        "na_reason": null
+      },
+      "NZD": {
+        "score": -0.6,
+        "state": "NEUTRAL",
+        "percentile": 27.6,
+        "z": -0.6,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -11619.0,
+          "lf_cot_index": 42.3,
+          "lf_pct_oi": -9.3,
+          "d_print": -10832.0,
+          "d_4w": -9853.0,
+          "d_13w": 17383.0,
+          "am_net": -44139.0,
+          "am_z": -1.13,
+          "time_in_state": 6,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "CAD": {
+        "score": -1.48,
+        "state": "NEUTRAL",
+        "percentile": 10.3,
+        "z": -1.48,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -88112.0,
+          "lf_cot_index": 16.6,
+          "lf_pct_oi": -23.3,
+          "d_print": -8487.0,
+          "d_4w": -49090.0,
+          "d_13w": 4659.0,
+          "am_net": -30804.0,
+          "am_z": 0.61,
+          "time_in_state": 8,
+          "divergence": true
+        },
+        "na_reason": null
+      },
+      "CHF": {
+        "score": -1.43,
+        "state": "NEUTRAL",
+        "percentile": 11.5,
+        "z": -1.43,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": -14941.0,
+          "lf_cot_index": 29.1,
+          "lf_pct_oi": -10.9,
+          "d_print": -3591.0,
+          "d_4w": 23.0,
+          "d_13w": -5441.0,
+          "am_net": -31456.0,
+          "am_z": -0.05,
+          "time_in_state": 3,
+          "divergence": false
+        },
+        "na_reason": null
+      },
+      "USD": {
+        "score": 0.79,
+        "state": "NEUTRAL",
+        "percentile": null,
+        "z": 0.79,
+        "window_bars": 156,
+        "thresholds_frozen": {
+          "warn": 1.5,
+          "ext": 2.0,
+          "z_cap": 3.0
+        },
+        "components": {
+          "lf_net": 155442.0,
           "proxy": true,
           "note": "desk proxy: -mean(7 LF Z)"
         },
         "na_reason": null
       },
       "XAU": {
-        "score": -0.54,
+        "score": -0.67,
         "state": "NEUTRAL",
-        "percentile": 32.7,
-        "z": -0.54,
+        "percentile": 26.9,
+        "z": -0.67,
         "window_bars": 156,
         "thresholds_frozen": {
           "warn": 1.68,
@@ -260,21 +260,21 @@
           "z_cap": 3.0
         },
         "components": {
-          "mm_net": 110987.0,
-          "mm_cot_index": 47.0,
-          "mm_pct_oi": 28.0,
-          "d_print": -9331.0,
-          "d_4w": -23985.0,
-          "d_13w": -5174.0,
-          "time_in_state": 105
+          "mm_net": 107089.0,
+          "mm_cot_index": 39.4,
+          "mm_pct_oi": 27.0,
+          "d_print": -3898.0,
+          "d_4w": -26027.0,
+          "d_13w": -13690.0,
+          "time_in_state": 106
         },
         "na_reason": null
       },
       "XAG": {
-        "score": -1.28,
+        "score": -1.4,
         "state": "NEUTRAL",
-        "percentile": 3.8,
-        "z": -1.28,
+        "percentile": 2.9,
+        "z": -1.4,
         "window_bars": 104,
         "thresholds_frozen": {
           "warn": 1.61,
@@ -282,13 +282,13 @@
           "z_cap": 3.0
         },
         "components": {
-          "mm_net": 7528.0,
-          "mm_cot_index": 6.6,
-          "mm_pct_oi": 7.2,
-          "d_print": -86.0,
-          "d_4w": -6858.0,
-          "d_13w": -5673.0,
-          "time_in_state": 24
+          "mm_net": 5619.0,
+          "mm_cot_index": 2.3,
+          "mm_pct_oi": 5.2,
+          "d_print": -1909.0,
+          "d_4w": -7505.0,
+          "d_13w": -5882.0,
+          "time_in_state": 25
         },
         "na_reason": null
       }
@@ -311,44 +311,44 @@
     "cutoff_date": "2026-06-19",
     "signal_snapshot": {
       "EUR": {
-        "state": "STRETCH-",
-        "score": -1.7
+        "state": "CROWD SHORT",
+        "score": -2.53
       },
       "GBP": {
         "state": "NEUTRAL",
-        "score": -1.22
+        "score": -1.33
       },
       "JPY": {
         "state": "NEUTRAL",
-        "score": 0.55
+        "score": 0.31
       },
       "AUD": {
         "state": "STRETCH+",
-        "score": 1.66
+        "score": 1.52
       },
       "NZD": {
         "state": "NEUTRAL",
-        "score": 0.37
+        "score": -0.6
       },
       "CAD": {
         "state": "NEUTRAL",
-        "score": -1.11
+        "score": -1.48
       },
       "CHF": {
         "state": "NEUTRAL",
-        "score": -0.88
+        "score": -1.43
       },
       "USD": {
         "state": "NEUTRAL",
-        "score": 0.33
+        "score": 0.79
       },
       "XAU": {
         "state": "NEUTRAL",
-        "score": -0.54
+        "score": -0.67
       },
       "XAG": {
         "state": "NEUTRAL",
-        "score": -1.28
+        "score": -1.4
       }
     },
     "forward_windows_bd": [
@@ -359,8 +359,12 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "47f2d729ff24b60582eb7a1e5955edf14c6d98baa26459a0d328a39662539f61",
+    "state_hash": "1c5df80bb21f14ad946d0e425e98ac7118e3cdc7e59642bb4f714876c0c4a2a6",
     "prev_state_hash": "47f2d729ff24b60582eb7a1e5955edf14c6d98baa26459a0d328a39662539f61",
-    "diff_vs_prev": []
+    "diff_vs_prev": [
+      "EUR",
+      "regime",
+      "new_report:2026-10-13"
+    ]
   }
 }
