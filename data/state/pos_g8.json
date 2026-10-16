@@ -2,16 +2,16 @@
   "meta": {
     "script": "POS",
     "question": "Who is already inside the trade? Speculative COT positioning (LF/MM) vs structural (AM), per G8 currency and metals.",
-    "pine_version": "v1_1_3_EN",
+    "pine_version": "v1_2_6",
     "py_version": "0.1.0",
-    "generated_at": "2026-10-16T21:06:19+00:00",
-    "run_id": "38966951087",
-    "commit": "4a37969c6ad0",
+    "generated_at": "2026-10-16T22:13:18+00:00",
+    "run_id": "38974373835",
+    "commit": "5946f53d05db",
     "schema_version": "1.0",
     "twin_test": {
       "status": "PASSED",
       "started": "2026-08-25",
-      "weeks_elapsed": 6.6,
+      "weeks_elapsed": 7.4,
       "state_discrepancy_pct": 6.67,
       "acta": null,
       "per_key": {
@@ -52,7 +52,7 @@
     "regime": {
       "label": "CROWDED",
       "since": "2026-10-13",
-      "changed_this_run": true
+      "changed_this_run": false
     },
     "per_ccy": {
       "EUR": {
@@ -62,8 +62,8 @@
         "z": -2.53,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.51,
+          "ext": 2.26,
           "z_cap": 3.0
         },
         "components": {
@@ -75,6 +75,7 @@
           "d_13w": -14310.0,
           "am_net": 199918.0,
           "am_z": -1.32,
+          "am_state_shadow": "NEUTRAL",
           "time_in_state": 1,
           "divergence": false
         },
@@ -87,8 +88,8 @@
         "z": -1.33,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.47,
+          "ext": 2.06,
           "z_cap": 3.0
         },
         "components": {
@@ -100,6 +101,7 @@
           "d_13w": -18228.0,
           "am_net": -145735.0,
           "am_z": -2.0,
+          "am_state_shadow": "NEUTRAL",
           "time_in_state": 2,
           "divergence": false
         },
@@ -112,8 +114,8 @@
         "z": 0.31,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.44,
+          "ext": 2.42,
           "z_cap": 3.0
         },
         "components": {
@@ -125,7 +127,8 @@
           "d_13w": 56788.0,
           "am_net": 65819.0,
           "am_z": 0.96,
-          "time_in_state": 4,
+          "am_state_shadow": "NEUTRAL",
+          "time_in_state": 3,
           "divergence": false
         },
         "na_reason": null
@@ -137,8 +140,8 @@
         "z": 1.52,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.46,
+          "ext": 2.3,
           "z_cap": 3.0
         },
         "components": {
@@ -150,6 +153,7 @@
           "d_13w": 23369.0,
           "am_net": -115920.0,
           "am_z": -2.1,
+          "am_state_shadow": "STRETCH-",
           "time_in_state": 10,
           "divergence": true
         },
@@ -162,8 +166,8 @@
         "z": -0.6,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.56,
+          "ext": 2.26,
           "z_cap": 3.0
         },
         "components": {
@@ -175,6 +179,7 @@
           "d_13w": 17383.0,
           "am_net": -44139.0,
           "am_z": -1.13,
+          "am_state_shadow": "NEUTRAL",
           "time_in_state": 6,
           "divergence": false
         },
@@ -187,8 +192,8 @@
         "z": -1.48,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.51,
+          "ext": 2.36,
           "z_cap": 3.0
         },
         "components": {
@@ -200,7 +205,8 @@
           "d_13w": 4659.0,
           "am_net": -30804.0,
           "am_z": 0.61,
-          "time_in_state": 8,
+          "am_state_shadow": "NEUTRAL",
+          "time_in_state": 9,
           "divergence": true
         },
         "na_reason": null
@@ -212,8 +218,8 @@
         "z": -1.43,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 1.47,
+          "ext": 2.02,
           "z_cap": 3.0
         },
         "components": {
@@ -225,6 +231,7 @@
           "d_13w": -5441.0,
           "am_net": -31456.0,
           "am_z": -0.05,
+          "am_state_shadow": "NEUTRAL",
           "time_in_state": 3,
           "divergence": false
         },
@@ -232,19 +239,21 @@
       },
       "USD": {
         "score": 0.79,
-        "state": "NEUTRAL",
+        "state": "STRETCH+",
         "percentile": null,
         "z": 0.79,
         "window_bars": 156,
         "thresholds_frozen": {
-          "warn": 1.5,
-          "ext": 2.0,
+          "warn": 0.79,
+          "ext": 1.15,
           "z_cap": 3.0
         },
         "components": {
           "lf_net": 155442.0,
           "proxy": true,
-          "note": "desk proxy: -mean(7 LF Z)"
+          "note": "desk proxy: -mean(7 LF Z) \u00b7 AM: -mean(7 AM Z)",
+          "am_z": 0.72,
+          "am_state_shadow": "NEUTRAL"
         },
         "na_reason": null
       },
@@ -339,7 +348,7 @@
         "score": -1.43
       },
       "USD": {
-        "state": "NEUTRAL",
+        "state": "STRETCH+",
         "score": 0.79
       },
       "XAU": {
@@ -359,12 +368,10 @@
     "realised": null
   },
   "journal_link": {
-    "state_hash": "1c5df80bb21f14ad946d0e425e98ac7118e3cdc7e59642bb4f714876c0c4a2a6",
-    "prev_state_hash": "47f2d729ff24b60582eb7a1e5955edf14c6d98baa26459a0d328a39662539f61",
+    "state_hash": "e4f3d3f01cf33048becfcf168d101ae669dda9a25bb19a534a394cf45e0808e4",
+    "prev_state_hash": "1c5df80bb21f14ad946d0e425e98ac7118e3cdc7e59642bb4f714876c0c4a2a6",
     "diff_vs_prev": [
-      "EUR",
-      "regime",
-      "new_report:2026-10-13"
+      "USD"
     ]
   }
 }

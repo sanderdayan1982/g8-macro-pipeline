@@ -1,6 +1,7 @@
 {
-  "schema": "pos_g8_cot/1.1.0",
-  "generated_utc": "2026-10-16T21:06:19+00:00",
+  "schema": "pos_g8_cot/1.2.0",
+  "pine_ref": "POS-G8 v1.2.6",
+  "generated_utc": "2026-10-16T22:13:17+00:00",
   "source": "CFTC SODA (gpe5-46if TFF, 72hh-3qpy Disaggregated), Futures-Only",
   "report_date": "2026-10-13",
   "freshness": {
@@ -13,6 +14,40 @@
       "warn": 1.5,
       "ext": 2.0
     },
+    "fx_ccy": {
+      "EUR": {
+        "warn": 1.51,
+        "ext": 2.26
+      },
+      "GBP": {
+        "warn": 1.47,
+        "ext": 2.06
+      },
+      "JPY": {
+        "warn": 1.44,
+        "ext": 2.42
+      },
+      "AUD": {
+        "warn": 1.46,
+        "ext": 2.3
+      },
+      "NZD": {
+        "warn": 1.56,
+        "ext": 2.26
+      },
+      "CAD": {
+        "warn": 1.51,
+        "ext": 2.36
+      },
+      "CHF": {
+        "warn": 1.47,
+        "ext": 2.02
+      },
+      "USD": {
+        "warn": 0.79,
+        "ext": 1.15
+      }
+    },
     "XAU": {
       "warn": 1.68,
       "ext": 2.29
@@ -21,6 +56,56 @@
       "warn": 1.61,
       "ext": 2.25
     }
+  },
+  "am_thresholds_shadow": {
+    "EUR": [
+      1.52,
+      2.12,
+      2.16,
+      2.72
+    ],
+    "GBP": [
+      2.0,
+      2.61,
+      1.41,
+      2.22
+    ],
+    "JPY": [
+      1.48,
+      1.96,
+      2.23,
+      2.76
+    ],
+    "AUD": [
+      1.79,
+      2.52,
+      1.69,
+      2.44
+    ],
+    "NZD": [
+      2.3,
+      3.0,
+      1.39,
+      2.17
+    ],
+    "CAD": [
+      1.88,
+      2.76,
+      1.69,
+      2.48
+    ],
+    "CHF": [
+      2.26,
+      3.0,
+      1.16,
+      1.79
+    ],
+    "USD": [
+      0.8,
+      1.55,
+      0.91,
+      1.17
+    ]
   },
   "windows_weeks": {
     "fx": 156,
@@ -44,6 +129,11 @@
       "am_net": 199918.0,
       "am_z": -1.32,
       "state": "CROWD SHORT",
+      "thr": {
+        "warn": 1.51,
+        "ext": 2.26
+      },
+      "am_state_shadow": "NEUTRAL",
       "time_in_state": 1,
       "divergence": false,
       "report_date": "2026-10-13"
@@ -64,6 +154,11 @@
       "am_net": -145735.0,
       "am_z": -2.0,
       "state": "NEUTRAL",
+      "thr": {
+        "warn": 1.47,
+        "ext": 2.06
+      },
+      "am_state_shadow": "NEUTRAL",
       "time_in_state": 2,
       "divergence": false,
       "report_date": "2026-10-13"
@@ -84,7 +179,12 @@
       "am_net": 65819.0,
       "am_z": 0.96,
       "state": "NEUTRAL",
-      "time_in_state": 4,
+      "thr": {
+        "warn": 1.44,
+        "ext": 2.42
+      },
+      "am_state_shadow": "NEUTRAL",
+      "time_in_state": 3,
       "divergence": false,
       "report_date": "2026-10-13"
     },
@@ -104,6 +204,11 @@
       "am_net": -115920.0,
       "am_z": -2.1,
       "state": "STRETCH+",
+      "thr": {
+        "warn": 1.46,
+        "ext": 2.3
+      },
+      "am_state_shadow": "STRETCH-",
       "time_in_state": 10,
       "divergence": true,
       "report_date": "2026-10-13"
@@ -124,6 +229,11 @@
       "am_net": -44139.0,
       "am_z": -1.13,
       "state": "NEUTRAL",
+      "thr": {
+        "warn": 1.56,
+        "ext": 2.26
+      },
+      "am_state_shadow": "NEUTRAL",
       "time_in_state": 6,
       "divergence": false,
       "report_date": "2026-10-13"
@@ -144,7 +254,12 @@
       "am_net": -30804.0,
       "am_z": 0.61,
       "state": "NEUTRAL",
-      "time_in_state": 8,
+      "thr": {
+        "warn": 1.51,
+        "ext": 2.36
+      },
+      "am_state_shadow": "NEUTRAL",
+      "time_in_state": 9,
       "divergence": true,
       "report_date": "2026-10-13"
     },
@@ -164,6 +279,11 @@
       "am_net": -31456.0,
       "am_z": -0.05,
       "state": "NEUTRAL",
+      "thr": {
+        "warn": 1.47,
+        "ext": 2.02
+      },
+      "am_state_shadow": "NEUTRAL",
       "time_in_state": 3,
       "divergence": false,
       "report_date": "2026-10-13"
@@ -174,8 +294,14 @@
     "proxy": true,
     "lf_net": 155442.0,
     "lf_z": 0.79,
-    "state": "NEUTRAL",
-    "note": "desk proxy: -mean(7 LF Z)"
+    "state": "STRETCH+",
+    "thr": {
+      "warn": 0.79,
+      "ext": 1.15
+    },
+    "am_z": 0.72,
+    "am_state_shadow": "NEUTRAL",
+    "note": "desk proxy: -mean(7 LF Z) \u00b7 AM: -mean(7 AM Z)"
   },
   "metals": [
     {
