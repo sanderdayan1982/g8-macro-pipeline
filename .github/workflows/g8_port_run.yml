@@ -3,10 +3,9 @@
 # Phase 2: POS only. COT is a WEEKLY release (CFTC, Fri 19:30 UTC, report as of Tue) — the
 # 4-hourly cadence belonged to the (paused) FFVA generators. Cadence now: Fri 21:05 UTC + Sat 09:05 UTC retry.
 #
-# 2026-09-12 — FFVA PAUSED (decision: no more Databento spend for the port project).
-#   Removed from this run: FX futures collector (Databento), Generator FFVA, Twin-test FFVA,
-#   ffva_g8.json in the Telegram diff. Scripts, data/futures and data/state/ffva_g8.json stay
-#   untouched in the repo. To reopen: restore the four blocks marked "FFVA (paused)" below.
+# 2026-09-12 — FFVA paused (no Databento spend). 2026-10-16 (A4, plan de armonía): FFVA RETIRADO del
+#   dashboard — su dueño único es 9-FFVA en TradingView. Se borran su generador, su twin, su colector de
+#   futuros y su workflow de backfill; data/futures/canonical se conserva (usd_factor.py lo lee como twin).
 name: G8 Port Run
 
 on:
@@ -47,23 +46,10 @@ jobs:
         id: cot
         run: python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json
 
-      # FFVA (paused) — FX futures collector (Databento, T+1)
-      # - name: FX futures collector (Databento, T+1)
-      #   id: fut
-      #   continue-on-error: true
-      #   env:
-      #     DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
-      #   run: python scripts/fx_futures_collector.py
-
       # ── generators (one per ported Pine script) ─────────────────────────────
       - name: Generator POS
         id: pos
         run: python scripts/generators/pos_g8.py
-
-      # FFVA (paused) — Generator FFVA
-      # - name: Generator FFVA
-      #   id: ffva
-      #   run: python scripts/generators/ffva_g8.py
 
       # ── twin-test (runs only when the Pine export exists) ───────────────────
       - name: Twin-test POS
@@ -71,14 +57,7 @@ jobs:
         continue-on-error: true
         run: python scripts/twin_test.py POS
 
-      # FFVA (paused) — Twin-test FFVA
-      # - name: Twin-test FFVA
-      #   if: hashFiles('data/twin/ffva_g8_pine.csv') != ''
-      #   continue-on-error: true
-      #   run: python scripts/twin_test.py FFVA
-
       # ── notify only on change (D6) ──────────────────────────────────────────
-      # FFVA (paused) — add data/state/ffva_g8.json back here when reopened
       - name: Telegram (diff-based)
         run: python scripts/notify_telegram.py --states data/state/pos_g8.json
 
