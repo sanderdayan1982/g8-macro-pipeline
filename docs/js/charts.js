@@ -597,15 +597,14 @@
         console.log('[G8 Dashboard v5] Initializing...');
         setLoading('chart-rfr');
         setLoading('chart-xccy');
-        setLoading('chart-policy');
         setLoading('chart-acm');
         document.getElementById('curves-grid').innerHTML = '<div class="chart-loading">Loading curves</div>';
         /* B1: §05 retirado; renderQualityGrid ya sale si no hay #quality-grid */
         try {
-            const [rfrData, billsData, policyData, acmData] = await Promise.all([
+            /* A5 (2026-10-16): §03 retirada — sin carga de policy aquí (la §02 lee los tipos oficiales). */
+            const [rfrData, billsData, acmData] = await Promise.all([
                 global.G8DataLoader.loadAllRFR(),
                 global.G8DataLoader.loadAllBills(),
-                global.G8DataLoader.loadAllPolicy(),
                 global.G8DataLoader.loadACM()
             ]);
             /* v5.7: header (count · dots · LAST UPDATE) is owned by G8DQM + §00 brief only.
@@ -613,8 +612,6 @@
             renderRFRChart(rfrData);
             renderCurvesGrid(billsData);
             renderXCCYChart(rfrData, billsData);
-            renderQualityGrid(rfrData, billsData, policyData, acmData);
-            renderPolicyChart(policyData);
             renderACMChart(acmData);
             console.log('[G8 Dashboard v5] Render complete');
             console.log('[G8 Dashboard v5] Load stats:', global.G8DataLoader.loadStats);

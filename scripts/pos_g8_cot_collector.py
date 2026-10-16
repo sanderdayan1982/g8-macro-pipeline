@@ -366,6 +366,7 @@ def build_ccy(name, rows):
     return {
         "ccy": name,
         "lf_net": net_lf,
+        "_z_lf": z_lf, "_z_am": z_am,        # A5: Z sin redondear para el USD° (se retiran antes de escribir)
         "lf_z": round(z_lf, 2) if z_lf is not None else None,
         "lf_cot_index": cot_index(lf, win),
         "lf_pctile": pct_rank(lf, win),
@@ -418,9 +419,11 @@ def build_metal(name, rows):
 
 def usd_proxy(ccy_rows):
     """USD row: -mean of the 7 LF Zs, -sum of the 7 LF nets (desk proxy, '°')."""
-    zs = [r["lf_z"] for r in ccy_rows if r["lf_z"] is not None]
+    # A5 (2026-10-16): como POS-G8, el USD° se calcula con las Z SIN redondear; con las Z redondeadas a 2 decimales un
+    # valor en el umbral (p. ej. 0,79 frente a 0,79) podía clasificar distinto que TradingView.
+    zs = [r.get("_z_lf", r["lf_z"]) for r in ccy_rows if r.get("_z_lf", r["lf_z"]) is not None]
     ns = [r["lf_net"] for r in ccy_rows if r["lf_net"] is not None]
-    ams = [r["am_z"] for r in ccy_rows if r.get("am_z") is not None]
+    ams = [r.get("_z_am", r.get("am_z")) for r in ccy_rows if r.get("_z_am", r.get("am_z")) is not None]
     z = -sum(zs) / len(zs) if len(zs) >= 4 else None
     z_am = -sum(ams) / len(ams) if len(ams) >= 4 else None
     warn, ext = fx_thr("USD")
@@ -459,6 +462,8 @@ def main():
     ccy_rows = [build_ccy(name, tff[code]) for name, code in CCY_CODES.items()]
     metal_rows = [build_metal(name, disagg[code]) for name, code in METAL_CODES.items()]
     usd_row = usd_proxy(ccy_rows)
+    for r in ccy_rows:
+        r.pop("_z_lf", None); r.pop("_z_am", None)
 
     report_date = ccy_rows[0]["report_date"] if ccy_rows else None
     status, age = freshness(report_date) if report_date else ("NA", None)

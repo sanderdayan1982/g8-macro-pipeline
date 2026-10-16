@@ -338,7 +338,7 @@
 </header>
     <aside id="publication-health" class="dqm-attn" style="margin:12px 24px;overflow-x:auto" aria-live="polite">Comprobando frescura por publicación…</aside>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
-    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#publication-health" data-key="5">5 Salud</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-acm" data-key="4">4 TP</a><a href="#publication-health" data-key="5">5 Salud</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-factor" data-key="u">u Factor</a>
     <span class="desk-nav-hint">teclas 0–9 · u</span>
     <button type="button" id="nav-refresh" style="background:none;border:1px solid #1c2330;color:#8a93a6;font:inherit;padding:2px 8px;border-radius:2px;cursor:pointer;margin-left:8px" title="Borra la caché local (15 min) de CSV/JSON y recarga con los datos que el pipeline acaba de publicar" onclick="if(window.G8NET&&G8NET.clearCache)G8NET.clearCache();location.reload();">↻ datos</button>
 </nav>
@@ -492,7 +492,7 @@
     <!-- ══ 02 — MONEY MARKET FLOOR SPREADS ════════════════════════════════ -->
     <section class="dashboard-section" id="section-floors">
         <div class="section-header">
-            <h2 class="section-title">02 — Money Market Floor Spreads G8</h2>
+            <h2 class="section-title">02 — Money Market Floor Spreads · Tipos oficiales G8</h2>
             <span class="section-meta">RFR − deposit floor / policy ref · bps · domestic reserve pressure · T+1 fixings</span>
         </div>
         <div class="section-body">
@@ -505,19 +505,8 @@
         </div>
     </section>
 
-    <!-- ══ 02 — POLICY RATES ══════════════════════════════════════════════ -->
-    <section class="dashboard-section" id="section-policy">
-        <div class="section-header">
-            <h2 class="section-title">03 — Policy Rates G8 (MFLUX MFS)</h2>
-            <span class="section-meta">8 policy rates · 90D lookback · last value held to today (step) · BIS WS_CBPOL + FRED/ECB/BoC</span>
-        </div>
-        <div class="section-body">
-            <div class="chart-container" id="chart-policy"></div>
-            <div class="section-footer">
-                <span class="footer-note">Fed IORB (FLOOR_USD) · ECB Deposit Facility Rate (FLOOR_EUR) · BoC Target (FLOOR_CAD) · BoE Bank Rate · BoJ Policy Balance Rate · SNB Policy Rate · RBA Cash Rate Target (BIS WS_CBPOL) · RBNZ OCR. Event-driven series only print on change/fixing days, so each line is extended to today with its last value (the rate still in force). Lines that coincide (e.g. ECB DFR and BoC 2.25 % Jun–Sep 2026) overlap — use the unified hover.</span>
-            </div>
-        </div>
-    </section>
+    <!-- A5 (2026-10-16): §03 Policy Rates fundida en §02 (columnas Tipo oficial · Último cambio · Próxima reunión).
+         Impulso de tipos: dueño único 6-POL-G8 (TradingView). -->
 
     <!-- ══ 04 — ACM G8 TERM PREMIUM TIME SERIES ═══════════════════════════ -->
     <style>
@@ -607,245 +596,8 @@
     </div>
 </section>
 
-<!-- ===== SECTION 09 — COT POSITIONING (added) ===== -->
-<style>
-/* only new CSS — everything else inherits attr-table/attr-ccy/attr-val/dqm-bar */
-.cot-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;
-    font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:2px;border:1px solid #1c2433}
-.cot-crowd{background:#221a05;color:#fdb813;border-color:#3a2e08}
-.cot-stretch{background:#221608;color:#ff8c42;border-color:#3a2410}
-.cot-neutral{background:#0c1119;color:#5d6678}
-.cot-na{background:#2a0e14;color:#ff5c72;border-color:#3a1620}
-.cot-div{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
-    background:#0e1c22;color:#5d8aa8;border:1px solid #1c3340;border-radius:2px;padding:1px 5px}
-.cot-sub{color:#5d6678}
-.cot-metalhdr td{background:#0c1119;color:#fdb813;font-family:'IBM Plex Sans Condensed',sans-serif;
-    font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-    text-align:left !important;padding:8px 14px !important}
-</style>
-
-<section class="dashboard-section" id="section-cot">
-    <div class="section-header">
-        <h2 class="section-title">09 — COT Positioning G8 (TFF · Managed Money)</h2>
-        <span class="section-meta">CFTC direct · TFF Leveraged Funds/Asset Mgrs + Disagg Managed Money · Z-156w fx/gold · Z-104w silver · Fri(Tue)</span>
-    </div>
-    <div class="section-body">
-        <div id="cot-panel">
-            <div class="attr-err" style="color:#5d6678">Loading COT positioning — pos_g8_cot.json (repo)…</div>
-        </div>
-        <div class="section-footer">
-            <span class="section-meta">who is already inside the trade · positioning flow (weeks/months), context filter never a trigger</span>
-        </div>
-    </div>
-</section>
-
-<script>
-/* ════════════════════════════════════════════════════════════════════════
-   COT POSITIONING — Section 09 module · v1.1.0 (P3y/EXT, 17-sep-2026)
-   Reads data/pos_g8_cot.json (built by pos_g8_cot_collector.py).
-   Same question as the POS-G8 v1.1.3 Pine study, enriched with the metrics the
-   Pine environment can't compute: COT index, empirical percentile, % of OI,
-   LF/AM divergence, positioning velocity (Δ4w/Δ13w), time-in-state.
-   ════════════════════════════════════════════════════════════════════════ */
-(function () {
-'use strict';
-
-var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
-var GREEN = '#2fbf71', RED = '#e0485a', MUTE = '#5d6678', GOLD = '#fdb813', AMBER = '#ff8c42';
-
-function k(x) {
-    if (x == null || !isFinite(x)) return '<span class="cot-sub">·</span>';
-    return (x >= 0 ? '+' : '') + (x / 1000).toFixed(1) + 'k';
-}
-function z(x) {
-    if (x == null || !isFinite(x)) return '·';
-    return (x >= 0 ? '+' : '') + x.toFixed(2);
-}
-function pctOI(x) {
-    if (x == null || !isFinite(x)) return '<span class="cot-sub">·</span>';
-    return (x >= 0 ? '+' : '') + x.toFixed(1) + '%';
-}
-function idx(x)  { return (x == null || !isFinite(x)) ? '·' : x.toFixed(0); }
-function pcti(x) { return (x == null || !isFinite(x)) ? '·' : x.toFixed(0); }
-
-function netCol(x) { return x == null ? MUTE : x > 0 ? GREEN : x < 0 ? RED : MUTE; }
-
-function zCell(zz, warn, ext) {
-    if (zz == null || !isFinite(zz)) return '<td class="cot-sub">·</td>';
-    var a = Math.abs(zz);
-    var c = a >= ext ? GOLD : a >= warn ? AMBER : zz > 0 ? GREEN : RED;
-    return '<td style="color:' + c + '">' + z(zz) + '</td>';
-}
-
-function stateBadge(s) {
-    var cls = 'cot-neutral', t = s || 'NA';
-    if (s === 'CROWD LONG' || s === 'CROWD SHORT') cls = 'cot-crowd';
-    else if (s === 'STRETCH+' || s === 'STRETCH-') cls = 'cot-stretch';
-    else if (!s || s === 'NA') cls = 'cot-na';
-    return '<span class="cot-badge ' + cls + '">' + t + '</span>';
-}
-
-/* COT index 0-100: color the number by extreme (>85 crowd-long / <15 crowd-short) */
-function idxCell(v) {
-    if (v == null || !isFinite(v)) return '<td class="cot-sub">·</td>';
-    var c = v >= 85 ? GOLD : v <= 15 ? GOLD : v >= 70 || v <= 30 ? AMBER : MUTE;
-    return '<td style="color:' + c + '">' + idx(v) + '</td>';
-}
-
-function velCell(x) {
-    if (x == null || !isFinite(x)) return '<td class="cot-sub">·</td>';
-    var c = x > 0 ? GREEN : x < 0 ? RED : MUTE;
-    return '<td style="color:' + c + '">' + k(x) + '</td>';
-}
-
-/* v1.1 (17-sep-2026): P3y = percentile of %OI vs the PREVIOUS window (current
-   excluded), z alongside, EXT badge on the two tails. Descriptive band, no vote. */
-function p3yCell(p, zz, ext) {
-    if (p == null || !isFinite(p)) return '<td class="cot-sub" title="NA: history shorter than the window">·</td>';
-    var c = ext ? GOLD : (p >= 75 || p <= 25) ? AMBER : MUTE;
-    return '<td style="color:' + c + '" title="z ' + z(zz) + ' (same previous window)">' + p.toFixed(0) +
-        (ext ? ' <span class="cot-badge cot-crowd" style="padding:1px 4px">EXT</span>' : '') + '</td>';
-}
-
-function inStateCell(n) {
-    if (n == null) return '<td class="cot-sub">·</td>';
-    return '<td class="cot-sub">' + n + 'w</td>';
-}
-
-function ccyRow(r) {
-    /* A1 (2026-10-16): umbrales por divisa de POS-G8 v1.2.6 (r.thr del colector); 1.5/2.0 solo como respaldo */
-    var warn = (r.thr && r.thr.warn) || 1.5, ext = (r.thr && r.thr.ext) || 2.0;
-    var div = r.divergence ? ' <span class="cot-div" title="Leveraged Funds and Asset Managers positioned on opposite sides — fast money vs structural money disagree">DIV</span>' : '';
-    return '<tr>' +
-        '<td><span class="attr-ccy">' + r.ccy + (r.proxy ? '°' : '') + '</span>' + div + '</td>' +
-        '<td style="color:' + netCol(r.lf_net) + '">' + k(r.lf_net) + '</td>' +
-        zCell(r.lf_z, warn, ext) +
-        idxCell(r.lf_cot_index) +
-        '<td class="cot-sub">' + pcti(r.lf_pctile) + '</td>' +
-        '<td style="color:' + netCol(r.lf_pct_oi) + '">' + pctOI(r.lf_pct_oi) + '</td>' +
-        p3yCell(r.lf_pctoi_p3y, r.lf_pctoi_z3y, r.lf_ext) +
-        velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
-        '<td style="color:' + netCol(r.am_net) + '">' + k(r.am_net) + '</td>' +
-        zCell(r.am_z, warn, ext) +
-        '<td style="text-align:left">' + stateBadge(r.state) + '</td>' +
-        inStateCell(r.time_in_state) +
-        '</tr>';
-}
-
-function metalRow(r, thr) {
-    var warn = thr.warn, ext = thr.ext;
-    return '<tr>' +
-        '<td><span class="attr-ccy" style="color:' + (r.ccy === 'XAU' ? GOLD : '#c5ccd6') + '">' + r.ccy + '</span></td>' +
-        '<td style="color:' + netCol(r.mm_net) + '">' + k(r.mm_net) + '</td>' +
-        zCell(r.mm_z, warn, ext) +
-        idxCell(r.mm_cot_index) +
-        '<td class="cot-sub">' + pcti(r.mm_pctile) + '</td>' +
-        '<td style="color:' + netCol(r.mm_pct_oi) + '">' + pctOI(r.mm_pct_oi) + '</td>' +
-        p3yCell(r.mm_pctoi_p3y, r.mm_pctoi_z3y, r.mm_ext) +
-        velCell(r.d_print) + velCell(r.d_4w) + velCell(r.d_13w) +
-        '<td class="cot-sub">·</td><td class="cot-sub">·</td>' +
-        '<td style="text-align:left">' + stateBadge(r.state) + '</td>' +
-        inStateCell(r.time_in_state) +
-        '</tr>';
-}
-
-function render(doc) {
-    var el = document.getElementById('cot-panel');
-    /* v2.7.0 (audit 2026-09-24): freshness.age_days was frozen at generation time ("FRESH (4d)"
-       nine days after the report). Recomputed here from report_date: the CFTC publishes Tuesday's
-       positions on Friday, so a report is current until ~10 calendar days old. */
-    var f = Object.assign({}, doc.freshness || {});
-    var rdt = Date.parse(String(doc.report_date || '') + 'T00:00:00Z');
-    if (isFinite(rdt)) {
-        f.age_days = Math.floor((Date.now() - rdt) / 86400000);
-        f.status = f.age_days <= 10 ? 'FRESH' : f.age_days <= 14 ? 'AGING' : 'STALE';
-    }
-    var fc = f.status === 'FRESH' ? GREEN : f.status === 'AGING' ? AMBER : RED;
-    var thr = doc.thresholds || {};
-
-    var html = '<div class="dqm-bar" style="margin-bottom:12px">' +
-        '<span class="dqm-ts">report ' + (doc.report_date || '—') +
-        ' · <span style="color:' + fc + ';font-weight:700">' + (f.status || 'NA') + '</span>' +
-        (f.age_days != null ? ' (' + f.age_days + ' d desde el informe)' : '') +
-        ' · generated ' + (doc.generated_utc || '—') + '</span>' +
-        '<span class="dqm-ts cot-sub">' + (doc.source || '') + '</span></div>';
-
-    html += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' +
-        '<th>CCY</th><th>LF NET</th><th>LF Z</th>' +
-        '<th title="COT index 0-100 (Williams: position in own 3y min-max)">COTi</th>' +
-        '<th title="Empirical percentile in own window — distribution-free">%ile</th>' +
-        '<th title="Net as % of open interest — cross-currency comparable">%OI</th>' +
-        '<th title="v1.1: percentile of %OI against the PREVIOUS 156 weekly reports (current excluded) · z on the same window · EXT = ≤p10 / ≥p90, two-tail descriptive band (convention, ACTA_UF1 §E) — not danger, not reversion">P3y</th>' +
-        '<th title="Δ vs previous distinct COT print">Δprt</th>' +
-        '<th title="Net change over 4 weeks">Δ4w</th>' +
-        '<th title="Net change over 13 weeks">Δ13w</th>' +
-        '<th>AM NET</th><th>AM Z</th><th style="text-align:left">STATE</th>' +
-        '<th title="Weeks held in current state">held</th></tr></thead><tbody>';
-
-    (doc.currencies || []).forEach(function (r) { html += ccyRow(r); });
-    if (doc.usd) html += ccyRow(doc.usd);
-
-    if ((doc.metals || []).length) {
-        html += '<tr class="cot-metalhdr"><td colspan="14">── METALS · MM (Managed Money) ──</td></tr>';
-        (doc.metals || []).forEach(function (r) {
-            var t = (thr[r.ccy]) || { warn: 1.6, ext: 2.25 };
-            html += metalRow(r, t);
-        });
-    }
-
-    html += '</tbody></table></div>';
-
-    var fxt = thr.fx || { warn: 1.5, ext: 2.0 };
-    html += '<div class="attr-note">' +
-        '<b style="color:#d7dce6">Who is already inside the trade.</b> ' +
-        'LF = Leveraged Funds (fast money) · AM = Asset Managers (structural) · MM = Managed Money (metals). ' +
-        (thr.fx_ccy ? 'STATE on LF Z: umbrales por divisa de POS-G8 v1.2.6 (P10/P90 · P2.5/P97.5; USD° 0.79/1.15) ' +
-            '<span style="color:' + GREEN + '">[fx CAL]</span>' :
-            'STATE on LF Z: CROWD ≥ ' + fxt.ext + 'σ · STRETCH ≥ ' + fxt.warn + 'σ <span style="color:' + AMBER + '">[fx PROV]</span>') +
-        ' · metals <span style="color:' + GREEN + '">[CAL]</span>. ' +
-        '<b>COTi</b> 0-100 Williams · <b>%ile</b> empirical percentile (distribution-free, robust for non-normal metals) · ' +
-        '<b>%OI</b> net as % open interest (comparable across currencies) · <b>P3y</b> percentile of %OI vs the previous 156 reports (current excluded; <b>EXT</b> ≤p10/≥p90, two-tail band by convention, no vote) · <b>Δprt</b> vs previous distinct print · ' +
-        '<b>Δ4w/Δ13w</b> positioning velocity · <b>DIV</b> = LF and AM on opposite sides · <b>held</b> = weeks in state.<br>' +
-        '<b style="color:#d7dce6">Cross-read:</b> a suite signal (IYDT/RTF10) in the SAME direction as a CROWD state = <b style="color:' + AMBER + '">exhausted</b> (everyone already in); ' +
-        'in the OPPOSITE direction = <b style="color:' + GREEN + '">squeeze fuel</b>. For metals, cross with the §06/07 MDP residual: MM CROWD + stretched residual = exhausted; MM CROWD against the residual = squeeze fuel.' +
-        '</div>';
-
-    el.innerHTML = html;
-
-    if (window.G8DQM && window.G8DQM.report) {
-        try {
-            window.G8DQM.report('POS_COT', { lastDate: doc.report_date, via: 'repo (cot module v1)' });
-        } catch (e) { /* non-fatal */ }
-    }
-}
-
-async function init() {
-    var el = document.getElementById('cot-panel');
-    try {
-        var r = await window.G8NET.fetchChain([RAW + 'pos_g8_cot.json'], { corsOk: true });
-        if (!r.ok) throw new Error(r.error || 'fetch failed');
-        render(JSON.parse(r.text));
-    } catch (e) {
-        el.innerHTML = '<div class="attr-err">pos_g8_cot.json unreachable — ' + e.message +
-            ' · run pos_g8_cot_collector.py (or its GH Action) to publish data/pos_g8_cot.json</div>';
-        if (window.G8DQM && window.G8DQM.report) {
-            try { window.G8DQM.report('POS_COT', { status: 'DEAD', error: e.message }); } catch (e2) {}
-        }
-    }
-}
-
-function boot(tries) {
-    tries = tries || 0;
-    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) {
-        return setTimeout(function () { boot(tries + 1); }, 120);
-    }
-    init();
-}
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { boot(0); });
-} else { boot(0); }
-})();
-</script>
+<!-- A5 (2026-10-16): §09 COT retirado de la web — dueño único: 0-POS-G8 (TradingView). data/pos_g8_cot.json
+     sigue en el back-end para la matriz MDP×COT de metales (§06/§07) y el libro (§00). -->
 
 
 <!-- ===== SECTION 10 — FACTOR USD · RESIDUALES · LIBRO (added 17-sep-2026, ACTA_UF1) ===== -->
@@ -1552,12 +1304,6 @@ var FEED_REGISTRY = {
        The CSV can be deleted from data/ separately; nothing reads it. */
 };
 
-function isoDaysAgo(d) {
-    var t = new Date(Date.now() - d * 86400000);
-    return t.toISOString().slice(0, 10);
-}
-
-
 /* ── 5.1b G8 market-holiday calendar ────────────────────────────────────
    Business-day counting must skip G8 settlement holidays, otherwise a long
    weekend (e.g. a Monday bank holiday) inflates the lag by a full day and
@@ -1659,18 +1405,8 @@ function computeStaleness(lastDateStr, maxStale) {
    SNB semicolon format and FRED observation_date. The compact pattern is
    anchored to 19xx/20xx so an 8-digit non-date column (e.g. a raw volume
    like 12345678) can't be mis-read as a date in short CSVs. (audit v2.4 — A3) */
-function extractLastDate(text) {
-    var lines = text.trim().split('\n');
-    for (var i = lines.length - 1; i >= Math.max(0, lines.length - 12); i--) {
-        var L = lines[i];
-        var m = L.match(/(\d{4}-\d{2}-\d{2})/) || L.match(/(\d{4}-\d{2})(?!\d)/) || L.match(/(^|,)((?:19|20)\d{6})(,|$)/);
-        if (m) return m[2] || m[1];
-    }
-    return null;
-}
-
 var state = {};       /* feedId -> { status, lastDate, latency, via, checkedAt } */
-var running = false;
+
 
 /* External modules push real outcomes here (attribution v2 does) */
 function report(feedId, info) {
@@ -1678,318 +1414,16 @@ function report(feedId, info) {
     if (info.lastDate && !info.status) {
         state[feedId].status = computeStaleness(info.lastDate, (FEED_REGISTRY[feedId] || {}).maxStaleness || 5);
     }
-    render();
 }
 
-async function checkFeed(id, force) {
-    var f = FEED_REGISTRY[id];
-    if (f.externalReport) {
-        /* Owned by an external module (e.g. metals.js for MFV_STATE). The DQM
-           must not fetch/date-extract it — doing so produced a false DEAD. Leave
-           whatever the owning module reported. */
-        return;
-    }
-    if (f.manual) {
-        /* For editable manual feeds (CHF nominal), the single source of truth
-           is localStorage via G8Manual — the registry value/lastDate are only
-           boot defaults. Reading live here keeps DQM and §01 in lockstep
-           (no stale 0.399 vs edited 0.35 divergence). (audit v2.4 — B1) */
-        var mv = f.value, md = f.lastDate;
-        if (f.liveCcy && window.G8Manual && window.G8Manual.get) {
-            var lm = window.G8Manual.get(f.liveCcy);
-            if (lm && isFinite(lm.v)) { mv = lm.v; md = lm.date || md; }
-        }
-        state[id] = { status: 'MANUAL', lastDate: md, latency: null, via: 'manual input', value: mv, checkedAt: Date.now() };
-        return;
-    }
-    var r = await G8NET.fetchChain(f.urls, { corsOk: f.corsOk, binary: f.binary, noCache: !!force });
-    if (!r.ok) {
-        state[id] = { status: 'DEAD', lastDate: (state[id] || {}).lastDate || null, latency: null, via: null, error: r.error, checkedAt: Date.now() };
-        return;
-    }
-    var lastDate = f.binary ? ((state[id] || {}).lastDate || 'binary (parsed in §01)') : extractLastDate(r.text || '');
-    /* a freshly-fetched binary feed whose date is parsed downstream is healthy, not degraded */
-    var status = f.binary && !(state[id] || {}).lastDate ? 'LIVE' : computeStaleness(lastDate, f.maxStaleness);
-    state[id] = { status: status, lastDate: lastDate, latency: r.ms, via: r.via, checkedAt: Date.now() };
-}
+/* A5 (2026-10-16): poda del antiguo monitor del navegador (checkFeed, runAll, healthScore, syncHeader,
+   persistAudit, auditStrip, attentionStrip, render, init). Desde B1 no se invocaban: la frescura vive solo en
+   health.json (js/health.js). Quedan report()/computeStaleness()/businessDays/FEED_REGISTRY para las secciones. */
 
-async function runAll(force) {
-    if (running) return;
-    running = true;
-    var btn = document.getElementById('dqm-run');
-    if (btn) { btn.disabled = true; btn.textContent = 'CHECKING…'; }
-    var ids = Object.keys(FEED_REGISTRY).filter(function (id) {
-        return force || !FEED_REGISTRY[id].onDemand;
-    });
-    /* batches of 5 to be polite with proxies */
-    for (var i = 0; i < ids.length; i += 5) {
-        await Promise.all(ids.slice(i, i + 5).map(function (id) {
-            return checkFeed(id, force).catch(function (e) {
-                state[id] = { status: 'DEAD', error: e.message, checkedAt: Date.now() };
-            });
-        }));
-        render();
-    }
-    running = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'RUN ALL'; }
-    render();
-}
-
-function fmtDate(d) {
-    if (!d) return '—';
-    return String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
-}
-
-/* ── 5.4 canonical health score + header sync ────────────────────────────
-   ONE source of truth. The header used to show a hardcoded "12/20" that never
-   reconciled with this panel. Now the header is *derived* from live feed state:
-     healthy   = LIVE + MANUAL + SYNTHETIC  (a hand-set constant with a known
-                 source and a fresh manual date is operationally trustworthy)
-     watch     = DEGRADED
-     broken    = STALE + DEAD
-   Denominator excludes UNKNOWN (on-demand feeds not yet checked) so the score
-   reflects what we actually monitor, not what we *could* poll. */
-/* v2.5.2 (audit — H-11): a feed that drives a RENDERED valuation (§01 attribution,
-   §06/§07 metals) must move the header more than a redundant fallback. The raw
-   count stays honest (healthy/total), but the header dots are computed from a
-   criticality-WEIGHTED share so 4 dead valuation feeds no longer read as a mostly
-   green board. Critical = §01/§06/§07 and not an on-demand fallback. */
-function feedWeight(f) {
-    return ((f.section === '01' || f.section === '06' || f.section === '07') && !f.onDemand) ? 2 : 1;
-}
-function healthScore() {
-    var healthy = 0, watch = 0, broken = 0, total = 0;
-    var wHealthy = 0, wWatch = 0, wBroken = 0, wTotal = 0;
-    Object.keys(FEED_REGISTRY).forEach(function (id) {
-        var f = FEED_REGISTRY[id];
-        var s = (state[id] || {}).status || (f.onDemand ? 'UNKNOWN' : 'UNKNOWN');
-        if (s === 'UNKNOWN' || s === 'PENDING') return;           /* not part of the monitored denominator */
-        total++;
-        var wt = feedWeight(f), bucket;
-        /* v2.5.1 (audit — D2): a MANUAL input past its lag budget is no longer
-           "healthy". The ⚠ age badge already showed it in the panel, but the
-           header count stayed green — trading on a month-old hand-typed nominal
-           with a green board is exactly the silent-corruption class the suite
-           bans. Stale-manual now counts as WATCH (amber), matching the badge. */
-        if (s === 'MANUAL') {
-            var adm = calBusinessDays((state[id] || {}).lastDate);
-            bucket = (adm !== null && adm > (f.maxStaleness || 5)) ? 'watch' : 'healthy';
-        }
-        else if (s === 'LIVE' || s === 'SYNTHETIC') bucket = 'healthy';
-        else if (s === 'DEGRADED') bucket = 'watch';
-        else bucket = 'broken';                 /* STALE | DEAD */
-        if (bucket === 'healthy') { healthy++; wHealthy += wt; }
-        else if (bucket === 'watch') { watch++; wWatch += wt; }
-        else { broken++; wBroken += wt; }
-        wTotal += wt;
-    });
-    return { healthy: healthy, watch: watch, broken: broken, total: total,
-             wHealthy: wHealthy, wWatch: wWatch, wBroken: wBroken, wTotal: wTotal };
-}
-
-function syncHeader() {
-    var h = healthScore();
-    var upEl    = document.getElementById('last-update');
-    /* B1 (2026-10-16): el contador y los puntos de la cabecera los escribe solo js/health.js (health.json). */
-    /* v2.7.0: LAST UPDATE = last pipeline publish (brief.json generated_utc, set by §00).
-       The freshest feed date was usually an effective-dated IORB/DFR row = "today" even when
-       the pipeline had not run. Fallback only if the brief never loads. */
-    if (upEl && !upEl.dataset.fromBrief) {
-        var best = null;
-        Object.keys(state).forEach(function (id) {
-            var ld = state[id] && state[id].lastDate;
-            if (ld && /^\d{4}-?\d{2}-?\d{2}/.test(String(ld))) {
-                var iso = String(ld).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3').slice(0, 10);
-                var todayIso = new Date().toISOString().slice(0, 10);
-                if (iso > todayIso) return;            /* v2.5.5: effective-dated future rows don't set the book's as-of */
-                if (!best || iso > best) best = iso;
-            }
-        });
-        if (best) upEl.textContent = best;
-    }
-    if (window.G8PublicationHealth) window.G8PublicationHealth.applyHeader();
-    persistAudit(h);
-}
-
-/* ── 5.5 audit trail (last 90 checks, localStorage) ──────────────────────
-   Compliance-grade availability log: when did we last see a green board?
-   Survives reloads; trimmed to 90 entries. */
-function persistAudit(h) {
-    try {
-        var KEY = 'g8dqm_audit_v1';
-        var log = JSON.parse(localStorage.getItem(KEY) || '[]');
-        var stamp = new Date().toISOString().slice(0, 16);
-        var today = stamp.slice(0, 10);
-        var entry = { t: stamp, h: h.healthy, w: h.watch, b: h.broken, n: h.total };
-        var lastIsToday = log.length && log[log.length - 1].t.slice(0, 10) === today;
-        if (lastIsToday) {
-            /* audit v2.5.4 (H — availability strip): the day's entry used to be FROZEN
-               at the first render, which happens BEFORE any feed resolves (0/0), so the
-               strip read "today 0/1 healthy" all day on a green board. Update today's
-               entry with the most COMPLETE reading seen (largest denominator = fully
-               loaded board), so it converges to the real state instead of the pre-load one. */
-            var prev = log[log.length - 1];
-            if (h.total >= (prev.n || 0)) log[log.length - 1] = entry;
-        } else {
-            log.push(entry);
-            if (log.length > 90) log = log.slice(-90);
-        }
-        localStorage.setItem(KEY, JSON.stringify(log));
-    } catch (e) { /* private mode / quota — non-fatal */ }
-}
-
-/* ── 5.6 audit-log strip (availability history) ──────────────────────────
-   Renders the persisted 90-day health log as a compact bar history:
-   green = healthy share, amber = watch, red = broken. Answers compliance's
-   question "when was the board last fully green?" without leaving the page. */
-function auditStrip() {
-    var log;
-    try { log = JSON.parse(localStorage.getItem('g8dqm_audit_v1') || '[]'); }
-    catch (e) { log = []; }
-    if (!log.length) {
-        return '<div class="dqm-audit"><span class="dqm-audit-lbl">Availability history</span>' +
-               '<span class="dqm-audit-empty">— accrues one entry per day as the board is checked —</span></div>';
-    }
-    var recent = log.slice(-45);
-    var W = 6, G = 2, H = 26;
-    var bars = recent.map(function (e, i) {
-        var n = e.n || (e.h + e.w + e.b) || 1;
-        var hG = Math.round(H * e.h / n), hW = Math.round(H * e.w / n), hB = H - hG - hW;
-        var x = i * (W + G);
-        var y = 0, seg = '';
-        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hB + '" fill="#ff5c72"/>'; y += hB;
-        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hW + '" fill="#fdb813"/>'; y += hW;
-        seg += '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + hG + '" fill="#2fbf71"/>';
-        return '<g><title>' + e.t + '  ·  ' + e.h + '/' + n + ' healthy · ' + e.w + ' watch · ' + e.b + ' broken</title>' + seg + '</g>';
-    }).join('');
-    var last = recent[recent.length - 1];
-    var nLast = last.n || (last.h + last.w + last.b) || 1;
-    var span = recent.length + (recent.length === 1 ? ' day' : ' days');
-    return '<div class="dqm-audit">' +
-        '<span class="dqm-audit-lbl">Availability history <span class="dqm-audit-sub">' + span + '</span></span>' +
-        '<svg class="dqm-audit-svg" width="' + (recent.length * (W + G)) + '" height="' + H + '" viewBox="0 0 ' + (recent.length * (W + G)) + ' ' + H + '">' + bars + '</svg>' +
-        '<span class="dqm-audit-now">today ' + last.h + '/' + nLast + ' healthy</span>' +
-        '</div>';
-}
-
-/* ── 5.6b ATTENTION strip ────────────────────────────────────────────────
-   Institutional triage: a long green table buries the one DEAD feed that
-   actually matters. This strip lifts every DEGRADED/STALE/DEAD source to the
-   top — name, status, business-days late vs its own budget, and section — so
-   the operator sees what needs action (and which downstream sections may be
-   consuming stale inputs) without scanning 40 rows. */
-function attentionStrip() {
-    var items = [];
-    Object.keys(FEED_REGISTRY).forEach(function (id) {
-        var f = FEED_REGISTRY[id];
-        var s = state[id] || {};
-        if (s.status === 'DEGRADED' || s.status === 'STALE' || s.status === 'DEAD') {
-            items.push({ name: f.name, status: s.status, section: f.section,
-                bd: s.lastDate ? calBusinessDays(s.lastDate) : null,
-                max: f.maxStaleness, lastDate: s.lastDate, err: s.error });
-        }
-    });
-    var rank = { DEAD: 0, STALE: 1, DEGRADED: 2 };
-    items.sort(function (a, b) { return (rank[a.status] - rank[b.status]) || ((b.bd || 0) - (a.bd || 0)); });
-
-    if (!items.length)
-        return '<div class="dqm-attn dqm-attn-ok">● All monitored feeds within budget — no DEGRADED / STALE / DEAD sources.</div>';
-
-    var rows = items.map(function (it) {
-        var late = (it.bd != null) ? it.bd + ' bd late · budget ' + it.max + 'bd'
-                 : (it.err ? 'unreachable' : 'no date');
-        return '<div class="dqm-attn-row">' +
-            '<span class="dqm-status dqm-' + it.status + '">' + it.status + '</span>' +
-            '<span class="dqm-attn-name">' + it.name + '</span>' +
-            '<span class="dqm-attn-meta">§' + it.section + ' · ' + late +
-                (it.lastDate ? ' · last ' + fmtDate(it.lastDate) : '') + '</span>' +
-            '</div>';
-    }).join('');
-    var nDead = items.filter(function (i) { return i.status === 'DEAD'; }).length;
-    return '<div class="dqm-attn dqm-attn-alert' + (nDead ? ' dqm-attn-dead' : '') + '">' +
-        '<div class="dqm-attn-head">⚠ ATTENTION · ' + items.length + ' feed' + (items.length > 1 ? 's' : '') +
-            ' need review' + (nDead ? ' · ' + nDead + ' DEAD' : '') +
-            ' — downstream sections may be consuming stale inputs</div>' +
-        rows + '</div>';
-}
-
-function render() {
-    var el = document.getElementById('dqm-panel');
-    if (!el) return;
-    persistAudit(healthScore());   /* seed today's entry so the strip reflects current state */
-    var counts = { LIVE: 0, DEGRADED: 0, STALE: 0, DEAD: 0, SYNTHETIC: 0, MANUAL: 0, UNKNOWN: 0, PENDING: 0 };
-    var STATUS_DEF = {
-        LIVE: 'Within the feed\'s expected publication lag. Daily feeds stay LIVE across weekends & G8 holidays; event-driven policy rates are LIVE while a flat inter-meeting series is correct.',
-        DEGRADED: 'Past expected lag but inside the grace band (1.0–1.5× the feed\'s budget). Source is late, not broken — worth a glance.',
-        STALE: '1.5–2.5× the expected lag. Meaningfully behind; treat the value as possibly off-as-of.',
-        DEAD: 'Beyond 2.5× the expected lag, or unreachable/unparseable. Do not trust the value.',
-        SYNTHETIC: 'Computed proxy (e.g. anchor-shifted nominal, formula TP). Not a directly observed market print.',
-        MANUAL: 'Hand-set constant with a linked source. A ⚠ age badge appears once the manual input exceeds its lag budget.',
-        PENDING: 'Awaiting the first scheduled session; no observations or signals yet. Not counted as healthy. A missed startup deadline is DEAD.',
-        UNKNOWN: 'On-demand feed not yet polled this session (checked only on RUN ALL).'
-    };
-    var rows = '';
-    Object.keys(FEED_REGISTRY).forEach(function (id) {
-        var f = FEED_REGISTRY[id];
-        var s = state[id] || { status: f.onDemand ? 'UNKNOWN' : 'UNKNOWN' };
-        counts[s.status] = (counts[s.status] || 0) + 1;
-        var title = (f.urls && f.urls.length ? f.urls.join('\n') : '') +
-                    (f.manualLink ? '\nManual source: ' + f.manualLink : '') +
-                    (s.error ? '\nLast error: ' + s.error : '');
-        /* manual-input age flag: a hand-typed value that's gone stale must SHOW it,
-           or you trade on a number you keyed in weeks ago believing it's live */
-        var ageFlag = '';
-        if (f.manual && s.lastDate) {
-            var ad = calBusinessDays(s.lastDate);
-            if (ad !== null) {
-                var warn = ad > (f.maxStaleness || 5);
-                ageFlag = ' <span class="dqm-age' + (warn ? ' dqm-age-warn' : '') + '">' +
-                          (warn ? '⚠ ' : '') + ad + 'bd old</span>';
-            }
-        }
-        rows += '<tr title="' + title.replace(/"/g, '&quot;') + '">' +
-            '<td class="dqm-name">' + f.name + (f.onDemand ? ' <span class="dqm-lat">(on-demand)</span>' : '') +
-                (f.eventDriven ? ' <span class="dqm-lat" title="publishes only on rate-change events; a flat series is correct">(event-driven)</span>' : '') + '</td>' +
-            '<td><span class="dqm-status dqm-' + s.status + '" title="' + (STATUS_DEF[s.status] || '').replace(/"/g, '&quot;') + '">' + s.status + '</span></td>' +
-            '<td>' + fmtDate(s.lastDate) + (s.value !== undefined ? ' · ' + s.value + '%' : '') + ageFlag + '</td>' +
-            '<td class="dqm-src">' + f.section + '</td>' +
-            '<td class="dqm-src">' + f.frequency + '</td>' +
-            '<td class="dqm-lat dqm-wrap">' + (s.latency != null ? s.latency + ' ms · ' + (s.via || '') : (s.via || '—')) + '</td>' +
-            '<td class="dqm-src dqm-wrap">' + f.source + '</td></tr>';
-    });
-    var chips = ['LIVE', 'DEGRADED', 'STALE', 'DEAD', 'SYNTHETIC', 'MANUAL', 'UNKNOWN', 'PENDING'].map(function (k) {
-        if (!counts[k]) return '';
-        var cls = { LIVE: 'live', DEGRADED: 'degraded', STALE: 'stale', DEAD: 'dead', SYNTHETIC: 'synth', MANUAL: 'synth', UNKNOWN: 'unknown', PENDING: 'unknown' }[k];
-        return '<span class="dqm-chip dqm-chip-' + cls + '" title="' + STATUS_DEF[k].replace(/"/g, '&quot;') + '">' + k + ' ' + counts[k] + '</span>';
-    }).join('');
-    el.innerHTML =
-        '<div class="dqm-bar">' + chips +
-            '<button class="dqm-run" id="dqm-run">RUN ALL</button>' +
-            '<span class="dqm-ts">last check ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC</span>' +
-        '</div>' +
-        attentionStrip() +
-        auditStrip() +
-        '<div class="attr-wrap"><table class="dqm-table"><thead><tr>' +
-        '<th>Feed</th><th>Status</th><th>Last date</th><th>§</th><th>Freq</th><th>Latency · via</th><th>Source</th>' +
-        '</tr></thead><tbody>' + rows + '</tbody></table></div>';
-    var btn = document.getElementById('dqm-run');
-    if (btn) btn.onclick = function () { runAll(true); };
-    syncHeader();
-}
-
-function init() {
-    /* B1 (2026-10-16): G8DQM deja de ser un monitor. Sin panel, sin RUN ALL ni sondeo cada 4 h y sin
-       escribir la cabecera: la única verdad de frescura es health.json (js/health.js). Se conservan
-       report() y computeStaleness() porque las secciones los usan para sus propias marcas de as-of. */
-}
-
-window.G8DQM = { report: report, runAll: runAll, computeStaleness: computeStaleness,
+window.G8DQM = { report: report, computeStaleness: computeStaleness,
                  businessDays: calBusinessDays,   /* P-3: §01 lag mark (same G8 calendar) */
                  FEED_REGISTRY: FEED_REGISTRY, state: state };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else { init(); }
 })();
 </script>
 
@@ -2988,7 +2422,60 @@ function fmtD(d) {
     return '<span class="' + cls + '">' + (d > 0 ? '+' : '') + d.toFixed(1) + '</span>';
 }
 
-function row(p, s) {
+/* A5 (2026-10-16): §03 fundida aquí. Tipo oficial vigente y fecha de su último cambio salen de la MISMA serie de
+   suelo/política que ya usa el spread (sin segunda fuente); la próxima reunión sale de data/manual/cb_meetings.csv
+   (calendario oficial verificado, acta A5). Solo contexto: el impulso de tipos lo mide 6-POL-G8 en TradingView. */
+var CB_OF = { USD: 'US', EUR: 'EA', GBP: 'GB', JPY: 'JP', CAD: 'CA', AUD: 'AU', NZD: 'NZ', CHF: 'CH' };
+var _cbNext = null;
+function todayCompact() { return new Date().toISOString().slice(0, 10).replace(/-/g, ''); }
+function policyInfo(flr) {
+    var t = todayCompact(), obs = (flr || []).filter(function (x) { return x.d && x.d <= t && x.v != null && isFinite(x.v); });
+    if (!obs.length) return null;
+    var last = obs[obs.length - 1].v, since = obs[obs.length - 1].d;
+    for (var i = obs.length - 1; i >= 0 && Math.abs(obs[i].v - last) < 1e-9; i--) since = obs[i].d;
+    return { rate: last, since: since, first: obs[0].d };
+}
+function bdBetween(a, b) {   /* días hábiles L-V entre hoy (a) y la reunión (b), ISO yyyy-mm-dd */
+    var d = new Date(a + 'T00:00:00Z'), e = new Date(b + 'T00:00:00Z'), n = 0;
+    while (d < e) { d.setUTCDate(d.getUTCDate() + 1); var w = d.getUTCDay(); if (w !== 0 && w !== 6) n++; }
+    return n;
+}
+function fmtC(d) { return d ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : '—'; }
+function policyCells(p, pol) {
+    if (p.noBadge) { var dot = '<td><span class="attr-sub" title="Fila de plazo (90d): el tipo oficial va en la fila overnight">·</span></td>'; return dot + dot + dot; }
+    var cb = CB_OF[p.ccy], nx = _cbNext && _cbNext[cb];
+    var today = new Date().toISOString().slice(0, 10);
+    var rate = pol ? '<span class="attr-val">' + pol.rate.toFixed(2) + '%</span><span class="attr-sub">' + p.ref + '</span>' : '<span class="attr-sub">—</span>';
+    var since = pol ? (pol.since === pol.first ? '<span class="attr-sub" title="Sin cambios en toda la serie cargada">≤ ' + fmtC(pol.since) + '</span>'
+                                                : '<span class="attr-val">' + fmtC(pol.since) + '</span>') : '—';
+    var meet;
+    if (!_cbNext) meet = '<span class="attr-sub" title="data/manual/cb_meetings.csv no disponible">calendario n/d</span>';
+    else if (!nx) meet = '<span class="attr-z attr-z-md" title="Sin fecha futura en el calendario oficial — actualizar cb_meetings.csv (revisión trimestral)">SIN FECHA</span>';
+    else {
+        var bd = bdBetween(today, nx.date), soon = bd <= 2;
+        meet = '<span class="attr-val"' + (soon ? ' style="color:#fdb813"' : '') + ' title="' + (nx.note || '').replace(/"/g, '&quot;') + ' · fuente: ' + nx.source + '">' + nx.date + '</span>' +
+               '<span class="attr-sub">' + (bd === 0 ? 'hoy' : bd + ' d.h.') + (soon ? ' · evento ≤48h' : '') + '</span>';
+    }
+    return '<td>' + rate + '</td><td>' + since + '</td><td>' + meet + '</td>';
+}
+function loadCbCalendar() {
+    var url = RAW + 'manual/cb_meetings.csv';
+    var p = (window.G8NET && window.G8NET.fetchChain)
+        ? window.G8NET.fetchChain([url], { corsOk: true }).then(function (r) { if (!r.ok) throw new Error('cb_meetings ' + (r.error || 'unreachable')); return r.text; })
+        : fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('cb_meetings HTTP ' + r.status); return r.text(); });
+    return p.then(function (t) {
+        var body = t.split('\n').filter(function (l) { return l && l.charAt(0) !== '#'; }).join('\n');
+        var rows = Papa.parse(body.trim(), { header: true, skipEmptyLines: true }).data;
+        var today = new Date().toISOString().slice(0, 10), next = {};
+        rows.forEach(function (r) {
+            if (!r.country || !r.decision_date || r.decision_date < today) return;
+            if (!next[r.country] || r.decision_date < next[r.country].date) next[r.country] = { date: r.decision_date, note: r.note, source: r.source };
+        });
+        _cbNext = next;
+    }).catch(function (e) { console.warn('[fls] calendario BC', e.message); _cbNext = null; });
+}
+
+function row(p, s, pol) {
     var v = s.map(function (x) { return x.v; });
     var n = v.length, last = v[n - 1];
     var d1w = n > 5 ? last - v[n - 6] : null;
@@ -3018,7 +2505,8 @@ function row(p, s) {
         '<td>' + fmtD(d1w) + '</td>' +
         '<td>' + fmtD(d1m) + '</td>' +
         '<td>' + spark(v.slice(-90)) + '</td>' +
-        '<td' + (st === 'LIVE' ? '' : ' style="opacity:.55"') + '>' + badge + staleTag + '</td></tr>';
+        '<td' + (st === 'LIVE' ? '' : ' style="opacity:.55"') + '>' + badge + staleTag + '</td>' +
+        policyCells(p, pol) + '</tr>';
 }
 
 /* v2.5.8: one currency at a time (same UX as §04 — selector buttons, single filled
@@ -3123,17 +2611,18 @@ function floorWire() {
 }
 
 function init() {
-    var data = {};
+    var data = {}, pols = {};
     var jobs = PAIRS.map(function (p) {
         return Promise.all([getCsv(p.rfr), getCsv(p.flr)])
-            .then(function (rs) { data[p.key || p.ccy] = spreadSeries(rs[0], rs[1]); })
+            .then(function (rs) { data[p.key || p.ccy] = spreadSeries(rs[0], rs[1]); pols[p.key || p.ccy] = policyInfo(rs[1]); })
             .catch(function (e) { console.warn('[fls]', p.ccy, e.message); });
     });
+    jobs.push(loadCbCalendar());
     Promise.all(jobs).then(function () {
         var rows = '';
         PAIRS.forEach(function (p) {
             var s = data[p.key || p.ccy];
-            if (s && s.length > 30) rows += row(p, s);
+            if (s && s.length > 30) rows += row(p, s, pols[p.key || p.ccy]);
         });
         var el = document.getElementById('fls-table');
         if (!rows) {
@@ -3151,6 +2640,9 @@ function init() {
             '<div class="attr-note" id="fls-chart-note" style="margin:0 0 10px"></div>' +
             '<table class="attr-table"><thead><tr>' +
             '<th>CCY</th><th>Spread (bps)</th><th>Δ1W</th><th>Δ1M</th><th>90D</th><th>Regime</th>' +
+            '<th title="Tipo oficial vigente hoy (misma serie de suelo/política del spread; los anuncios con fecha futura no cuentan)">Tipo oficial</th>' +
+            '<th title="Fecha desde la que rige el tipo vigente (último cambio dentro de la serie cargada)">Último cambio</th>' +
+            '<th title="Próxima decisión según el calendario oficial verificado (data/manual/cb_meetings.csv) · días hábiles · ámbar = evento en ≤ 2 d.h.">Próxima reunión</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table>';
         floorWire(); floorSync();
         setTimeout(function () { try { floorChart(_flsKey); } catch (e) { console.warn('[fls] chart', e.message); } }, 0);

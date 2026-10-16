@@ -57,6 +57,31 @@ def sla_deadline(since_iso, calendar, cals):
     return t + timedelta(days=(d - t.date()).days)
 
 
+CB_COUNTRIES = ("US", "EA", "GB", "JP", "CH", "AU", "CA", "NZ")
+
+
+def cb_calendar_items(root, now):
+    path = Path(root) / "data/manual/cb_meetings.csv"
+    if not path.exists():
+        return [{"file": "manual/cb_meetings.csv", "status": "MISSING", "state": "MISSING", "flags": [],
+                 "reason": "Falta el calendario oficial de reuniones de bancos centrales (acta A5)"}]
+    with path.open(encoding="utf-8") as fh:
+        rows = list(csv.DictReader(l for l in fh if l.strip() and not l.lstrip().startswith("#")))
+    today = now.date().isoformat()
+    out = []
+    for c in CB_COUNTRIES:
+        fut = sorted(r["decision_date"] for r in rows if r.get("country") == c and (r.get("decision_date") or "") >= today)
+        if fut:
+            out.append({"file": "manual/cb_meetings.csv:%s" % c, "status": "CURRENT", "state": "CALENDAR_OK", "flags": [],
+                        "have_max": fut[-1], "expected_obs": fut[0], "publication_frequency": "event",
+                        "reason": "Próxima decisión oficial %s; última fecha publicada %s" % (fut[0], fut[-1])})
+        else:
+            out.append({"file": "manual/cb_meetings.csv:%s" % c, "status": "LATE", "state": "CALENDAR_EXHAUSTED", "flags": [],
+                        "have_max": None, "expected_obs": None, "publication_frequency": "event",
+                        "reason": "Sin decisión futura en el calendario oficial: actualizar desde la web del banco central"})
+    return out
+
+
 def outstanding_fetch_failure(facts, filename):
     """A newer validated publication closes an older attempt, never the reverse."""
     records = list(facts.values())
@@ -193,6 +218,9 @@ def build(root, now, report=None):
         if name == "BOOK_RISK.json" and d.get(key) != read_json(root / "data/USD_FACTOR.json").get("as_of"):
             status = "LATE"
         items.append({"file": name, "status": status, "state": status, "have_max": d.get(key), "flags": []})
+    # A5 (2026-10-16): el calendario oficial de reuniones (data/manual/cb_meetings.csv) debe tener, para cada uno de
+    # los 8 bancos centrales, al menos una decisión futura. Si se agota, es una incidencia (revisión trimestral).
+    items.extend(cb_calendar_items(root, now))
     manual = read_json(root / "data/manual/manual_inputs.json")
     for reg in registry:
         if reg.get("manual") != "Y" or not reg.get("manual_expiry_days"):

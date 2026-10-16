@@ -32,7 +32,8 @@ const REQUIRED = [
   // B1 (2026-10-16): §05 DQM retirado; el único monitor es health.json pintado por js/health.js.
   ['publication-health', el => /FRESCURA|VIGILANCIA/.test(el.innerText) && !!el.querySelector('table')],
   ['uf-panel', el => el.innerText.trim().length > 50],
-  ['cot-panel', el => el.innerText.trim().length > 50],
+  // A5 (2026-10-16): §09 retirada de la web (dueño 0-POS-G8); §03 fundida en §02 → la tabla de suelos debe traer la próxima reunión.
+  ['fls-table', el => !!el.querySelector('table tbody tr') && /Próxima reunión/.test(el.innerText)],
   ['opt-surface', el => el.innerText.trim().length > 50],
 ];
 const FORBIDDEN = /Render error|is not defined|undefined is not|Cannot read propert|NaN%|\[object Object\]/;

@@ -40,7 +40,7 @@ ALLOW = [
 PROTECTED_JS = {
     "docs/index.html": ["zScore", "deltaBps", "spreadStats", "spreadSeries", "statsS", "statsCol", "proxyTP", "minusSeries",
                         "anchorToManual", "valueAt", "computeStaleness", "calBusinessDays", "localDay", "isG8Holiday",
-                        "briefAge", "healthScore", "feedWeight", "monthsBehind", "lagTag", "staleTag", "extractLastDate"],
+                        "briefAge", "monthsBehind", "lagTag", "staleTag"],   # A5: healthScore/feedWeight/extractLastDate retiradas
     "docs/js/data-loader.js": ["staleStatus", "businessDaysSince", "daysSince", "isG8Holiday", "forwardFillSeries", "parseACMG8"],
     "docs/js/charts.js": ["computeXCCYBasis"],
 }
