@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-16T04:40:56.317955Z",
+ "generated_utc": "2026-10-16T08:10:10.501626Z",
  "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -39,15 +39,17 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-10-14",
-   "expected_obs": "2026-10-14",
+   "expected_obs": "2026-10-15",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -993,7 +995,7 @@
    "file": "CHF_NOM_10Y.csv",
    "state": "CURRENT",
    "have_max": "2026-10-15",
-   "expected_obs": "2026-10-14",
+   "expected_obs": "2026-10-15",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1008,7 +1010,7 @@
    "file": "CHF_SARON.csv",
    "state": "CURRENT",
    "have_max": "2026-10-14",
-   "expected_obs": "2026-10-13",
+   "expected_obs": "2026-10-14",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1871,7 +1873,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-16T04:40:55Z",
+   "have_max": "2026-10-16T08:10:10Z",
    "flags": []
   },
   {
