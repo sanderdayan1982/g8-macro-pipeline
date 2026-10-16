@@ -713,7 +713,8 @@ function inStateCell(n) {
 }
 
 function ccyRow(r) {
-    var warn = 1.5, ext = 2.0;  /* fx thresholds (mirror POS-G8) */
+    /* A1 (2026-10-16): umbrales por divisa de POS-G8 v1.2.6 (r.thr del colector); 1.5/2.0 solo como respaldo */
+    var warn = (r.thr && r.thr.warn) || 1.5, ext = (r.thr && r.thr.ext) || 2.0;
     var div = r.divergence ? ' <span class="cot-div" title="Leveraged Funds and Asset Managers positioned on opposite sides — fast money vs structural money disagree">DIV</span>' : '';
     return '<tr>' +
         '<td><span class="attr-ccy">' + r.ccy + (r.proxy ? '°' : '') + '</span>' + div + '</td>' +
@@ -798,8 +799,10 @@ function render(doc) {
     html += '<div class="attr-note">' +
         '<b style="color:#d7dce6">Who is already inside the trade.</b> ' +
         'LF = Leveraged Funds (fast money) · AM = Asset Managers (structural) · MM = Managed Money (metals). ' +
-        'STATE on LF Z: CROWD ≥ ' + fxt.ext + 'σ · STRETCH ≥ ' + fxt.warn + 'σ ' +
-        '<span style="color:' + AMBER + '">[fx PROV]</span> · metals <span style="color:' + GREEN + '">[CAL]</span>. ' +
+        (thr.fx_ccy ? 'STATE on LF Z: umbrales por divisa de POS-G8 v1.2.6 (P10/P90 · P2.5/P97.5; USD° 0.79/1.15) ' +
+            '<span style="color:' + GREEN + '">[fx CAL]</span>' :
+            'STATE on LF Z: CROWD ≥ ' + fxt.ext + 'σ · STRETCH ≥ ' + fxt.warn + 'σ <span style="color:' + AMBER + '">[fx PROV]</span>') +
+        ' · metals <span style="color:' + GREEN + '">[CAL]</span>. ' +
         '<b>COTi</b> 0-100 Williams · <b>%ile</b> empirical percentile (distribution-free, robust for non-normal metals) · ' +
         '<b>%OI</b> net as % open interest (comparable across currencies) · <b>P3y</b> percentile of %OI vs the previous 156 reports (current excluded; <b>EXT</b> ≤p10/≥p90, two-tail band by convention, no vote) · <b>Δprt</b> vs previous distinct print · ' +
         '<b>Δ4w/Δ13w</b> positioning velocity · <b>DIV</b> = LF and AM on opposite sides · <b>held</b> = weeks in state.<br>' +

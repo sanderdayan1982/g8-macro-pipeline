@@ -19,7 +19,7 @@
 #   calculation, window or threshold — same source, same series. (G8 PORT D10)
 # -----------------------------------------------------------------------------
 # Feeds the G8 Macro Pipeline dashboard (g8-institutional.netlify.app) with the
-# same COT positioning table produced by the POS-G8 v1.1.3 Pine study, PLUS the
+# same COT positioning table produced by the POS-G8 Pine study (thresholds: v1.2.6), PLUS the
 # enrichments the Pine environment cannot compute (COT index, empirical
 # percentile, % of open interest, LF/AM divergence, positioning velocity,
 # time-in-state).
@@ -71,12 +71,35 @@ METAL_CODES = {"XAU": "088691", "XAG": "084691"}
 WIN = {"fx": 156, "XAU": 156, "XAG": 104}
 PULL_WEEKS = 175               # fetch buffer above the largest window
 
-# Classifier thresholds — mirror POS-G8 v1.1.3 exactly
+# Classifier thresholds — mirror POS-G8 v1.2.6 exactly (A1, 2026-10-16, consenso Claude + Argon 4).
+#   fx      = fallback de Pine (inputs z_warn / z_ext); solo se usa si una divisa no tiene par calibrado.
+#   fx_ccy  = f_thr_fx de POS-G8 (CAL 14sep26, calibrate_pos.py v1.0, P10/P90 · P2.5/P97.5 de la LF Z capada,
+#             2007-2026). USD = −media de las 7 Z: objeto más estrecho, par propio.
 THR = {
-    "fx":  {"warn": 1.5,  "ext": 2.0},   # PROVISIONAL
+    "fx":  {"warn": 1.5,  "ext": 2.0},   # fallback (Pine z_warn / z_ext)
+    "fx_ccy": {
+        "EUR": {"warn": 1.51, "ext": 2.26}, "GBP": {"warn": 1.47, "ext": 2.06},
+        "JPY": {"warn": 1.44, "ext": 2.42}, "AUD": {"warn": 1.46, "ext": 2.30},
+        "NZD": {"warn": 1.56, "ext": 2.26}, "CAD": {"warn": 1.51, "ext": 2.36},
+        "CHF": {"warn": 1.47, "ext": 2.02}, "USD": {"warn": 0.79, "ext": 1.15},
+    },
     "XAU": {"warn": 1.68, "ext": 2.29},  # CALIBRATED
     "XAG": {"warn": 1.61, "ext": 2.25},  # CALIBRATED
 }
+# AM (Asset Managers) — POS-G8 v1.2.6 [Z2] f_thr_am, SHADOW: umbrales por lado
+# [w_neg, e_neg, w_pos, e_pos] = [|P10|, |P2.5|, P90, P97.5] de la AM Z capada (CAL 16-oct-2026, n = 4.497).
+# Solo informativo (am_state_shadow): no cambia STATE, ni el libro, ni las alertas.
+AM_THR_SHADOW = {
+    "EUR": [1.52, 2.12, 2.16, 2.72], "GBP": [2.00, 2.61, 1.41, 2.22], "JPY": [1.48, 1.96, 2.23, 2.76],
+    "AUD": [1.79, 2.52, 1.69, 2.44], "NZD": [2.30, 3.00, 1.39, 2.17], "CAD": [1.88, 2.76, 1.69, 2.48],
+    "CHF": [2.26, 3.00, 1.16, 1.79], "USD": [0.80, 1.55, 0.91, 1.17],
+}
+PINE_REF = "POS-G8 v1.2.6"
+
+
+def fx_thr(ccy):
+    t = THR["fx_ccy"].get(ccy) or THR["fx"]
+    return t["warn"], t["ext"]
 Z_CAP = 3.0
 STALE_DAYS = 8                 # CFTC weekly; >8 calendar days since report_date = AGING
 
@@ -272,6 +295,22 @@ def state(z, warn, ext):
     return "NEUTRAL"
 
 
+def state_asym(z, thr):
+    """POS-G8 v1.2.6 f_state_asym (SHADOW): umbrales distintos para el lado corto y el largo."""
+    if z is None or not thr:
+        return "NA"
+    wn, en, wp, ep = thr
+    if z >= ep:
+        return "CROWD LONG"
+    if z >= wp:
+        return "STRETCH+"
+    if z <= -en:
+        return "CROWD SHORT"
+    if z <= -wn:
+        return "STRETCH-"
+    return "NEUTRAL"
+
+
 def time_in_state(z_series, warn, ext):
     """How many consecutive most-recent prints share the current state."""
     labels = [state(z, warn, ext) for z in z_series if z is not None]
@@ -314,7 +353,7 @@ def build_ccy(name, rows):
           if _f(r, COL["tff"]["am_long"]) is not None else None for r in rows]
     oi = [_f(r, COL["oi"]) for r in rows]
     win = WIN["fx"]
-    warn, ext = THR["fx"]["warn"], THR["fx"]["ext"]
+    warn, ext = fx_thr(name)
 
     z_lf = z_capped(lf, win)
     z_am = z_capped(am, win)
@@ -338,6 +377,8 @@ def build_ccy(name, rows):
         "am_net": net_am,
         "am_z": round(z_am, 2) if z_am is not None else None,
         "state": state(z_lf, warn, ext),
+        "thr": {"warn": warn, "ext": ext},
+        "am_state_shadow": state_asym(z_am, AM_THR_SHADOW.get(name)),
         "time_in_state": time_in_state(z_lf_hist, warn, ext),
         "divergence": divergence(z_lf, z_am),
         "report_date": rows[-1].get(COL["date"], "")[:10] if rows else None,
@@ -379,15 +420,20 @@ def usd_proxy(ccy_rows):
     """USD row: -mean of the 7 LF Zs, -sum of the 7 LF nets (desk proxy, '°')."""
     zs = [r["lf_z"] for r in ccy_rows if r["lf_z"] is not None]
     ns = [r["lf_net"] for r in ccy_rows if r["lf_net"] is not None]
+    ams = [r["am_z"] for r in ccy_rows if r.get("am_z") is not None]
     z = -sum(zs) / len(zs) if len(zs) >= 4 else None
-    warn, ext = THR["fx"]["warn"], THR["fx"]["ext"]
+    z_am = -sum(ams) / len(ams) if len(ams) >= 4 else None
+    warn, ext = fx_thr("USD")
     return {
         "ccy": "USD",
         "proxy": True,
         "lf_net": -sum(ns) if len(ns) >= 6 else None,
         "lf_z": round(z, 2) if z is not None else None,
         "state": state(z, warn, ext),
-        "note": "desk proxy: -mean(7 LF Z)",
+        "thr": {"warn": warn, "ext": ext},
+        "am_z": round(z_am, 2) if z_am is not None else None,
+        "am_state_shadow": state_asym(z_am, AM_THR_SHADOW["USD"]),
+        "note": "desk proxy: -mean(7 LF Z) · AM: -mean(7 AM Z)",
     }
 
 
@@ -418,12 +464,14 @@ def main():
     status, age = freshness(report_date) if report_date else ("NA", None)
 
     doc = {
-        "schema": "pos_g8_cot/1.1.0",
+        "schema": "pos_g8_cot/1.2.0",
+        "pine_ref": PINE_REF,
         "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "source": "CFTC SODA (gpe5-46if TFF, 72hh-3qpy Disaggregated), Futures-Only",
         "report_date": report_date,
         "freshness": {"status": status, "age_days": age, "stale_after_days": STALE_DAYS},
         "thresholds": THR,
+        "am_thresholds_shadow": AM_THR_SHADOW,
         "windows_weeks": WIN,
         "currencies": ccy_rows,
         "usd": usd_row,

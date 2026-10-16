@@ -41,17 +41,22 @@ TWIN_HIST = ROOT / "data" / "twin" / "pos_g8_py_history.csv"
 
 SCRIPT = "POS"
 QUESTION = "Who is already inside the trade? Speculative COT positioning (LF/MM) vs structural (AM), per G8 currency and metals."
-PINE_VERSION = "v1_1_3_EN"
+PINE_VERSION = "v1_2_6"
 PY_VERSION = "0.1.0"
 CUTOFF_DATE = "2026-06-19"          # metals calibration 19-jun-2026; fx thresholds are design values (see Gate M 3.1)
 FORWARD_WINDOWS_BD = [5, 10, 20]
 FEED_ID = "CFTC_TFF"
 
-# Expected frozen thresholds — from the POS-G8 v1.1.3 header. Asserted, not applied.
+# Expected frozen thresholds — from POS-G8 v1.2.6 (f_thr_fx per currency, A1 2026-10-16). Asserted, not applied.
 EXPECTED_THR = {"fx": {"warn": 1.5, "ext": 2.0},
+                "fx_ccy": {"EUR": {"warn": 1.51, "ext": 2.26}, "GBP": {"warn": 1.47, "ext": 2.06},
+                           "JPY": {"warn": 1.44, "ext": 2.42}, "AUD": {"warn": 1.46, "ext": 2.30},
+                           "NZD": {"warn": 1.56, "ext": 2.26}, "CAD": {"warn": 1.51, "ext": 2.36},
+                           "CHF": {"warn": 1.47, "ext": 2.02}, "USD": {"warn": 0.79, "ext": 1.15}},
                 "XAU": {"warn": 1.68, "ext": 2.29},
                 "XAG": {"warn": 1.61, "ext": 2.25}}
 EXPECTED_WIN = {"fx": 156, "XAU": 156, "XAG": 104}
+THR_TABLE = "v126"                  # etiqueta de la tabla vigente en data/twin/pos_g8_py_history.csv (A1)
 
 # Regime label for the Telegram diff (display-only aggregation; not a Pine output).
 REGIME_ORDER = ["NEUTRAL", "STRETCHED", "CROWDED"]
@@ -107,7 +112,7 @@ def main():
 
     # ── Rule 32 assertion: thresholds and windows must equal the Pine header ──
     if cot.get("thresholds") != EXPECTED_THR or cot.get("windows_weeks") != EXPECTED_WIN:
-        raise AssertionError("POS thresholds/windows in collector differ from Pine v1.1.3 — needs an acta (Rule 32). "
+        raise AssertionError("POS thresholds/windows in collector differ from Pine v1.2.6 — needs an acta (Rule 32). "
                              "collector=%s/%s expected=%s/%s" % (cot.get("thresholds"), cot.get("windows_weeks"),
                                                                    EXPECTED_THR, EXPECTED_WIN))
 
@@ -126,7 +131,7 @@ def main():
     # ── outputs.per_ccy ──
     per_ccy = {}
     for r in cot["currencies"]:
-        thr = cot["thresholds"]["fx"]
+        thr = cot["thresholds"]["fx_ccy"].get(r["ccy"], cot["thresholds"]["fx"])
         per_ccy[r["ccy"]] = {
             "score": r["lf_z"] if r["lf_z"] is not None else 0.0,
             "state": r["state"],
@@ -137,7 +142,7 @@ def main():
             "components": {
                 "lf_net": r["lf_net"], "lf_cot_index": r["lf_cot_index"], "lf_pct_oi": r["lf_pct_oi"],
                 "d_print": r["d_print"], "d_4w": r["d_4w"], "d_13w": r["d_13w"],
-                "am_net": r["am_net"], "am_z": r["am_z"],
+                "am_net": r["am_net"], "am_z": r["am_z"], "am_state_shadow": r.get("am_state_shadow"),
                 "time_in_state": r["time_in_state"], "divergence": r["divergence"],
             },
             "na_reason": None if r["lf_z"] is not None else "lf_z NA (window not filled or feed gap)",
@@ -146,8 +151,9 @@ def main():
     per_ccy["USD"] = {
         "score": u["lf_z"] if u["lf_z"] is not None else 0.0, "state": u["state"],
         "percentile": None, "z": u["lf_z"], "window_bars": cot["windows_weeks"]["fx"],
-        "thresholds_frozen": {"warn": EXPECTED_THR["fx"]["warn"], "ext": EXPECTED_THR["fx"]["ext"], "z_cap": 3.0},
-        "components": {"lf_net": u["lf_net"], "proxy": True, "note": u["note"]},
+        "thresholds_frozen": {"warn": EXPECTED_THR["fx_ccy"]["USD"]["warn"], "ext": EXPECTED_THR["fx_ccy"]["USD"]["ext"], "z_cap": 3.0},
+        "components": {"lf_net": u["lf_net"], "proxy": True, "note": u["note"],
+                       "am_z": u.get("am_z"), "am_state_shadow": u.get("am_state_shadow")},
         "na_reason": None if u["lf_z"] is not None else "fewer than 4 LF Z available",
     }
     for r in cot["metals"]:
@@ -227,14 +233,23 @@ def main():
     existing = set()
     if TWIN_HIST.exists():
         with open(TWIN_HIST, newline="") as f:
-            existing = {(r["data_date"], r["ccy_or_pair"]) for r in csv.DictReader(f)}
+            rows = list(csv.DictReader(f))
+        existing = {(r["data_date"], r["ccy_or_pair"]) for r in rows}
+        if rows and "thr" not in rows[0]:
+            # A1 (2026-10-16): cada fila declara con qué tabla de umbrales se clasificó, para que el twin-test
+            # compare Pine y Python con la MISMA tabla. Las filas anteriores a A1 son v113 (1.5/2.0 global).
+            with open(TWIN_HIST, "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["data_date", "ccy_or_pair", "state", "thr"])
+                for r in rows:
+                    w.writerow([r["data_date"], r["ccy_or_pair"], r["state"], "v113"])
     else:
-        TWIN_HIST.write_text("data_date,ccy_or_pair,state\n")
+        TWIN_HIST.write_text("data_date,ccy_or_pair,state,thr\n")
     with open(TWIN_HIST, "a", newline="") as f:
         w = csv.writer(f)
         for k, v in per_ccy.items():
             if (report_date, k) not in existing:
-                w.writerow([report_date, k, v["state"]])
+                w.writerow([report_date, k, v["state"], THR_TABLE])
 
     print("POS state written: regime=%s report=%s quality=%s diff=%s" % (label, report_date, quality, diff))
     return 0

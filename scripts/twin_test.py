@@ -40,7 +40,13 @@ def _pos_g8(pine):
     """POS-G8 v1.1.3 exports LANES, not states: plot = lane + clip(z * 0.9 / z_cap), z_cap = 3.
     z = (plot - lane) / 0.3 ; state via the frozen thresholds (fx 1.5/2.0, XAU 1.68/2.29, XAG 1.61/2.25)."""
     LANE = {"USD°": 16, "EUR": 14, "GBP": 12, "JPY": 10, "AUD": 8, "NZD": 6, "CAD": 4, "CHF": 2, "XAU": 18, "XAG": 20}
-    THR = {"XAU": (1.68, 2.29), "XAG": (1.61, 2.25)}
+    THR = {"XAU": (1.68, 2.29), "XAG": (1.61, 2.25),
+           # A1 (2026-10-16): f_thr_fx de POS-G8 v1.2.6 por divisa (antes 1.5/2.0 para todas)
+           "EUR": (1.51, 2.26), "GBP": (1.47, 2.06), "JPY": (1.44, 2.42), "AUD": (1.46, 2.30),
+           "NZD": (1.56, 2.26), "CAD": (1.51, 2.36), "CHF": (1.47, 2.02), "USD": (0.79, 1.15)}
+
+    # A1: tabla anterior (POS v1.1.3), solo para comparar las filas de Python clasificadas con ella (thr = v113).
+    THR_V113 = {"XAU": (1.68, 2.29), "XAG": (1.61, 2.25)}
 
     def st(z, w, e):
         if pd.isna(z):
@@ -53,8 +59,10 @@ def _pos_g8(pine):
             continue
         key = col.rstrip("°")
         w, e = THR.get(key, (1.5, 2.0))
+        w0, e0 = THR_V113.get(key, (1.5, 2.0))
         z = (pine[col].astype(float) - lane) / 0.3
-        recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": [st(v, w, e) for v in z]}))
+        recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": [st(v, w, e) for v in z],
+                                  "state_pine_v113": [st(v, w0, e0) for v in z]}))
     long = pd.concat(recs, ignore_index=True)
     # Amendment ACTA_TWIN_POS_ANCHOR (2026-09-19): TradingView stamps each COT report on its own
     # report date (Tuesday R) in the exported history, so the Pine bar dated R already carries
@@ -103,6 +111,10 @@ def main(script):
     # Python NA from warm-up (not enough history) is not a logic discrepancy: reported apart.
     warm = m["state_py"].astype(str) == "NA"
     py_na_pct = float(warm.mean() * 100.0)
+    if "state_pine_v113" in m.columns:
+        # A1: cada fila de Python se compara con Pine clasificado con la misma tabla (columna thr; sin ella = v113)
+        old = m["thr"].astype(str) != "v126" if "thr" in m.columns else pd.Series(True, index=m.index)
+        m = m.assign(state_pine=m["state_pine"].where(~old, m["state_pine_v113"]))
     c = m[~warm]
     if c.empty:
         raise SystemExit("twin-test %s: all Python bars are NA (warm-up) — nothing to compare yet" % script)
