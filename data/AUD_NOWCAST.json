@@ -1,14 +1,14 @@
 {
  "model": "EST_AUD_V2",
- "generated_utc": "2026-10-16T01:20:50Z",
+ "generated_utc": "2026-10-16T21:35:52Z",
  "config": "sources/nowcast_aud.json",
  "status": "OK",
  "warnings": [],
  "targets": {
   "NOM2Y": {
    "source": "RBA F2 FCMYGBAG2D",
-   "base_date": "2026-10-07",
-   "base_value": 4.94,
+   "base_date": "2026-10-14",
+   "base_value": 4.919,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -18,29 +18,29 @@
     {
      "name": "US_2Y",
      "lag_bd": 1,
-     "last": "2026-10-14"
+     "last": "2026-10-15"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.897,
-    "US_2Y": 0.2973
+    "AU_BILL_6M": 0.8949,
+    "US_2Y": 0.3015
    },
-   "r2": 0.451,
+   "r2": 0.454,
    "n_obs": 756,
    "window": [
-    "2023-10-09",
-    "2026-10-07"
+    "2023-10-16",
+    "2026-10-14"
    ],
    "err_bp_by_h": {
     "1": 3.6,
-    "2": 4.9,
+    "2": 4.8,
     "3": 5.6,
-    "4": 6.4,
+    "4": 6.3,
     "5": 7.1,
-    "6": 7.9,
+    "6": 7.8,
     "7": 8.5,
-    "8": 9.1,
-    "9": 9.6,
+    "8": 9.0,
+    "9": 9.5,
     "10": 10.1
    },
    "drivers_reach": "2026-10-15",
@@ -48,8 +48,8 @@
   },
   "NOM10": {
    "source": "RBA F2 FCMYGBAG10D (via real_yields_g8.py)",
-   "base_date": "2026-10-07",
-   "base_value": 5.404,
+   "base_date": "2026-10-14",
+   "base_value": 5.314,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -59,26 +59,26 @@
     {
      "name": "US_10Y",
      "lag_bd": 1,
-     "last": "2026-10-14"
+     "last": "2026-10-15"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.566,
-    "US_10Y": 0.534
+    "AU_BILL_6M": 0.5683,
+    "US_10Y": 0.5354
    },
-   "r2": 0.46,
+   "r2": 0.459,
    "n_obs": 756,
    "window": [
-    "2023-10-09",
-    "2026-10-07"
+    "2023-10-16",
+    "2026-10-14"
    ],
    "err_bp_by_h": {
     "1": 3.8,
     "2": 4.6,
     "3": 5.2,
     "4": 5.8,
-    "5": 6.3,
-    "6": 6.9,
+    "5": 6.2,
+    "6": 6.8,
     "7": 7.3,
     "8": 7.7,
     "9": 8.1,
@@ -89,8 +89,8 @@
   },
   "BE10": {
    "source": "RBA F2 (10Y nominal − indexado FCMYGBAGID, via real_yields_g8.py)",
-   "base_date": "2026-10-07",
-   "base_value": 2.402,
+   "base_date": "2026-10-14",
+   "base_value": 2.331,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -100,18 +100,18 @@
     {
      "name": "US_BE10",
      "lag_bd": 1,
-     "last": "2026-10-14"
+     "last": "2026-10-15"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.1324,
-    "US_BE10": 0.4063
+    "AU_BILL_6M": 0.133,
+    "US_BE10": 0.4071
    },
    "r2": 0.289,
    "n_obs": 756,
    "window": [
-    "2023-10-09",
-    "2026-10-07"
+    "2023-10-16",
+    "2026-10-14"
    ],
    "err_bp_by_h": {
     "1": 1.6,
@@ -129,5 +129,5 @@
    "last_estimate": "2026-10-15"
   }
  },
- "rows_estimated_now": 6
+ "rows_estimated_now": 1
 }
