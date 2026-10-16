@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-16T17:07:38.426456Z",
- "status": "UNVERIFIED",
+ "generated_utc": "2026-10-16T17:24:15.483685Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,8 +18,27 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
+ "needs_repair": true,
+ "issues": [
+  {
+   "file": "RY_G8_AUD.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-10-07",
+   "expected_obs": "2026-10-14",
+   "calendar": "AU",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+   "flags": [
+    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 7,
+   "publication_frequency": "weekly:FRI",
+   "slow_fallback": false
+  }
+ ],
  "unknown_count": 6,
  "feeds": [
   {
@@ -649,13 +668,13 @@
    "expected_obs": "2026-10-14",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 7,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1871,7 +1890,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-16T17:07:37Z",
+   "have_max": "2026-10-16T17:24:14Z",
    "flags": []
   },
   {
