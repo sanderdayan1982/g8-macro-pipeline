@@ -20,7 +20,6 @@ g8-macro-pipeline/
 │   ├── generators/                 NUEVO — un módulo por script Pine
 │   │   ├── _template_generator.py  plantilla obligatoria (esta entrega)
 │   │   ├── pos_g8.py               (Fase 2)
-│   │   ├── ffva_g8.py              (Fase 2)
 │   │   ├── risk_g8.py, psi_g8.py, iydt_2y.py, iydt_10y.py, curva_g8.py   (Fase 3)
 │   │   └── rtf10_g8.py, pol_g8.py, xccy_g8.py                            (Fase 4)
 │   ├── funnel/funnel.py            (Fase 5) embudo 7+1, abortos, Hard Stop 9, Módulo 19

@@ -29,7 +29,6 @@ scripts/metals_fairvalue_g8.py,actions,metals_update.yml,MFV_G8_*,PARCIAL,g8http
 scripts/usd_factor.py,actions,usd_factor.yml,USD_FACTOR.json + data/usd_factor/,PENDIENTE,requests propio,escritura propia,alerta de fallo del workflow,Congelado junto con S01B (F6); no está en la lista de 3B
 scripts/pos_g8_cot_collector.py,actions,g8_port_run.yml,pos_g8_cot.json,PENDIENTE,urllib propio,escritura propia,alerta de fallo del workflow,CFTC COT (POS_COT/CFTC_TFF): no está en la lista de 3B
 scripts/cme_options_collector.py,actions,cme_options.yml,OPTIONS_SURFACE.json,EXCLUIDO,,,,Opciones FX de CME / Databento: exclusión acordada
-scripts/fx_futures_collector.py,actions,fx_futures_backfill.yml + g8_port_run.yml,data/futures/,EXCLUIDO,,,,Databento: exclusión acordada
 scripts/fetch_saron.py,ninguno,ninguno,SARON*.csv (no existen),INACTIVO,requests propio,escritura propia,,Ningún workflow lo ejecuta y data/ no tiene sus salidas: SARON llega por fetch_chf_snb (Mac)
 scripts/notify_telegram.py,actions,varios,mensaje Telegram,NO_ES_DESCARGADOR,,,,Notificador
 scripts/fetch_gbp_real.py,actions,daily_update.yml + feed_recovery.yml,RY_G8_GBP.csv,CUBIERTO_3B,g8http (Ingest),Ingest.publish,actions__fetch_gbp_real.json + ingest_watch,BoE daily spot workbook with IADB fallback

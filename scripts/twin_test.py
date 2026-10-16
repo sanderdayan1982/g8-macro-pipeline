@@ -72,18 +72,7 @@ def _pos_g8(pine):
     return long
 
 
-def _ffva_g8(pine):
-    """FFVA-G8 v1.3.2 exports z_<CCY> (ΔOI Z-252 capped ±3). Bucket with z_flow = 0.25."""
-    recs = []
-    for col in [c for c in pine.columns if c.startswith("z_")]:
-        key = col[2:]
-        z = pd.to_numeric(pine[col], errors="coerce")
-        b = ["NA" if pd.isna(v) else "Z+" if v > 0.25 else "Z-" if v < -0.25 else "Z0" for v in z]
-        recs.append(pd.DataFrame({"data_date": pine["data_date"], "key": key, "state_pine": b}))
-    return pd.concat(recs, ignore_index=True)
-
-
-ADAPTERS = {"pos_g8": _pos_g8, "ffva_g8": _ffva_g8}
+ADAPTERS = {"pos_g8": _pos_g8}   # A4 (2026-10-16): FFVA retirado del dashboard
 
 
 def main(script):

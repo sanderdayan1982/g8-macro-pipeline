@@ -32,7 +32,7 @@ Persisten dependencias del Mac para fuentes bloqueadas en Actions y entradas man
 | CI de humo `validate.yml` | **Activo** — en cada push: sintaxis Python/JS/YAML, registry, `dashboard_alerts.py --dry-run` |
 | Feeds locales (Mac) | **Activo** — `fetch_nzd_b2.py` v1.4 + `fetch_chf_snb.py` v1.0 + `push_nzd_to_github.py` v1.2, launchd 08:00 (ver *Eslabón Mac*) |
 | Fase 1 (feeds macro) | Sellada |
-| Fase 2 — port FFVA (Databento futuros) | **PAUSADO** (2026-09-12): sin gasto Databento en futuros |
+| Fase 2 — port FFVA (Databento futuros) | **RETIRADO** (A4, 2026-10-16): FFVA vive solo en TradingView (9-FFVA) |
 | Opciones CME (§08 strike walls) | Activo — Databento, ~$0.05/sesión, tope $0.25/sesión en código |
 | COT (§09) | Activo — CFTC SODA, gratis, semanal (vie 21:05 + sáb 09:05 UTC) |
 | XCCY G8 Command Center (proyecto anterior) | **Cancelado** (mayo 2026). Su código sigue en `docs/` como `.legacy-hidden`; el XCCY operativo es el script TradingView v2.6.1 |
@@ -58,12 +58,11 @@ Persisten dependencias del Mac para fuentes bloqueadas en Actions y entradas man
 |---|---|---|
 | `daily_update.yml` | 18:00 lun–vie | Scrapers de tasas/RFR/floors → ACM (USD EUR JPY GBP CAD AUD **NZD CHF**) → synth NZD (solo fallback) → real yields (+NZD) → alertas → commit |
 | `cme_options.yml` | 13:30 + 17:00 | Colector Databento de opciones (T+1, tope $0.25/sesión) → resumen → alertas → commit |
-| `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. Bloques FFVA comentados (pausa) |
+| `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. FFVA retirado (A4) |
 | `metals_update.yml` | semanal | `metals_fairvalue_g8.py` (MDP) |
 | `usd_factor.yml` | 15:30 + 17:30 lun–vie | BCE ref. rates → `usd_factor.py` (factor, β EWMA, residuales, dispersión, PCA, twins) → `book_risk.py` (cubos, VaR, Euler, estrés, PRE-TRADE, snapshots) → alertas → commit. Festivo TARGET = NO_NEW_DATA, no fallo |
 | `acm_validate.yml`, `ry_validate.yml` | manual | Validaciones ACM/real yields |
 | `validate.yml` | push / PR | CI de humo: compila `scripts/`, valida YAML, registry y JS inline, corre `dashboard_alerts.py --dry-run` (sin secrets, sin datos) |
-| `fx_futures_backfill.yml` | **manual, no lanzar** | Backfill Databento de futuros (proyecto pausado; consume presupuesto) |
 
 Secrets: `FRED_API_KEY`, `DATABENTO_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 

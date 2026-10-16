@@ -3379,7 +3379,6 @@ function render(b) {
         var st = g.pos_twin.status, cls = st === 'PASSED' ? '' : st === 'FAILED' ? 'g-bad' : 'g-warn';
         h += '<span class="brief-gate ' + cls + '" title="' + esc(g.pos_twin.label) + '">' + esc(g.pos_twin.label) + '</span>';
     }
-    if (g.ffva) h += '<span class="brief-gate g-off">' + esc(g.ffva.label) + '</span>';
     (b.dqm || []).forEach(function (d) { h += '<span class="brief-gate g-bad">DQM · ' + esc(d.feed) + ' ' + esc(d.status) + '</span>'; });
     h += '</div>';
     /* libro G8 — una fila por divisa (server-side, brief.json) */
@@ -3434,7 +3433,6 @@ function render(b) {
         chips.innerHTML = '<span>rates <b>' + esc(a.rates || '—') + '</b></span><span>COT <b>' + esc(a.cot || '—') + '</b></span>' +
             '<span>options <b>' + esc(a.options || '—') + '</b></span><span>metals <b>' + esc(a.metals || '—') + '</b></span>' +
             '<span class="' + cls + '">twin POS ' + esc(pt.status || '—') + '</span>' +
-            (g.ffva ? '<span class="g-off">FFVA ' + esc(g.ffva.status || '') + '</span>' : '') +
             (age.late ? '<span class="g-bad">BRIEF ATRASADO</span>' : '') +
             ((b.dqm || []).length ? '<span class="g-bad">DQM ' + b.dqm.length + ' feed(s) STALE/DEAD</span>' : '');
     }
