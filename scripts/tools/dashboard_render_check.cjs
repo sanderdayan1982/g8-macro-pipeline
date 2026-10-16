@@ -29,7 +29,8 @@ const REQUIRED = [
   ['brief-body', el => el.innerText.trim().length > 200 && !/Cargando brief/.test(el.innerText)],
   ['attr-matrix', el => !!el.querySelector('table.attr-table tbody tr')],
   ['s01b-panel', el => !!el.querySelector('table tbody tr')],
-  ['dqm-panel', el => el.innerText.trim().length > 100],
+  // B1 (2026-10-16): §05 DQM retirado; el único monitor es health.json pintado por js/health.js.
+  ['publication-health', el => /FRESCURA|VIGILANCIA/.test(el.innerText) && !!el.querySelector('table')],
   ['uf-panel', el => el.innerText.trim().length > 50],
   ['cot-panel', el => el.innerText.trim().length > 50],
   ['opt-surface', el => el.innerText.trim().length > 50],

@@ -39,10 +39,16 @@ class Evidence(unittest.TestCase):
         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'CURRENT')
         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,4\n')['status'],'ERROR')
         self.now=datetime(2026,10,12,tzinfo=timezone.utc)
-        self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'UNKNOWN')
+        x=self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')
+        self.assertEqual(x['status'],'LATE')            # B1: verificación caducada = incidencia
+        self.assertEqual(x['state'],'EVIDENCE_EXPIRED')
 
     def test_next_meeting_invalidates_evidence_even_if_recent(self):
         self.policy['GB_POLICY.csv']['next_review_at']='2026-10-04T20:30:00Z'
+        self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'LATE')   # B1
+
+    def test_B1_future_verification_stays_unknown(self):
+        self.policy['GB_POLICY.csv']['verified_at']='2026-10-05T20:00:00Z'
         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'UNKNOWN')
 
     def test_retired_input_cannot_reappear_silently(self):

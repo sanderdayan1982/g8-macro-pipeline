@@ -2,14 +2,20 @@
 (function () {
     'use strict';
     var lastReport = null;
+    /* B1 (2026-10-16): ÚNICO dueño de la cabecera de salud. Antes solo escribía si había aviso y el antiguo
+       G8DQM (sondeo propio en el navegador) ponía su contador: dos monitores, dos verdades. */
     function applyHeader() {
         var r = lastReport, age = r ? (Date.now() - Date.parse(r.generated_utc)) / 3600000 : NaN;
-        var warning = !isFinite(age) || age > 56 || age < -0.1 ? 'SIN VERIFICAR' :
-            r.issues.length ? r.issues.length + ' INCIDENCIAS' : r.unknown_count ? 'VERIFICACIÓN PARCIAL' : (r.slow_fallbacks || []).length ? 'RESPALDOS LENTOS' : '';
-        if (!warning) return;
+        var old = !isFinite(age) || age > 56 || age < -0.1;
+        var text, color;
+        if (old) { text = 'SIN VERIFICAR'; color = '#ff8c42'; }
+        else if (r.issues.length) { text = r.issues.length + ' INCIDENCIAS'; color = '#ff5c72'; }
+        else if (r.unknown_count) { text = 'VERIFICACIÓN PARCIAL'; color = '#fdb813'; }
+        else if ((r.slow_fallbacks || []).length) { text = 'AL DÍA · RESPALDOS LENTOS'; color = '#fdb813'; }
+        else { text = 'AL DÍA'; color = '#2fbf71'; }
         var count = document.getElementById('status-count'), dots = document.getElementById('status-dots');
-        if (count) count.textContent = warning;
-        if (dots) { dots.textContent = '●'; dots.style.color = '#ff8c42'; dots.title = 'Ver vigilancia de publicaciones'; }
+        if (count) count.textContent = text;
+        if (dots) { dots.textContent = '●'; dots.style.color = color; dots.title = 'Ver vigilancia de publicaciones (health.json)'; }
     }
     function render(report, now) {
         lastReport = report;

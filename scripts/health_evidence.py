@@ -85,8 +85,13 @@ def refine(root, now, item, policy):
             raise ValueError('invalid evidence')
         item.update(evidence_source=evidence['source'], evidence_expires_utc=expires.isoformat(),
                     next_decision=evidence['next_review_at'])
-        if now < verified or now >= expires:
-            item.update(status='UNKNOWN', reason='Verificación oficial caducada o futura: requiere nueva consulta de decisión y calendario. No basta repetir el último tipo.')
+        if now < verified:
+            item.update(status='UNKNOWN', reason='Verificación oficial con fecha futura: no se puede certificar.')
+        elif now >= expires:
+            # B1 (2026-10-16): una verificación caducada (7 días o reunión ya celebrada) es una incidencia, no un
+            # «sin confirmar»: entra en issues → needs_repair → el agente debe reverificar (mantenimiento.md §3).
+            item.update(status='LATE', state='EVIDENCE_EXPIRED',
+                        reason='Verificación oficial caducada (%s): requiere nueva consulta de decisión y calendario. No basta repetir el último tipo.' % expires.isoformat())
         elif not observations or observations[-1][0] < effective:
             item.update(status='LATE', reason='Serie anterior a la decisión oficial verificada o sin observación vigente.')
         elif not math.isclose(observations[-1][1], rate, abs_tol=1e-8, rel_tol=0):

@@ -338,7 +338,7 @@
 </header>
     <aside id="publication-health" class="dqm-attn" style="margin:12px 24px;overflow-x:auto" aria-live="polite">Comprobando frescura por publicación…</aside>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
-    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#section-quality" data-key="5">5 DQM</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-policy" data-key="3">3 Policy</a><a href="#section-acm" data-key="4">4 TP</a><a href="#publication-health" data-key="5">5 Salud</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-cot" data-key="9">9 COT</a><a href="#section-factor" data-key="u">u Factor</a>
     <span class="desk-nav-hint">teclas 0–9 · u</span>
     <button type="button" id="nav-refresh" style="background:none;border:1px solid #1c2330;color:#8a93a6;font:inherit;padding:2px 8px;border-radius:2px;cursor:pointer;margin-left:8px" title="Borra la caché local (15 min) de CSV/JSON y recarga con los datos que el pipeline acaba de publicar" onclick="if(window.G8NET&&G8NET.clearCache)G8NET.clearCache();location.reload();">↻ datos</button>
 </nav>
@@ -557,23 +557,8 @@
         </div>
     </section>
 
-    <!-- ══ 04 — DATA QUALITY MONITOR ══════════════════════════════════════ -->
-    <section class="dashboard-section" id="section-quality">
-        <div class="section-header">
-            <h2 class="section-title">05 — Data Quality Monitor</h2>
-            <span class="section-meta">Feed freshness · Staleness alerts · Source reliability</span>
-        </div>
-        <div class="section-body">
-            <div id="dqm-panel">
-                <div class="attr-err" style="color:#5d6678">Initialising feed registry…</div>
-            </div>
-            <div class="dqm-legacy-head">Pipeline loader feeds (data-loader v5.2 — RFR · Bills · Policy · ACM) · mismo motor de frescura que la tabla superior (G8DQM.computeStaleness)</div>
-            <div class="quality-grid" id="quality-grid"></div>
-            <div class="section-footer">
-                <span class="footer-note">Registry-based monitor · single canonical health score drives the header. LIVE = within the feed's own expected publication lag (daily feeds stay LIVE across weekends/G8 holidays; policy rates are event-driven so a flat inter-meeting series is LIVE) · DEGRADED = late, inside grace band (1.0–1.5× lag) · STALE = 1.5–2.5× lag · DEAD = beyond 2.5× lag or unreachable · SYNTHETIC = computed proxy · MANUAL = hand-set constant; a ⚠ age badge appears once a manual input exceeds its lag. Business-day counting skips weekends + a G8 holiday union (extend yearly). RUN ALL re-checks every registered source live and appends to a 90-entry localStorage audit log. Routing: repo CSVs + ECB direct · SNB/RBNZ/FRED/eco3min via same-origin Netlify proxy. Cache 15 min (↻ datos in the nav clears it) · auto re-check every 4 h.</span>
-            </div>
-        </div>
-    </section>
+    <!-- B1 (2026-10-16): §05 Data Quality Monitor retirado. Un solo monitor de salud: health.json
+         (scripts/health_monitor.py), pintado por js/health.js en #publication-health. -->
 
 <!-- ══ 06 — GOLD FAIR VALUE / MDP (Kalman TVP · MMT) ═══════════════════════ -->
 <section class="dashboard-section" id="section-gold">
@@ -1160,7 +1145,7 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
 <footer class="dashboard-footer">
     <div class="footer-disclaimer" style="font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;line-height:1.55;color:#7e879a;letter-spacing:.01em;padding:12px 0 14px;border-bottom:1px solid #151c28;margin-bottom:12px">
         <b style="color:#b8c0cf">Uso interno / investigación · no es asesoramiento de inversión.</b>
-        Este panel no constituye una recomendación para comprar, vender ni mantener ningún instrumento. Los fair value, las primas por plazo ACM (Adrian-Crump-Moench) y el MDP (Monetary Disorder Premium) son estimaciones de modelos propios, sujetas a error, revisión y cambios de régimen; MDP es valoración, no timing. Las celdas marcadas <span style="color:#fdb813">PROXY / INDIC / MANUAL</span>, <span style="color:#fdb813">⧗ as-of</span>, <span style="color:#ff8c42">FROZEN</span> o <span style="color:#ff5c72">STALE / DEAD</span> no son observaciones de mercado corrientes — verifique cada cifra en su fuente (§05 · Data Quality Monitor) antes de decidir. Riesgo de modelo y de datos asumido por el operador.
+        Este panel no constituye una recomendación para comprar, vender ni mantener ningún instrumento. Los fair value, las primas por plazo ACM (Adrian-Crump-Moench) y el MDP (Monetary Disorder Premium) son estimaciones de modelos propios, sujetas a error, revisión y cambios de régimen; MDP es valoración, no timing. Las celdas marcadas <span style="color:#fdb813">PROXY / INDIC / MANUAL</span>, <span style="color:#fdb813">⧗ as-of</span>, <span style="color:#ff8c42">FROZEN</span> o <span style="color:#ff5c72">STALE / DEAD</span> no son observaciones de mercado corrientes — verifique cada cifra en su fuente (vigilancia de publicaciones (cabecera)) antes de decidir. Riesgo de modelo y de datos asumido por el operador.
     </div>
     <div class="footer-inner">
         <div class="footer-left">
@@ -1801,25 +1786,8 @@ function healthScore() {
 
 function syncHeader() {
     var h = healthScore();
-    var countEl = document.getElementById('status-count');
-    var dotsEl  = document.getElementById('status-dots');
     var upEl    = document.getElementById('last-update');
-    if (countEl) countEl.textContent = h.healthy + '/' + h.total;
-    if (dotsEl && h.total) {
-        /* 15-dot bar mapped to CRITICALITY-WEIGHTED healthy/watch/broken proportions
-           (audit — H-11): valuation feeds count double, so dead §01/§06/§07 sources
-           pull the board red instead of hiding in a 4-of-37 rounding. */
-        var wt = h.wTotal || h.total;
-        var N = 15, g = Math.round(N * h.wHealthy / wt), a = Math.round(N * h.wWatch / wt);
-        if (g + a > N) a = N - g;
-        var r = N - g - a;
-        dotsEl.innerHTML =
-            '<span style="color:#2fbf71">' + '●'.repeat(g) + '</span>' +
-            '<span style="color:#fdb813">' + '●'.repeat(a) + '</span>' +
-            '<span style="color:#ff5c72">' + '●'.repeat(r) + '</span>';
-        dotsEl.title = h.healthy + '/' + h.total + ' feeds healthy · dots weighted by criticality (' +
-            h.wBroken + '/' + h.wTotal + ' weighted broken · valuation feeds ×2)';
-    }
+    /* B1 (2026-10-16): el contador y los puntos de la cabecera los escribe solo js/health.js (health.json). */
     /* v2.7.0: LAST UPDATE = last pipeline publish (brief.json generated_utc, set by §00).
        The freshest feed date was usually an effective-dated IORB/DFR row = "today" even when
        the pipeline had not run. Fallback only if the brief never loads. */
@@ -2007,9 +1975,9 @@ function render() {
 }
 
 function init() {
-    render();
-    runAll(false);
-    setInterval(function () { runAll(false); }, 4 * 60 * 60 * 1000);   /* 4 h auto re-check */
+    /* B1 (2026-10-16): G8DQM deja de ser un monitor. Sin panel, sin RUN ALL ni sondeo cada 4 h y sin
+       escribir la cabecera: la única verdad de frescura es health.json (js/health.js). Se conservan
+       report() y computeStaleness() porque las secciones los usan para sus propias marcas de as-of. */
 }
 
 window.G8DQM = { report: report, runAll: runAll, computeStaleness: computeStaleness,
@@ -2360,7 +2328,7 @@ function staleTag(s) {
     var days = Math.floor((Date.now() - t.getTime()) / 86400000);
     if (days <= 15) return '';
     return '<span class="attr-z attr-z-md" title="leg as-of ' + iso + ' · ' + days +
-        'd old — this daily feed is not updating (see §05 · Data Quality Monitor)">⧗ ' + iso.slice(5) + '</span>';
+        'd old — this daily feed is not updating (see vigilancia de publicaciones (cabecera))">⧗ ' + iso.slice(5) + '</span>';
 }
 
 /* P-3 (acta P-3, 1-oct-2026): real date of the market data on the card, with a lag mark.
@@ -2489,7 +2457,7 @@ function build(data) {
         var d = data[c];
         if (!d) {
             html += '<tr><td><span class="attr-ccy">' + c + '</span></td><td colspan="6" class="attr-err">' +
-                'source unreachable — see Data Quality Monitor (§05) for fallback chain and manual link</td></tr>';
+                'source unreachable — see vigilancia de publicaciones (cabecera) for fallback chain and manual link</td></tr>';
             return;
         }
         var nomCell;
@@ -3723,7 +3691,7 @@ function paint(metal, ids, st, rows) {
           (lastDate ? ymd(lastDate) : '—') + ' · estado ' + dataStatus + '. El pipeline de este metal ' +
           'no se está actualizando: PRECIO, FAIR VALUE y MDP-Z mostrados son de esa fecha, no del mercado ' +
           'actual, así que la desviación no es una señal viva. Trátese como histórico hasta reanudar el ' +
-          'pipeline (§05 · Data Quality Monitor).</div>'
+          'pipeline (vigilancia de publicaciones (cabecera)).</div>'
         : '';
 
     // D1/D2: provenance badges. The operator must know which cascade tier feeds

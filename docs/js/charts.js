@@ -600,7 +600,7 @@
         setLoading('chart-policy');
         setLoading('chart-acm');
         document.getElementById('curves-grid').innerHTML = '<div class="chart-loading">Loading curves</div>';
-        document.getElementById('quality-grid').innerHTML = '<div class="chart-loading">Loading quality data</div>';
+        /* B1: §05 retirado; renderQualityGrid ya sale si no hay #quality-grid */
         try {
             const [rfrData, billsData, policyData, acmData] = await Promise.all([
                 global.G8DataLoader.loadAllRFR(),

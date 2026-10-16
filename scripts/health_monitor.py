@@ -38,6 +38,25 @@ def business_age(start, end, calendar, cals):
     return n
 
 
+def sla_deadline(since_iso, calendar, cals):
+    """B1: límite de la espera = mismo instante del siguiente día hábil del calendario del feed."""
+    if not since_iso:
+        return None
+    try:
+        t = datetime.fromisoformat(str(since_iso).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is None:            # auditoría Argon B1: un ISO sin zona se interpreta como UTC (evita TypeError naive/aware)
+        t = t.replace(tzinfo=timezone.utc)
+    cal = {"EU": "TARGET"}.get(calendar, calendar)
+    d = t.date()
+    for _ in range(15):
+        d += timedelta(days=1)
+        if not cal or SC.is_bd(cals, cal, d):
+            break
+    return t + timedelta(days=(d - t.date()).days)
+
+
 def outstanding_fetch_failure(facts, filename):
     """A newer validated publication closes an older attempt, never the reverse."""
     records = list(facts.values())
@@ -84,8 +103,19 @@ def build(root, now, report=None):
         # Acta P-11: one observation behind and no scheduled pass yet since it became due is a wait, not an
         # incident (e.g. NZD only arrives with the Mac's evening pass). Two missing (STALE) or over the registry
         # budget (checked below) is still LATE.
+        # B1 (2026-10-16, consenso Claude + Argon): esa espera tiene un límite. Gracia = 1 día hábil del calendario
+        # del feed desde que la observación se hizo exigible (overdue_since). Pasado el límite, la falta es LATE →
+        # needs_repair → agente de mantenimiento + aviso Telegram. Sin overdue_since conocido se mantiene PENDING.
         if row["state"] == "OVERDUE" and row.get("cause") == "SIN_PASADA_PROGRAMADA":
-            item.update(status="PENDING", reason="Publicada; espera la próxima pasada programada (1 observación, dentro de plazo)")
+            deadline = sla_deadline(row.get("overdue_since"), row.get("calendar") or "", cals)
+            if deadline is not None:
+                item["sla_deadline_utc"] = deadline.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if deadline is None or now < deadline:
+                item.update(status="PENDING", reason="Publicada; espera la próxima pasada programada (1 observación, dentro de plazo"
+                            + (" hasta %s UTC)" % item["sla_deadline_utc"] if deadline is not None else ")"))
+            else:
+                item.update(status="LATE", reason="SLA superado (B1): la observación %s sigue sin llegar 1 día hábil después de ser exigible (%s UTC)"
+                            % (row.get("expected_obs"), row.get("overdue_since")))
         # An HTTP success cannot close an outstanding error without a published
         # output; existing ingest_watch also checks these facts independently.
         if outstanding_fetch_failure(row.get("facts", {}).get("by_source") or {}, row['file']):
