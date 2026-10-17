@@ -1186,9 +1186,9 @@ var FEED_REGISTRY = {
     CAD_NOM_2Y: repo('CAD_NOM_2Y.csv', 'CAD Nominal 2Y (BoC Valet, via acm_g8)', 'daily', 5, '01'),
     /* v2.5.7: NZD TP proxy materialised by nzd_tp_synth.py (SYNTH, AUD-anchored). Budget 7bd:
        depends on the Mac local B2 fetch, tolerate a long weekend without a push. */
-    NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '04'),
+    NZD_ACM: repo('ACM_G8_NZD.csv', 'NZD ACM 10Y (K=3 on RBNZ B2; SYNTH proxy fallback)', 'daily', 7, '03'),
     /* v2.5.9: CHF ACM on the SNB zero curve (Mac local fetch); frozen 2025-07 file until then */
-    CHF_ACM: repo('ACM_G8_CHF.csv', 'CHF ACM 10Y (K=3 on SNB rendeiduebd + NOWCAST diario; sin respaldo congelado, acta P-9)', 'daily', 7, '04'),
+    CHF_ACM: repo('ACM_G8_CHF.csv', 'CHF ACM 10Y (K=3 on SNB rendeiduebd + NOWCAST diario; sin respaldo congelado, acta P-9)', 'daily', 7, '03'),
     CHF_SARON: repo('CHF_SARON.csv', 'CHF SARON (SNB zirepo + RSS, local fetch)', 'daily', 7, '02'),
 
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
@@ -1201,7 +1201,7 @@ var FEED_REGISTRY = {
        budget — the others stay at 4. (audit v2.4 — RBA) */
     AUD_RY: repo('RY_G8_AUD.csv', 'AUD Real/BE 10Y (iAGS, RBA)', 'daily', 8, '01'),
 
-    /* ── 06/07 metals MDP — Kalman TVP fair value (metals_fairvalue_g8.py) ── */
+    /* ── 04/05 metals MDP — Kalman TVP fair value (metals_fairvalue_g8.py) ── */
     /* MFV_STATE is a JSON, not a CSV — extractLastDate() can't read its date and
        the DQM's own fetch was flipping it to a false DEAD ('no date'), racing the
        correct LIVE report from metals.js. externalReport tells checkFeed to skip
@@ -1210,9 +1210,9 @@ var FEED_REGISTRY = {
     /* metals model is WEEKLY (COT W-TUE) and auto-refreshed by the metals_update
        workflow every Saturday; budget 10bd spans a week + slack so a healthy weekly
        feed doesn't false-alarm mid-week, while a truly frozen feed (>2.5×) still DEADs. */
-    MFV_STATE: Object.assign(repo('MFV_G8_state.json', 'Metals MDP bridge state', 'weekly', 10, '06'), { externalReport: true }),
-    XAU_MFV:   repo('MFV_G8_XAU.csv',    'Gold MDP (Kalman TVP/MMT)',  'weekly', 10, '06'),
-    XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'weekly', 10, '07'),
+    MFV_STATE: Object.assign(repo('MFV_G8_state.json', 'Metals MDP bridge state', 'weekly', 10, '04'), { externalReport: true }),
+    XAU_MFV:   repo('MFV_G8_XAU.csv',    'Gold MDP (Kalman TVP/MMT)',  'weekly', 10, '04'),
+    XAG_MFV:   repo('MFV_G8_XAG.csv',    'Silver MDP (Kalman TVP)',    'weekly', 10, '05'),
 
     /* ── 01 attribution — in-browser external feeds ────────────────────── */
     /* v2.6.3 (19-sep-2026): the browser can no longer reach data-api.ecb.europa.eu
@@ -1279,41 +1279,41 @@ var FEED_REGISTRY = {
     NZD_BKBM_90D: repo('NZD_BILL_90D.csv', 'NZD BKBM 90d (RBNZ B2, Mac fetch)', 'daily', 5, '02'),
     NZD_BOND_10Y: repo('NZD_BOND_10Y.csv', 'NZD 10Y bond file (RBNZ B2, Mac fetch)', 'daily', 5, '01'),
 
-    /* ── 03 policy rates — repo (BIS WS_CBPOL) ─────────────────────────────
+    /* ── 02 policy rates — repo (BIS WS_CBPOL), fundidos en §02 ─────────────
        EVENT-DRIVEN, NOT DAILY. BIS WS_CBPOL only emits a new observation on a
        rate-change event, so a flat series between meetings is the CORRECT state,
        not staleness. maxStaleness must span a realistic inter-meeting gap
        (~35 business days ≈ 7 weeks) or these alarm permanently. freq label
        reflects the true cadence so the table reads honestly. */
-    GB_POLICY: Object.assign(repo('GB_POLICY.csv', 'BoE Bank Rate', 'event-driven', 35, '03'), { eventDriven: true }),
-    JP_POLICY: Object.assign(repo('JP_POLICY.csv', 'BoJ Policy Balance Rate', 'event-driven', 40, '03'), { eventDriven: true }),
-    CH_POLICY: Object.assign(repo('CH_POLICY.csv', 'SNB Policy Rate', 'event-driven', 65, '03'), { eventDriven: true }),
-    AU_POLICY: Object.assign(repo('AU_POLICY.csv', 'RBA Cash Rate Target', 'event-driven', 35, '03'), { eventDriven: true }),
-    NZD_OCR:   Object.assign(repo('NZD_OCR.csv',   'RBNZ OCR', 'event-driven', 45, '03'), { eventDriven: true }),
+    GB_POLICY: Object.assign(repo('GB_POLICY.csv', 'BoE Bank Rate', 'event-driven', 35, '02'), { eventDriven: true }),
+    JP_POLICY: Object.assign(repo('JP_POLICY.csv', 'BoJ Policy Balance Rate', 'event-driven', 40, '02'), { eventDriven: true }),
+    CH_POLICY: Object.assign(repo('CH_POLICY.csv', 'SNB Policy Rate', 'event-driven', 65, '02'), { eventDriven: true }),
+    AU_POLICY: Object.assign(repo('AU_POLICY.csv', 'RBA Cash Rate Target', 'event-driven', 35, '02'), { eventDriven: true }),
+    NZD_OCR:   Object.assign(repo('NZD_OCR.csv',   'RBNZ OCR', 'event-driven', 45, '02'), { eventDriven: true }),
 
-    /* ── 04 ACM USD time series — repo ─────────────────────────────────── */
-    ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '04'),
+    /* ── 03 ACM USD time series — repo ─────────────────────────────────── */
+    ACM_TP_10Y: repo('ACM_TP_10Y.csv', 'ACM 10Y TP chart feed (NY Fed)', 'weekly', 10, '03'),
 
     OPTIONS_SURFACE: Object.assign(
-        repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '08'),
+        repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '06'),
         { externalReport: true }),
 
-    /* ── 09 COT positioning — repo (pos_g8_cot_collector.py) ──────────────
+    /* ── 00 COT positioning — repo (pos_g8_cot_collector.py). Fuera de la página. ──
        Weekly (COT W-TUE), published Friday; budget 10bd spans a week + slack.
-       externalReport: the §09 module parses the JSON date and reports its own
+       externalReport: the COT collector parses the JSON date and reports its own
        freshness (extractLastDate can't read a JSON), same as OPTIONS_SURFACE. */
     POS_COT: Object.assign(
-        repo('pos_g8_cot.json', 'COT Positioning G8 (TFF + Disagg MM)', 'weekly', 10, '09'),
+        repo('pos_g8_cot.json', 'COT Positioning G8 (TFF + Disagg MM)', 'weekly', 10, '00'),
         { externalReport: true }),
 
-    /* ── 10 Factor USD — repo (usd_factor.py, BCE ref. rates triangulados) ──
+    /* ── 07 Factor USD — repo (usd_factor.py, BCE ref. rates triangulados) ──
        Daily on TARGET days (BCE ~16:00 CET); budget 5bd. externalReport: the
-       §10 module reads as_of from the JSON and reports its own freshness. */
+       §07 module reads as_of from the JSON and reports its own freshness. */
     S01B: Object.assign(
         repo('S01B.json', '§01-b lectura 22 s. · CTF (s01b.py)', 'daily', 3, '01'),
         { externalReport: true }),
     USD_FACTOR: Object.assign(
-        repo('USD_FACTOR.json', 'Factor USD · residuales · Σ (BCE triangulado)', 'daily', 5, '10'),
+        repo('USD_FACTOR.json', 'Factor USD · residuales · Σ (BCE triangulado)', 'daily', 5, '07'),
         { externalReport: true })
     /* CHF_BILL_3M deregistered 2026-06-26 — orphan feed: no rendered section
        consumed it (§02 has no CHF row: no FLOOR_CHF and no SARON fixing) and no
@@ -2459,10 +2459,29 @@ function bdBetween(a, b) {   /* días hábiles L-V entre hoy (a) y la reunión (
     return n;
 }
 function fmtC(d) { return d ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : '—'; }
+function shadowAgeOk(doc) {
+    /* Mismo tope que briefAge: 30 h entre semana, 78 h en domingo y lunes.
+       as_of es una fecha. El día UTC de hoy cuenta como vigente. Si no, la edad
+       se mide desde las 21:30 UTC de ese día (cierre --final del daily). */
+    var asOf = doc && String(doc.as_of || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf)) return false;
+    if (asOf === new Date().toISOString().slice(0, 10)) return true;
+    var t = Date.parse(asOf + 'T21:30:00Z');
+    if (!isFinite(t)) return false;
+    var h = (Date.now() - t) / 3600000, dow = new Date().getUTCDay();
+    var lim = (dow === 0 || dow === 1) ? 78 : 30;
+    return h >= 0 && h <= lim;
+}
 function shadowDays(ccy) {
-    var block = _cbShadow && _cbShadow.currencies && _cbShadow.currencies[ccy];
+    var doc = _cbShadow;
+    var block = doc && doc.currencies && doc.currencies[ccy];
     if (!block || block.days_to_next_cb_meeting == null || !isFinite(Number(block.days_to_next_cb_meeting))) return null;
-    return { bd: Number(block.days_to_next_cb_meeting), soon: block.CB_EVENT_48H === true };
+    return {
+        bd: Number(block.days_to_next_cb_meeting),
+        soon: block.CB_EVENT_48H === true,
+        asOf: String(doc.as_of || ''),
+        fresh: shadowAgeOk(doc)
+    };
 }
 function loadCbShadow() {
     var url = RAW + 'CB_EVENT_48H_shadow.json';
@@ -2484,11 +2503,19 @@ function policyCells(p, pol) {
     else {
         var shadow = shadowDays(p.ccy);
         var today = new Date().toISOString().slice(0, 10);
-        var bd = shadow ? shadow.bd : bdBetween(today, nx.date);
-        var soon = shadow ? shadow.soon : bd <= 2;
-        var via = shadow ? ' · días hábiles del banco (CB_EVENT_48H_shadow.json)' : ' · lunes a viernes (calendario de sombra no disponible)';
+        var useShadow = !!(shadow && shadow.fresh);
+        var bd = useShadow ? shadow.bd : bdBetween(today, nx.date);
+        var soon = useShadow ? shadow.soon : bd <= 2;
+        var via = useShadow
+            ? ' · días hábiles del banco (CB_EVENT_48H_shadow.json · as-of ' + shadow.asOf + ') · ámbar = CB_EVENT_48H (0..2 d.h. del calendario del banco)'
+            : (shadow
+                ? ' · lunes a viernes (CB_EVENT_48H_shadow.json · as-of ' + shadow.asOf + ' · ATRASADO, recuento en vivo)'
+                : ' · lunes a viernes (calendario de sombra no disponible)');
+        var stale = (!useShadow && shadow)
+            ? ' <span class="attr-sub" title="CB_EVENT_48H_shadow.json · as-of ' + shadow.asOf + '">sombra atrasada</span>'
+            : '';
         meet = '<span class="attr-val"' + (soon ? ' style="color:#fdb813"' : '') + ' title="' + (nx.note || '').replace(/"/g, '&quot;') + ' · fuente: ' + nx.source + via + '">' + nx.date + '</span>' +
-               '<span class="attr-sub">' + (bd === 0 ? 'hoy' : bd + ' d.h.') + (soon ? ' · evento ≤48h' : '') + '</span>';
+               '<span class="attr-sub">' + (bd === 0 ? 'hoy' : bd + ' d.h.') + (soon ? ' · evento ≤48h' : '') + '</span>' + stale;
     }
     return '<td>' + rate + '</td><td>' + since + '</td><td>' + meet + '</td>';
 }
@@ -2677,7 +2704,7 @@ function init() {
             '<th>CCY</th><th>Spread (bps)</th><th>Δ1W</th><th>Δ1M</th><th>90D</th><th>Regime</th>' +
             '<th title="Tipo oficial vigente hoy (misma serie de suelo/política del spread; los anuncios con fecha futura no cuentan)">Tipo oficial</th>' +
             '<th title="Fecha desde la que rige el tipo vigente (último cambio dentro de la serie cargada)">Último cambio</th>' +
-            '<th title="Próxima decisión según el calendario oficial verificado (data/manual/cb_meetings.csv) · días hábiles · ámbar = evento en ≤ 2 d.h.">Próxima reunión</th>' +
+            '<th title="Próxima decisión según el calendario oficial verificado (data/manual/cb_meetings.csv). Con sombra vigente el ámbar lo gobierna CB_EVENT_48H (0..2 d.h. del calendario del banco). Si as_of queda fuera del tope del brief (30 h entre semana, 78 h en domingo y lunes) se usa el recuento lunes–viernes y el ámbar es ≤ 2 d.h.">Próxima reunión</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table>';
         floorWire(); floorSync();
         setTimeout(function () { try { floorChart(_flsKey); } catch (e) { console.warn('[fls] chart', e.message); } }, 0);
@@ -2692,7 +2719,7 @@ if (document.readyState === 'loading') {
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   OPTIONS SURFACE — Section 08 module · v2 (user-pair convention)
+   OPTIONS SURFACE — Section 06 module · v2 (user-pair convention)
    Reads data/OPTIONS_SURFACE.json (built by scripts/build_options_summary.py).
    v2: JPY/CAD/CHF are quoted by CME as XXX/USD (6J/6C/6S) but traded by the
    operator as USD/XXX. This module TRANSLATES display for those three:
@@ -2847,7 +2874,8 @@ function render(doc, shadow) {
                 '<td>' + vBadge(g.verdict || 'NA') + '</td></tr>';
             return;
         }
-        var sh = userWalls(ccy, shadow && shadow.currencies && shadow.currencies[ccy]);
+        var sameSession = !!(shadow && shadow.session && doc.latest_session && String(shadow.session) === String(doc.latest_session));
+        var sh = userWalls(ccy, sameSession ? (shadow.currencies && shadow.currencies[ccy]) : null);
         var prev = (doc.prev || {})[ccy];
         /* user-pair C/P counts: CME calls on XXX/USD are user-puts on USD/XXX */
         var uC = inv ? d.n_put : d.n_call;
@@ -2868,7 +2896,15 @@ function render(doc, shadow) {
             dte = '<span class="attr-sub">' + sh.dte + ' d / ' + (sh.dteBd == null ? '·' : sh.dteBd + ' d.h.') + '</span>';
             if (sh.roll) dte += ' <span class="uf-flag" title="EXPIRING_≤7D_USE_NEXT_MONTH">ROLL ≤7D</span>';
         }
-        var c2 = c2Side(ccy, 'CALL WALL', sh.call, sh.nearCall, d.ref) + c2Side(ccy, 'PUT WALL', sh.put, sh.nearPut, d.ref);
+        var shadowMark = '';
+        if (sameSession) {
+            shadowMark = '<div><span class="uf-flag" title="CME_OPTIONS_C1_shadow.json · sesión ' + shadow.session + '">SHADOW</span></div>';
+        } else if (shadow && shadow.session) {
+            shadowMark = '<div class="attr-sub" title="CME_OPTIONS_C1_shadow.json · sesión ' + shadow.session + '">SHADOW omitida · sesión ' + shadow.session + '</div>';
+        }
+        var c2 = shadowMark + (sameSession
+            ? c2Side(ccy, 'CALL WALL', sh.call, sh.nearCall, d.ref) + c2Side(ccy, 'PUT WALL', sh.put, sh.nearPut, d.ref)
+            : '');
         html += '<tr>' +
             '<td><span class="attr-ccy">' + PAIR[ccy] + '</span>' + invTag + mapBadge(sh.status) + '</td>' +
             '<td><span class="attr-val">' + fmtUser(ccy, d.ref) + '</span>' + refSub + '</td>' +
@@ -2880,7 +2916,8 @@ function render(doc, shadow) {
             '<td title="' + gtitle + '">' + vBadge(g.verdict || '—') + '</td></tr>';
     });
 
-    var nzd = userWalls('NZD', shadow && shadow.currencies && shadow.currencies.NZD);
+    var nzdSame = !!(shadow && shadow.session && doc.latest_session && String(shadow.session) === String(doc.latest_session));
+    var nzd = userWalls('NZD', nzdSame ? (shadow.currencies && shadow.currencies.NZD) : null);
     html += '<tr><td><span class="attr-ccy" style="color:#5d6678">NZD</span>' + mapBadge(nzd.status || 'NO_CME_OPTIONS') + '</td>' +
         '<td colspan="5" class="dqm-src">excluded — VOI census: dead market (Gate 0 decision)</td>' +
         '<td>' + vBadge('NA') + '</td></tr>';
@@ -2957,6 +2994,7 @@ function briefAge(b) {
 function briefSec(sec) {
     return String(sec || '')
         .replace('§06/§07', '§METALES')
+        .replace('§09 COT', 'COT · fuera de la página')
         .replace('§04', '§03')
         .replace('§08', '§06')
         .replace('§10', '§07')

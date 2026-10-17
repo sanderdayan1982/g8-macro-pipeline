@@ -2,7 +2,7 @@
 
 Extiende el complemento C1. No modifica scripts/cme_options_collector.py,
 scripts/build_options_summary.py ni data/OPTIONS_SURFACE.json. No importa
-dashboard_alerts.py: la §08 publicada sigue igual, inversión JPY/CAD/CHF incluida.
+dashboard_alerts.py (§00) y docs/index.html (§06) invierten JPY/CAD/CHF una sola vez. Este JSON se queda nativo.
 
 CALL WALL: strike estrictamente por encima de ref con más open interest de calls,
 entre strikes con OI total >= 100. PUT WALL: strike estrictamente por debajo de ref
@@ -338,7 +338,7 @@ def from_surface(doc, is_business_day, history=None):
         "session": session,
         "prev_session_present": bool(prev),
         "chain": "OPTIONS_SURFACE.json walls (top 5 by total OI). Canonical CSVs are not in the repo.",
-        "convention": "CME (XXX/USD). La inversión de JPY/CAD/CHF de la §08 sigue solo en dashboard_alerts.py.",
+        "convention": "CME (XXX/USD). En este JSON los niveles y dist_pct son nativos; tanto dashboard_alerts.py (§00) como docs/index.html (§06) invierten una sola vez (1/k y cruce call/put) para JPY, CAD y CHF. No volver a invertir.",
         "min_oi": MIN_OI,
         "near_pin_pct": NEAR_PIN_PCT,
         "chip_pct": CHIP_PCT,
