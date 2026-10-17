@@ -47,6 +47,37 @@ class Evidence(unittest.TestCase):
         self.policy['GB_POLICY.csv']['next_review_at']='2026-10-04T20:30:00Z'
         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'LATE')   # B1
 
+    def _calendar(self, body):
+        folder = self.root / 'data' / 'manual'
+        folder.mkdir(parents=True)
+        (folder / 'cb_meetings.csv').write_text(
+            '# nota\ncountry,decision_date,source,note,verified\n' + body, encoding='utf-8')
+
+    def test_held_meeting_in_calendar_expires_even_if_review_is_future(self):
+        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
+        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-12-10T00:00:00Z'
+        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
+        self._calendar('GB,2026-10-05,https://www.bankofengland.co.uk/monetary-policy,hold,2026-10-16\n')
+        x = self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')
+        self.assertEqual(x['status'], 'LATE')
+        self.assertEqual(x['state'], 'EVIDENCE_EXPIRED')
+
+    def test_future_meeting_does_not_expire_evidence(self):
+        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
+        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-12-10T00:00:00Z'
+        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
+        self._calendar('GB,2026-11-05,https://www.bankofengland.co.uk/monetary-policy,future,2026-10-16\n')
+        self.assertEqual(self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')['status'], 'CURRENT')
+
+    def test_calendar_ignores_stale_next_review_when_no_meeting_was_held(self):
+        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
+        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-10-05T00:00:00Z'
+        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
+        self._calendar('GB,2026-11-05,https://www.bankofengland.co.uk/monetary-policy,future,2026-10-16\n')
+        x = self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')
+        self.assertEqual(x['status'], 'CURRENT')
+        self.assertEqual(x['next_decision'], '2026-11-05')
+
     def test_B1_future_verification_stays_unknown(self):
         self.policy['GB_POLICY.csv']['verified_at']='2026-10-05T20:00:00Z'
         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'UNKNOWN')

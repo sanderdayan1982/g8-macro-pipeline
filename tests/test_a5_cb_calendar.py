@@ -2,7 +2,7 @@
 import csv
 import sys
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +47,7 @@ class Calendar(unittest.TestCase):
         for f, c in cc.items():
             d = datetime.fromisoformat(ev[f]["next_review_at"]).date()
             # la evidencia caduca al empezar la reunión (BoJ: 1.er día); la decisión es ese día o el siguiente
-            self.assertTrue((c, d.isoformat()) in dates or (c, d.replace(day=d.day + 1).isoformat()) in dates, (f, d))
+            self.assertTrue((c, d.isoformat()) in dates or (c, (d + timedelta(days=1)).isoformat()) in dates, (f, d))
 
     def test_health_flags_exhausted_calendar(self):
         items = {x["file"]: x for x in HM.cb_calendar_items(ROOT, datetime(2026, 10, 16, tzinfo=timezone.utc))}
@@ -66,6 +66,10 @@ class Web(unittest.TestCase):
         self.assertNotIn('id="section-policy"', self.html)
         self.assertIn("Próxima reunión", self.html)
         self.assertIn("manual/cb_meetings.csv", self.html)
+
+    def test_render_check_accepts_uppercase_header(self):
+        src = (ROOT / "scripts/tools/dashboard_render_check.cjs").read_text(encoding="utf-8")
+        self.assertIn("/pr[oó]xima reuni[oó]n/i", src)
 
     def test_dead_monitor_code_pruned(self):
         for name in ("function runAll(", "function healthScore(", "function syncHeader(", "function checkFeed("):

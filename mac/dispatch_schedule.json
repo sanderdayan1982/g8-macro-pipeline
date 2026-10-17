@@ -14,6 +14,7 @@
   {"id": "daily",           "workflow": "daily_update.yml",   "cron": "30 21 * * 1-5"},
   {"id": "g8_port_fri",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 5"},
   {"id": "g8_port_sat",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 6"},
-  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"}
+  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"},
+  {"id": "metals_shadow",   "workflow": "metals_update.yml",  "cron": "45 22 * * 1-5"}
  ]
 }

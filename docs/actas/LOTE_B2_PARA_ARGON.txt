@@ -1,0 +1,846 @@
+LOTE PARA ARGON — validación A5 + B2 SHADOW
+Fecha: 2026-10-17
+Base: 7213110 (daily data update 2026-10-16), que ya contiene A5 (4c43ba1).
+Pruebas: python -m unittest discover -s tests → 787 OK, 11 omitidas.
+Render: dashboard_render_check (Chromium) → 7 paneles OK, incluido fls-table.
+Este archivo no está dentro del diff de abajo.
+
+1. ACTAS
+- docs/actas/NOTA_A5_VALIDACION_CALENDARIO.md
+- docs/actas/ACTA_B2_METALES_SHADOW.md
+- docs/actas/ACTA_A5_CALENDARIO_TIPOS.md (la propuesta del calendario queda cerrada)
+
+2. ARCHIVOS CLAVE (intactos)
+No se han tocado, y sus hashes de función siguen los del test:
+- asof_weekly, load_slope, forward_returns, evaluate_delta, calibrate_delta, cot_activation
+No se han tocado los archivos congelados por SHA-256 de tests/test_exclusions.py:
+- cme_options_collector.py, build_options_summary.py, cme_options.yml, dashboard_alerts.py, s01b.py, usd_factor.py, book_risk.py
+MFV_G8_state.json no recibe claves de la sombra. metals_provenance.OUTPUTS no cambia.
+No se abre A2 ni lotes posteriores. No se construye el par asimétrico de Asset Managers.
+
+Hashes que cambian (ensamblan el panel diario):
+- build_panel_xau adcabe6d9e4d117083ca4d6ce50c732f6b007d33100b97d22a9657c7fc5c0d31
+- build_panel_xag b3b627d913a4154805b997eb31587284cb0aab88a3d1c6523db2d9bf7010ad19
+- build_metal     aa8955af15f50eaa8ca62d947b7cb1bd9dd69a6a7dfd726a5de32d26f1eda0cd
+
+3. DIFF COMPLETO
+
+diff --git a/.github/workflows/metals_update.yml b/.github/workflows/metals_update.yml
+index 85c9cbf..3ab5fe9 100644
+--- a/.github/workflows/metals_update.yml
++++ b/.github/workflows/metals_update.yml
+@@ -2,7 +2,9 @@
+ # Metals Fair Value / MDP (§06 Gold · §07 Silver) — fully automatic.
+ # metals_fairvalue_g8.py v3 (Kalman TVP under MMT). Prices come from Yahoo/Stooq
+ # (headless), NFA from Treasury/FRED, breakeven from data/RY_G8_USD.csv, slope+DXY
+-# from FRED — no local TradingView exports needed. Weekly cadence (COT is W-TUE).
++# from FRED — no local TradingView exports needed.
++# El contrato de §06/§07 sigue siendo semanal (ancla W-TUE). La pasada de lunes a
++# viernes solo refresca la proyección diaria en SHADOW (B2); no sustituye el MDP semanal.
+ name: Metals Fair Value (MDP)
+ 
+ on:
+@@ -10,6 +12,8 @@ on:
+     # Saturdays 07:00 UTC — after Friday's CFTC COT release; the model anchors to
+     # the Tuesday-COT grid, so once a week keeps §06/§07 within their weekly budget.
+     - cron: '0 7 * * 6'
++    # Lun–vie 22:45 UTC. El daily ocupa las 21:30; esta pasada refresca solo la sombra y no cambia el contrato semanal.
++    - cron: '45 22 * * 1-5'
+   push:
+     branches: [main]
+     paths: ['docs/actas/ACTA_FEED_PROVENANCE_20261004.md']
+@@ -77,6 +81,8 @@ jobs:
+           if [ "${{ steps.compute.outcome }}" = "success" ]; then
+             git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json
+             git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv
++            # B2 SHADOW: paralelo al semanal. Si la sombra no se escribió, el semanal se publica igual.
++            git add -- data/MFV_G8_XAU_daily_shadow.csv data/MFV_G8_XAG_daily_shadow.csv data/MFV_G8_shadow_state.json || true
+           fi
+           git add data/_ingest/metals_provenance.json 2>/dev/null || true
+           git add data/_ingest/latest/actions__job_metals.json
+diff --git a/docs/actas/ACTA_A5_CALENDARIO_TIPOS.md b/docs/actas/ACTA_A5_CALENDARIO_TIPOS.md
+index 810fbfb..03ec082 100644
+--- a/docs/actas/ACTA_A5_CALENDARIO_TIPOS.md
++++ b/docs/actas/ACTA_A5_CALENDARIO_TIPOS.md
+@@ -60,4 +60,4 @@ Modelos, señales, umbrales del POS, la §01, la §01-b, la §08, la matriz MDP
+ ## Pendiente
+ - **Revisión trimestral del calendario:** añadir el 2027 de la RBA en cuanto se publique. Si no se hace, el monitor avisa el 2027-01-05 (CALENDAR_EXHAUSTED).
+ - **Siguiente paso:** B2 (metales diarios en SHADOW).
+-- **Propuesta, no construida:** que `health_evidence` use `cb_meetings.csv` para la regla "reunión ya celebrada". Necesita consenso con Argon antes de construirse.
++- **Cerrada el 17-oct-2026** (nota `NOTA_A5_VALIDACION_CALENDARIO.md`, con el consentimiento de Argon previo a B2): `health_evidence` usa `cb_meetings.csv` como dueño de la reunión, y el chequeo de render acepta la cabecera en mayúsculas.
+diff --git a/docs/actas/ACTA_B2_METALES_SHADOW.md b/docs/actas/ACTA_B2_METALES_SHADOW.md
+new file mode 100644
+index 0000000..ec98b18
+--- /dev/null
++++ b/docs/actas/ACTA_B2_METALES_SHADOW.md
+@@ -0,0 +1,56 @@
++# ACTA B2 — MDP diario de oro y plata en SHADOW (17-oct-2026)
++
++**Origen:** enmienda v2, lote B2, especificación firmada por Argon y Claude. Sander: el markdown es el trabajo; la foto es la validación de A5, que se corrige en la nota del mismo día.
++**Base:** A5 (`4c43ba1`) más la nota de validación y calendario.
++**Dueño de la señal que pinta §06 y §07:** sigue siendo el MDP semanal (`MFV_G8_XAU.csv`, `MFV_G8_XAG.csv`, `MFV_G8_state.json`). El diario no lo sustituye.
++
++## Regla
++
++El filtro de Kalman no cambia. Sigue siendo forward-only, sin smoother, y las betas se reestiman solo en la rejilla W-TUE.
++
++Sobre esa rejilla, en paralelo:
++
++- El martes τ el diario usa el estado predicho β_{τ|τ−1}. El `MDP_Z` publicado ese día es el semanal, al decimal (4 cifras).
++- De miércoles a lunes, como máximo 4 días hábiles después de τ, se usa el estado filtrado β_{τ|τ} con as-of causal (τ ≤ t).
++- El Z de esos días es un z-score rolling de los residuos diarios anteriores. No se divide un residuo diario entre la varianza de innovación semanal.
++- Un día a más de 4 días hábiles del último martes conocido no se emite. El fin de semana no se emite.
++- `mdp_as_of` (día del precio y de los regresores) y `cot_as_of` (último martes COT de la rejilla) salen por separado.
++
++## Salidas (no entran en el contrato semanal)
++
++| Archivo | Papel |
++|---|---|
++| `data/MFV_G8_XAU_daily_shadow.csv` | Proyección diaria del oro. Cabecera `SHADOW`. |
++| `data/MFV_G8_XAG_daily_shadow.csv` | Proyección diaria de la plata. El `HG_ORTH` diario hereda el OLS semanal: no se reestima. |
++| `data/MFV_G8_shadow_state.json` | `mode=SHADOW`, y por metal `mdp_z`, `mdp_as_of`, `cot_as_of`, `beta_state`. |
++
++Esas claves no se escriben dentro de `MFV_G8_state.json`. No entran en `metals_provenance.OUTPUTS` ni en el registro de salud: un fallo de la sombra no restaura ni bloquea la publicación semanal, y no abre una incidencia. `tests/test_f1_config.py` y `tests/test_f3_freshness.py` los dejan fuera de las reglas de frescura para cuando el workflow los publique.
++
++## Archivos
++
++| Archivo | Cambio |
++|---|---|
++| `scripts/metals_shadow_daily.py` (nuevo) | Ensamblado diario y proyección. No calibra δ. |
++| `scripts/metals_fairvalue_g8.py` | `build_panel_xau`, `build_panel_xag` y `build_metal` preparan el panel diario y escriben la sombra después del CSV semanal. `main` vacía el estado de sombra y escribe el JSON aparte. |
++| `.github/workflows/metals_update.yml` | Se mantiene el sábado 07:00 UTC. Se añade lunes–viernes 22:45 UTC (el daily ya ocupa las 21:30). El commit añade los tres archivos de sombra solo si existen. |
++| `mac/dispatch_schedule.json`, `sources/schedules.csv` | El mismo cron `45 22 * * 1-5`, para que el Mac y el inventario no se aparten del workflow. |
++| `tests/test_b2_metals_shadow.py` (nuevo) | Martes = Z semanal a 4 decimales y residuo con β predicho; miércoles con β filtrado del martes ya visto; se descarta el día a 5 días hábiles; no se usa una beta de un martes futuro; el sábado no sale; el Z no martes es el z-score diario causal. |
++| `tests/test_feed_provenance.py` | Se actualizan solo los tres hashes de las funciones que ahora ensamblan el diario. |
++
++## Hashes [MEDIDO]
++
++Sin cambio: `asof_weekly`, `load_slope`, `forward_returns`, `evaluate_delta`, `calibrate_delta`, `cot_activation`.
++
++Cambian, porque el panel diario se ensambla ahí:
++
++- `build_panel_xau` `adcabe6d9e4d117083ca4d6ce50c732f6b007d33100b97d22a9657c7fc5c0d31`
++- `build_panel_xag` `b3b627d913a4154805b997eb31587284cb0aab88a3d1c6523db2d9bf7010ad19`
++- `build_metal` `aa8955af15f50eaa8ca62d947b7cb1bd9dd69a6a7dfd726a5de32d26f1eda0cd`
++
++## Lo que no cambia
++
++La fórmula del Kalman, la calibración de δ, el CSV semanal, el fair value que pinta §06/§07, el POS, la §01, la §01-b y la §08. No se construye el par asimétrico de Asset Managers. No se abre el lote A2.
++
++## Siguiente paso
++
++Parar aquí para la auditoría de Argon. El orden que queda es A2 → A3 (SHADOW) → B5 → B6 → C1 / CB_EVENT_48H (SHADOW) → B3.
+diff --git a/docs/actas/NOTA_A5_VALIDACION_CALENDARIO.md b/docs/actas/NOTA_A5_VALIDACION_CALENDARIO.md
+new file mode 100644
+index 0000000..0dc00e9
+--- /dev/null
++++ b/docs/actas/NOTA_A5_VALIDACION_CALENDARIO.md
+@@ -0,0 +1,24 @@
++# NOTA — Validación de A5 y dueño del calendario (17-oct-2026)
++
++**Origen:** la pasada «Tipos oficiales y calendario BC en §02» (commit `4c43ba1`) quedó en rojo en Validate (smoke). Argon ya había aprobado A5 y, como nota previa a B2, pidió dos correcciones: el `timedelta` del test del calendario y que `health_evidence.py` tome las reuniones de `cb_meetings.csv`.
++
++## Por qué no validó
++
++La tabla de la §02 sí se pinta (tipo oficial, último cambio y próxima reunión). El chequeo de render la daba por vacía.
++
++`docs/index.html` aplica `text-transform: uppercase` a la cabecera. El texto que lee el navegador es `PRÓXIMA REUNIÓN`. El chequeo buscaba `Próxima reunión`, con mayúsculas y minúsculas fijas, y por eso fallaba. El resto del humo (compilación, unittest, s01b, YAML, registro, sintaxis JS, alertas en seco) no era el fallo.
++
++## Qué se corrige
++
++| Archivo | Cambio |
++|---|---|
++| `scripts/tools/dashboard_render_check.cjs` | `#fls-table` sigue exigiendo una fila en la tabla. El texto de la columna se acepta en cualquier capitalización (`/pr[oó]xima reuni[oó]n/i`). |
++| `tests/test_a5_cb_calendar.py` | El día siguiente de una revisión se calcula con `d + timedelta(days=1)`. Así un día 31 no revienta el test. |
++| `scripts/health_evidence.py` | Si existe `data/manual/cb_meetings.csv`, ese archivo es el único dueño de la fecha de reunión. Una decisión con `verified.date() < decisión <= hoy` caduca la evidencia a las 00:00 UTC de ese día (`LATE` / `EVIDENCE_EXPIRED`). `next_review_at` no entra en ese mínimo. Si el CSV no está, se conserva la regla anterior, para no romper los tests que usan un directorio temporal. |
++| `tests/test_health_evidence.py` | Tres casos: reunión ya celebrada caduca aunque `expires_at` y `next_review_at` estén en el futuro; una reunión solo futura no caduca; un `next_review_at` pasado no caduca cuando el calendario no tiene reunión en la ventana. |
++
++## Lo que no se toca
++
++- No se reescriben `verified_at` ni `expires_at` de `sources/policy_evidence.json`. Los cuatro `LATE` por evidencia caducada siguen hasta una verificación nueva contra la fuente primaria.
++- El `ERROR` de `NZD_OCR.csv` es un fallo de la descarga BIS (`LAST_FETCH_FAILED`), no un hueco del calendario. No se tapa con el CSV.
++- Tipos, señales y la §02 publicada no cambian de contrato.
+diff --git a/mac/dispatch_schedule.json b/mac/dispatch_schedule.json
+index f79a5d9..7687a93 100644
+--- a/mac/dispatch_schedule.json
++++ b/mac/dispatch_schedule.json
+@@ -14,6 +14,7 @@
+   {"id": "daily",           "workflow": "daily_update.yml",   "cron": "30 21 * * 1-5"},
+   {"id": "g8_port_fri",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 5"},
+   {"id": "g8_port_sat",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 6"},
+-  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"}
++  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"},
++  {"id": "metals_shadow",   "workflow": "metals_update.yml",  "cron": "45 22 * * 1-5"}
+  ]
+ }
+diff --git a/scripts/health_evidence.py b/scripts/health_evidence.py
+index cedcaf5..ad8739f 100644
+--- a/scripts/health_evidence.py
++++ b/scripts/health_evidence.py
+@@ -2,7 +2,7 @@
+ import csv
+ import json
+ import math
+-from datetime import datetime, timedelta
++from datetime import datetime, timedelta, timezone
+ from g8common.freshness import _parse_date
+ import health_derivatives as HD
+ 
+@@ -33,6 +33,36 @@ def rate_rows(path, today):
+         return []
+ 
+ 
++# El calendario oficial es el dueño de la fecha de reunión. next_review_at solo se usa si el archivo no está.
++POLICY_CB = {
++    "GB_POLICY.csv": "GB",
++    "JP_POLICY.csv": "JP",
++    "CH_POLICY.csv": "CH",
++    "AU_POLICY.csv": "AU",
++    "NZD_OCR.csv": "NZ",
++}
++
++
++def _calendar_dates(root, country):
++    """Fechas de decisión del país, o None si el calendario no está (se conserva next_review_at)."""
++    path = root / "data" / "manual" / "cb_meetings.csv"
++    if not path.exists():
++        return None
++    try:
++        with path.open(encoding="utf-8") as fh:
++            rows = csv.DictReader(l for l in fh if l.strip() and not l.lstrip().startswith("#"))
++            out = []
++            for row in rows:
++                if (row.get("country") or "").strip() != country:
++                    continue
++                d = _parse_date(str(row.get("decision_date") or ""))
++                if d:
++                    out.append(d)
++        return sorted(set(out))
++    except OSError:
++        return None
++
++
+ def refine(root, now, item, policy):
+     name = item['file']
+     # Absence is intentional but remains visible. Never relabel annual estimates monthly.
+@@ -76,15 +106,27 @@ def refine(root, now, item, policy):
+     observations = rate_rows(root / 'data' / name, now.date())
+     try:
+         verified = datetime.fromisoformat(evidence['verified_at'].replace('Z', '+00:00'))
+-        expires = min(datetime.fromisoformat(evidence['expires_at'].replace('Z', '+00:00')),
+-                      datetime.fromisoformat(evidence['next_review_at'].replace('Z', '+00:00')),
+-                      verified + timedelta(days=7))
++        caps = [datetime.fromisoformat(evidence['expires_at'].replace('Z', '+00:00')),
++                verified + timedelta(days=7)]
++        meetings = _calendar_dates(root, POLICY_CB[name]) if name in POLICY_CB else None
++        if meetings is None:
++            next_decision = evidence['next_review_at']
++            caps.append(datetime.fromisoformat(next_decision.replace('Z', '+00:00')))
++        else:
++            # Reunión ya celebrada: verified.date() < decisión <= hoy. Caduca a las 00:00 UTC de ese día.
++            held = [d for d in meetings if verified.date() < d <= now.date()]
++            if held:
++                d0 = min(held)
++                caps.append(datetime(d0.year, d0.month, d0.day, tzinfo=timezone.utc))
++            upcoming = [d for d in meetings if d > now.date()]
++            next_decision = min(upcoming).isoformat() if upcoming else evidence.get('next_review_at')
++        expires = min(caps)
+         rate = float(evidence['rate'])
+         effective = _parse_date(evidence['effective_on_or_before'])
+         if not effective or not math.isfinite(rate) or not evidence['source'].startswith('https://'):
+             raise ValueError('invalid evidence')
+         item.update(evidence_source=evidence['source'], evidence_expires_utc=expires.isoformat(),
+-                    next_decision=evidence['next_review_at'])
++                    next_decision=next_decision)
+         if now < verified:
+             item.update(status='UNKNOWN', reason='Verificación oficial con fecha futura: no se puede certificar.')
+         elif now >= expires:
+diff --git a/scripts/metals_fairvalue_g8.py b/scripts/metals_fairvalue_g8.py
+index 35a79bb..be37591 100644
+--- a/scripts/metals_fairvalue_g8.py
++++ b/scripts/metals_fairvalue_g8.py
+@@ -658,7 +658,7 @@ def build_panel_xau(tuesdays, log):
+     price, src = find_local_price("XAU")
+     if price is None:
+         log.append("precio XAU local no encontrado — exporta GC1!/XAU a ~/Downloads")
+-        return None, None
++        return None, None, None
+     log.append(f"precio LOCAL: {os.path.basename(src)} "
+                f"({price.index[0].date()}→{price.index[-1].date()}, {len(price)} barras)")
+     be    = load_be10()
+@@ -691,7 +691,11 @@ def build_panel_xau(tuesdays, log):
+         panel["LOGOFF"] = np.log(panel["OFF"].clip(lower=1e-9))
+     panel = panel.replace([np.inf, -np.inf], np.nan)
+     panel = panel.dropna(subset=["PX", "BE", "SL", "NFA", "DXY", "REAL", "LOGPX", "LOGNFA", "REAL_BRK"])
+-    return panel, src
++    # B2 SHADOW: el panel semanal de arriba no cambia. El diario es otra rejilla, mismo as-of.
++    import metals_shadow_daily as _shadow
++    daily = _shadow.xau_daily(price, be, slope, nfa, dxy, real, official,
++                              panel.index.min(), panel.index.max())
++    return panel, src, daily
+ 
+ 
+ def build_panel_xag(tuesdays, log):
+@@ -701,13 +705,13 @@ def build_panel_xag(tuesdays, log):
+     price, src = find_local_price("XAG")
+     if price is None:
+         log.append("precio XAG local no encontrado — exporta SI1!/XAG a ~/Downloads")
+-        return None, None, False
++        return None, None, False, None
+     log.append(f"precio LOCAL: {os.path.basename(src)} "
+                f"({price.index[0].date()}→{price.index[-1].date()}, {len(price)} barras)")
+     xau, _ = find_local_price("XAU")
+     if xau is None:
+         log.append("plata requiere oro (XAU) presente para el canal monetario — falta.")
+-        return None, None, False
++        return None, None, False, None
+     copper, csrc = find_local_price("COPPER")
+     real = load_real10()                 # plata también responde a tipos reales
+     dxy  = fetch_fred(FRED_DXY)           # y al dólar
+@@ -736,14 +740,21 @@ def build_panel_xag(tuesdays, log):
+         A = np.column_stack([np.ones_like(lx), lx])
+         coef, *_ = np.linalg.lstsq(A, lh, rcond=None)
+         panel["HG_ORTH"] = lh - A @ coef
++    else:
++        coef = None
+     panel = panel.replace([np.inf, -np.inf], np.nan).dropna()
+-    return panel, src, has_copper
++    # B2 SHADOW: HG_ORTH diario hereda el OLS semanal (coef); no se reestima.
++    import metals_shadow_daily as _shadow
++    daily = _shadow.xag_daily(price, xau, real, dxy, copper if has_copper else None, coef,
++                              panel.index.min(), panel.index.max())
++    return panel, src, has_copper, daily
+ 
+ 
+ def build_metal(name, tuesdays, fixed_delta, bridge, log):
+     cfg = MODELS[name]
++    daily = None
+     if name == "XAU":
+-        panel, src = build_panel_xau(tuesdays, log)
++        panel, src, daily = build_panel_xau(tuesdays, log)
+         if panel is None or len(panel) < BURN + 60:
+             return False
+         y = panel["LOGPX"].values
+@@ -798,7 +809,7 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
+             spec = "baseline"
+         extra = {"gamma_dxy": round(gamma_dxy, 6), "spec": spec, "official": bool(has_off and use_enh)}
+     else:  # XAG
+-        panel, src, has_copper = build_panel_xag(tuesdays, log)
++        panel, src, has_copper, daily = build_panel_xag(tuesdays, log)
+         if panel is None or len(panel) < BURN + 60:
+             return False
+         y = panel["LOGPX"].values
+@@ -995,11 +1006,54 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
+     print(f"  quality: {quality} — {desc}")
+     print(f"  gates  : {'ALL PASS' if not issues else 'ISSUES: ' + '; '.join(issues)}")
+     print(f"  wrote  : {out_path} ({len(df)} rows)")
++    _write_daily_shadow(name, daily, panel.index, out, ycol, Xrun, z, driver_names, extra, cfg["z_window"], log)
+     return len(issues) == 0
+ 
+ 
++def _write_daily_shadow(name, daily, weekly_index, kalman, y_weekly, X_weekly, weekly_z, driver_names, extra, z_window, log):
++    """Escribe el MDP diario en paralelo. Un fallo aquí no deshace la salida semanal."""
++    import metals_shadow_daily as shadow
++    try:
++        if daily is None or len(daily) == 0:
++            log.append("SHADOW diario: sin panel diario")
++            return
++        if name == "XAU":
++            y = daily["LOGPX"].to_numpy(float) - float(extra["gamma_dxy"]) * daily["DXY"].to_numpy(float)
++        else:
++            y = daily["LOGPX"].to_numpy(float)
++        X = shadow.design_matrix(daily, driver_names)
++        frame = shadow.project(daily, weekly_index, kalman["beta_pred"], kalman["beta_filt"],
++                               weekly_z, y, X, z_window)
++        if frame is None:
++            log.append("SHADOW diario: sin filas proyectables")
++            return
++        path = os.path.join(DATA_DIR, f"MFV_G8_{name}_daily_shadow.csv")
++        with open(path, "w") as fh:
++            fh.write("# SHADOW B2 | no es la señal de §06/§07 | MDP_Z del martes = MDP_Z semanal\n")
++            frame.to_csv(fh, index=False)
++        meta = shadow.last_meta(frame, weekly_index)
++        if meta is not None:
++            SHADOW_STATE[name] = meta
++        # Invariante: el martes publicado coincide al decimal con el Z semanal redondeado a 4.
++        weekly_dates = pd.DatetimeIndex(pd.to_datetime(weekly_index)).strftime("%Y%m%d")
++        wz = pd.DataFrame({"DATE": weekly_dates, "Z_W": np.round(np.asarray(weekly_z, float), 4)})
++        joined = frame.merge(wz, on="DATE", how="inner")
++        both = joined.dropna(subset=["MDP_Z", "Z_W"])
++        if len(both) and not np.allclose(both["MDP_Z"], both["Z_W"], atol=5e-5, equal_nan=True):
++            log.append("SHADOW diario: el martes no clava el Z semanal")
++        else:
++            log.append(f"SHADOW diario: {path} ({len(frame)} días hábiles; martes = semanal)")
++    except Exception as exc:  # noqa: BLE001 — la sombra no puede tumbar la publicación semanal
++        log.append(f"SHADOW diario no publicado: {exc}")
++
++
++SHADOW_STATE = {}
++
++
+ # ============================================================ run / main
+ def main():
++    global SHADOW_STATE
++    SHADOW_STATE = {}
+     args = [a for a in sys.argv[1:]]
+     fixed_delta = None
+     if "--delta" in args:
+@@ -1057,6 +1111,19 @@ def main():
+             json.dump({"generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "metals": bridge}, f, indent=2)
+         print(f"\n  bridge : {bpath}")
++        # B2: archivo aparte. Estas claves no entran en MFV_G8_state.json ni en el contrato de §06/§07.
++        if SHADOW_STATE:
++            spath = os.path.join(DATA_DIR, "MFV_G8_shadow_state.json")
++            try:
++                with open(spath, "w") as f:
++                    json.dump({"schema": "MFV_G8_SHADOW/1", "mode": "SHADOW",
++                               "note": "Proyección diaria. No es la señal de §06/§07.",
++                               "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
++                               "metals": {k: SHADOW_STATE[k] for k in targets if k in SHADOW_STATE}},
++                              f, indent=2)
++                print(f"  shadow : {spath}")
++            except OSError as exc:
++                print(f"  shadow : no publicado ({exc})")
+ 
+     MP.manifest(Path(DATA_DIR), PROVENANCE, targets)
+     print(f"\nSummary: {ok_count} clean of {len(targets)}")
+diff --git a/scripts/metals_shadow_daily.py b/scripts/metals_shadow_daily.py
+new file mode 100644
+index 0000000..8b1d750
+--- /dev/null
++++ b/scripts/metals_shadow_daily.py
+@@ -0,0 +1,198 @@
++"""B2 — MDP diario en SHADOW.
++
++El Kalman se sigue estimando solo en la rejilla semanal W-TUE (ancla COT),
++forward-filter, sin smoother. Esta proyección no reestima betas ni escribe
++MFV_G8_XAU.csv / MFV_G8_XAG.csv / MFV_G8_state.json.
++
++Regla firmada:
++- Martes τ: estado predicho β_{τ|τ-1}. El MDP_Z publicado es el semanal, al decimal.
++- Miércoles a lunes, hasta 4 días hábiles después de τ: estado filtrado β_{τ|τ}
++  propagado con ffill causal (τ ≤ t).
++- El Z de esos días sale de una ventana rolling causal de residuos diarios.
++  No se divide un residuo diario entre la varianza de innovación semanal.
++"""
++import numpy as np
++import pandas as pd
++
++
++def _asof(series, days):
++    import metals_fairvalue_g8 as M
++    return M.asof_weekly(series, days)
++
++
++def _finish_levels(panel, required):
++    panel = panel.replace([np.inf, -np.inf], np.nan)
++    return panel.dropna(subset=required)
++
++
++def xau_daily(price, be, slope, nfa, dxy, real, official, start, end):
++    """Mismo ensamblado que el panel semanal, sobre días hábiles (lun–vie)."""
++    import metals_fairvalue_g8 as M
++    days = pd.bdate_range(start, end)
++    if len(days) == 0:
++        return None
++    panel = pd.concat([
++        _asof(price.rename("PX"), days),
++        _asof(be.rename("BE"), days),
++        _asof(slope.rename("SL"), days),
++        _asof(nfa.rename("NFA"), days),
++        _asof(dxy.rename("DXY"), days),
++        _asof(real.rename("REAL"), days),
++    ], axis=1, sort=True).dropna(subset=["PX", "BE", "SL", "NFA", "DXY", "REAL"])
++    panel = panel[(panel["PX"] > 0) & (panel["NFA"] > 0)]
++    panel["LOGPX"] = np.log(panel["PX"])
++    panel["LOGNFA"] = np.log(panel["NFA"])
++    brk = (panel.index >= pd.Timestamp(M.RATE_BREAK)).astype(float)
++    panel["REAL_BRK"] = panel["REAL"].values * brk
++    if official is not None:
++        panel = panel.join(_asof(official.rename("OFF"), days))
++        panel["LOGOFF"] = np.log(panel["OFF"].clip(lower=1e-9))
++    return _finish_levels(panel, ["PX", "BE", "SL", "NFA", "DXY", "REAL", "LOGPX", "LOGNFA", "REAL_BRK"])
++
++
++def xag_daily(price, xau, real, dxy, copper, hg_coef, start, end):
++    """HG_ORTH usa los coeficientes del OLS semanal: no se reestima en el diario."""
++    days = pd.bdate_range(start, end)
++    if len(days) == 0:
++        return None
++    cols = [
++        _asof(price.rename("PX"), days),
++        _asof(xau.rename("XAU"), days),
++        _asof(real.rename("REAL"), days),
++        _asof(dxy.rename("DXY"), days),
++    ]
++    has_copper = copper is not None and hg_coef is not None
++    if has_copper:
++        cols.append(_asof(copper.rename("HG"), days))
++    need = ["PX", "XAU", "REAL", "DXY"] + (["HG"] if has_copper else [])
++    panel = pd.concat(cols, axis=1, sort=True).dropna(subset=need)
++    panel = panel[panel["PX"] > 0]
++    panel["LOGPX"] = np.log(panel["PX"])
++    panel["LOGXAU"] = np.log(panel["XAU"].clip(lower=1e-9))
++    if has_copper:
++        lx = panel["LOGXAU"].values
++        lh = np.log(panel["HG"].values)
++        A = np.column_stack([np.ones_like(lx), lx])
++        panel["HG_ORTH"] = lh - A @ np.asarray(hg_coef, float)
++    return _finish_levels(panel, ["PX", "LOGPX", "LOGXAU", "REAL", "DXY"] + (["HG_ORTH"] if has_copper else []))
++
++
++def design_matrix(df, driver_names):
++    cols = []
++    for name in driver_names:
++        if name == "const":
++            cols.append(np.ones(len(df)))
++        elif name == "be":
++            cols.append(df["BE"].to_numpy(float))
++        elif name == "slope":
++            cols.append(df["SL"].to_numpy(float))
++        elif name == "log_nfa":
++            cols.append(df["LOGNFA"].to_numpy(float))
++        elif name == "real":
++            cols.append(df["REAL"].to_numpy(float))
++        elif name == "real_brk":
++            cols.append(df["REAL_BRK"].to_numpy(float))
++        elif name == "official":
++            lo = df["LOGOFF"].to_numpy(float)
++            cols.append(np.where(np.isnan(lo), np.nanmedian(lo), lo))
++        elif name == "log_xau":
++            cols.append(df["LOGXAU"].to_numpy(float))
++        elif name == "hg_orth":
++            cols.append(df["HG_ORTH"].to_numpy(float))
++        elif name == "dxy":
++            cols.append(df["DXY"].to_numpy(float))
++        else:
++            raise KeyError(name)
++    return np.column_stack(cols)
++
++
++def business_steps(tau, t):
++    """Días hábiles lun–vie estrictamente posteriores a τ y hasta t, incluido t."""
++    return len(pd.bdate_range(tau, t)) - 1
++
++
++def rolling_causal_z(resid, window, min_obs):
++    """Z con media y desviación poblacional de los residuos diarios estrictamente anteriores."""
++    r = np.asarray(resid, float)
++    z = np.full(len(r), np.nan)
++    for t in range(len(r)):
++        hist = r[max(0, t - window):t]
++        hist = hist[np.isfinite(hist)]
++        if len(hist) < min_obs:
++            continue
++        sd = hist.std(ddof=0)
++        if sd > 1e-12 and np.isfinite(r[t]):
++            z[t] = (r[t] - hist.mean()) / sd
++    return z
++
++
++def project(daily, weekly_index, beta_pred, beta_filt, weekly_z, y, X, z_window):
++    """Proyecta betas semanales sobre el panel diario. Devuelve un DataFrame o None."""
++    if daily is None or len(daily) == 0:
++        return None
++    w_index = pd.DatetimeIndex(pd.to_datetime(weekly_index))
++    y = np.asarray(y, float)
++    X = np.asarray(X, float)
++    beta_pred = np.asarray(beta_pred, float)
++    beta_filt = np.asarray(beta_filt, float)
++    weekly_z = np.asarray(weekly_z, float)
++    n = len(daily)
++    resid = np.full(n, np.nan)
++    z_tue = np.full(n, np.nan)
++    kind = np.array([""] * n, dtype=object)
++    for i, t in enumerate(daily.index):
++        ts = pd.Timestamp(t)
++        if ts.weekday() >= 5:
++            continue
++        j = int(w_index.searchsorted(ts, side="right")) - 1
++        if j < 0:
++            continue
++        steps = business_steps(w_index[j], ts)
++        if steps == 0:
++            beta, tag = beta_pred[j], "pred"
++        elif 1 <= steps <= 4:
++            beta, tag = beta_filt[j], "filt"
++        else:
++            continue
++        x = X[i]
++        if not (np.isfinite(y[i]) and np.all(np.isfinite(x)) and np.all(np.isfinite(beta))):
++            continue
++        resid[i] = y[i] - float(x @ beta)
++        kind[i] = tag
++        if steps == 0 and np.isfinite(weekly_z[j]):
++            z_tue[i] = weekly_z[j]
++    window = int(z_window) * 5
++    min_obs = min(52, int(z_window) // 3) * 5
++    z = rolling_causal_z(resid, window, min_obs)
++    tue = np.isfinite(z_tue)
++    z[tue] = z_tue[tue]
++    keep = kind != ""
++    if not np.any(keep):
++        return None
++    out = pd.DataFrame({
++        "DATE": daily.index[keep].strftime("%Y%m%d"),
++        "PX": np.round(daily["PX"].to_numpy(float)[keep], 4),
++        "RESID": np.round(resid[keep], 6),
++        "MDP_Z": np.round(z[keep], 4),
++        "BETA_STATE": kind[keep],
++    })
++    return out
++
++
++def last_meta(frame, weekly_index):
++    """mdp_as_of = último día diario; cot_as_of = último martes de la rejilla ≤ ese día."""
++    if frame is None or len(frame) == 0:
++        return None
++    last = frame.iloc[-1]
++    mdp_as_of = pd.Timestamp(str(last["DATE"]))
++    w = pd.DatetimeIndex(pd.to_datetime(weekly_index))
++    j = int(w.searchsorted(mdp_as_of, side="right")) - 1
++    cot = w[j] if j >= 0 else None
++    z = last["MDP_Z"]
++    return {
++        "mdp_z": None if pd.isna(z) else float(z),
++        "mdp_as_of": mdp_as_of.strftime("%Y-%m-%d"),
++        "cot_as_of": None if cot is None else cot.strftime("%Y-%m-%d"),
++        "beta_state": str(last["BETA_STATE"]),
++        "mode": "SHADOW",
++    }
+diff --git a/scripts/tools/dashboard_render_check.cjs b/scripts/tools/dashboard_render_check.cjs
+index d35a602..26667d9 100644
+--- a/scripts/tools/dashboard_render_check.cjs
++++ b/scripts/tools/dashboard_render_check.cjs
+@@ -33,7 +33,8 @@ const REQUIRED = [
+   ['publication-health', el => /FRESCURA|VIGILANCIA/.test(el.innerText) && !!el.querySelector('table')],
+   ['uf-panel', el => el.innerText.trim().length > 50],
+   // A5 (2026-10-16): §09 retirada de la web (dueño 0-POS-G8); §03 fundida en §02 → la tabla de suelos debe traer la próxima reunión.
+-  ['fls-table', el => !!el.querySelector('table tbody tr') && /Próxima reunión/.test(el.innerText)],
++  // El CSS de la cabecera aplica text-transform:uppercase, así que innerText llega como «PRÓXIMA REUNIÓN».
++  ['fls-table', el => !!el.querySelector('table tbody tr') && /pr[oó]xima reuni[oó]n/i.test(el.innerText)],
+   ['opt-surface', el => el.innerText.trim().length > 50],
+ ];
+ const FORBIDDEN = /Render error|is not defined|undefined is not|Cannot read propert|NaN%|\[object Object\]/;
+diff --git a/sources/schedules.csv b/sources/schedules.csv
+index b3070ed..424e7a6 100644
+--- a/sources/schedules.csv
++++ b/sources/schedules.csv
+@@ -5,6 +5,7 @@ USDF2,USDF,usd_factor.yml,30 17 * * 1-5,,,ACTIVE,"segunda oportunidad del BCE","
+ COT1,COT,g8_port_run.yml,5 21 * * 5,,,ACTIVE,"COT de la CFTC","Existente. CFTC viernes 15:30 ET (19:30Z verano / 20:30Z invierno)."
+ COT2,COT,g8_port_run.yml,5 9 * * 6,,,ACTIVE,"segunda oportunidad COT","Existente."
+ METALS,METALS,metals_update.yml,0 7 * * 6,,,ACTIVE,"MDP semanal","Existente; tras el COT del viernes."
++METALS_SHADOW,METALS,metals_update.yml,45 22 * * 1-5,,,ACTIVE,"proyección diaria SHADOW del MDP","B2. No sustituye el MDP semanal. 22:45 UTC para no coincidir con el daily de las 21:30."
+ ASIA1,ASIA,intraday_fetch.yml,23 0 * * 1-5,,,ACTIVE,"TONA, AONIA, bills AUD y JPY, RY JPY — solo descargas + vigilancia + commit","BoJ publica la base a las 08:50 JST = 23:50Z (manual oficial de la API): primera consulta 33 min después. AONIA/F1 observado disponible entre 21:00Z y 23:50Z."
+ ASIA2,ASIA,intraday_fetch.yml,17 3 * * 1-5,,,ACTIVE,"segunda oportunidad Asia","Si ASIA1 llega pronto, se retrasa o se omite."
+ EU,EU,intraday_fetch.yml,17 13 * * 1-5,,,ACTIVE,"€STR, curva BCE, SONIA, curva BoE","€STR 08:00 CET/CEST; curva BCE 12:00 CET; SOFR 08:00 ET = 12:00Z (EDT) / 13:00Z (EST)."
+diff --git a/tests/test_a5_cb_calendar.py b/tests/test_a5_cb_calendar.py
+index f6f4794..c8461d4 100644
+--- a/tests/test_a5_cb_calendar.py
++++ b/tests/test_a5_cb_calendar.py
+@@ -2,7 +2,7 @@
+ import csv
+ import sys
+ import unittest
+-from datetime import datetime, timezone
++from datetime import datetime, timedelta, timezone
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+@@ -47,7 +47,7 @@ class Calendar(unittest.TestCase):
+         for f, c in cc.items():
+             d = datetime.fromisoformat(ev[f]["next_review_at"]).date()
+             # la evidencia caduca al empezar la reunión (BoJ: 1.er día); la decisión es ese día o el siguiente
+-            self.assertTrue((c, d.isoformat()) in dates or (c, d.replace(day=d.day + 1).isoformat()) in dates, (f, d))
++            self.assertTrue((c, d.isoformat()) in dates or (c, (d + timedelta(days=1)).isoformat()) in dates, (f, d))
+ 
+     def test_health_flags_exhausted_calendar(self):
+         items = {x["file"]: x for x in HM.cb_calendar_items(ROOT, datetime(2026, 10, 16, tzinfo=timezone.utc))}
+@@ -67,6 +67,10 @@ class Web(unittest.TestCase):
+         self.assertIn("Próxima reunión", self.html)
+         self.assertIn("manual/cb_meetings.csv", self.html)
+ 
++    def test_render_check_accepts_uppercase_header(self):
++        src = (ROOT / "scripts/tools/dashboard_render_check.cjs").read_text(encoding="utf-8")
++        self.assertIn("/pr[oó]xima reuni[oó]n/i", src)
++
+     def test_dead_monitor_code_pruned(self):
+         for name in ("function runAll(", "function healthScore(", "function syncHeader(", "function checkFeed("):
+             self.assertNotIn(name, self.html)
+diff --git a/tests/test_b2_metals_shadow.py b/tests/test_b2_metals_shadow.py
+new file mode 100644
+index 0000000..2e38756
+--- /dev/null
++++ b/tests/test_b2_metals_shadow.py
+@@ -0,0 +1,84 @@
++"""B2 (SHADOW): el MDP diario no reestima betas y el martes clava el Z semanal."""
++import sys
++import unittest
++from pathlib import Path
++
++import numpy as np
++import pandas as pd
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT / "scripts"))
++import metals_shadow_daily as S  # noqa: E402
++
++
++def _daily(dates, px=100.0):
++    idx = pd.DatetimeIndex(pd.to_datetime(dates))
++    return pd.DataFrame({"PX": np.full(len(idx), px)}, index=idx)
++
++
++class ShadowProjection(unittest.TestCase):
++    def test_tuesday_matches_weekly_and_later_days_stay_causal(self):
++        # Rejilla W-TUE con un hueco: el 13-oct queda a 5 días hábiles del 6-oct y antes del 20-oct.
++        weekly = pd.to_datetime(["2026-10-06", "2026-10-20"])
++        dates = ["2026-10-06", "2026-10-07", "2026-10-10", "2026-10-13", "2026-10-20", "2026-10-21"]
++        daily = _daily(dates)
++        y = np.ones(len(daily))
++        X = np.ones((len(daily), 1))
++        beta_pred = np.array([[0.2], [0.8]])
++        beta_filt = np.array([[0.5], [9.0]])
++        weekly_z = np.array([1.23456, -0.5])
++        frame = S.project(daily, weekly, beta_pred, beta_filt, weekly_z, y, X, z_window=156)
++        by_date = {row.DATE: row for row in frame.itertuples(index=False)}
++
++        self.assertNotIn("20261013", by_date)   # 5 días hábiles después del último martes conocido: no se emite
++        self.assertNotIn("20261010", by_date)   # sábado
++
++        tue = by_date["20261006"]
++        self.assertEqual(tue.BETA_STATE, "pred")
++        self.assertAlmostEqual(tue.RESID, 0.8, places=6)   # y - x·β_{τ|τ-1}
++        self.assertAlmostEqual(tue.MDP_Z, round(1.23456, 4), places=4)
++
++        wed = by_date["20261007"]
++        self.assertEqual(wed.BETA_STATE, "filt")
++        self.assertAlmostEqual(wed.RESID, 0.5, places=6)   # β_{τ|τ} del martes ya visto, no el del 20-oct
++        self.assertNotAlmostEqual(wed.RESID, 1.0 - 9.0, places=6)
++
++        nxt = by_date["20261020"]
++        self.assertEqual(nxt.BETA_STATE, "pred")
++        self.assertAlmostEqual(nxt.MDP_Z, -0.5, places=4)
++
++        after = by_date["20261021"]
++        self.assertEqual(after.BETA_STATE, "filt")
++        self.assertAlmostEqual(after.RESID, 1.0 - 9.0, places=6)
++
++        meta = S.last_meta(frame, weekly)
++        self.assertEqual(meta["mdp_as_of"], "2026-10-21")
++        self.assertEqual(meta["cot_as_of"], "2026-10-20")
++        self.assertEqual(meta["beta_state"], "filt")
++        self.assertEqual(meta["mode"], "SHADOW")
++
++    def test_weekend_is_not_emitted(self):
++        weekly = pd.to_datetime(["2026-10-06"])
++        daily = _daily(["2026-10-06", "2026-10-10"])  # sábado
++        y = np.ones(2)
++        X = np.ones((2, 1))
++        frame = S.project(daily, weekly, np.array([[0.2]]), np.array([[0.5]]), np.array([1.0]), y, X, 156)
++        self.assertEqual(list(frame["DATE"]), ["20261006"])
++
++    def test_non_tuesday_z_is_a_causal_daily_zscore(self):
++        # Dos martes seguidos: el miércoles 7-oct ya tiene residuos diarios previos y sigue dentro de los 4 días.
++        weekly = pd.to_datetime(["2026-09-29", "2026-10-06"])
++        dates = pd.bdate_range("2026-09-29", "2026-10-07")
++        daily = _daily(dates)
++        y = np.arange(len(daily), dtype=float)
++        X = np.ones((len(daily), 1))
++        beta = np.zeros((2, 1))
++        frame = S.project(daily, weekly, beta, beta, np.array([0.25, -0.25]), y, X, z_window=3)
++        wed = dates[-1]
++        self.assertEqual(wed.strftime("%Y-%m-%d"), "2026-10-07")
++        row = frame[frame["DATE"] == wed.strftime("%Y%m%d")].iloc[0]
++        hist = y[:-1]
++        expected = (y[-1] - hist.mean()) / hist.std(ddof=0)
++        self.assertAlmostEqual(row.MDP_Z, round(float(expected), 4), places=4)
++        self.assertNotAlmostEqual(row.MDP_Z, round(float(y[-1] / 0.25), 4), places=4)
++        self.assertEqual(frame.iloc[0].MDP_Z, 0.25)  # el primer martes conserva el Z semanal
+diff --git a/tests/test_f1_config.py b/tests/test_f1_config.py
+index ec3d899..f9873bc 100644
+--- a/tests/test_f1_config.py
++++ b/tests/test_f1_config.py
+@@ -42,7 +42,9 @@ class F1Config(unittest.TestCase):
+         covered = set()
+         for r in RULES:
+             covered.update(os.path.basename(x) for x in r["files"].split(";") if x)
+-        extra = {"BOOK_RISK.json", "S01B.json", "USD_FACTOR.json", "OPTIONS_SURFACE.json", "pos_g8_cot.json", "MFV_G8_state.json"}
++        # B2: los tres archivos SHADOW no son serie de frescura. Cuando el workflow los publique, siguen fuera de las reglas.
++        extra = {"BOOK_RISK.json", "S01B.json", "USD_FACTOR.json", "OPTIONS_SURFACE.json", "pos_g8_cot.json", "MFV_G8_state.json",
++                 "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json"}
+         self.assertEqual(sorted(files - covered - extra), [], "ficheros de data/ sin regla")
+         self.assertIn("BOOK_RISK.json", files)                 # derivado de USD_FACTOR (libro), sin frescura propia
+ 
+diff --git a/tests/test_f3_freshness.py b/tests/test_f3_freshness.py
+index 381e791..0d81fbc 100644
+--- a/tests/test_f3_freshness.py
++++ b/tests/test_f3_freshness.py
+@@ -896,7 +896,8 @@ class Mapping(unittest.TestCase):
+     def test_every_data_file_has_an_output_or_a_documented_exclusion(self):
+         files = {os.path.relpath(p, os.path.join(ROOT, "data"))
+                  for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}
+-        extra = {"BOOK_RISK.json"}                              # derivado del libro (test_f1_config), sin frescura propia
++        # BOOK_RISK: derivado del libro. Los tres SHADOW de B2 no son serie de frescura.
++        extra = {"BOOK_RISK.json", "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json"}
+         self.assertEqual(sorted(files - set(OUT) - extra), [])
+ 
+     def test_registry_feeds_map_to_outputs(self):
+diff --git a/tests/test_feed_provenance.py b/tests/test_feed_provenance.py
+index 5be5297..ee32a83 100644
+--- a/tests/test_feed_provenance.py
++++ b/tests/test_feed_provenance.py
+@@ -129,7 +129,9 @@ class Provenance(unittest.TestCase):
+         # Compare original function text, independent of Python AST schema/version.
+         # Acta P-9 (OK del propietario 6-oct-2026): load_slope solo cambia el RESPALDO de EFFR (FEDFUNDS mensual →
+         # EFFR diario del NY Fed); la fórmula DGS10 − EFFR y el resto del modelo no cambian.
+-        expected={'asof_weekly': '710c0541c78e4157480bebdcd5bdb2ffbaff899c30d7cd12d91dbf2ce5f7ee0e', 'load_slope': '684844895cc4be3ae286437e888d6a1f8d1b01e5644aafb3ddf2d1dd5482b1d6', 'forward_returns': '8befbd22911e00b29c1d954d8c7e07531b31701fa8362d41b3a90ee29b1d7ea8', 'evaluate_delta': '2157aae522bd200d83e2242ec3716f0fea0702d701d3000221cbefe897ad47ed', 'calibrate_delta': 'f32662c7168d26e05b9c7b3d4fa8f4a861f0938703fa862856b9359d850892ee', 'cot_activation': '54498f07ed1a6fa30e4660d418613230d9623809ac6b7085025c887cf7061055', 'build_panel_xau': 'e026467b1208e73286b42482c4e76ef26eaaba0444b88651bd36171b0db5182d', 'build_panel_xag': 'f25055e6de03240c33c3162b11cfcf432006c63e7ca2932bdd6b21c830e101f6', 'build_metal': '91acad1d9a3b5244566d43e364c7f880974cda08796e8b9529dcbc7f61ce46a5'}
++        # Acta B2 (SHADOW, 17-oct-2026): build_panel_xau, build_panel_xag y build_metal ensamblan además el panel
++        # diario. asof_weekly, load_slope, forward_returns, evaluate_delta, calibrate_delta y cot_activation no cambian.
++        expected={'asof_weekly': '710c0541c78e4157480bebdcd5bdb2ffbaff899c30d7cd12d91dbf2ce5f7ee0e', 'load_slope': '684844895cc4be3ae286437e888d6a1f8d1b01e5644aafb3ddf2d1dd5482b1d6', 'forward_returns': '8befbd22911e00b29c1d954d8c7e07531b31701fa8362d41b3a90ee29b1d7ea8', 'evaluate_delta': '2157aae522bd200d83e2242ec3716f0fea0702d701d3000221cbefe897ad47ed', 'calibrate_delta': 'f32662c7168d26e05b9c7b3d4fa8f4a861f0938703fa862856b9359d850892ee', 'cot_activation': '54498f07ed1a6fa30e4660d418613230d9623809ac6b7085025c887cf7061055', 'build_panel_xau': 'adcabe6d9e4d117083ca4d6ce50c732f6b007d33100b97d22a9657c7fc5c0d31', 'build_panel_xag': 'b3b627d913a4154805b997eb31587284cb0aab88a3d1c6523db2d9bf7010ad19', 'build_metal': 'aa8955af15f50eaa8ca62d947b7cb1bd9dd69a6a7dfd726a5de32d26f1eda0cd'}
+         source=(ROOT/'scripts/metals_fairvalue_g8.py').read_text()
+         tree=ast.parse(source)
+         actual={n.name:hashlib.sha256(ast.get_source_segment(source,n).encode()).hexdigest() for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in expected}
+diff --git a/tests/test_health_evidence.py b/tests/test_health_evidence.py
+index f724981..6f0cdb1 100644
+--- a/tests/test_health_evidence.py
++++ b/tests/test_health_evidence.py
+@@ -47,6 +47,37 @@ class Evidence(unittest.TestCase):
+         self.policy['GB_POLICY.csv']['next_review_at']='2026-10-04T20:30:00Z'
+         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'LATE')   # B1
+ 
++    def _calendar(self, body):
++        folder = self.root / 'data' / 'manual'
++        folder.mkdir(parents=True)
++        (folder / 'cb_meetings.csv').write_text(
++            '# nota\ncountry,decision_date,source,note,verified\n' + body, encoding='utf-8')
++
++    def test_held_meeting_in_calendar_expires_even_if_review_is_future(self):
++        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
++        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-12-10T00:00:00Z'
++        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
++        self._calendar('GB,2026-10-05,https://www.bankofengland.co.uk/monetary-policy,hold,2026-10-16\n')
++        x = self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')
++        self.assertEqual(x['status'], 'LATE')
++        self.assertEqual(x['state'], 'EVIDENCE_EXPIRED')
++
++    def test_future_meeting_does_not_expire_evidence(self):
++        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
++        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-12-10T00:00:00Z'
++        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
++        self._calendar('GB,2026-11-05,https://www.bankofengland.co.uk/monetary-policy,future,2026-10-16\n')
++        self.assertEqual(self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')['status'], 'CURRENT')
++
++    def test_calendar_ignores_stale_next_review_when_no_meeting_was_held(self):
++        self.now = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
++        self.policy['GB_POLICY.csv']['next_review_at'] = '2026-10-05T00:00:00Z'
++        self.policy['GB_POLICY.csv']['expires_at'] = '2026-12-10T00:00:00Z'
++        self._calendar('GB,2026-11-05,https://www.bankofengland.co.uk/monetary-policy,future,2026-10-16\n')
++        x = self.item('GB_POLICY.csv', 'DATE,CLOSE\n20261001,3.75\n')
++        self.assertEqual(x['status'], 'CURRENT')
++        self.assertEqual(x['next_decision'], '2026-11-05')
++
+     def test_B1_future_verification_stays_unknown(self):
+         self.policy['GB_POLICY.csv']['verified_at']='2026-10-05T20:00:00Z'
+         self.assertEqual(self.item('GB_POLICY.csv','DATE,CLOSE\n20261001,3.75\n')['status'],'UNKNOWN')

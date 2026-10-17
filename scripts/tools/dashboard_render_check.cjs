@@ -33,7 +33,8 @@ const REQUIRED = [
   ['publication-health', el => /FRESCURA|VIGILANCIA/.test(el.innerText) && !!el.querySelector('table')],
   ['uf-panel', el => el.innerText.trim().length > 50],
   // A5 (2026-10-16): §09 retirada de la web (dueño 0-POS-G8); §03 fundida en §02 → la tabla de suelos debe traer la próxima reunión.
-  ['fls-table', el => !!el.querySelector('table tbody tr') && /Próxima reunión/.test(el.innerText)],
+  // El CSS de la cabecera aplica text-transform:uppercase, así que innerText llega como «PRÓXIMA REUNIÓN».
+  ['fls-table', el => !!el.querySelector('table tbody tr') && /pr[oó]xima reuni[oó]n/i.test(el.innerText)],
   ['opt-surface', el => el.innerText.trim().length > 50],
 ];
 const FORBIDDEN = /Render error|is not defined|undefined is not|Cannot read propert|NaN%|\[object Object\]/;

@@ -658,7 +658,7 @@ def build_panel_xau(tuesdays, log):
     price, src = find_local_price("XAU")
     if price is None:
         log.append("precio XAU local no encontrado — exporta GC1!/XAU a ~/Downloads")
-        return None, None
+        return None, None, None
     log.append(f"precio LOCAL: {os.path.basename(src)} "
                f"({price.index[0].date()}→{price.index[-1].date()}, {len(price)} barras)")
     be    = load_be10()
@@ -691,7 +691,11 @@ def build_panel_xau(tuesdays, log):
         panel["LOGOFF"] = np.log(panel["OFF"].clip(lower=1e-9))
     panel = panel.replace([np.inf, -np.inf], np.nan)
     panel = panel.dropna(subset=["PX", "BE", "SL", "NFA", "DXY", "REAL", "LOGPX", "LOGNFA", "REAL_BRK"])
-    return panel, src
+    # B2 SHADOW: el panel semanal de arriba no cambia. El diario es otra rejilla, mismo as-of.
+    import metals_shadow_daily as _shadow
+    daily = _shadow.xau_daily(price, be, slope, nfa, dxy, real, official,
+                              panel.index.min(), panel.index.max())
+    return panel, src, daily
 
 
 def build_panel_xag(tuesdays, log):
@@ -701,13 +705,13 @@ def build_panel_xag(tuesdays, log):
     price, src = find_local_price("XAG")
     if price is None:
         log.append("precio XAG local no encontrado — exporta SI1!/XAG a ~/Downloads")
-        return None, None, False
+        return None, None, False, None
     log.append(f"precio LOCAL: {os.path.basename(src)} "
                f"({price.index[0].date()}→{price.index[-1].date()}, {len(price)} barras)")
     xau, _ = find_local_price("XAU")
     if xau is None:
         log.append("plata requiere oro (XAU) presente para el canal monetario — falta.")
-        return None, None, False
+        return None, None, False, None
     copper, csrc = find_local_price("COPPER")
     real = load_real10()                 # plata también responde a tipos reales
     dxy  = fetch_fred(FRED_DXY)           # y al dólar
@@ -736,14 +740,21 @@ def build_panel_xag(tuesdays, log):
         A = np.column_stack([np.ones_like(lx), lx])
         coef, *_ = np.linalg.lstsq(A, lh, rcond=None)
         panel["HG_ORTH"] = lh - A @ coef
+    else:
+        coef = None
     panel = panel.replace([np.inf, -np.inf], np.nan).dropna()
-    return panel, src, has_copper
+    # B2 SHADOW: HG_ORTH diario hereda el OLS semanal (coef); no se reestima.
+    import metals_shadow_daily as _shadow
+    daily = _shadow.xag_daily(price, xau, real, dxy, copper if has_copper else None, coef,
+                              panel.index.min(), panel.index.max())
+    return panel, src, has_copper, daily
 
 
 def build_metal(name, tuesdays, fixed_delta, bridge, log):
     cfg = MODELS[name]
+    daily = None
     if name == "XAU":
-        panel, src = build_panel_xau(tuesdays, log)
+        panel, src, daily = build_panel_xau(tuesdays, log)
         if panel is None or len(panel) < BURN + 60:
             return False
         y = panel["LOGPX"].values
@@ -798,7 +809,7 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
             spec = "baseline"
         extra = {"gamma_dxy": round(gamma_dxy, 6), "spec": spec, "official": bool(has_off and use_enh)}
     else:  # XAG
-        panel, src, has_copper = build_panel_xag(tuesdays, log)
+        panel, src, has_copper, daily = build_panel_xag(tuesdays, log)
         if panel is None or len(panel) < BURN + 60:
             return False
         y = panel["LOGPX"].values
@@ -995,11 +1006,54 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
     print(f"  quality: {quality} — {desc}")
     print(f"  gates  : {'ALL PASS' if not issues else 'ISSUES: ' + '; '.join(issues)}")
     print(f"  wrote  : {out_path} ({len(df)} rows)")
+    _write_daily_shadow(name, daily, panel.index, out, ycol, Xrun, z, driver_names, extra, cfg["z_window"], log)
     return len(issues) == 0
+
+
+def _write_daily_shadow(name, daily, weekly_index, kalman, y_weekly, X_weekly, weekly_z, driver_names, extra, z_window, log):
+    """Escribe el MDP diario en paralelo. Un fallo aquí no deshace la salida semanal."""
+    import metals_shadow_daily as shadow
+    try:
+        if daily is None or len(daily) == 0:
+            log.append("SHADOW diario: sin panel diario")
+            return
+        if name == "XAU":
+            y = daily["LOGPX"].to_numpy(float) - float(extra["gamma_dxy"]) * daily["DXY"].to_numpy(float)
+        else:
+            y = daily["LOGPX"].to_numpy(float)
+        X = shadow.design_matrix(daily, driver_names)
+        frame = shadow.project(daily, weekly_index, kalman["beta_pred"], kalman["beta_filt"],
+                               weekly_z, y, X, z_window)
+        if frame is None:
+            log.append("SHADOW diario: sin filas proyectables")
+            return
+        path = os.path.join(DATA_DIR, f"MFV_G8_{name}_daily_shadow.csv")
+        with open(path, "w") as fh:
+            fh.write("# SHADOW B2 | no es la señal de §06/§07 | MDP_Z del martes = MDP_Z semanal\n")
+            frame.to_csv(fh, index=False)
+        meta = shadow.last_meta(frame, weekly_index)
+        if meta is not None:
+            SHADOW_STATE[name] = meta
+        # Invariante: el martes publicado coincide al decimal con el Z semanal redondeado a 4.
+        weekly_dates = pd.DatetimeIndex(pd.to_datetime(weekly_index)).strftime("%Y%m%d")
+        wz = pd.DataFrame({"DATE": weekly_dates, "Z_W": np.round(np.asarray(weekly_z, float), 4)})
+        joined = frame.merge(wz, on="DATE", how="inner")
+        both = joined.dropna(subset=["MDP_Z", "Z_W"])
+        if len(both) and not np.allclose(both["MDP_Z"], both["Z_W"], atol=5e-5, equal_nan=True):
+            log.append("SHADOW diario: el martes no clava el Z semanal")
+        else:
+            log.append(f"SHADOW diario: {path} ({len(frame)} días hábiles; martes = semanal)")
+    except Exception as exc:  # noqa: BLE001 — la sombra no puede tumbar la publicación semanal
+        log.append(f"SHADOW diario no publicado: {exc}")
+
+
+SHADOW_STATE = {}
 
 
 # ============================================================ run / main
 def main():
+    global SHADOW_STATE
+    SHADOW_STATE = {}
     args = [a for a in sys.argv[1:]]
     fixed_delta = None
     if "--delta" in args:
@@ -1057,6 +1111,19 @@ def main():
             json.dump({"generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
                        "metals": bridge}, f, indent=2)
         print(f"\n  bridge : {bpath}")
+        # B2: archivo aparte. Estas claves no entran en MFV_G8_state.json ni en el contrato de §06/§07.
+        if SHADOW_STATE:
+            spath = os.path.join(DATA_DIR, "MFV_G8_shadow_state.json")
+            try:
+                with open(spath, "w") as f:
+                    json.dump({"schema": "MFV_G8_SHADOW/1", "mode": "SHADOW",
+                               "note": "Proyección diaria. No es la señal de §06/§07.",
+                               "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                               "metals": {k: SHADOW_STATE[k] for k in targets if k in SHADOW_STATE}},
+                              f, indent=2)
+                print(f"  shadow : {spath}")
+            except OSError as exc:
+                print(f"  shadow : no publicado ({exc})")
 
     MP.manifest(Path(DATA_DIR), PROVENANCE, targets)
     print(f"\nSummary: {ok_count} clean of {len(targets)}")

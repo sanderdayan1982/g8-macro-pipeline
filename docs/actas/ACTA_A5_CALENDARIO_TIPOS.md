@@ -60,4 +60,4 @@ Modelos, señales, umbrales del POS, la §01, la §01-b, la §08, la matriz MDP�
 ## Pendiente
 - **Revisión trimestral del calendario:** añadir el 2027 de la RBA en cuanto se publique. Si no se hace, el monitor avisa el 2027-01-05 (CALENDAR_EXHAUSTED).
 - **Siguiente paso:** B2 (metales diarios en SHADOW).
-- **Propuesta, no construida:** que `health_evidence` use `cb_meetings.csv` para la regla "reunión ya celebrada". Necesita consenso con Argon antes de construirse.
+- **Cerrada el 17-oct-2026** (nota `NOTA_A5_VALIDACION_CALENDARIO.md`, con el consentimiento de Argon previo a B2): `health_evidence` usa `cb_meetings.csv` como dueño de la reunión, y el chequeo de render acepta la cabecera en mayúsculas.

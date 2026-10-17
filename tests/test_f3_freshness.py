@@ -896,7 +896,8 @@ class Mapping(unittest.TestCase):
     def test_every_data_file_has_an_output_or_a_documented_exclusion(self):
         files = {os.path.relpath(p, os.path.join(ROOT, "data"))
                  for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}
-        extra = {"BOOK_RISK.json"}                              # derivado del libro (test_f1_config), sin frescura propia
+        # BOOK_RISK: derivado del libro. Los tres SHADOW de B2 no son serie de frescura.
+        extra = {"BOOK_RISK.json", "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json"}
         self.assertEqual(sorted(files - set(OUT) - extra), [])
 
     def test_registry_feeds_map_to_outputs(self):

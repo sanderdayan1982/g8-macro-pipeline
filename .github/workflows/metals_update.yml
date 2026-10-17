@@ -2,7 +2,9 @@
 # Metals Fair Value / MDP (§06 Gold · §07 Silver) — fully automatic.
 # metals_fairvalue_g8.py v3 (Kalman TVP under MMT). Prices come from Yahoo/Stooq
 # (headless), NFA from Treasury/FRED, breakeven from data/RY_G8_USD.csv, slope+DXY
-# from FRED — no local TradingView exports needed. Weekly cadence (COT is W-TUE).
+# from FRED — no local TradingView exports needed.
+# El contrato de §06/§07 sigue siendo semanal (ancla W-TUE). La pasada de lunes a
+# viernes solo refresca la proyección diaria en SHADOW (B2); no sustituye el MDP semanal.
 name: Metals Fair Value (MDP)
 
 on:
@@ -10,6 +12,8 @@ on:
     # Saturdays 07:00 UTC — after Friday's CFTC COT release; the model anchors to
     # the Tuesday-COT grid, so once a week keeps §06/§07 within their weekly budget.
     - cron: '0 7 * * 6'
+    # Lun–vie 22:45 UTC. El daily ocupa las 21:30; esta pasada refresca solo la sombra y no cambia el contrato semanal.
+    - cron: '45 22 * * 1-5'
   push:
     branches: [main]
     paths: ['docs/actas/ACTA_FEED_PROVENANCE_20261004.md']
@@ -77,6 +81,8 @@ jobs:
           if [ "${{ steps.compute.outcome }}" = "success" ]; then
             git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json
             git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv
+            # B2 SHADOW: paralelo al semanal. Si la sombra no se escribió, el semanal se publica igual.
+            git add -- data/MFV_G8_XAU_daily_shadow.csv data/MFV_G8_XAG_daily_shadow.csv data/MFV_G8_shadow_state.json || true
           fi
           git add data/_ingest/metals_provenance.json 2>/dev/null || true
           git add data/_ingest/latest/actions__job_metals.json

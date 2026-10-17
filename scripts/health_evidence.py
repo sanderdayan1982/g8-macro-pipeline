@@ -2,7 +2,7 @@
 import csv
 import json
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from g8common.freshness import _parse_date
 import health_derivatives as HD
 
@@ -31,6 +31,36 @@ def rate_rows(path, today):
             return sorted(out)
     except OSError:
         return []
+
+
+# El calendario oficial es el dueño de la fecha de reunión. next_review_at solo se usa si el archivo no está.
+POLICY_CB = {
+    "GB_POLICY.csv": "GB",
+    "JP_POLICY.csv": "JP",
+    "CH_POLICY.csv": "CH",
+    "AU_POLICY.csv": "AU",
+    "NZD_OCR.csv": "NZ",
+}
+
+
+def _calendar_dates(root, country):
+    """Fechas de decisión del país, o None si el calendario no está (se conserva next_review_at)."""
+    path = root / "data" / "manual" / "cb_meetings.csv"
+    if not path.exists():
+        return None
+    try:
+        with path.open(encoding="utf-8") as fh:
+            rows = csv.DictReader(l for l in fh if l.strip() and not l.lstrip().startswith("#"))
+            out = []
+            for row in rows:
+                if (row.get("country") or "").strip() != country:
+                    continue
+                d = _parse_date(str(row.get("decision_date") or ""))
+                if d:
+                    out.append(d)
+        return sorted(set(out))
+    except OSError:
+        return None
 
 
 def refine(root, now, item, policy):
@@ -76,15 +106,27 @@ def refine(root, now, item, policy):
     observations = rate_rows(root / 'data' / name, now.date())
     try:
         verified = datetime.fromisoformat(evidence['verified_at'].replace('Z', '+00:00'))
-        expires = min(datetime.fromisoformat(evidence['expires_at'].replace('Z', '+00:00')),
-                      datetime.fromisoformat(evidence['next_review_at'].replace('Z', '+00:00')),
-                      verified + timedelta(days=7))
+        caps = [datetime.fromisoformat(evidence['expires_at'].replace('Z', '+00:00')),
+                verified + timedelta(days=7)]
+        meetings = _calendar_dates(root, POLICY_CB[name]) if name in POLICY_CB else None
+        if meetings is None:
+            next_decision = evidence['next_review_at']
+            caps.append(datetime.fromisoformat(next_decision.replace('Z', '+00:00')))
+        else:
+            # Reunión ya celebrada: verified.date() < decisión <= hoy. Caduca a las 00:00 UTC de ese día.
+            held = [d for d in meetings if verified.date() < d <= now.date()]
+            if held:
+                d0 = min(held)
+                caps.append(datetime(d0.year, d0.month, d0.day, tzinfo=timezone.utc))
+            upcoming = [d for d in meetings if d > now.date()]
+            next_decision = min(upcoming).isoformat() if upcoming else evidence.get('next_review_at')
+        expires = min(caps)
         rate = float(evidence['rate'])
         effective = _parse_date(evidence['effective_on_or_before'])
         if not effective or not math.isfinite(rate) or not evidence['source'].startswith('https://'):
             raise ValueError('invalid evidence')
         item.update(evidence_source=evidence['source'], evidence_expires_utc=expires.isoformat(),
-                    next_decision=evidence['next_review_at'])
+                    next_decision=next_decision)
         if now < verified:
             item.update(status='UNKNOWN', reason='Verificación oficial con fecha futura: no se puede certificar.')
         elif now >= expires:

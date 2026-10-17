@@ -42,7 +42,9 @@ class F1Config(unittest.TestCase):
         covered = set()
         for r in RULES:
             covered.update(os.path.basename(x) for x in r["files"].split(";") if x)
-        extra = {"BOOK_RISK.json", "S01B.json", "USD_FACTOR.json", "OPTIONS_SURFACE.json", "pos_g8_cot.json", "MFV_G8_state.json"}
+        # B2: los tres archivos SHADOW no son serie de frescura. Cuando el workflow los publique, siguen fuera de las reglas.
+        extra = {"BOOK_RISK.json", "S01B.json", "USD_FACTOR.json", "OPTIONS_SURFACE.json", "pos_g8_cot.json", "MFV_G8_state.json",
+                 "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json"}
         self.assertEqual(sorted(files - covered - extra), [], "ficheros de data/ sin regla")
         self.assertIn("BOOK_RISK.json", files)                 # derivado de USD_FACTOR (libro), sin frescura propia
 
