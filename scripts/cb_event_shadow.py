@@ -7,7 +7,8 @@ y no cambia la §00 publicada.
 
 La bandera de una divisa es verdadera cuando
 0 <= days_to_next_cb_meeting <= 2.
-La de un par de los 28 del contrato es verdadera solo si las dos patas lo son.
+La de un par de los 28 del contrato es verdadera si al menos una pata lo es.
+both_legs_in_window conserva el choque doble (las dos patas a la vez).
 """
 import csv
 import json
@@ -118,14 +119,15 @@ def evaluate(as_of, meetings_by_country, is_business_day, pairs):
         dq = currencies[quote]["days_to_next_cb_meeting"]
         pair_rows[pair] = {
             "days_to_next_cb_meeting": {base: db, quote: dq},
-            "CB_EVENT_48H": in_window(db) and in_window(dq),
+            "CB_EVENT_48H": in_window(db) or in_window(dq),
+            "both_legs_in_window": in_window(db) and in_window(dq),
         }
     return {
-        "schema": "cb-event-48h-shadow-1",
+        "schema": "cb-event-48h-shadow-2",
         "mode": "SHADOW",
         "as_of": as_of.isoformat(),
         "window_bd": [WINDOW_LO, WINDOW_HI],
-        "rule": "Divisa: 0 <= days_to_next_cb_meeting <= 2. Par: las dos patas.",
+        "rule": "Divisa: 0 <= days_to_next_cb_meeting <= 2. Par: al menos una pata. both_legs_in_window: las dos.",
         "currencies": currencies,
         "pairs": pair_rows,
     }

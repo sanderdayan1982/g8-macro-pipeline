@@ -10,9 +10,11 @@
 
 `days_to_next_cb_meeting` es 0 el día del anuncio. Cada día hábil posterior suma 1. El fin de semana no cuenta. Un festivo intermedio no cuenta. El día del anuncio cuenta aunque ese calendario lo marque festivo. Sin reunión futura el valor es `None` y la bandera queda en falso.
 
-La bandera de la divisa es verdadera solo si `0 <= days_to_next_cb_meeting <= 2`. La de un par de los 28 de `sources/suite_contract.json` es verdadera solo si las dos patas lo son.
+La bandera de la divisa es verdadera solo si `0 <= days_to_next_cb_meeting <= 2`. La de un par de los 28 de `sources/suite_contract.json` es verdadera si al menos una pata lo es (`or`). `both_legs_in_window` guarda el choque doble (`and`), que era la regla anterior.
 
-Medido el 17-oct-2026 (sábado). Ninguna divisa y ningún par están dentro de la ventana:
+Corrección del 17-oct-2026, pedida por Argon sobre `5114a1e`: con `and`, un FOMC, un SNB o un RBA en solitario dejaba en falso todos los pares de esa divisa. En mesa, el par tiene evento si cualquiera de las dos patas decide dentro de la ventana.
+
+Medido el 17-oct-2026 (sábado). Ninguna divisa y ningún par están dentro de la ventana (`CB_EVENT_48H` y `both_legs_in_window` en falso):
 
 | Divisa | Próxima decisión | Días hábiles |
 | --- | --- | --- |
@@ -25,9 +27,9 @@ Medido el 17-oct-2026 (sábado). Ninguna divisa y ningún par están dentro de l
 | GBP | 2026-11-05 | 14 |
 | CHF | 2026-12-10 | 39 |
 
-NZD va un día por debajo de USD porque el Labour Day neozelandés (2026-10-26) no cuenta. Por eso el viernes 23-oct NZD ya está en 2 y USD sigue en 3: hay bandera de divisa y todavía ningún par.
+NZD va un día por debajo de USD porque el Labour Day neozelandés (2026-10-26) no cuenta. El viernes 23-oct NZD ya está en 2 y USD sigue en 3. Se encienden los siete pares de NZD (`AUD/NZD`, `EUR/NZD`, `GBP/NZD`, `NZD/CAD`, `NZD/CHF`, `NZD/JPY`, `NZD/USD`) con `both_legs_in_window` en falso.
 
-El miércoles 28-oct, día de decisión de Estados Unidos, Canadá y Nueva Zelanda, entran también el BCE (1 día hábil) y el BoJ (2). Diez pares: `CAD/JPY`, `EUR/CAD`, `EUR/JPY`, `EUR/NZD`, `EUR/USD`, `NZD/CAD`, `NZD/JPY`, `NZD/USD`, `USD/CAD`, `USD/JPY`. El jueves 29 la de USD ya se apagó (la próxima es el 9-dic) y el único par que queda es `EUR/JPY`.
+El miércoles 28-oct entran USD, CAD y NZD (día 0), el BCE (1 día hábil) y el BoJ (2). `GBP/USD` y `AUD/USD` quedan en `CB_EVENT_48H` aunque la libra y el dólar australiano no decidan. Los diez choques dobles, con `both_legs_in_window` verdadero, siguen siendo `CAD/JPY`, `EUR/CAD`, `EUR/JPY`, `EUR/NZD`, `EUR/USD`, `NZD/CAD`, `NZD/JPY`, `NZD/USD`, `USD/CAD` y `USD/JPY`. `GBP/AUD` sigue en falso: ninguna pata está en la ventana. El jueves 29 la de USD ya se apagó y el único choque doble que queda es `EUR/JPY`; `GBP/JPY` sigue encendido por el BoJ.
 
 Salida: `data/CB_EVENT_48H_shadow.json` (`mode: SHADOW`). No entra en el libro.
 
@@ -55,6 +57,6 @@ Los dos JSON de sombra entran en la lista de exclusiones de `tests/test_f1_confi
 
 ## Tests
 
-`python -m unittest discover -s tests`: **830 OK, 11 omitidas**. Son las 820 de B6 más las 10 de `tests/test_c1_shadow.py`. Las 11 omitidas son las condicionales que ya tenía la suite.
+Las 10 de `tests/test_c1_shadow.py` cubren la corrección de pares. El recuento del árbol completo, con B3, está en el acta de B3.
 
-No se abre B3 (CHF 2Y/5Y diario).
+La corrección de pares queda en el mismo día que se abre B3. El nowcast suizo está en `docs/actas/ACTA_B3_CHF_NOWCAST.md`.

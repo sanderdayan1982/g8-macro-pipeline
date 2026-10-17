@@ -56,7 +56,7 @@ class BusinessDaysToTheMeeting(unittest.TestCase):
     def test_no_future_meeting_is_none(self):
         self.assertIsNone(CB.days_to_next_cb_meeting(date(2027, 1, 1), [date(2026, 12, 8)], _weekdays))
 
-    def test_a_pair_needs_both_legs_inside_the_window(self):
+    def test_a_pair_flags_if_either_leg_is_inside_the_window(self):
         meetings = {
             "US": [date(2026, 10, 28)],
             "EA": [date(2026, 10, 29)],
@@ -73,8 +73,11 @@ class BusinessDaysToTheMeeting(unittest.TestCase):
         self.assertTrue(doc["currencies"]["EUR"]["CB_EVENT_48H"])
         self.assertFalse(doc["currencies"]["GBP"]["CB_EVENT_48H"])
         self.assertTrue(doc["pairs"]["EUR/USD"]["CB_EVENT_48H"])
-        self.assertFalse(doc["pairs"]["EUR/GBP"]["CB_EVENT_48H"])
-        self.assertFalse(doc["pairs"]["GBP/USD"]["CB_EVENT_48H"])
+        self.assertTrue(doc["pairs"]["EUR/USD"]["both_legs_in_window"])
+        self.assertTrue(doc["pairs"]["EUR/GBP"]["CB_EVENT_48H"])
+        self.assertFalse(doc["pairs"]["EUR/GBP"]["both_legs_in_window"])
+        self.assertTrue(doc["pairs"]["GBP/USD"]["CB_EVENT_48H"])
+        self.assertFalse(doc["pairs"]["GBP/USD"]["both_legs_in_window"])
         self.assertFalse(doc["currencies"]["JPY"]["CB_EVENT_48H"])
         self.assertIsNone(doc["currencies"]["JPY"]["days_to_next_cb_meeting"])
 
@@ -85,20 +88,26 @@ class OfficialCalendar(unittest.TestCase):
         self.assertEqual(len(doc["pairs"]), 28)
         self.assertTrue(all(not row["CB_EVENT_48H"] for row in doc["currencies"].values()))
         self.assertTrue(all(not row["CB_EVENT_48H"] for row in doc["pairs"].values()))
+        self.assertTrue(all(not row["both_legs_in_window"] for row in doc["pairs"].values()))
         # Labour Day NZ (2026-10-26) no cuenta: el viernes 23 NZD ya está a 2 días hábiles y USD no.
         friday = CB.build(date(2026, 10, 23), ROOT)
         self.assertTrue(friday["currencies"]["NZD"]["CB_EVENT_48H"])
         self.assertEqual(friday["currencies"]["NZD"]["days_to_next_cb_meeting"], 2)
         self.assertEqual(friday["currencies"]["USD"]["days_to_next_cb_meeting"], 3)
         self.assertFalse(friday["currencies"]["USD"]["CB_EVENT_48H"])
-        self.assertTrue(all(not row["CB_EVENT_48H"] for row in friday["pairs"].values()))
+        nzd_pairs = ["AUD/NZD", "EUR/NZD", "GBP/NZD", "NZD/CAD", "NZD/CHF", "NZD/JPY", "NZD/USD"]
+        self.assertEqual(sorted(p for p, row in friday["pairs"].items() if row["CB_EVENT_48H"]), nzd_pairs)
+        self.assertTrue(all(not row["both_legs_in_window"] for row in friday["pairs"].values()))
         monday = CB.build(date(2026, 10, 26), ROOT)
         for ccy in ("USD", "CAD", "NZD"):
             self.assertEqual(monday["currencies"][ccy]["days_to_next_cb_meeting"], 2, ccy)
             self.assertTrue(monday["currencies"][ccy]["CB_EVENT_48H"], ccy)
         self.assertFalse(monday["currencies"]["EUR"]["CB_EVENT_48H"])
-        self.assertEqual(sorted(p for p, row in monday["pairs"].items() if row["CB_EVENT_48H"]),
+        self.assertEqual(sorted(p for p, row in monday["pairs"].items() if row["both_legs_in_window"]),
                          ["NZD/CAD", "NZD/USD", "USD/CAD"])
+        self.assertTrue(monday["pairs"]["GBP/USD"]["CB_EVENT_48H"])
+        self.assertFalse(monday["pairs"]["GBP/USD"]["both_legs_in_window"])
+        self.assertFalse(monday["pairs"]["EUR/GBP"]["CB_EVENT_48H"])
         day = CB.build(date(2026, 10, 28), ROOT)
         for ccy in ("USD", "CAD", "NZD"):
             self.assertEqual(day["currencies"][ccy]["days_to_next_cb_meeting"], 0, ccy)
@@ -107,14 +116,21 @@ class OfficialCalendar(unittest.TestCase):
         self.assertFalse(day["currencies"]["AUD"]["CB_EVENT_48H"])
         self.assertFalse(day["currencies"]["GBP"]["CB_EVENT_48H"])
         self.assertFalse(day["currencies"]["CHF"]["CB_EVENT_48H"])
-        on = sorted(p for p, row in day["pairs"].items() if row["CB_EVENT_48H"])
-        self.assertEqual(on, ["CAD/JPY", "EUR/CAD", "EUR/JPY", "EUR/NZD", "EUR/USD",
-                              "NZD/CAD", "NZD/JPY", "NZD/USD", "USD/CAD", "USD/JPY"])
+        doubles = sorted(p for p, row in day["pairs"].items() if row["both_legs_in_window"])
+        self.assertEqual(doubles, ["CAD/JPY", "EUR/CAD", "EUR/JPY", "EUR/NZD", "EUR/USD",
+                                   "NZD/CAD", "NZD/JPY", "NZD/USD", "USD/CAD", "USD/JPY"])
+        self.assertTrue(day["pairs"]["GBP/USD"]["CB_EVENT_48H"])
+        self.assertFalse(day["pairs"]["GBP/USD"]["both_legs_in_window"])
+        self.assertTrue(day["pairs"]["AUD/USD"]["CB_EVENT_48H"])
+        self.assertFalse(day["pairs"]["AUD/USD"]["both_legs_in_window"])
+        self.assertFalse(day["pairs"]["GBP/AUD"]["CB_EVENT_48H"])
         after = CB.build(date(2026, 10, 29), ROOT)
         self.assertFalse(after["currencies"]["USD"]["CB_EVENT_48H"])
         self.assertTrue(after["currencies"]["EUR"]["CB_EVENT_48H"])
         self.assertTrue(after["currencies"]["JPY"]["CB_EVENT_48H"])
-        self.assertEqual(sorted(p for p, row in after["pairs"].items() if row["CB_EVENT_48H"]), ["EUR/JPY"])
+        self.assertEqual(sorted(p for p, row in after["pairs"].items() if row["both_legs_in_window"]), ["EUR/JPY"])
+        self.assertTrue(after["pairs"]["GBP/JPY"]["CB_EVENT_48H"])
+        self.assertFalse(after["pairs"]["GBP/JPY"]["both_legs_in_window"])
 
     def test_snapshot_matches_the_official_files(self):
         with open(os.path.join(ROOT, "data", CB.SHADOW_NAME), encoding="utf-8") as fh:
