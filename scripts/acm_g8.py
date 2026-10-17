@@ -531,8 +531,12 @@ def ns_fit_panel(panel, grid_years):
 
 
 # ===================================================================== ACM core
-def acm_estimate(y_monthly_dec, k=K):
-    """ACM three-step on month-end zero yields (decimal annual) on full grid."""
+def acm_estimate(y_monthly_dec, k=K, phi_adjust=None):
+    """ACM three-step on month-end zero yields (decimal annual) on full grid.
+
+    phi_adjust(Phi, n_transitions) is the B5 SHADOW hook. None — the default — leaves
+    the published VAR, residuals and prices of risk unchanged.
+    """
     mats = y_monthly_dec.columns.values.astype(int)
     Y = y_monthly_dec.values
     T = Y.shape[0]
@@ -559,6 +563,15 @@ def acm_estimate(y_monthly_dec, k=K):
         Phi = np.real(eigvec @ np.diag(eigval * scale) @ np.linalg.inv(eigvec))
         print(f"    [ACM] Phi eigenvalue clip applied "
               f"(max |eig| was {np.max(np.abs(eigval)):.4f})")
+    if phi_adjust is not None:
+        # B5 SHADOW only. Residuals and prices of risk are rebuilt under the corrected Φ.
+        # The published call (phi_adjust=None) still residuals against the OLS Φ_full above.
+        Phi = np.real(np.asarray(phi_adjust(Phi, T - 1), dtype=float))
+        eigval, eigvec = np.linalg.eig(Phi)
+        if np.max(np.abs(eigval)) > 0.995:
+            scale = np.where(np.abs(eigval) > 0.995, 0.995 / np.abs(eigval), 1.0)
+            Phi = np.real(eigvec @ np.diag(eigval * scale) @ np.linalg.inv(eigvec))
+        Phi_full = np.vstack([np.asarray(mu, dtype=float).reshape(1, -1), Phi.T])
     V = X1 - Zv @ Phi_full
     Sigma = (V.T @ V) / (T - 1)
 
