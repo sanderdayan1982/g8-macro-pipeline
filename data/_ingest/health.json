@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-16T23:23:17.934064Z",
+ "generated_utc": "2026-10-17T01:19:22.282630Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -205,7 +205,7 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-16",
+   "have_max": "2026-10-17",
    "expected_obs": "2026-10-14",
    "calendar": "US",
    "basis": "PROVISIONAL",
@@ -221,7 +221,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-10-16",
+   "have_max": "2026-10-17",
    "expected_obs": "2026-10-15",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -1806,19 +1806,19 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "VERIFIED_CANONICAL",
+   "state": "AWAITING_PUBLICATION",
    "have_max": "2026-10-15",
-   "expected_obs": "2026-10-15",
+   "expected_obs": "2026-10-16",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
+   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-10-19T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "expected_publication_utc": "2026-10-16T21:00:00+00:00"
+   "expected_publication_utc": "2026-10-19T21:00:00+00:00"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -1921,7 +1921,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-16T23:23:17Z",
+   "have_max": "2026-10-17T01:19:21Z",
    "flags": []
   },
   {
