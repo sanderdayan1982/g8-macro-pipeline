@@ -3,8 +3,10 @@
 No toca los siete ficheros congelados de tests/test_exclusions.py.
 """
 import hashlib
+import json
 import os
 import re
+import subprocess
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -49,6 +51,17 @@ def _read(path):
         return fh.read()
 
 
+def _js_function(name):
+    match = re.search(r"function " + re.escape(name) + r"\([^\n]*\) \{[\s\S]*?\n\}", _read(HTML))
+    if not match:
+        raise AssertionError("Missing dashboard function: " + name)
+    return match.group(0)
+
+
+def _node(program):
+    return json.loads(subprocess.check_output(["node", "-e", program], text=True))
+
+
 class U1DashboardIntegration(unittest.TestCase):
     def test_titles_are_consecutive_00_to_07(self):
         titles = re.findall(r'<h2 class="section-title">(.*?)</h2>', _read(HTML))
@@ -76,10 +89,75 @@ class U1DashboardIntegration(unittest.TestCase):
         self.assertIn("bdBetween", html)
 
     def test_brief_renumbers_visible_sections(self):
-        html = _read(HTML)
-        self.assertIn("§06/§07", html)
-        self.assertIn("§04/§05", html)
-        self.assertIn("function briefSec", html)
+        labels = ["§09 COT", "§04 Term premium", "§06/§07 Metales MDP",
+                  "§08 Opciones", "§10 Factor USD", "§02 Floor spreads", "§01-b CTF"]
+        out = _node(_js_function("briefSec") + "\nprocess.stdout.write(JSON.stringify(" +
+                    json.dumps(labels) + ".map(briefSec)));")
+        self.assertEqual(out, ["COT · fuera de la página", "§03 Term premium", "§04/§05 Metales MDP",
+                               "§06 Opciones", "§07 Factor USD", "§02 Floor spreads", "§01-b CTF"])
+
+    def test_jpy_distance_and_side_execute_the_display_functions(self):
+        program = "var INV = {JPY: true, CAD: true, CHF: true};\n"
+        program += _js_function("userWalls") + "\n" + _js_function("fmtC2Dist")
+        program += """
+const native = {call_wall: {k: 0.0065, dist_pct: 2.31}, put_wall: {k: 0.006, dist_pct: -5.56}};
+const user = userWalls('JPY', native);
+process.stdout.write(JSON.stringify({
+    put: fmtC2Dist('JPY', user.put, 0.006353),
+    putIsNativeCall: user.put === native.call_wall,
+    callIsNativePut: user.call === native.put_wall,
+    native: fmtC2Dist('EUR', native.call_wall, 0.006353)
+}));
+"""
+        self.assertEqual(_node(program), {"put": "-2.26%", "putIsNativeCall": True,
+                                          "callIsNativePut": True, "native": "+2.31%"})
+
+    def test_cb_shadow_age_with_a_fixed_clock(self):
+        program = """
+const RealDate = Date;
+var Date = class extends RealDate {
+    constructor(...args) { super(...(args.length ? args : ['2026-03-03T12:00:00Z'])); }
+    static now() { return new RealDate('2026-03-03T12:00:00Z').getTime(); }
+};
+""" + _js_function("shadowAgeOk")
+        program += "\nprocess.stdout.write(JSON.stringify(" + json.dumps(
+            ["2026-03-03", "2026-03-02", "2026-03-01", "2026-03-04", "2026-02-30", "bad", ""]
+        ) + ".map(as_of => shadowAgeOk({as_of}))));"
+        self.assertEqual(_node(program), [True, True, False, False, False, False, False])
+
+    def test_missing_daily_mdp_is_not_a_zero_signal(self):
+        out = _node(_js_function("b2Line") + "\nprocess.stdout.write(JSON.stringify(" +
+                    "[null, '', 0, 1.25].map(mdp_z => b2Line({mdp_z}))));")
+        self.assertIn("MDP-Z —", out[0])
+        self.assertIn("MDP-Z —", out[1])
+        self.assertIn("MDP-Z +0.00", out[2])
+        self.assertIn("MDP-Z +1.25", out[3])
+
+    def test_policy_cells_recompute_days_when_shadow_expires(self):
+        program = """
+const RealDate = Date;
+var Date = class extends RealDate {
+    constructor(...args) { super(...(args.length ? args : ['2026-10-17T22:00:00Z'])); }
+    static now() { return new RealDate('2026-10-17T22:00:00Z').getTime(); }
+};
+var CB_OF = {JPY: 'JP'};
+var _cbNext = {JP: {date: '2026-10-30', source: 'official', note: 'next decision'}};
+var _cbShadow = {as_of: '2026-10-01', currencies: {JPY: {days_to_next_cb_meeting: 99, CB_EVENT_48H: true}}};
+"""
+        program += "\n".join(_js_function(n) for n in ('bdBetween', 'shadowAgeOk', 'shadowDays', 'policyCells'))
+        program += """
+const stale = policyCells({ccy: 'JPY'}, null);
+_cbShadow.as_of = '2026-10-17';
+const current = policyCells({ccy: 'JPY'}, null);
+process.stdout.write(JSON.stringify({stale, current}));
+"""
+        out = _node(program)
+        self.assertIn("as-of 2026-10-01", out['stale'])
+        self.assertIn("sombra atrasada", out['stale'])
+        self.assertIn("10 d.h.", out['stale'])
+        self.assertNotIn("99 d.h.", out['stale'])
+        self.assertIn("as-of 2026-10-17", out['current'])
+        self.assertIn("99 d.h.", out['current'])
 
     def test_daily_update_runs_shadows_and_stages_outputs(self):
         yml = _read(YML)

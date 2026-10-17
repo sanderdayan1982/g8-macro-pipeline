@@ -2496,7 +2496,7 @@ function shadowAgeOk(doc) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf)) return false;
     if (asOf === new Date().toISOString().slice(0, 10)) return true;
     var t = Date.parse(asOf + 'T21:30:00Z');
-    if (!isFinite(t)) return false;
+    if (!isFinite(t) || new Date(t).toISOString().slice(0, 10) !== asOf) return false;
     var h = (Date.now() - t) / 3600000, dow = new Date().getUTCDay();
     var lim = (dow === 0 || dow === 1) ? 78 : 30;
     return h >= 0 && h <= lim;
@@ -3743,7 +3743,7 @@ var IDS = {
    el titular semanal (tarjetas, semáforo, gráficos) sigue saliendo de MFV_G8_state.json. */
 var B2_IDS = { XAU: 'mfv-b2-xau', XAG: 'mfv-b2-xag' };
 function b2Line(m) {
-    var z = Number(m.mdp_z);
+    var z = m.mdp_z == null || m.mdp_z === '' ? NaN : Number(m.mdp_z);
     var zs = isFinite(z) ? (z >= 0 ? '+' : '') + z.toFixed(2) : '—';
     return 'DIARIO (B2): MDP-Z ' + zs + ' · precio/regresores ' + (m.mdp_as_of || '—') +
         ' · ancla COT ' + (m.cot_as_of || '—') + ' · β ' + (m.beta_state || '—');
