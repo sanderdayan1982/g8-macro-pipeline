@@ -1,15 +1,21 @@
-"""U2 — los seis hallazgos del dictamen sobre 6c387bea dejan de ser solo cadenas.
+"""U2 — los seis hallazgos del dictamen sobre 6c387bea dejan de ser solo cadenas, y la web enseña
+las sombras diarias B2 (metales) y A3 (§01-b) sin tocar los ficheros congelados.
 
-briefSec se ejecuta con node, la distancia JPY se recalcula, y los siete hashes siguen.
+briefSec, b2Line y las celdas A3 se ejecutan con node sobre los JSON reales; la distancia JPY se
+recalcula; las sesiones se comparan; y los siete hashes siguen.
 """
 import hashlib
 import json
 import os
 import re
 import subprocess
+import sys
+import tempfile
 import unittest
+from datetime import date
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
 HTML = os.path.join(ROOT, "docs", "index.html")
 FROZEN = [
     ("scripts/cme_options_collector.py", "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9"),
@@ -101,7 +107,7 @@ class OptionsInversion(unittest.TestCase):
 
     def test_section_06_marks_shadow_and_refuses_a_different_session(self):
         html = _read(HTML)
-        self.assertIn('title="CME_OPTIONS_C1_shadow.json · sesión \' + shadow.session + \'">SHADOW</span>', html)
+        self.assertIn("\">C2 · sesión ' + shadow.session + ' (CME_OPTIONS_C1_shadow.json)</span>", html)
         self.assertIn("String(shadow.session) === String(doc.latest_session)", html)
         self.assertIn("SHADOW omitida", html)
 
@@ -129,10 +135,109 @@ class FloorsAndRegistry(unittest.TestCase):
         self.assertEqual(sections["pos_g8_cot.json"], "00")
         self.assertFalse(set(sections.values()) & {"08", "09", "10"})
 
+    def test_section_06_session_matches_on_the_real_files(self):
+        shadow = json.loads(_read(os.path.join(ROOT, "data", "CME_OPTIONS_C1_shadow.json")))
+        surface = json.loads(_read(os.path.join(ROOT, "data", "OPTIONS_SURFACE.json")))
+        self.assertEqual(str(shadow["session"]), str(surface["latest_session"]))
+
     def test_seven_frozen_hashes_stay(self):
         for rel, expected in FROZEN:
             with open(os.path.join(ROOT, rel), "rb") as fh:
                 self.assertEqual(hashlib.sha256(fh.read()).hexdigest(), expected, rel)
+
+
+def _block(html, head, indent=""):
+    match = re.search(re.escape(head) + r"[\s\S]*?\n" + indent + r"\}", html)
+    if not match:
+        raise AssertionError(head)
+    return match.group(0)
+
+
+def _node(program):
+    return json.loads(subprocess.check_output(["node", "-e", program], text=True))
+
+
+class MetalsDailyB2(unittest.TestCase):
+    def test_b2_line_reads_the_real_shadow_state(self):
+        html = _read(HTML)
+        doc = json.loads(_read(os.path.join(ROOT, "data", "MFV_G8_shadow_state.json")))
+        self.assertEqual(doc["mode"], "SHADOW")
+        src = _block(html, "function b2Line(m) {")
+        out = _node(src + "\nconst doc = " + json.dumps(doc) +
+                    ";\nprocess.stdout.write(JSON.stringify({XAU: b2Line(doc.metals.XAU), XAG: b2Line(doc.metals.XAG)}));")
+        for metal in ("XAU", "XAG"):
+            m = doc["metals"][metal]
+            z = "%+.2f" % m["mdp_z"]
+            self.assertEqual(out[metal], "DIARIO (B2): MDP-Z %s · precio/regresores %s · ancla COT %s · β %s"
+                             % (z, m["mdp_as_of"], m["cot_as_of"], m["beta_state"]))
+
+    def test_b2_is_loaded_apart_and_the_weekly_headline_stays(self):
+        html = _read(HTML)
+        self.assertIn("getText(RAW + 'MFV_G8_shadow_state.json')", html)
+        self.assertIn("getText(RAW + 'MFV_G8_state.json')", html)
+        self.assertIn('id="mfv-b2-xau"', html)
+        self.assertIn('id="mfv-b2-xag"', html)
+        refresh = _block(html, "function refreshMetals() {")
+        self.assertLess(refresh.index("renderDailyB2()"), refresh.index("renderMetal('XAU'"))
+        self.assertNotIn("await renderDailyB2", html)
+
+
+class S01BShadowA3(unittest.TestCase):
+    def _cells(self, a3, as_of):
+        html = _read(HTML)
+        same = re.search(r"function a3SameSession\(j\) \{.*\}", html).group(0)
+        cell = _block(html, "function a3Cell(c) {", " " * 16)
+        helpers = ("function nz(x) { return x != null && isFinite(x); }\n"
+                   "function esc(s) { return String(s == null ? '' : s); }\n")
+        program = (helpers + "var a3Shadow = " + json.dumps(a3) + ";\n" + same + "\n" + cell +
+                   "\nconst j = {as_of: " + json.dumps(as_of) + "};\nconst ok = a3SameSession(j);\n"
+                   "const rows = {}; ['USD','EUR','GBP','JPY','AUD','NZD','CAD','CHF'].forEach(function (c) { rows[c] = a3Cell(c); });\n"
+                   "process.stdout.write(JSON.stringify({ok: ok, rows: rows}));")
+        return _node(program)
+
+    def test_a3_rows_on_the_real_files(self):
+        a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
+        s01b = json.loads(_read(os.path.join(ROOT, "data", "S01B.json")))
+        self.assertEqual(a3["mode"], "SHADOW")
+        self.assertEqual(a3["t"], s01b["as_of"])
+        out = self._cells(a3, s01b["as_of"])
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
+        eur = a3["currencies"]["EUR"]
+        self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
+                         % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
+        for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
+            self.assertIn("local: ", out["rows"][c])
+            self.assertIn("ρ22: ", out["rows"][c])
+
+    def test_a3_is_dropped_when_the_session_differs(self):
+        a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
+        out = self._cells(a3, "1999-01-05")
+        self.assertFalse(out["ok"])
+        html = _read(HTML)
+        self.assertIn("(a3ok ? a3Row(c) : '')", html)
+        self.assertIn("A3 SHADOW omitida", html)
+
+    def test_writer_session_is_the_last_target_day_of_the_canonical(self):
+        import s01b_shadow_a3 as A3
+        s01b = json.loads(_read(os.path.join(ROOT, "data", "S01B.json")))
+        self.assertEqual(A3.last_session(os.path.join(ROOT, "data")), date.fromisoformat(s01b["as_of"]))
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(lambda: __import__("shutil").rmtree(tmp))
+        dest = os.path.join(tmp, A3.SHADOW_NAME)
+        A3.write_shadow({"mode": "SHADOW", "t": "2026-10-16"}, dest)
+        self.assertEqual(json.loads(_read(dest))["t"], "2026-10-16")
+        self.assertFalse(os.path.exists(dest + ".tmp"))
+
+    def test_daily_job_writes_and_stages_a3(self):
+        wf = _read(os.path.join(ROOT, ".github", "workflows", "daily_update.yml"))
+        step = wf[wf.index("- name: Shadow S01B A3"):]
+        step = step[:step.index("\n\n")]
+        self.assertIn("continue-on-error: true", step)
+        self.assertIn("--phase post --cap 40", step)
+        self.assertIn("python scripts/s01b_shadow_a3.py", step)
+        commit = wf[wf.index("- name: Commit updated data files"):]
+        self.assertIn("data/S01B_shadow_a3.json", commit[:commit.index("git diff --staged")])
 
 
 if __name__ == "__main__":

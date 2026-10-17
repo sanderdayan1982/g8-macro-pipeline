@@ -24,12 +24,12 @@ jobs:
     timeout-minutes: 30
     # Revisión 24-sep (hallazgo #3): plazo global del job y reserva para publicar. Duraciones medidas en los
     # Daily del 13 al 24-sep: job 2,5–10,7 min; ACM G8 ≤ 326 s; EUR AAA ≤ 225 s; S01B, avisos y commit < 5 s
-    # cada uno. Reserva 660 s = S01B 120 + avisos 60 + vigilancia 90 + sombras U1 3×40 + registro 15 +
-    # commit 180 + rojo 15 + aviso de fallo 60. La fase de descarga dispone de ~19 min (≈2× el máximo observado). PROVISIONAL:
+    # cada uno. Reserva 700 s = S01B 120 + avisos 60 + vigilancia 90 + sombras U1 3×40 + A3 40 + registro 15 +
+    # commit 180 + rojo 15 + aviso de fallo 60. La fase de descarga dispone de ~14,8 min (≈1,4× el máximo observado). PROVISIONAL:
     # recalibrar con data/_ingest/latest/actions__job_daily.json tras 2 semanas.
     env:
       G8_JOB: daily
-      G8_JOB_RESERVE_S: '660'
+      G8_JOB_RESERVE_S: '700'
       # R2-1: cada paso g8step copia data/ antes de ejecutarse y, al terminar, restaura al último válido lo que
       # quede vacío, ilegible, retrocedido o escrito por un paso cortado → «git add data/» solo ve salidas válidas.
       G8_STEP_GUARD: data
@@ -334,6 +334,13 @@ jobs:
         timeout-minutes: 2
         run: python scripts/tools/g8step.py --name chf_nowcast_shadow --phase post --cap 40 --min 5 -- python scripts/chf_nowcast_shadow.py
 
+      # U2: diagnóstico A3 de §01-b en SHADOW. No toca s01b.py ni su salida; ~15 s medidos.
+      - name: Shadow S01B A3
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python scripts/tools/g8step.py --name s01b_shadow_a3 --phase post --cap 40 --min 5 -- python scripts/s01b_shadow_a3.py
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
@@ -349,7 +356,8 @@ jobs:
             data/options/shadow_history.json \
             data/CHF_NOWCAST_shadow.json \
             data/CHF_SPOT_2Y_daily_shadow.csv \
-            data/CHF_SPOT_5Y_daily_shadow.csv
+            data/CHF_SPOT_5Y_daily_shadow.csv \
+            data/S01B_shadow_a3.json
 
           if git diff --staged --quiet; then
             echo "No data changes detected — skipping commit"

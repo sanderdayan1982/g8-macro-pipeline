@@ -899,7 +899,8 @@ class Mapping(unittest.TestCase):
         # BOOK_RISK: derivado del libro. Los tres SHADOW de B2 no son serie de frescura.
         extra = {"BOOK_RISK.json", "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json",
                  "ACM_G8_NZD_phi_shadow.json", "CB_EVENT_48H_shadow.json", "CME_OPTIONS_C1_shadow.json",
-                 "CHF_NOWCAST_shadow.json", "CHF_SPOT_2Y_daily_shadow.csv", "CHF_SPOT_5Y_daily_shadow.csv"}
+                 "CHF_NOWCAST_shadow.json", "CHF_SPOT_2Y_daily_shadow.csv", "CHF_SPOT_5Y_daily_shadow.csv",
+                 "S01B_shadow_a3.json"}
         self.assertEqual(sorted(files - set(OUT) - extra), [])
 
     def test_registry_feeds_map_to_outputs(self):

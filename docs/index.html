@@ -378,6 +378,7 @@
                 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
                 var GREEN = '#2fbf71', RED = '#e0485a', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#eef1f6', MUTE = '#aeb6c6';
                 var chfNowcast = null;
+                var a3Shadow = null;
                 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
                 function nz(x) { return x != null && isFinite(x); }
                 function bp(x) { if (!nz(x)) return '·'; var r = Math.round(x); return r === 0 ? '0' : (r > 0 ? '+' : '') + r; }   /* E2: sign after rounding */
@@ -424,6 +425,26 @@
                         ' · oficial ' + esc(t.official) + ' el ' + esc(t.anchor_date || '') + '">nowcast 2Y: ' +
                         Number(t.last_value).toFixed(2) + '% · ' + (dbp > 0 ? '+' : '') + dbp + 'e pb al ' + esc(when) + '</span>';
                 }
+                /* U2 · A3: diagnóstico de contagio en SHADOW (S01B_shadow_a3.json). Solo se pinta si su sesión t
+                   es la misma que el as_of de S01B.json; no entra en CTF, θ ni Persist. */
+                function a3SameSession(j) { return !!(a3Shadow && a3Shadow.mode === 'SHADOW' && String(a3Shadow.t) === String(j.as_of)); }
+                function a3Cell(c) {
+                    var a = (a3Shadow.currencies || {})[c];
+                    if (!a) return 'A3 · sin fila';
+                    if (a.status === 'EXCLUIDA_B5') return 'A3 · EXCLUIDA_B5';
+                    if (a.status === 'REFERENCIA') return 'A3 · referencia ΔTP22_USD';
+                    var loc = nz(a.dtp22_local) ? (a.dtp22_local >= 0 ? '+' : '') + a.dtp22_local.toFixed(1) : '·';
+                    var beta = nz(a.beta_usd) ? a.beta_usd.toFixed(2) : '·';
+                    var rho = nz(a.rho_tp_fx_22) ? (a.rho_tp_fx_22 >= 0 ? '+' : '') + a.rho_tp_fx_22.toFixed(2) : '·';
+                    return 'A3 · local: ' + loc + ' pb (β ' + beta + ') · ρ22: ' + rho + (a.status !== 'OK' ? ' · ' + esc(a.status) : '');
+                }
+                function a3Row(c) {
+                    var a = (a3Shadow.currencies || {})[c] || {};
+                    var tip = 'S01B_shadow_a3.json · SHADOW · t ' + a3Shadow.t + ' · t0 ' + a3Shadow.t0 +
+                        (a.input_t0 ? ' · curva ' + a.input_t0 + ' → ' + a.input_t : '') + (a.n_beta ? ' · β con ' + a.n_beta + ' pasos' : '') +
+                        ' · ΔTP22_local = ΔTP22_i − β·ΔTP22_USD; ρ22 = Pearson(ΔTP diario, Δln FX XXX/USD). No vota.';
+                    return '<tr class="a3-row"><td></td><td colspan="12" style="color:' + AMBER + ';font-size:10px;padding-top:0" title="' + esc(tip) + '">' + a3Cell(c) + '</td></tr>';
+                }
                 function render(j) {
                     var el = document.getElementById('s01b-panel');
                     if (j.status === 'PENDING_FIRST_SESSION') {
@@ -446,6 +467,7 @@
                         '<th title="Δ term premium ACM 22 s. (bp)">ΔTP</th><th title="ΔRNY+ΔTP">ΔFIT</th><th title="Δnominal observado − ΔFIT">RESID</th>' +
                         '<th title="contexto, no aditivo">Δ2Y</th><th title="contexto">ΔBE</th><th title="log-retorno 22 s. nativo XXX/USD; USD = cesta §10">ΔFX</th>' +
                         '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th title="fecha de la última fila ACM usada (acm_g8.py va ~1 sesión detrás de los insumos); «curva» = fecha real del insumo largo cuando acm_g8 lo arrastra (ffill ≤ 8 s., bandera ACM_FFILL)">ACM as-of</th></tr></thead><tbody>';
+                    var a3ok = a3SameSession(j);
                     order.forEach(function (c) {
                         var v = cur[c]; if (!v) return;
                         var col = v.colour === 'red' ? RED : (v.colour === 'amber' ? AMBER : WHITE);
@@ -463,9 +485,12 @@
                             '<td class="attr-val">' + (v.emitter && v.avail === 'OK' ? v.persist : '·') + '</td>' +
                             '<td style="color:' + ((v.flags || []).indexOf('ACM_FFILL') >= 0 ? AMBER : MUTE) + '">' + esc(flags || 'OK') + '</td>' +
                             '<td style="color:' + MUTE + '">' + esc(v.acm_asof_t || '·') +
-                            ((v.flags || []).indexOf('ACM_FFILL') >= 0 && v.acm_input_asof_t ? ' <span style="color:' + AMBER + '" title="ACM_FFILL: la curva larga (' + esc(v.acm_input_asof_t) + ') va detrás de la fila ACM (' + esc(v.acm_asof_t) + '); acm_g8.py arrastra hasta 8 sesiones. Solo lectura, no gatea.">· curva ' + esc(v.acm_input_asof_t) + '</span>' : '') + '</td></tr>';
+                            ((v.flags || []).indexOf('ACM_FFILL') >= 0 && v.acm_input_asof_t ? ' <span style="color:' + AMBER + '" title="ACM_FFILL: la curva larga (' + esc(v.acm_input_asof_t) + ') va detrás de la fila ACM (' + esc(v.acm_asof_t) + '); acm_g8.py arrastra hasta 8 sesiones. Solo lectura, no gatea.">· curva ' + esc(v.acm_input_asof_t) + '</span>' : '') + '</td></tr>' +
+                            (a3ok ? a3Row(c) : '');
                     });
                     h += '</tbody></table></div>';
+                    if (a3Shadow && !a3ok) h += '<div class="section-meta" style="margin-top:4px;color:' + MUTE + '">A3 SHADOW omitida · S01B_shadow_a3.json t ' + esc(a3Shadow.t) + ' ≠ as-of ' + esc(j.as_of) + '</div>';
+                    else if (a3ok) h += '<div class="section-meta" style="margin-top:4px;color:' + MUTE + '">A3 SHADOW (S01B_shadow_a3.json · t ' + esc(a3Shadow.t) + '): contagio local frente a USD, sin voto · NZD fuera hasta cerrar B5</div>';
                     var ev = (j.events || []).map(function (e) { return e.ccy + ' ' + (e.baseline ? '(baseline)' : 'ON') + ' ' + e.t; });
                     h += '<div class="section-meta" style="margin-top:6px;color:' + MUTE + '">eventos de esta sesión: ' + (ev.length ? esc(ev.join(' · ')) : 'ninguno') +
                         ' · registro reproducible data/s01b/log + snap · ' + esc(j.version) + ' · run ' + esc(j.run_id) + '</div>';
@@ -477,11 +502,13 @@
                     try {
                         var pair = await Promise.all([
                             window.G8NET.fetchChain([RAW + 'S01B.json'], { corsOk: true }),
-                            window.G8NET.fetchChain([RAW + 'CHF_NOWCAST_shadow.json'], { corsOk: true }).catch(function () { return { ok: false }; })
+                            window.G8NET.fetchChain([RAW + 'CHF_NOWCAST_shadow.json'], { corsOk: true }).catch(function () { return { ok: false }; }),
+                            window.G8NET.fetchChain([RAW + 'S01B_shadow_a3.json'], { corsOk: true }).catch(function () { return { ok: false }; })
                         ]);
                         var r = pair[0];
                         if (!r.ok) throw new Error(r.error || 'fetch failed');
                         if (pair[1] && pair[1].ok) { try { chfNowcast = JSON.parse(pair[1].text); } catch (e2) { chfNowcast = null; } }
+                        if (pair[2] && pair[2].ok) { try { a3Shadow = JSON.parse(pair[2].text); } catch (e4) { a3Shadow = null; } }
                         render(JSON.parse(r.text));
                     } catch (e) {
                         el.innerHTML = '<div class="attr-err">S01B.json unreachable — ' + esc(e.message) + ' · run scripts/s01b.py (workflow daily_update.yml) to publish data/S01B.json</div>';
@@ -571,6 +598,7 @@
     <div class="section-header">
         <h2 class="section-title">04 — GOLD FAIR VALUE / MDP (KALMAN TVP / MMT)</h2>
         <span class="section-meta">log(XAU) = α + β·[BE + slope + log NFA] + γ·DXY · MDP = residual z · forward-filter</span>
+        <span class="section-meta mfv-b2" id="mfv-b2-xau"></span>
     </div>
     <div class="section-body">
         <div id="mfv-xau">
@@ -587,6 +615,7 @@
     <div class="section-header">
         <h2 class="section-title">05 — SILVER FAIR VALUE / MDP (KALMAN TVP / DUAL)</h2>
         <span class="section-meta">log(XAG) = α + βm·log(XAU) + βi·copper⊥gold · monetary + industrial channel · MDP z</span>
+        <span class="section-meta mfv-b2" id="mfv-b2-xag"></span>
     </div>
     <div class="section-body">
         <div id="mfv-xag">
@@ -2898,7 +2927,7 @@ function render(doc, shadow) {
         }
         var shadowMark = '';
         if (sameSession) {
-            shadowMark = '<div><span class="uf-flag" title="CME_OPTIONS_C1_shadow.json · sesión ' + shadow.session + '">SHADOW</span></div>';
+            shadowMark = '<div><span class="uf-flag" title="C2 · sesión ' + shadow.session + ' (CME_OPTIONS_C1_shadow.json) · SHADOW">C2 · sesión ' + shadow.session + ' (CME_OPTIONS_C1_shadow.json)</span></div>';
         } else if (shadow && shadow.session) {
             shadowMark = '<div class="attr-sub" title="CME_OPTIONS_C1_shadow.json · sesión ' + shadow.session + '">SHADOW omitida · sesión ' + shadow.session + '</div>';
         }
@@ -3710,7 +3739,34 @@ var IDS = {
     XAU: { root: 'mfv-xau', cFair: 'mfv-xau-fair', cMdp: 'mfv-xau-mdp', cBeta: 'mfv-xau-beta', cCot: 'mfv-xau-cot' },
     XAG: { root: 'mfv-xag', cFair: 'mfv-xag-fair', cMdp: 'mfv-xag-mdp', cBeta: 'mfv-xag-beta', cCot: 'mfv-xag-cot' }
 };
+/* U2 · B2: proyección diaria en SHADOW. Se carga en paralelo y solo pinta la cabecera;
+   el titular semanal (tarjetas, semáforo, gráficos) sigue saliendo de MFV_G8_state.json. */
+var B2_IDS = { XAU: 'mfv-b2-xau', XAG: 'mfv-b2-xag' };
+function b2Line(m) {
+    var z = Number(m.mdp_z);
+    var zs = isFinite(z) ? (z >= 0 ? '+' : '') + z.toFixed(2) : '—';
+    return 'DIARIO (B2): MDP-Z ' + zs + ' · precio/regresores ' + (m.mdp_as_of || '—') +
+        ' · ancla COT ' + (m.cot_as_of || '—') + ' · β ' + (m.beta_state || '—');
+}
+async function renderDailyB2() {
+    var doc = null;
+    try {
+        var txt = await getText(RAW + 'MFV_G8_shadow_state.json');
+        doc = (typeof txt === 'string') ? JSON.parse(txt) : txt;
+    } catch (e) { doc = null; }
+    Object.keys(B2_IDS).forEach(function (metal) {
+        var el = document.getElementById(B2_IDS[metal]);
+        if (!el) return;
+        var m = doc && doc.mode === 'SHADOW' && doc.metals ? doc.metals[metal] : null;
+        if (!m) { el.textContent = 'DIARIO (B2): sin datos (MFV_G8_shadow_state.json)'; el.style.color = C.mute; return; }
+        el.textContent = b2Line(m);
+        el.style.color = C.amber;
+        el.title = 'MFV_G8_shadow_state.json · SHADOW · generado ' + (doc.generated || '—') +
+            ' · proyección diaria; no cambia el titular semanal de MFV_G8_state.json';
+    });
+}
 function refreshMetals() {
+    renderDailyB2();
     renderMetal('XAU', IDS.XAU);
     renderMetal('XAG', IDS.XAG);
 }

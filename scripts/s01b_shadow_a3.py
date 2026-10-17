@@ -29,10 +29,19 @@ def is_real_print(quality):
     return not (quality or "").endswith(FFILL_MARK)
 
 
+_BY_DATE_CACHE = {}
+
+
 def _by_date(rows):
+    key = id(rows)
+    hit = _BY_DATE_CACHE.get(key)
+    if hit is not None and hit[0] is rows and hit[1] == len(rows) and (not rows or hit[2] == rows[-1]):
+        return hit[3]
     out = {}
     for d, tp, quality in rows:
         out[d] = (tp, quality)
+    if isinstance(rows, list):
+        _BY_DATE_CACHE[key] = (rows, len(rows), rows[-1] if rows else None, out)
     return out
 
 
@@ -376,3 +385,38 @@ def _end_input(rows, day, probe):
     if not have:
         return None
     return input_date(rows, have[-1], probe)
+
+
+SHADOW_NAME = "S01B_shadow_a3.json"
+
+
+def last_session(data_dir):
+    """Último día TARGET con rendimientos en usd_factor/canonical.csv: la misma sesión que lee §01-b."""
+    fx_dates, _ = _read_fx(os.path.join(data_dir, "usd_factor", "canonical.csv"))
+    for d in reversed(fx_dates):
+        if d in _target_days(d, d):
+            return d
+    return None
+
+
+def write_shadow(out, path):
+    import json
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1, ensure_ascii=False)
+        fh.write("\n")
+    os.replace(tmp, path)
+
+
+if __name__ == "__main__":
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(root, "data")
+    session = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else last_session(data_dir)
+    out = build_shadow(data_dir, session) if session is not None else None
+    if out is None:
+        print("[s01b_shadow_a3] sin lectura para la sesión", session, "— no escribo")
+        sys.exit(0)
+    dest = os.path.join(data_dir, SHADOW_NAME)
+    write_shadow(out, dest)
+    print("[s01b_shadow_a3] wrote", dest, "t", out["t"])
