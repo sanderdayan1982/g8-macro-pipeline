@@ -1,0 +1,35 @@
+{
+ "schema": "chf-nowcast-shadow-1",
+ "mode": "SHADOW",
+ "quality": "NOWCAST",
+ "formula": "oficial(M) + mezcla(t) - mezcla(M); mezcla = (1-w)*SARON + w*NOM10; w = plazo/10",
+ "anchors": {
+  "short": "CHF_SARON.csv",
+  "long": "CHF_NOM_10Y.csv"
+ },
+ "calendar": "CH",
+ "tenors": {
+  "2Y": {
+   "source": "CHF_SPOT_2Y.csv",
+   "years": 2,
+   "w_nom10": 0.2,
+   "anchor_date": "2026-09-30",
+   "official": 0.287,
+   "last_date": "2026-10-16",
+   "last_value": 0.3002,
+   "last_label": "NOWCAST",
+   "rows": 13
+  },
+  "5Y": {
+   "source": "CHF_SPOT_5Y.csv",
+   "years": 5,
+   "w_nom10": 0.5,
+   "anchor_date": "2026-09-30",
+   "official": 0.453,
+   "last_date": "2026-10-16",
+   "last_value": 0.456,
+   "last_label": "NOWCAST",
+   "rows": 13
+  }
+ }
+}
