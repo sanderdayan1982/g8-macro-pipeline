@@ -1,11 +1,16 @@
 {
- "schema": "cme-options-c1-shadow-1",
+ "schema": "cme-options-c2-shadow-1",
  "mode": "SHADOW",
  "session": "2026-10-15",
  "prev_session_present": true,
  "chain": "OPTIONS_SURFACE.json walls (top 5 by total OI). Canonical CSVs are not in the repo.",
  "convention": "CME (XXX/USD). La inversión de JPY/CAD/CHF de la §08 sigue solo en dashboard_alerts.py.",
  "min_oi": 100,
+ "near_pin_pct": 0.5,
+ "chip_pct": 15.0,
+ "drain_1_3_pct": -33.33,
+ "drain_2_3_pct": -66.67,
+ "roll_dte": 7,
  "dte_calendar_name": "US",
  "currencies": {
   "EUR": {
@@ -13,19 +18,70 @@
    "ref": 1.12385,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "READABLE",
    "call_wall": {
     "k": 1.135,
     "oi": 2525.0,
-    "delta_oi": 25.0
+    "delta_oi": 25.0,
+    "delta_oi_1d": 25.0,
+    "pct_oi_1d": 1.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.99,
+    "abs_dist_pct": 0.99,
+    "near_pin_05pct": false
    },
    "put_wall": {
     "k": 1.11,
     "oi": 5435.0,
-    "delta_oi": -13.0
+    "delta_oi": -13.0,
+    "delta_oi_1d": -13.0,
+    "pct_oi_1d": -0.24,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -1.23,
+    "abs_dist_pct": 1.23,
+    "near_pin_05pct": false
+   },
+   "nearest_call_wall": {
+    "k": 1.125,
+    "oi": 801.0,
+    "delta_oi": -17.0,
+    "delta_oi_1d": -17.0,
+    "pct_oi_1d": -2.08,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.1,
+    "abs_dist_pct": 0.1,
+    "near_pin_05pct": true
+   },
+   "nearest_put_wall": {
+    "k": 1.12,
+    "oi": 5300.0,
+    "delta_oi": 396.0,
+    "delta_oi_1d": 396.0,
+    "pct_oi_1d": 8.08,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.34,
+    "abs_dist_pct": 0.34,
+    "near_pin_05pct": true
    },
    "aggregate": {
     "oi": 79688,
-    "delta_oi": 2335
+    "delta_oi": 2335,
+    "delta_oi_1d": 2335,
+    "pct_oi_1d": 3.02,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "JPY": {
@@ -33,19 +89,70 @@
    "ref": 0.006353,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "READABLE",
    "call_wall": {
     "k": 0.0065,
     "oi": 3045.0,
-    "delta_oi": 51.0
+    "delta_oi": 51.0,
+    "delta_oi_1d": 51.0,
+    "pct_oi_1d": 1.7,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 2.31,
+    "abs_dist_pct": 2.31,
+    "near_pin_05pct": false
    },
    "put_wall": {
     "k": 0.0063,
     "oi": 4478.0,
-    "delta_oi": 11.0
+    "delta_oi": 11.0,
+    "delta_oi_1d": 11.0,
+    "pct_oi_1d": 0.25,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.83,
+    "abs_dist_pct": 0.83,
+    "near_pin_05pct": false
+   },
+   "nearest_call_wall": {
+    "k": 0.0064,
+    "oi": 2584.0,
+    "delta_oi": 2.0,
+    "delta_oi_1d": 2.0,
+    "pct_oi_1d": 0.08,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.74,
+    "abs_dist_pct": 0.74,
+    "near_pin_05pct": false
+   },
+   "nearest_put_wall": {
+    "k": 0.00635,
+    "oi": 1310.0,
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.05,
+    "abs_dist_pct": 0.05,
+    "near_pin_05pct": true
    },
    "aggregate": {
     "oi": 35258,
-    "delta_oi": 933
+    "delta_oi": 933,
+    "delta_oi_1d": 933,
+    "pct_oi_1d": 2.72,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "GBP": {
@@ -53,19 +160,70 @@
    "ref": 1.3274,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "READABLE",
    "call_wall": {
     "k": 1.43,
     "oi": 1520.0,
-    "delta_oi": 0.0
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 7.73,
+    "abs_dist_pct": 7.73,
+    "near_pin_05pct": false
    },
    "put_wall": {
     "k": 1.3,
     "oi": 1504.0,
-    "delta_oi": -4.0
+    "delta_oi": -4.0,
+    "delta_oi_1d": -4.0,
+    "pct_oi_1d": -0.27,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -2.06,
+    "abs_dist_pct": 2.06,
+    "near_pin_05pct": false
+   },
+   "nearest_call_wall": {
+    "k": 1.33,
+    "oi": 603.0,
+    "delta_oi": null,
+    "delta_oi_1d": null,
+    "pct_oi_1d": null,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": null,
+    "dist_pct": 0.2,
+    "abs_dist_pct": 0.2,
+    "near_pin_05pct": true
+   },
+   "nearest_put_wall": {
+    "k": 1.315,
+    "oi": 1380.0,
+    "delta_oi": 21.0,
+    "delta_oi_1d": 21.0,
+    "pct_oi_1d": 1.55,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.93,
+    "abs_dist_pct": 0.93,
+    "near_pin_05pct": false
    },
    "aggregate": {
     "oi": 18794,
-    "delta_oi": 304
+    "delta_oi": 304,
+    "delta_oi_1d": 304,
+    "pct_oi_1d": 1.64,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "AUD": {
@@ -73,19 +231,70 @@
    "ref": 0.69115,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "READABLE",
    "call_wall": {
     "k": 0.705,
     "oi": 897.0,
-    "delta_oi": 0.0
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 2.0,
+    "abs_dist_pct": 2.0,
+    "near_pin_05pct": false
    },
    "put_wall": {
     "k": 0.69,
     "oi": 738.0,
-    "delta_oi": -2.0
+    "delta_oi": -2.0,
+    "delta_oi_1d": -2.0,
+    "pct_oi_1d": -0.27,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.17,
+    "abs_dist_pct": 0.17,
+    "near_pin_05pct": true
+   },
+   "nearest_call_wall": {
+    "k": 0.7,
+    "oi": 768.0,
+    "delta_oi": 280.0,
+    "delta_oi_1d": 280.0,
+    "pct_oi_1d": 57.38,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": true,
+    "dist_pct": 1.28,
+    "abs_dist_pct": 1.28,
+    "near_pin_05pct": false
+   },
+   "nearest_put_wall": {
+    "k": 0.69,
+    "oi": 738.0,
+    "delta_oi": -2.0,
+    "delta_oi_1d": -2.0,
+    "pct_oi_1d": -0.27,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.17,
+    "abs_dist_pct": 0.17,
+    "near_pin_05pct": true
    },
    "aggregate": {
     "oi": 9103,
-    "delta_oi": 209
+    "delta_oi": 209,
+    "delta_oi_1d": 209,
+    "pct_oi_1d": 2.35,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "CAD": {
@@ -93,19 +302,70 @@
    "ref": 0.70685,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "READABLE",
    "call_wall": {
     "k": 0.71,
     "oi": 3119.0,
-    "delta_oi": 203.0
+    "delta_oi": 203.0,
+    "delta_oi_1d": 203.0,
+    "pct_oi_1d": 6.96,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.45,
+    "abs_dist_pct": 0.45,
+    "near_pin_05pct": true
    },
    "put_wall": {
     "k": 0.7,
     "oi": 751.0,
-    "delta_oi": 0.0
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.97,
+    "abs_dist_pct": 0.97,
+    "near_pin_05pct": false
+   },
+   "nearest_call_wall": {
+    "k": 0.71,
+    "oi": 3119.0,
+    "delta_oi": 203.0,
+    "delta_oi_1d": 203.0,
+    "pct_oi_1d": 6.96,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.45,
+    "abs_dist_pct": 0.45,
+    "near_pin_05pct": true
+   },
+   "nearest_put_wall": {
+    "k": 0.705,
+    "oi": 155.0,
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": -0.26,
+    "abs_dist_pct": 0.26,
+    "near_pin_05pct": true
    },
    "aggregate": {
     "oi": 15336,
-    "delta_oi": 845
+    "delta_oi": 845,
+    "delta_oi_1d": 845,
+    "pct_oi_1d": 5.83,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "CHF": {
@@ -113,15 +373,46 @@
    "ref": 1.21725,
    "dte_calendar": 22,
    "dte_bd": 16,
+   "roll_window_7d": false,
+   "map_status": "THIN_ONE_SIDED",
    "call_wall": {
     "k": 1.255,
     "oi": 1181.0,
-    "delta_oi": 0.0
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 3.1,
+    "abs_dist_pct": 3.1,
+    "near_pin_05pct": false
    },
    "put_wall": null,
+   "nearest_call_wall": {
+    "k": 1.22,
+    "oi": 672.0,
+    "delta_oi": 0.0,
+    "delta_oi_1d": 0.0,
+    "pct_oi_1d": 0.0,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_strike": false,
+    "dist_pct": 0.23,
+    "abs_dist_pct": 0.23,
+    "near_pin_05pct": true
+   },
+   "nearest_put_wall": null,
    "aggregate": {
     "oi": 7471,
-    "delta_oi": 576
+    "delta_oi": 576,
+    "delta_oi_1d": 576,
+    "pct_oi_1d": 8.35,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": false,
+    "drain_1_3": false,
+    "drain_2_3": false
    }
   },
   "NZD": {
@@ -129,11 +420,22 @@
    "ref": null,
    "dte_calendar": null,
    "dte_bd": null,
+   "roll_window_7d": false,
+   "map_status": "NO_CME_OPTIONS",
    "call_wall": null,
    "put_wall": null,
+   "nearest_call_wall": null,
+   "nearest_put_wall": null,
    "aggregate": {
     "oi": null,
-    "delta_oi": null
+    "delta_oi": null,
+    "delta_oi_1d": null,
+    "pct_oi_1d": null,
+    "delta_oi_1w": null,
+    "delta_oi_1m": null,
+    "chip_15pct_chain": null,
+    "drain_1_3": null,
+    "drain_2_3": null
    },
    "note": "sin opciones CME"
   }
