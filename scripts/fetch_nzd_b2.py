@@ -1,5 +1,12 @@
 """
-fetch_nzd_b2.py — RBNZ Table B2 (Wholesale interest rates) daily close  — v1.5 (2026-09-24, lote 3B)
+fetch_nzd_b2.py — RBNZ Table B2 (Wholesale interest rates) daily close  — v1.6 (2026-10-17, lote B6)
+
+v1.6 (lote B6): an inflation-indexed bond matures on 20 September of the year in
+NZD_IIB_<year>.csv. On that Auckland calendar day the last close may still be written.
+From the next day the file is closed history: the daily pass does not open it, does not
+rewrite it, and does not create it if it is absent. Live IIBs (2030 and later, as of
+2026-10-17) keep the v1.5 writer. real_yields_g8.py still globs every NZD_IIB_*.csv
+that is already on disk, including the closed one.
 
 v1.5: HTTP por g8common (reintentos 1+3 con presupuesto, Retry-After persistido, 403 sin reintento; mismo
 transporte curl_cffi→requests), escritura atómica y validada por fichero (una serie vacía o ilegible no
@@ -38,9 +45,13 @@ v1.4 (NZD real — same formula as the rest of the G8):
 """
 
 import os
+import re
 import sys
 import time
+from datetime import date, datetime
 from io import BytesIO
+from zoneinfo import ZoneInfo
+
 from openpyxl import load_workbook
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -97,6 +108,11 @@ OPTIONAL_BY_LABEL = {}
 # 20 September 2035 | %"). One CSV per maturity: NZD_IIB_2035.csv. Loud WARN if none found.
 IIB_PATTERN = r"(inflation|indexed|index-linked|IIB)"
 IIB_YEAR = r"(20[2-6]\d)"
+# NZ IIBs mature 20 September (same convention as real_yields_g8.build_nzd). Auckland calendar.
+IIB_MATURITY_MONTH = 9
+IIB_MATURITY_DAY = 20
+_AUCKLAND = ZoneInfo("Pacific/Auckland")
+_IIB_NAME = re.compile(r"NZD_IIB_(\d{4})\.csv\Z")
 
 # v1.4: label fallback for the 1985-2017 workbook if its Series Ids differ from the current one.
 # Keys are regexes tested against the joined header text; values are output files.
@@ -116,6 +132,39 @@ SHEET_NAME = "Data"
 SERIES_ID_ROW = 5
 DATA_START_ROW = 6
 DATE_COL = 1
+
+
+def iib_year(filename: str):
+    """Maturity year encoded in NZD_IIB_<year>.csv, or None for any other file."""
+    m = _IIB_NAME.fullmatch(os.path.basename(filename))
+    return int(m.group(1)) if m else None
+
+
+def iib_maturity(year: int) -> date:
+    return date(int(year), IIB_MATURITY_MONTH, IIB_MATURITY_DAY)
+
+
+def auckland_today(now=None) -> date:
+    """Calendar date of the pass, in Pacific/Auckland. Naive datetimes are read as Auckland."""
+    if now is None:
+        now = datetime.now(_AUCKLAND)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=_AUCKLAND)
+    else:
+        now = now.astimezone(_AUCKLAND)
+    return now.date()
+
+
+def iib_is_closed(filename: str, today: date) -> bool:
+    """True once `today` is strictly after 20 September of the bond's maturity year.
+
+    The pass that runs on the maturity date may still write the last close. Later
+    passes leave the CSV untouched (and do not create one that is not already there).
+    """
+    year = iib_year(filename)
+    if year is None:
+        return False
+    return today > iib_maturity(year)
 
 
 def download_xlsx(url: str) -> bytes:
@@ -321,17 +370,29 @@ def main() -> int:
                   + ", ".join(f"{k} {len(v):,}" for k, v in hist.items()))
         except Exception as e:
             print(f"[fetch_nzd_b2] WARN hist splice skipped: {e}")    # la copia local conserva la historia
+    today = auckland_today()
     total = 0
     written = 0
+    skipped_closed = 0
     for sid, rows in data.items():
         filename = SERIES_MAP[sid]
+        if sid.startswith("IIB:") and iib_is_closed(filename, today):
+            # Historia cerrada: no se abre, no se reescribe y no se crea si falta.
+            skipped_closed += 1
+            year = iib_year(filename)
+            print(f"[fetch_nzd_b2] {filename}: historia cerrada "
+                  f"(vencimiento {iib_maturity(year).isoformat()}); no se reescribe")
+            continue
         rows = splice(rows, hist.get(filename))
         ok = write_csv(os.path.join(OUTPUT_DIR, filename), rows)   # una serie inválida no frena a las demás
         written += bool(ok)
         ld, lv = rows[-1] if rows else ("NONE", float("nan"))
         print(f"[fetch_nzd_b2] {filename}: {len(rows):,} rows, latest {ld} = {lv}{'' if ok else ' — NO ESCRITO'}")
         total += len(rows)
-    print(f"[fetch_nzd_b2] {'OK' if written == len(data) else 'PARCIAL'} — {written}/{len(data)} files, {total:,} total rows")
+    expected = len(data) - skipped_closed
+    print(f"[fetch_nzd_b2] {'OK' if written == expected else 'PARCIAL'} — "
+          f"{written}/{expected} files, {total:,} total rows"
+          + (f", {skipped_closed} IIB cerrado(s)" if skipped_closed else ""))
     return _fetch().finish(0)
 
 
