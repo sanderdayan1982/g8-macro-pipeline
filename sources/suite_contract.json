@@ -1,0 +1,95 @@
+{
+  "schema": "SUITE_CONTRACT/1",
+  "lot": "A2",
+  "owner": "Este archivo es el contrato permanente entre la Suite G8 (TradingView) y el dashboard. El test tests/test_suite_contract.py falla si el código se aparta. No es un panel.",
+  "pine_ref": "POS-G8 v1.2.6",
+  "pos": {
+    "z_cap": 3.0,
+    "windows_weeks": {"fx": 156, "XAU": 156, "XAG": 104},
+    "fx_fallback": {"warn": 1.5, "ext": 2.0},
+    "fx_ccy": {
+      "EUR": {"warn": 1.51, "ext": 2.26},
+      "GBP": {"warn": 1.47, "ext": 2.06},
+      "JPY": {"warn": 1.44, "ext": 2.42},
+      "AUD": {"warn": 1.46, "ext": 2.30},
+      "NZD": {"warn": 1.56, "ext": 2.26},
+      "CAD": {"warn": 1.51, "ext": 2.36},
+      "CHF": {"warn": 1.47, "ext": 2.02},
+      "USD": {"warn": 0.79, "ext": 1.15}
+    },
+    "metals": {
+      "XAU": {"warn": 1.68, "ext": 2.29},
+      "XAG": {"warn": 1.61, "ext": 2.25}
+    },
+    "am_thresholds_shadow": {
+      "order": ["w_neg", "e_neg", "w_pos", "e_pos"],
+      "note": "f_thr_am de POS-G8 v1.2.6. Solo am_state_shadow. No cambia STATE, el libro ni las alertas.",
+      "EUR": [1.52, 2.12, 2.16, 2.72],
+      "GBP": [2.00, 2.61, 1.41, 2.22],
+      "JPY": [1.48, 1.96, 2.23, 2.76],
+      "AUD": [1.79, 2.52, 1.69, 2.44],
+      "NZD": [2.30, 3.00, 1.39, 2.17],
+      "CAD": [1.88, 2.76, 1.69, 2.48],
+      "CHF": [2.26, 3.00, 1.16, 1.79],
+      "USD": [0.80, 1.55, 0.91, 1.17]
+    },
+    "code_owners": [
+      "scripts/pos_g8_cot_collector.py",
+      "scripts/generators/pos_g8.py",
+      "scripts/twin_test.py"
+    ]
+  },
+  "section_02": {
+    "unit": "bp",
+    "ample_if_bp_le": 2.0,
+    "tight_if_bp_gt": 2.0,
+    "tight_if_bp_le": 10.0,
+    "pressure_if_bp_gt": 10.0,
+    "note": "AMPLE cuando el spread es menor o igual a 2,0 bp. TIGHT cuando es mayor que 2,0 y menor o igual a 10,0. PRESSURE cuando es mayor que 10,0. El 2,0 exacto es AMPLE y el 10,0 exacto es TIGHT, igual que index.html (last > 2, last > 10) y que floor_badge.",
+    "code_owners": ["scripts/dashboard_alerts.py", "docs/index.html"]
+  },
+  "policy_floors": [
+    {"ccy": "USD", "rfr": "SOFR.csv", "floor_file": "FLOOR_USD.csv", "anchor": "IORB", "source": "FRED series_id=IORB, scripts/fetch_floor_spreads.py fetch_usd"},
+    {"ccy": "EUR", "rfr": "ESTR.csv", "floor_file": "FLOOR_EUR.csv", "anchor": "DFR", "source": "BCE SDMX FM/D.U2.EUR.4F.KR.DFR.LEV, scripts/fetch_floor_spreads.py fetch_eur. Es la Deposit Facility Rate oficial, no el tipo principal de refinanciación."},
+    {"ccy": "GBP", "rfr": "SONIA.csv", "floor_file": "GB_POLICY.csv", "anchor": "Bank Rate", "source": "BIS WS_CBPOL, fetch_bis_policy.py"},
+    {"ccy": "JPY", "rfr": "TONA.csv", "floor_file": "JP_POLICY.csv", "anchor": "Policy Rate", "source": "BIS WS_CBPOL, fetch_bis_policy.py"},
+    {"ccy": "CAD", "rfr": "CORRA.csv", "floor_file": "FLOOR_CAD.csv", "anchor": "BoC Target", "source": "BoC Valet V39079, scripts/fetch_floor_spreads.py fetch_cad"},
+    {"ccy": "AUD", "rfr": "AONIA.csv", "floor_file": "AU_POLICY.csv", "anchor": "Cash Rate", "source": "BIS WS_CBPOL, fetch_bis_policy.py"},
+    {"ccy": "NZD", "rfr": "NZD_CASH_ON.csv", "floor_file": "NZD_OCR.csv", "anchor": "OCR (floor puro)", "source": "RBNZ OCR"},
+    {"ccy": "CHF", "rfr": "CHF_SARON.csv", "floor_file": "CH_POLICY.csv", "anchor": "SNB policy rate", "source": "BIS WS_CBPOL. El badge usa este tipo. La remuneración escalonada (policy menos 25 pb por encima del umbral) no entra en el corte de 2/10 bp."}
+  ],
+  "pairs": {
+    "currencies": ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"],
+    "base_priority": ["EUR", "GBP", "AUD", "NZD", "USD", "CAD", "CHF", "JPY"],
+    "rule": "De cada cruce, la divisa que aparece antes en base_priority es la base. Son 28 pares, uno por combinación de las 8 divisas. USD/JPY, USD/CAD y USD/CHF salen de esta regla.",
+    "list": [
+      "EUR/GBP", "EUR/AUD", "EUR/NZD", "EUR/USD", "EUR/CAD", "EUR/CHF", "EUR/JPY",
+      "GBP/AUD", "GBP/NZD", "GBP/USD", "GBP/CAD", "GBP/CHF", "GBP/JPY",
+      "AUD/NZD", "AUD/USD", "AUD/CAD", "AUD/CHF", "AUD/JPY",
+      "NZD/USD", "NZD/CAD", "NZD/CHF", "NZD/JPY",
+      "USD/CAD", "USD/CHF", "USD/JPY",
+      "CAD/CHF", "CAD/JPY",
+      "CHF/JPY"
+    ],
+    "options_operator_quote": {
+      "EUR": "EUR/USD",
+      "GBP": "GBP/USD",
+      "AUD": "AUD/USD",
+      "JPY": "USD/JPY",
+      "CAD": "USD/CAD",
+      "CHF": "USD/CHF"
+    },
+    "cme_inverted_vs_operator": ["JPY", "CAD", "CHF"],
+    "cme_note": "CME cotiza JPY, CAD y CHF como XXX/USD. El operador usa USD/XXX. En §08 el nivel es 1/k y call se intercambia con put. NZD no tiene opciones CME en el dashboard.",
+    "native_usd_per_unit": ["EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD"],
+    "code_owners": ["scripts/dashboard_alerts.py", "scripts/usd_factor.py"]
+  },
+  "cot_calendar": {
+    "report_as_of": "Tuesday",
+    "cftc_release": "Friday 19:30 UTC en horario de verano (15:30 ET); 20:30 UTC en invierno",
+    "dashboard_cron_utc": ["5 21 * * 5", "5 9 * * 6"],
+    "workflow": ".github/workflows/g8_port_run.yml",
+    "schedule_ids": ["COT1", "COT2"],
+    "note": "No hay pasada del miércoles en el repo. La publicación medida es el viernes y el reintento el sábado 09:05 UTC."
+  }
+}
