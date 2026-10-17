@@ -898,7 +898,7 @@ class Mapping(unittest.TestCase):
                  for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}
         # BOOK_RISK: derivado del libro. Los tres SHADOW de B2 no son serie de frescura.
         extra = {"BOOK_RISK.json", "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json",
-                 "ACM_G8_NZD_phi_shadow.json"}
+                 "ACM_G8_NZD_phi_shadow.json", "CB_EVENT_48H_shadow.json", "CME_OPTIONS_C1_shadow.json"}
         self.assertEqual(sorted(files - set(OUT) - extra), [])
 
     def test_registry_feeds_map_to_outputs(self):

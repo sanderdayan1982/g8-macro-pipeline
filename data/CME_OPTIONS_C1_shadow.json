@@ -1,0 +1,141 @@
+{
+ "schema": "cme-options-c1-shadow-1",
+ "mode": "SHADOW",
+ "session": "2026-10-15",
+ "prev_session_present": true,
+ "chain": "OPTIONS_SURFACE.json walls (top 5 by total OI). Canonical CSVs are not in the repo.",
+ "convention": "CME (XXX/USD). La inversión de JPY/CAD/CHF de la §08 sigue solo en dashboard_alerts.py.",
+ "min_oi": 100,
+ "dte_calendar_name": "US",
+ "currencies": {
+  "EUR": {
+   "front_expiry": "2026-11-06",
+   "ref": 1.12385,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 1.135,
+    "oi": 2525.0,
+    "delta_oi": 25.0
+   },
+   "put_wall": {
+    "k": 1.11,
+    "oi": 5435.0,
+    "delta_oi": -13.0
+   },
+   "aggregate": {
+    "oi": 79688,
+    "delta_oi": 2335
+   }
+  },
+  "JPY": {
+   "front_expiry": "2026-11-06",
+   "ref": 0.006353,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 0.0065,
+    "oi": 3045.0,
+    "delta_oi": 51.0
+   },
+   "put_wall": {
+    "k": 0.0063,
+    "oi": 4478.0,
+    "delta_oi": 11.0
+   },
+   "aggregate": {
+    "oi": 35258,
+    "delta_oi": 933
+   }
+  },
+  "GBP": {
+   "front_expiry": "2026-11-06",
+   "ref": 1.3274,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 1.43,
+    "oi": 1520.0,
+    "delta_oi": 0.0
+   },
+   "put_wall": {
+    "k": 1.3,
+    "oi": 1504.0,
+    "delta_oi": -4.0
+   },
+   "aggregate": {
+    "oi": 18794,
+    "delta_oi": 304
+   }
+  },
+  "AUD": {
+   "front_expiry": "2026-11-06",
+   "ref": 0.69115,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 0.705,
+    "oi": 897.0,
+    "delta_oi": 0.0
+   },
+   "put_wall": {
+    "k": 0.69,
+    "oi": 738.0,
+    "delta_oi": -2.0
+   },
+   "aggregate": {
+    "oi": 9103,
+    "delta_oi": 209
+   }
+  },
+  "CAD": {
+   "front_expiry": "2026-11-06",
+   "ref": 0.70685,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 0.71,
+    "oi": 3119.0,
+    "delta_oi": 203.0
+   },
+   "put_wall": {
+    "k": 0.7,
+    "oi": 751.0,
+    "delta_oi": 0.0
+   },
+   "aggregate": {
+    "oi": 15336,
+    "delta_oi": 845
+   }
+  },
+  "CHF": {
+   "front_expiry": "2026-11-06",
+   "ref": 1.21725,
+   "dte_calendar": 22,
+   "dte_bd": 16,
+   "call_wall": {
+    "k": 1.255,
+    "oi": 1181.0,
+    "delta_oi": 0.0
+   },
+   "put_wall": null,
+   "aggregate": {
+    "oi": 7471,
+    "delta_oi": 576
+   }
+  },
+  "NZD": {
+   "front_expiry": null,
+   "ref": null,
+   "dte_calendar": null,
+   "dte_bd": null,
+   "call_wall": null,
+   "put_wall": null,
+   "aggregate": {
+    "oi": null,
+    "delta_oi": null
+   },
+   "note": "sin opciones CME"
+  }
+ }
+}
