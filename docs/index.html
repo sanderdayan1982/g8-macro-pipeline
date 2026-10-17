@@ -433,7 +433,7 @@
                     h += '<div class="attr-wrap"><table class="attr-table"><thead><tr><th>CCY</th><th title="Δ risk-neutral yield 22 s. (bp)">ΔRNY</th>' +
                         '<th title="Δ term premium ACM 22 s. (bp)">ΔTP</th><th title="ΔRNY+ΔTP">ΔFIT</th><th title="Δnominal observado − ΔFIT">RESID</th>' +
                         '<th title="contexto, no aditivo">Δ2Y</th><th title="contexto">ΔBE</th><th title="log-retorno 22 s. nativo XXX/USD; USD = cesta §10">ΔFX</th>' +
-                        '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th title="fecha de la última fila ACM usada (acm_g8.py va ~1 sesión detrás de los insumos); «curva» = fecha real del insumo largo cuando acm_g8 lo arrastra (ffill ≤ 5 s., bandera ACM_FFILL)">ACM as-of</th></tr></thead><tbody>';
+                        '<th title="umbral expanding p80 (ΔTP firmado, hasta t−1)">θ</th><th>CTF</th><th>Persist</th><th>Calidad</th><th title="fecha de la última fila ACM usada (acm_g8.py va ~1 sesión detrás de los insumos); «curva» = fecha real del insumo largo cuando acm_g8 lo arrastra (ffill ≤ 8 s., bandera ACM_FFILL)">ACM as-of</th></tr></thead><tbody>';
                     order.forEach(function (c) {
                         var v = cur[c]; if (!v) return;
                         var col = v.colour === 'red' ? RED : (v.colour === 'amber' ? AMBER : WHITE);
@@ -451,7 +451,7 @@
                             '<td class="attr-val">' + (v.emitter && v.avail === 'OK' ? v.persist : '·') + '</td>' +
                             '<td style="color:' + ((v.flags || []).indexOf('ACM_FFILL') >= 0 ? AMBER : MUTE) + '">' + esc(flags || 'OK') + '</td>' +
                             '<td style="color:' + MUTE + '">' + esc(v.acm_asof_t || '·') +
-                            ((v.flags || []).indexOf('ACM_FFILL') >= 0 && v.acm_input_asof_t ? ' <span style="color:' + AMBER + '" title="ACM_FFILL: la curva larga (' + esc(v.acm_input_asof_t) + ') va detrás de la fila ACM (' + esc(v.acm_asof_t) + '); acm_g8.py arrastra hasta 5 sesiones. Solo lectura, no gatea.">· curva ' + esc(v.acm_input_asof_t) + '</span>' : '') + '</td></tr>';
+                            ((v.flags || []).indexOf('ACM_FFILL') >= 0 && v.acm_input_asof_t ? ' <span style="color:' + AMBER + '" title="ACM_FFILL: la curva larga (' + esc(v.acm_input_asof_t) + ') va detrás de la fila ACM (' + esc(v.acm_asof_t) + '); acm_g8.py arrastra hasta 8 sesiones. Solo lectura, no gatea.">· curva ' + esc(v.acm_input_asof_t) + '</span>' : '') + '</td></tr>';
                     });
                     h += '</tbody></table></div>';
                     var ev = (j.events || []).map(function (e) { return e.ccy + ' ' + (e.baseline ? '(baseline)' : 'ON') + ' ' + e.t; });
@@ -1807,7 +1807,7 @@ function asOfLine(d) {
     if (acm && acm !== nom) {
         h += acm > nom
             ? ' · <span style="color:#fdb813" title="La fila ACM (' + acm + ') va por delante del último dato de la curva (' + nom +
-              '): acm_g8.py arrastra los tramos que faltan hasta 5 sesiones (ffill). TP/RNY de esos días no son observaciones nuevas.">ACM ' + acm.slice(5) + ' ⚠ curva ' + nom.slice(5) + '</span>'
+              '): acm_g8.py arrastra los tramos que faltan hasta 8 sesiones (ffill). TP/RNY de esos días no son observaciones nuevas.">ACM ' + acm.slice(5) + ' ⚠ curva ' + nom.slice(5) + '</span>'
             : ' · ACM ' + acm.slice(5);
     }
     return h;

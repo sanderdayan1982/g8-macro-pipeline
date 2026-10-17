@@ -25,7 +25,7 @@ def bdays(start, n):
 
 class DailyPanelFfill(unittest.TestCase):
     def panel(self):
-        d = bdays("2026-09-14", 13)                                       # 14-sep … 30-sep
+        d = bdays("2026-09-14", 17)                                       # 14-sep … 6-oct: 8 impresiones + 9 huecos
         bills = pd.Series(np.linspace(4.3, 4.6, len(d)), index=d)
         bonds = pd.Series(np.linspace(4.9, 5.2, 8), index=d[:8])          # F2: hasta mié 23-sep
         with patch.dict(acm_g8.DAILY_FILES, {"XXX": {}}), \
@@ -33,25 +33,28 @@ class DailyPanelFfill(unittest.TestCase):
              patch.dict(acm_g8.DAILY_DV_FILES, {}, clear=False), \
              patch.dict(acm_g8.DAILY_SOURCE_EXTRA, {"XXX": {0.25: lambda: bills, 10: lambda: bonds}}), \
              patch.object(acm_g8, "persist_extra", lambda *a, **k: None), \
-             patch.object(pd.Timestamp, "today", classmethod(lambda cls: pd.Timestamp("2026-10-01"))):
+             patch.object(pd.Timestamp, "today", classmethod(lambda cls: pd.Timestamp("2026-10-07"))):
             return acm_g8.build_daily_panel("XXX"), bonds
 
     def test_carried_rows_marked_and_values_unchanged(self):
         p, bonds = self.panel()
         ff = p.attrs["ffilled"]
-        self.assertEqual(str(p.index[-1].date()), "2026-09-30")          # ffill(limit=5) intacto
+        self.assertEqual(acm_g8.FFILL_LIMIT, 8)
+        self.assertEqual(str(p.index[-1].date()), "2026-10-05")          # 8 arrastres; el 9.º (6-oct) cae
+        self.assertNotIn(pd.Timestamp("2026-10-06"), p.index)
+        self.assertIn(pd.Timestamp("2026-09-30"), p.index)                # con límite 5 el panel moría aquí
         self.assertFalse(ff.loc[:"2026-09-23"].any())
         self.assertTrue(ff.loc["2026-09-24":].all())
-        self.assertEqual(int(ff.sum()), 5)
+        self.assertEqual(int(ff.sum()), 8)
         self.assertTrue((p.loc["2026-09-24":, 10] == bonds.iloc[-1]).all())
 
     def test_tag_ffill_appends_suffix_only_on_marked_rows(self):
         p, _ = self.panel()
         q = np.array(["ACM_K3_380m"] * len(p), dtype=object)
         out, n = acm_g8.tag_ffill(q, p.index, p.attrs["ffilled"])
-        self.assertEqual(n, 5)
+        self.assertEqual(n, 8)
         self.assertEqual(list(out[:8]), ["ACM_K3_380m"] * 8)
-        self.assertEqual(list(out[8:]), ["ACM_K3_380m_FFILL"] * 5)
+        self.assertEqual(list(out[8:]), ["ACM_K3_380m_FFILL"] * 8)
         self.assertEqual(list(q), ["ACM_K3_380m"] * len(p))               # entrada no mutada
 
     def test_tag_ffill_without_mask_is_noop(self):

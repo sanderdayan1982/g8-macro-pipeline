@@ -69,6 +69,9 @@ RX_MATS = np.array([6, 12, 24, 36, 48, 60, 84, 120])   # excess-return maturitie
 K = 3                                                  # PCA factors (= NS dimensionality; K=5 requires Svensson curve — phase 1b)
 MIN_OBS_MONTHLY = 240                                  # hard floor (20y) for estimation
 WARN_OBS_MONTHLY = 420                                 # below this -> WARN (35y)
+# v2.8 (acta A3, enmienda v2 #1): carry at most 8 business-day rows, then drop.
+# The daily panel still tags every carried row `_FFILL`. The history panel uses the same limit.
+FFILL_LIMIT = 8
 # v2.4 (2026-09-13): documented per-currency exception. NZD open data (RBNZ B2 daily close)
 # only carries bonds/bills from 2009-01 — no earlier open curve exists (the 1985-2017 file
 # has only OCR/cash before 2009). Monte Carlo with the estimated NZ dynamics as truth
@@ -632,7 +635,7 @@ def load_dv(fname):
 def build_hist_panel(ccy):
     print(f"  [stage 1] fetching long history for {ccy}…")
     cols = {t: fn() for t, fn in sorted(HIST_SOURCES[ccy].items())}
-    panel = pd.DataFrame(cols).sort_index().ffill(limit=5).dropna()
+    panel = pd.DataFrame(cols).sort_index().ffill(limit=FFILL_LIMIT).dropna()
     print(f"  history panel: tenors {list(panel.columns)}  "
           f"{panel.index[0].date()} → {panel.index[-1].date()}  ({len(panel)} daily obs)")
     return panel
@@ -658,7 +661,7 @@ def build_daily_panel(ccy):
         cols[tenor] = s[s.index >= cutoff]
         persist_extra(ccy, tenor, s)                                     # v2.6 (E1): side-write only
     raw = pd.DataFrame(cols).sort_index()
-    panel = raw.ffill(limit=5).dropna()
+    panel = raw.ffill(limit=FFILL_LIMIT).dropna()
     # v2.7 (acta P-3): rows where any tenor was carried forward (no new print that day) —
     # read by run_currency() to tag QUALITY …_FFILL. Values unchanged.
     panel.attrs["ffilled"] = raw.reindex(panel.index).isna().any(axis=1)
