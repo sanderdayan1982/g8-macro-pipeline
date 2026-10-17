@@ -15,7 +15,7 @@ import cme_options_shadow as OPT  # noqa: E402
 FROZEN = {
     "scripts/cme_options_collector.py": "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9",
     "scripts/build_options_summary.py": "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019",
-    "scripts/dashboard_alerts.py": "56e46654e7cc86b0be45e9d5d1792476169db3426d38d12aacb93d50056b5ebb",
+    "scripts/dashboard_alerts.py": "e7554e4451330ff9b8e47e1d17d23da19c11a349f311a4665b91b5d6463ca477",
     "scripts/book_risk.py": "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50",
     "scripts/s01b.py": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
 }

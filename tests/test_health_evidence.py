@@ -16,7 +16,9 @@ class Evidence(unittest.TestCase):
         self.root = Path(self.tmp.name)
         (self.root / 'data').mkdir()
         self.now = datetime(2026,10,4,21,tzinfo=timezone.utc)
-        self.policy = E.read_json(ROOT / 'sources/policy_evidence.json')['policies']
+        # Historical clock tests must use the corresponding historical evidence,
+        # not the live JSON legitimately renewed by each maintenance review.
+        self.policy = E.read_json(ROOT / 'tests/fixtures/policy_evidence_20261004.json')['policies']
 
     def item(self, name, contents, **kw):
         (self.root / 'data' / name).write_text(contents)

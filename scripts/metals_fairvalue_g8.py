@@ -691,10 +691,11 @@ def build_panel_xau(tuesdays, log):
         panel["LOGOFF"] = np.log(panel["OFF"].clip(lower=1e-9))
     panel = panel.replace([np.inf, -np.inf], np.nan)
     panel = panel.dropna(subset=["PX", "BE", "SL", "NFA", "DXY", "REAL", "LOGPX", "LOGNFA", "REAL_BRK"])
-    # B2 SHADOW: el panel semanal de arriba no cambia. El diario es otra rejilla, mismo as-of.
+    # F1: el diario llega al último precio real; project limita la propagación a 4 d.h. tras τ.
+    # El panel semanal y sus regresores/betas conservan exactamente su rejilla W-TUE.
     import metals_shadow_daily as _shadow
     daily = _shadow.xau_daily(price, be, slope, nfa, dxy, real, official,
-                              panel.index.min(), panel.index.max())
+                              panel.index.min(), max(price.index.max(), panel.index.max()))
     return panel, src, daily
 
 
@@ -746,7 +747,7 @@ def build_panel_xag(tuesdays, log):
     # B2 SHADOW: HG_ORTH diario hereda el OLS semanal (coef); no se reestima.
     import metals_shadow_daily as _shadow
     daily = _shadow.xag_daily(price, xau, real, dxy, copper if has_copper else None, coef,
-                              panel.index.min(), panel.index.max())
+                              panel.index.min(), max(price.index.max(), panel.index.max()))
     return panel, src, has_copper, daily
 
 

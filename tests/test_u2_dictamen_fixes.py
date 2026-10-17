@@ -21,7 +21,7 @@ FROZEN = [
     ("scripts/cme_options_collector.py", "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9"),
     ("scripts/build_options_summary.py", "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019"),
     (".github/workflows/cme_options.yml", "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab"),
-    ("scripts/dashboard_alerts.py", "56e46654e7cc86b0be45e9d5d1792476169db3426d38d12aacb93d50056b5ebb"),
+    ("scripts/dashboard_alerts.py", "e7554e4451330ff9b8e47e1d17d23da19c11a349f311a4665b91b5d6463ca477"),
     ("scripts/s01b.py", "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5"),
     ("scripts/usd_factor.py", "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3"),
     ("scripts/book_risk.py", "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50"),
@@ -34,19 +34,19 @@ def _read(path):
 
 
 def _brief_sec_source(html):
-    match = re.search(r"function briefSec\(sec\) \{\n(?:.*\n)*?\}", html)
+    match = re.search(r"function briefSec\(sec, numbering\) \{\n(?:.*\n)*?\}", html)
     if not match:
         raise AssertionError("briefSec no está en docs/index.html")
     return match.group(0)
 
 
-def _run_brief_sec(html, secs):
+def _run_brief_sec(html, secs, numbering=None):
     src = _brief_sec_source(html)
     program = (
         src
         + "\nconst secs = "
         + json.dumps(secs)
-        + ";\nprocess.stdout.write(JSON.stringify(secs.map(briefSec)));\n"
+        + ";\nprocess.stdout.write(JSON.stringify(secs.map(s => briefSec(s, " + json.dumps(numbering) + "))));\n"
     )
     out = subprocess.check_output(["node", "-e", program], text=True)
     return json.loads(out)
@@ -70,8 +70,10 @@ class BriefSec(unittest.TestCase):
         html = _read(HTML)
         brief = json.loads(_read(os.path.join(ROOT, "data", "alerts", "brief.json")))
         secs = [b["sec"] for b in brief["bullets"]]
-        painted = _run_brief_sec(html, secs)
-        by_src = dict(zip(secs, painted))
+        painted = _run_brief_sec(html, secs, brief.get('section_numbering'))
+        legacy = ['§09 COT', '§04 Term premium', '§06/§07 Metales MDP', '§10 Factor USD',
+                  '§02 Floor spreads', '§01-b CTF']
+        by_src = dict(zip(legacy, _run_brief_sec(html, legacy)))
         self.assertEqual(by_src["§09 COT"], "COT · fuera de la página")
         self.assertEqual(by_src["§04 Term premium"], "§03 Term premium")
         self.assertEqual(by_src["§06/§07 Metales MDP"], "§04/§05 Metales MDP")
@@ -79,9 +81,10 @@ class BriefSec(unittest.TestCase):
         self.assertEqual(by_src["§02 Floor spreads"], "§02 Floor spreads")
         self.assertEqual(by_src["§01-b CTF"], "§01-b CTF")
         for text in painted:
-            for stale in ("§06", "§08", "§09", "§10"):
+            for stale in ("§08", "§09", "§10"):
                 self.assertNotIn(stale, text, text)
         self.assertNotIn("§09", " ".join(painted))
+        self.assertEqual(painted, secs if brief.get('section_numbering') == '00-07' else _run_brief_sec(html, secs))
 
 
 class OptionsInversion(unittest.TestCase):

@@ -53,12 +53,19 @@ def validate(requests):
 
 
 def busy(workflow, run=subprocess.run):
-    out = run(["gh", "run", "list", "--workflow", workflow, "-L", "5", "--json", "status"],
-              capture_output=True, text=True)
     try:
-        return any(x.get("status") in ("queued", "in_progress", "waiting", "pending") for x in json.loads(out.stdout or "[]"))
-    except ValueError:
-        return False
+        out = run(["gh", "run", "list", "--workflow", workflow, "-L", "5", "--json", "status"],
+                  capture_output=True, text=True)
+        if out.returncode != 0:
+            raise ValueError('gh run list rc=%s' % out.returncode)
+        items = json.loads(out.stdout)
+        if not isinstance(items, list) or any(not isinstance(x, dict) or
+                x.get('status') not in {'queued', 'in_progress', 'waiting', 'pending', 'requested', 'completed'} for x in items):
+            raise ValueError('unexpected run-list schema/status')
+        return any(x['status'] != 'completed' for x in items)
+    except (ValueError, TypeError, OSError) as exc:
+        print('Recovery occupancy unknown for %s; dispatch blocked: %s' % (workflow, exc), file=sys.stderr)
+        return True
 
 
 def dispatch(ok, dry=False, run=subprocess.run):

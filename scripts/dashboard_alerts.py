@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-G8 Macro Pipeline — dashboard_alerts.py  v2.6  (2026-10-01) — Acta P-1: coherencia tipo a un día ↔ oficial · §01-b E2: S01B.json PROVISIONAL etiquetado (sin eventos) · v2.4 §01-b CTF (evento ≠ envío) · §04 TP/NOM renombrado (D5)
+G8 Macro Pipeline — dashboard_alerts.py  v2.6  (2026-10-01) — Acta P-1: coherencia tipo a un día ↔ oficial · §01-b E2: S01B.json PROVISIONAL etiquetado (sin eventos) · v2.4 §01-b CTF (evento ≠ envío) · §03 TP/NOM renombrado (D5)
 =============================================================
 Un mensaje de Telegram al día, SOLO si algo cambió en el dashboard.
 Lee los ficheros que ya están en el repo (cero descargas, cero coste) y
@@ -33,7 +33,7 @@ v1.6 (corregido 2026-10-05): constantes trimestrales NZD/CHF retiradas del brief
       Sin fuente admisible, BE/REAL quedan no disponibles; máximo mensual.
       Cuando existe RY_G8_NZD.csv (linkers NZ IIB, real_yields_g8.py v1.1) NZD entra por la
       vía genérica (flag "REAL IIB (B2)"); TP flag según el fichero ACM (real K=3 o SYNTH).
-      Walls del brief = la fila de §08 (strikes C/P OI≥100, front OI + Δ1D, top-3 walls)
+      Walls del brief = la fila de §06 (strikes C/P OI≥100, front OI + Δ1D, top-3 walls)
       en convención de usuario, además de pin/call/put del mapa operable.
 
 v1.7: CHF activado como NZD — §02 floor SARON − policy (CHF_SARON.csv), NOM 10Y SNB
@@ -43,13 +43,13 @@ v1.7: CHF activado como NZD — §02 floor SARON − policy (CHF_SARON.csv), NOM
 v1.8: auditoría institucional — check_dqm lee la última fecha de CUALQUIER CSV del registry
       (los RY_G8_* con NOM10 no se vigilaban); §01 vs USD incluye CHF; los feeds del Mac
       (NZD B2, IIB, SNB curva/SARON/10Y, ACM NZD/CHF, RY NZD) entran en sources/registry.csv
-      con presupuesto → un Mac apagado dispara §05 STALE/DEAD por Telegram.
+      con presupuesto → un Mac apagado dispara Salud STALE/DEAD por Telegram.
 
-v2.3: §10 Factor USD (ACTA_UF1): check_factor — cambio de banda de dispersión (COMÚN/MIXTO/
+v2.3: §07 Factor USD (ACTA_UF1): check_factor — cambio de banda de dispersión (COMÚN/MIXTO/
       DISPERSO, ya con histéresis en usd_factor.py), |z21| del factor cruza 2 (sale en 1.5,
       Schmitt), libro con cuota sobre la cesta > 0.80 (sale en 0.70), bandera COLA. Todas
-      convenciones pre-registradas en el acta; contexto, no voto. Bullet §10 en el brief.
-v2.2: §08b Cross Walls retirada del dashboard y del pipeline (17-sep-2026, decisión del operador).
+      convenciones pre-registradas en el acta; contexto, no voto. Bullet §07 en el brief.
+v2.2: §06b Cross Walls retirada del dashboard y del pipeline (17-sep-2026, decisión del operador).
 v1.9: §01 diferencial REAL 10Y vs USD (linkers: EUR GBP JPY CAD AUD NZD) — columna en el
       libro G8, bullet propio y alerta (|z| 252d histéresis, |Δ1w| P95). CHF fuera (BE constante).
 
@@ -59,14 +59,14 @@ v1.2: escribe data/alerts/brief.json — la MISMA lectura que el Telegram, para 
 
 Secciones cubiertas (todas las divisas con dato en repo)
   §02 floor spreads   USD EUR GBP JPY CAD AUD NZD CHF   badge AMPLE/TIGHT/PRESSURE · |z| 252d
-  §03 policy rates    USD(IORB) EUR(DFR) GBP JPY CHF AUD CAD(BoC) NZD(OCR)   cambio de tasa
-  §04 term premium    USD EUR JPY GBP CAD AUD   |ΔTP 1d| > P95 · TP/NOM cruza 60 %
+  §02 policy rates    USD(IORB) EUR(DFR) GBP JPY CHF AUD CAD(BoC) NZD(OCR)   cambio de tasa
+  §03 term premium    USD EUR JPY GBP CAD AUD   |ΔTP 1d| > P95 · TP/NOM cruza 60 %
   §01 spread vs USD   EUR JPY GBP CAD AUD NZD CHF (NOM10 − NOM10_USD)   |z| 252d · |Δ1w| > P95
   §01 REAL vs USD     EUR JPY GBP CAD AUD NZD (REAL10 − REAL10_USD, linkers)   |z| 252d · |Δ1w| > P95
-  §06/§07 metales     XAU XAG   cambio de régimen · MDP z cruza ±2 · |Δz sem| > P95
-  §08 strike walls    EUR JPY GBP AUD CAD CHF   nueva sesión: tarjeta completa + cambios
-  §09 COT             7 divisas + USD + XAU/XAG   nuevo reporte: cambios de estado / EXT
-  §05 DQM             frescura de los feeds del repo (presupuesto de sources/registry.csv)
+  §04/§05 metales     XAU XAG   cambio de régimen · MDP z cruza ±2 · |Δz sem| > P95
+  §06 strike walls    EUR JPY GBP AUD CAD CHF   nueva sesión: tarjeta completa + cambios
+  COT · fuera de la página             7 divisas + USD + XAU/XAG   nuevo reporte: cambios de estado / EXT
+  Salud DQM             frescura de los feeds del repo (presupuesto de sources/registry.csv)
 """
 import csv
 import copy
@@ -92,7 +92,7 @@ REGISTRY = os.path.join(ROOT, "sources", "registry.csv")
 FLOOR_TIGHT_BP, FLOOR_PRESS_BP = 2.0, 10.0          # §02 badges
 Z_IN, Z_OUT = 2.0, 1.5                              # |z| histéresis
 TPNOM_IN, TPNOM_OUT = 0.60, 0.55                    # HEURÍSTICO (no validado): TP/NOM supera el umbral configurado (D5 §01-b, 19-sep-2026)
-MDP_IN, MDP_OUT = 2.0, 1.5                          # §06/07 mdp_z
+MDP_IN, MDP_OUT = 2.0, 1.5                          # §04/§05 mdp_z
 # ── umbrales de MOVIMIENTO: percentiles rolling, medidos ─────────────────────
 WIN = 252
 P_IN, P_OUT = 95.0, 90.0
@@ -184,8 +184,8 @@ def ffill_join(a, b):
     return out
 
 
-# v2.5.1 (auditoría 24-sep-2026): la §05 del navegador descuenta una unión de festivos G8 y este DQM no, así que
-# el brief marcaba STALE lo que la §05 daba LIVE (p.ej. TONA en la Silver Week japonesa 21-23 sep). Misma unión.
+# v2.5.1 (auditoría 24-sep-2026): la Salud del navegador descuenta una unión de festivos G8 y este DQM no, así que
+# el brief marcaba STALE lo que la Salud daba LIVE (p.ej. TONA en la Silver Week japonesa 21-23 sep). Misma unión.
 G8_HOLIDAYS = {
     "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-06-19",
     "2026-07-03", "2026-08-03", "2026-08-31", "2026-09-07", "2026-10-12", "2026-11-11", "2026-11-26", "2026-12-25",
@@ -209,9 +209,17 @@ def bdays_between(d0, d1):
     return n
 
 
-def band_z(z, prev):
+def band_z(z, prev, series_vals=None):
     """Estado de |z| con histéresis: '' | 'HI' | 'LO'."""
     if z is None:
+        # F1 OWNER: a known flat window is no extreme. Insufficient/missing data
+        # keeps the previous band; scalar MDP readers retain their existing rule.
+        win = series_vals[-WIN:] if series_vals is not None else []
+        if len(win) >= 60:
+            mu = sum(win) / len(win)
+            sd = (sum((x - mu) ** 2 for x in win) / len(win)) ** 0.5
+            if sd < 1e-9:
+                return ""
         return prev or ""
     if prev in ("HI", "LO"):
         return prev if abs(z) >= Z_OUT else ""
@@ -271,7 +279,7 @@ def check_floors(st, lines):
         last, z = vals[-1], zscore(vals)
         badge = floor_badge(last)
         prev = s.get(ccy, {})
-        zb = band_z(z, prev.get("zband"))
+        zb = band_z(z, prev.get("zband"), vals)
         chg = []
         if prev.get("badge") and prev["badge"] != badge:
             chg.append("%s → %s" % (prev["badge"], badge))
@@ -285,7 +293,7 @@ def check_floors(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §05 coherencia tipo a un día ↔ tipo oficial (Acta P-1, 2026-10-01)
+# Salud coherencia tipo a un día ↔ tipo oficial (Acta P-1, 2026-10-01)
 # ═════════════════════════════════════════════════════════════════════════════
 # El BIS publica los tipos oficiales con retraso: el 24-sep TONA saltó a 1.227 y JP_POLICY siguió en 1.00 una
 # semana, sin que el DQM de frescura lo viera (presupuesto 40 bd). Regla: si el diferencial tipo a un día − oficial
@@ -313,14 +321,14 @@ def check_policy_coherence(st, lines):
                  % (ccy, flr[:-4], rfr[:-4], flr[:-4], recent[-1][1], med))
         prev = s.get(ccy, {}).get("status")
         if prev and prev != status:
-            lines.append("§05 %s %s: %s → %s (%s − oficial %+.1f bp, mediana %+.1f bp)"
+            lines.append("Salud %s %s: %s → %s (%s − oficial %+.1f bp, mediana %+.1f bp)"
                          % (ccy, flr[:-4], prev, status, rfr[:-4], recent[-1][1], med))
         s[ccy] = {"status": status, "gap_bp": round(recent[-1][1], 2), "median_bp": round(med, 2),
                   "date": recent[-1][0].isoformat()}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §03 policy rates
+# §02 policy rates
 # ═════════════════════════════════════════════════════════════════════════════
 POLICY = [("USD", "FLOOR_USD.csv", "Fed IORB"), ("EUR", "FLOOR_EUR.csv", "ECB DFR"),
           ("GBP", "GB_POLICY.csv", "BoE Bank Rate"), ("JPY", "JP_POLICY.csv", "BoJ Policy Rate"),
@@ -340,13 +348,13 @@ def check_policy(st, lines):
         last_d, last_v = ser[-1]
         prev = s.get(ccy)
         if prev and abs(prev["v"] - last_v) > 1e-6:
-            lines.append("§03 %s %s: %.2f → %.2f (%+.0f bp) · %s"
+            lines.append("§02 %s %s: %.2f → %.2f (%+.0f bp) · %s"
                          % (ccy, label, prev["v"], last_v, (last_v - prev["v"]) * 100, last_d.isoformat()))
         s[ccy] = {"v": last_v, "date": last_d.isoformat()}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §04 term premium ACM  +  §01 spread vs USD
+# §03 term premium ACM  +  §01 spread vs USD
 # ═════════════════════════════════════════════════════════════════════════════
 ACM_CCY = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "NZD", "CHF"]   # NZD real K=3 (o SYNTH), CHF real K=3 (SNB curve) o congelado
 
@@ -381,7 +389,7 @@ def check_tp(st, lines):
                 ratio * 100, "supera ▲" if fis else "vuelve bajo ▼", TPNOM_IN * 100, TPNOM_OUT * 100,
                 " · nominal negativo o próximo a cero: cociente poco informativo" if y10[-1][1] < 0.5 else ""))
         if chg:
-            lines.append("§04 %s TP %.2f %% · %s" % (ccy, vals[-1], " · ".join(chg)))
+            lines.append("§03 %s TP %.2f %% · %s" % (ccy, vals[-1], " · ".join(chg)))
         s[ccy] = {"band": band, "fiscal": fis, "tp": round(vals[-1], 4),
                   "ratio": None if ratio is None else round(ratio, 3), "date": tp[-1][0].isoformat()}
 
@@ -410,7 +418,7 @@ def check_vs_usd(st, lines):
         d1w = [(vals[i] - vals[i - 5]) * 100 for i in range(5, len(vals))]  # bp/semana
         hist = [abs(x) for x in d1w[-WIN:]]
         prev = s.get(ccy, {})
-        zb = band_z(z, prev.get("zband"))
+        zb = band_z(z, prev.get("zband"), vals)
         mb, p95 = band_pct(abs(d1w[-1]), hist, prev.get("mband"))
         chg = []
         if zb and prev.get("zband", "") != zb:
@@ -451,7 +459,7 @@ def check_real_vs_usd(st, lines):
         d1w = [(vals[i] - vals[i - 5]) * 100 for i in range(5, len(vals))]  # bp/semana
         hist = [abs(x) for x in d1w[-WIN:]]
         prev = s.get(ccy, {})
-        zb = band_z(z, prev.get("zband"))
+        zb = band_z(z, prev.get("zband"), vals)
         mb, p95 = band_pct(abs(d1w[-1]), hist, prev.get("mband"))
         chg = []
         if zb and prev.get("zband", "") != zb:
@@ -467,7 +475,7 @@ def check_real_vs_usd(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §06 / §07 metales MDP
+# §04/§05 metales MDP
 # ═════════════════════════════════════════════════════════════════════════════
 def check_metals(st, lines):
     s = st.setdefault("metals", {})
@@ -501,7 +509,7 @@ def check_metals(st, lines):
             chg.append("quality %s → %s" % (prev["quality"], cur.get("quality")))
         if chg:
             px = ser[-1][1] if False else None
-            lines.append("§0%s %s MDP z %+.2f · %s · %s" % ("6" if m == "XAU" else "7", m, z or 0.0,
+            lines.append("§0%s %s MDP z %+.2f · %s · %s" % ("4" if m == "XAU" else "5", m, z or 0.0,
                                                            cur.get("regime"), " · ".join(chg)))
         s[m] = {"regime": cur.get("regime"), "zband": zb, "mband": mb, "quality": cur.get("quality"),
                 "z": None if z is None else round(z, 3),
@@ -509,7 +517,7 @@ def check_metals(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §08 strike walls (CME options) — cadena COMPLETA, tarjeta por par en cada sesión nueva
+# §06 strike walls (CME options) — cadena COMPLETA, tarjeta por par en cada sesión nueva
 # ═════════════════════════════════════════════════════════════════════════════
 OPT_ROOT = {"EUR": "EUU", "JPY": "JPU", "GBP": "GBU", "AUD": "ADU", "CAD": "CAU", "CHF": "CHU"}
 FUT_ROOT = {"EUR": "6E", "JPY": "6J", "GBP": "6B", "AUD": "6A", "CAD": "6C", "CHF": "6S"}
@@ -634,7 +642,7 @@ def check_walls(st, lines):
     gate0 = js.get("gate0") or {}
     sd = date.fromisoformat(sess)
     age_bd = bdays_between(sd, TODAY)
-    head = "🧱 <b>§08 STRIKE WALLS · sesión %s</b>" % sess
+    head = "🧱 <b>§06 STRIKE WALLS · sesión %s</b>" % sess
     if age_bd > 4:
         head += " · ⚠ %d bd de antigüedad (Databento bloqueado / sin sesiones nuevas)" % age_bd
     blocks = [head, "(convención operador: USD/JPY, USD/CAD, USD/CHF ya invertidos; OI ≥ 100 contratos)"]
@@ -671,7 +679,7 @@ def check_walls(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §09 COT — solo cuando entra un reporte nuevo
+# COT · fuera de la página — solo cuando entra un reporte nuevo
 # ═════════════════════════════════════════════════════════════════════════════
 def check_cot(st, lines):
     s = st.setdefault("cot", {})
@@ -706,15 +714,15 @@ def check_cot(st, lines):
             out.append("  %s z %+.2f (%s) · %s" % (k, c.get("lf_z") or 0.0, cur, " · ".join(tag)))
         (s.setdefault("states", {}))[k] = cur
     if out:
-        lines.append("§09 COT reporte %s" % rep)
+        lines.append("COT · fuera de la página reporte %s" % rep)
         lines.extend(out)
     else:
-        lines.append("§09 COT reporte %s · sin cambios de estado" % rep)
+        lines.append("COT · fuera de la página reporte %s · sin cambios de estado" % rep)
     s["report"] = rep
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §10 Factor USD — v2.3 (ACTA_UF1): banda de dispersión · |z21| factor · libro
+# §07 Factor USD — v2.3 (ACTA_UF1): banda de dispersión · |z21| factor · libro
 # ═════════════════════════════════════════════════════════════════════════════
 def check_factor(st, lines):
     s = st.setdefault("factor", {})
@@ -762,7 +770,7 @@ def check_factor(st, lines):
             out.append("libro DESACTUALIZADO (snapshot %s)" % bk.get("snapshot_date"))
         s["stale"] = bk.get("status") == "STALE"
     for l in out:
-        lines.append("§10 " + l)
+        lines.append("§07 " + l)
     s["asof"] = asof
 
 
@@ -796,7 +804,7 @@ def check_s01b(st, lines):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# §05 DQM — frescura contra el presupuesto del registry
+# Salud DQM — frescura contra el presupuesto del registry
 # ═════════════════════════════════════════════════════════════════════════════
 def _last_csv_date(path):
     """Última fecha (yyyymmdd) de un CSV del repo, sea OHLCV, Date,Value o NOM10/REAL10.
@@ -836,7 +844,7 @@ def check_dqm(st, lines):
                 deadline = datetime.fromisoformat(js["pending_until"].replace("Z", "+00:00"))
                 status = "PENDING" if datetime.now(timezone.utc) <= deadline else "DEAD"
                 if status == "DEAD" and s.get(fid) != "DEAD":
-                    lines.append("§05 S01B: primera sesión no publicada dentro del plazo previsto")
+                    lines.append("Salud S01B: primera sesión no publicada dentro del plazo previsto")
                 s[fid] = status
                 continue
             for key in (("as_of",) if fid in ("S01B", "USD_FACTOR") else ("latest_session", "report_date", "generated")):
@@ -853,7 +861,7 @@ def check_dqm(st, lines):
         status = "DEAD" if bd > 2.5 * budget else "STALE" if bd > 1.5 * budget else "DEGRADED" if bd > budget else "LIVE"
         prev = s.get(fid)
         if prev and prev != status and (status in ("STALE", "DEAD") or prev in ("STALE", "DEAD")):
-            lines.append("§05 %s: %s → %s (%d bd, presupuesto %.0f)" % (fid, prev, status, bd, budget))
+            lines.append("Salud %s: %s → %s (%d bd, presupuesto %.0f)" % (fid, prev, status, bd, budget))
         s[fid] = status
 
 
@@ -888,12 +896,12 @@ def summary_baseline(st):
         out.append("")
     p = st.get("policy", {})
     if p:
-        out.append("<b>§03 Policy rates</b>")
+        out.append("<b>§02 Policy rates</b>")
         out.append("   " + " · ".join("%s %.2f" % (k, v["v"]) for k, v in p.items()))
         out.append("")
     t = st.get("tp", {})
     if t:
-        out.append("<b>§04 Term premium ACM 10Y</b> (TP · TP/NOM; ▲ = supera el umbral configurado 60 %, heurístico)")
+        out.append("<b>§03 Term premium ACM 10Y</b> (TP · TP/NOM; ▲ = supera el umbral configurado 60 %, heurístico)")
         for k, v in t.items():
             out.append("   %s  TP %.2f %%  TP/NOM %s%s" % (k, v["tp"], "—" if v["ratio"] is None else "%.0f %%" % (v["ratio"] * 100),
                                                         "  ▲ >60 %" if v.get("fiscal") else ""))
@@ -922,7 +930,7 @@ def summary_baseline(st):
         out.append("")
     m = st.get("metals", {})
     if m:
-        out.append("<b>§06/§07 Metales MDP</b> (z vs ancla NFA · régimen)")
+        out.append("<b>§04/§05 Metales MDP</b> (z vs ancla NFA · régimen)")
         for k, v in m.items():
             out.append("   %s  z %+.2f  %s  · quality %s" % (k, v["z"] or 0, v["regime"], v.get("quality")))
         out.append("")
@@ -1125,8 +1133,8 @@ def build_book(st):
     return rows
 
 def surface_snapshot(oj, ccy):
-    """v1.6: la fila de §08 para el brief — MISMOS datos (OPTIONS_SURFACE.json latest[ccy])
-    y MISMA convención de usuario que §08: en JPY/CAD/CHF el nivel es 1/k y call↔put
+    """v1.6: la fila de §06 para el brief — MISMOS datos (OPTIONS_SURFACE.json latest[ccy])
+    y MISMA convención de usuario que §06: en JPY/CAD/CHF el nivel es 1/k y call↔put
     se intercambian. Devuelve strikes C/P (OI≥100), front OI (+Δ1D) y top-3 walls."""
     d = (oj.get("latest") or {}).get(ccy) or {}
     if not d:
@@ -1152,6 +1160,7 @@ def surface_snapshot(oj, ccy):
 
 def build_brief(st, wall_lines):
     b = {"generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+         "section_numbering": "00-07",
          "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); "
                      "el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
          "as_of": {}, "gates": {}, "bullets": [], "dqm": [], "walls": []}
@@ -1165,7 +1174,6 @@ def build_brief(st, wall_lines):
     mx = read_series("MFV_G8_XAU.csv", col="MDP_Z")
     b["as_of"]["metals"] = mx[-1][0].isoformat() if mx else None
     # gates
-    b["gates"]["ffva"] = {"status": "PAUSED", "label": "FFVA pausado (sin Databento futuros) — decisión 2026-09-12"}
     tw = read_json("twin/pos_g8_twin.json") or {}
     dates = 0
     try:
@@ -1188,7 +1196,7 @@ def build_brief(st, wall_lines):
     t = st.get("tp", {})
     tl = ["%s TP %.2f %% (TP/NOM %.0f %% ▲60)" % (k, v["tp"], (v["ratio"] or 0) * 100) for k, v in t.items() if v.get("fiscal")]
     tl += ["%s ΔTP 1d extremo" % k for k, v in t.items() if v.get("band") == "EXT"]
-    b["bullets"].append({"sec": "§04 Term premium", "text": " · ".join(tl) if tl else "TP/NOM bajo el umbral configurado (60 %, heurístico) y sin salto diario extremo"})
+    b["bullets"].append({"sec": "§03 Term premium", "text": " · ".join(tl) if tl else "TP/NOM bajo el umbral configurado (60 %, heurístico) y sin salto diario extremo"})
     u = st.get("vs_usd", {})
     ul = ["%s−USD %+.0f bp (z %s)" % (k, v["spread_bp"], "techo" if v["zband"] == "HI" else "suelo") for k, v in u.items() if v.get("zband")]
     ul += ["%s Δ1w extremo" % k for k, v in u.items() if v.get("mband") == "EXT"]
@@ -1199,14 +1207,14 @@ def build_brief(st, wall_lines):
     b["bullets"].append({"sec": "§01 REAL 10Y vs USD", "text": " · ".join(rl) if rl else "ningún diferencial real en extremo de su año"})
     m = st.get("metals", {})
     ml = ["%s z %+.2f %s%s" % (k, v["z"] or 0, v["regime"], " (|z|≥2)" if v.get("zband") else "") for k, v in m.items()]
-    b["bullets"].append({"sec": "§06/§07 Metales MDP", "text": (" · ".join(ml) if ml else "sin dato") + " — valoración, no timing"})
+    b["bullets"].append({"sec": "§04/§05 Metales MDP", "text": (" · ".join(ml) if ml else "sin dato") + " — valoración, no timing"})
     cl = []
     for c in (js.get("currencies") or []):
         if c.get("state") and c["state"] != "NEUTRAL":
             cl.append("%s %s (LF z %+.2f)" % (c["ccy"], c["state"], c.get("lf_z") or 0))
         elif c.get("divergence"):
             cl.append("%s divergencia LF/AM" % c["ccy"])
-    b["bullets"].append({"sec": "§09 COT", "text": " · ".join(cl) if cl else "sin crowding — todo NEUTRAL"})
+    b["bullets"].append({"sec": "COT · fuera de la página", "text": " · ".join(cl) if cl else "sin crowding — todo NEUTRAL"})
     # v2.4 §01-b — lectura 22 s. y CTF (CONTEXT, sin voto)
     try:
         sj = read_json("S01B.json") or {}
@@ -1224,7 +1232,7 @@ def build_brief(st, wall_lines):
             b["bullets"].append({"sec": "§01-b CTF", "text": t})
     except Exception as e:
         note("s01b: %s" % e)
-    # v2.3 §10 factor USD — contexto de composición, nunca dirección
+    # v2.3 §07 factor USD — contexto de composición, nunca dirección
     try:
         uf = read_json("USD_FACTOR.json") or {}
         if uf.get("as_of"):
@@ -1240,7 +1248,7 @@ def build_brief(st, wall_lines):
                 t += " · libro VaR95 %.0f USD · cuota cesta %.0f %%%s" % (r.get("var95_param") or 0, (r.get("share_on_basket") or 0) * 100,
                                                                   " · COLA" if r.get("cola") else "")
             b["as_of"]["factor"] = uf.get("as_of")
-            b["bullets"].append({"sec": "§10 Factor USD", "text": t})
+            b["bullets"].append({"sec": "§07 Factor USD", "text": t})
     except Exception as e:
         note("factor: %s" % e)
     # walls: foto por par de la sesión vigente (pin / call / put / proximidad), siempre
@@ -1267,7 +1275,7 @@ def build_brief(st, wall_lines):
                      "put": None if a["put_k"] is None else round(a["put_k"], 5),
                      "near_pct": round(a["near_pct"] * 100, 2), "near_k": round(a["near_k"], 5),
                      "gate0": (gate0.get(ccy) or {}).get("verdict", "NA")}
-                w.update(surface_snapshot(oj, ccy))      # v1.6: §08 row (strikes C/P, front OI, top-3 walls)
+                w.update(surface_snapshot(oj, ccy))      # v1.6: §06 row (strikes C/P, front OI, top-3 walls)
                 b["walls"].append(w)
             except Exception as e:
                 b["walls"].append({"pair": PAIR[ccy], "note": "error %s" % e})
@@ -1316,9 +1324,9 @@ def main(argv):
     elif events:
         body.append("<b>CAMBIOS DETECTADOS</b>")
         body.append("")
-        sec_names = {"§01": "§01 Spread vs USD", "§1b": "§01-b Lectura 22 s. · CTF (CONTEXT)", "§02": "§02 Floor spreads", "§03": "§03 Policy rates",
-                     "§04": "§04 Term premium", "§05": "§05 Data quality", "§06": "§06 Oro", "§07": "§07 Plata",
-                     "§08": "§08 Walls", "§09": "§09 COT", "§10": "§10 Factor USD"}
+        sec_names = {"§01": "§01 Spread vs USD", "§1b": "§01-b Lectura 22 s. · CTF (CONTEXT)",
+                     "§02": "§02 Floor spreads · tipos oficiales", "§03": "§03 Term premium",
+                     "§04": "§04 Oro", "§05": "§05 Plata", "§06": "§06 Walls", "§07": "§07 Factor USD"}
         last_sec = None
         for l in events:
             sec = l[:3]

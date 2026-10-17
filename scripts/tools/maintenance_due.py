@@ -30,6 +30,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--manual", action="store_true")
     ap.add_argument("--record")
+    ap.add_argument("--agent-outcome")
+    ap.add_argument("--verification")
+    ap.add_argument("--gate-decision")
     a = ap.parse_args()
     p = ROOT / "data/_ingest/maintenance_state.json"
     state = json.loads(p.read_text()) if p.exists() else {}
@@ -37,7 +40,12 @@ def main():
     if a.record:
         stamp = now.isoformat().replace("+00:00", "Z")
         recent = [x for x in state.get("attempts", []) if x.get("at", "")[:10] >= (now.date() - timedelta(days=7)).isoformat()]
-        recent.append({"at": stamp, "result": a.record})
+        attempt = {"at": stamp, "result": a.record}
+        for key, value in (("agent_outcome", a.agent_outcome), ("verification", a.verification),
+                           ("gate_decision", a.gate_decision)):
+            if value is not None:
+                attempt[key] = value
+        recent.append(attempt)
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps({"last_attempt": stamp, "attempts": recent}, indent=1) + "\n")
     else:

@@ -13,6 +13,9 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
       run: ${{ steps.due.outputs.run }}
     steps:
@@ -26,7 +29,15 @@ jobs:
       - id: cadence
         env:
           EVENT_NAME: ${{ github.event_name }}
-        run: python scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$EVENT_NAME" = schedule ]; then
+            event_at="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json createdAt --jq .createdAt)"
+            python scripts/tools/watch_cadence.py --event "$EVENT_NAME" --event-at "$event_at" --cron "$EVENT_SCHEDULE" >> "$GITHUB_OUTPUT"
+          else
+            python scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+          fi
       - if: steps.cadence.outputs.run == 'true'
         run: python scripts/health_monitor.py --out .agent/health.json
       - id: due
@@ -96,6 +107,12 @@ jobs:
           BASE: ${{ steps.base.outputs.sha }}
         run: |
           mkdir -p .agent
+          # F1: edited policy evidence must reach OWNER review, even without the
+          # agent's final commit. Never sweep other staged files into this commit.
+          if [ -n "$BASE" ] && ! git diff --quiet HEAD -- sources/policy_evidence.json; then
+            git add -- sources/policy_evidence.json
+            git commit --only -m 'maintenance: propose policy evidence renewal for OWNER' -- sources/policy_evidence.json
+          fi
           if [ -n "$BASE" ] && [ "$(git rev-list --count "$BASE..HEAD")" -gt 0 ]; then
             git bundle create .agent/work.bundle "$BASE..HEAD"
           fi
@@ -200,22 +217,23 @@ jobs:
           SMOKE: ${{ needs.verify.outputs.smoke }}
           VERIFY_RESULT: ${{ needs.verify.result }}
           AGENT_RESULT: ${{ needs.agent.result }}
+          CLAUDE_OUTCOME: ${{ needs.agent.outputs.claude }}
         run: |
           git config user.name g8-maintenance-agent
           git config user.email g8-maintenance-agent@users.noreply.github.com
           cp scripts/tools/agent_gate.py "$RUNNER_TEMP/trusted_gate.py"
           result=NO_CHANGES
-          if [ "$VERIFY_RESULT" = failure ] || [ "$AGENT_RESULT" = failure ]; then result=FAILED; fi
-          if [ -f .agent/work.bundle ] && [ -n "$VERIFIED_HEAD" ]; then
+          if [ "$VERIFY_RESULT" != success ] || [ "$AGENT_RESULT" != success ] || [ "$CLAUDE_OUTCOME" != success ]; then result=FAILED; fi
+          if [ -f .agent/work.bundle ]; then
             git fetch .agent/work.bundle HEAD:refs/heads/candidate
-            test "$(git rev-parse candidate)" = "$VERIFIED_HEAD"
+            if [ -n "$VERIFIED_HEAD" ]; then test "$(git rev-parse candidate)" = "$VERIFIED_HEAD"; fi
             git checkout candidate
             # Reclassify independently with trusted main code, no imports from candidate.
             set +e
             python "$RUNNER_TEMP/trusted_gate.py" --base "$BASE" > .agent/gate-final.json
             gate_rc=$?
             set -e
-            if [ "$DECISION" = AUTO ] && [ "$gate_rc" = 0 ] && [ "$SMOKE" = success ]; then
+            if [ "$DECISION" = AUTO ] && [ "$gate_rc" = 0 ] && [ "$SMOKE" = success ] && [ -n "$VERIFIED_HEAD" ] && [ "$CLAUDE_OUTCOME" = success ] && [ "$AGENT_RESULT" = success ]; then
               git fetch origin main
               # If code changed since BASE, a new verification is needed. Data-only
               # changes may be merged without silently resolving any conflict.
@@ -240,7 +258,7 @@ jobs:
           git checkout main
           git pull --ff-only origin main
           # Trusted code from main, not the unmerged candidate, records attempts.
-          python scripts/tools/maintenance_due.py --record "$result"
+          python scripts/tools/maintenance_due.py --record "$result" --agent-outcome "$CLAUDE_OUTCOME" --verification "$VERIFY_RESULT" --gate-decision "$DECISION"
           git add data/_ingest/maintenance_state.json
           git commit -m 'chore: record maintenance attempt'
           for i in 1 2 3; do

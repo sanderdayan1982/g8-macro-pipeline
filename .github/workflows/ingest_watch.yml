@@ -28,6 +28,7 @@ jobs:
     timeout-minutes: 3
     permissions:
       contents: read
+      actions: read
     outputs:
       run: ${{ steps.cadence.outputs.run }}
     steps:
@@ -37,7 +38,15 @@ jobs:
       - id: cadence
         env:
           EVENT_NAME: ${{ github.event_name }}
-        run: python3 scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$EVENT_NAME" = schedule ]; then
+            event_at="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json createdAt --jq .createdAt)"
+            python3 scripts/tools/watch_cadence.py --event "$EVENT_NAME" --event-at "$event_at" --cron "$EVENT_SCHEDULE" >> "$GITHUB_OUTPUT"
+          else
+            python3 scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+          fi
   watch:
     needs: cadence
     if: needs.cadence.outputs.run == 'true'

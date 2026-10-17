@@ -1,5 +1,6 @@
 {
- "generated_utc": "2026-10-17T19:04:58Z",
+ "generated_utc": "2026-10-17T22:57:09Z",
+ "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-10-16",
@@ -10,10 +11,6 @@
   "factor": "2026-10-16"
  },
  "gates": {
-  "ffva": {
-   "status": "PAUSED",
-   "label": "FFVA pausado (sin Databento futuros) — decisión 2026-09-12"
-  },
   "pos_twin": {
    "status": "PASSED",
    "label": "POS twin-test: PASSED (60 barras, 7.6 sem)",
@@ -25,10 +22,10 @@
  "bullets": [
   {
    "sec": "§02 Floor spreads",
-   "text": "CAD +2.0 bp TIGHT · AUD +0.0 bp AMPLE (z extremo) · NZD +3.0 bp TIGHT"
+   "text": "CAD +2.0 bp TIGHT · NZD +3.0 bp TIGHT"
   },
   {
-   "sec": "§04 Term premium",
+   "sec": "§03 Term premium",
    "text": "JPY TP 2.03 % (TP/NOM 69 % ▲60) · USD ΔTP 1d extremo · EUR ΔTP 1d extremo · JPY ΔTP 1d extremo"
   },
   {
@@ -40,11 +37,11 @@
    "text": "EUR−USD real -162 bp (z suelo) · JPY−USD real -205 bp (z suelo) · GBP−USD real -82 bp (z suelo) · CAD−USD real -89 bp (z suelo) · NZD−USD real +0 bp (z suelo)"
   },
   {
-   "sec": "§06/§07 Metales MDP",
+   "sec": "§04/§05 Metales MDP",
    "text": "XAU z +1.49 REVERSION · XAG z +1.39 REVERSION — valoración, no timing"
   },
   {
-   "sec": "§09 COT",
+   "sec": "COT · fuera de la página",
    "text": "EUR CROWD SHORT (LF z -2.53) · AUD STRETCH+ (LF z +1.52) · CAD divergencia LF/AM"
   },
   {
@@ -52,7 +49,7 @@
    "text": "CTF ON: ninguna · ΔTP22 USD +13 EUR -0 GBP -3 JPY -14 AUD -0 NZD -7 CAD -1 CHF -2"
   },
   {
-   "sec": "§10 Factor USD",
+   "sec": "§07 Factor USD",
    "text": "f USD 21 s. +1.21 % (z +0.66) · dispersión MIXTO p46.0 · S 60 %"
   }
  ],
@@ -286,7 +283,7 @@
    "be": 2.32,
    "nom_asof": "2026-10-15",
    "tp": 1.5871,
-   "tp_z": 1.9922751426912693,
+   "tp_z": 1.9922751426912744,
    "tp_asof": "2026-10-15",
    "rfr": 3.89,
    "floor_bp": -1.0,
@@ -308,7 +305,7 @@
    "be": 2.2645,
    "nom_asof": "2026-10-16",
    "tp": 1.209,
-   "tp_z": -0.08759199645166635,
+   "tp_z": -0.087591996451663,
    "tp_asof": "2026-10-15",
    "rfr": 2.44,
    "floor_bp": -6.0,
@@ -330,7 +327,7 @@
    "be": 3.3843,
    "nom_asof": "2026-10-15",
    "tp": 2.0014,
-   "tp_z": 0.7243479562772737,
+   "tp_z": 0.7243479562772686,
    "tp_asof": "2026-10-15",
    "rfr": 3.7324,
    "floor_bp": -1.76,
@@ -352,7 +349,7 @@
    "be": 2.2147,
    "nom_asof": "2026-10-16",
    "tp": 2.0327,
-   "tp_z": 0.6045373656678699,
+   "tp_z": 0.6045373656678668,
    "tp_asof": "2026-10-15",
    "rfr": 1.228,
    "floor_bp": -2.2,
@@ -379,7 +376,7 @@
    "nom_rba_asof": "2026-10-14",
    "nom_est": true,
    "tp": 1.3075,
-   "tp_z": 1.8093380028977124,
+   "tp_z": 1.809338002897711,
    "tp_asof": "2026-10-15",
    "rfr": 4.6,
    "floor_bp": 0.0,
@@ -403,7 +400,7 @@
    "be": 2.156,
    "nom_asof": "2026-10-15",
    "tp": 1.9133,
-   "tp_z": 1.5835276532684164,
+   "tp_z": 1.5835276532684173,
    "tp_asof": "2026-10-15",
    "rfr": 2.78,
    "floor_bp": 3.0,
@@ -427,7 +424,7 @@
    "be": 2.28,
    "nom_asof": "2026-10-15",
    "tp": 1.2706,
-   "tp_z": 1.241910541583238,
+   "tp_z": 1.2419105415832306,
    "tp_asof": "2026-10-15",
    "rfr": 2.27,
    "floor_bp": 2.0,
@@ -452,7 +449,7 @@
    "be": 1.0,
    "nom_asof": "2026-10-16",
    "tp": -0.0525,
-   "tp_z": 0.6579264869673357,
+   "tp_z": 0.6579264869673358,
    "tp_asof": "2026-10-16",
    "rfr": -0.05,
    "floor_bp": -5.0,

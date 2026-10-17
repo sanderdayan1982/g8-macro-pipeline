@@ -1,6 +1,7 @@
 """B2 (SHADOW): el MDP diario no reestima betas y el martes clava el Z semanal."""
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +18,34 @@ def _daily(dates, px=100.0):
 
 
 class ShadowProjection(unittest.TestCase):
+    def test_daily_panel_reaches_actual_prices_beyond_last_weekly_tuesday(self):
+        import metals_fairvalue_g8 as M
+        dates = pd.bdate_range('2026-09-01', '2026-10-16')
+        price = pd.Series(100 + np.arange(len(dates), dtype=float), index=dates)
+        driver = pd.Series(2 + np.arange(len(dates), dtype=float) / 100, index=dates)
+        weekly = pd.date_range(dates.min(), '2026-10-13', freq='W-TUE')
+        with patch.object(M, 'find_local_price', return_value=(price, 'fixture')), \
+             patch.object(M, 'load_be10', return_value=driver), \
+             patch.object(M, 'load_slope', return_value=driver), \
+             patch.object(M, 'load_nfa_total', return_value=driver * 1000), \
+             patch.object(M, 'load_real10', return_value=driver), \
+             patch.object(M, 'load_official_demand', return_value=None), \
+             patch.object(M, 'fetch_fred', return_value=driver):
+            xau, _, daily_xau = M.build_panel_xau(weekly, [])
+            xag, _, _, daily_xag = M.build_panel_xag(weekly, [])
+        for panel, daily in ((xau, daily_xau), (xag, daily_xag)):
+            self.assertEqual(panel.index.max(), pd.Timestamp('2026-10-13'))
+            self.assertEqual(daily.index.max(), pd.Timestamp('2026-10-16'))
+            self.assertTrue(all(d.weekday() == 1 for d in panel.index))
+            y = np.ones(len(daily)); X = np.ones((len(daily), 1))
+            frame = S.project(daily, panel.index, np.zeros((len(panel), 1)),
+                              np.full((len(panel), 1), 0.5), np.ones(len(panel)), y, X, 3)
+            by_date = frame.set_index('DATE')
+            for day in ('20261014', '20261015', '20261016'):
+                self.assertEqual(by_date.loc[day, 'BETA_STATE'], 'filt')
+                self.assertEqual(by_date.loc[day, 'RESID'], 0.5)
+            self.assertEqual(by_date.loc['20261013', 'MDP_Z'], 1.0)
+
     def test_tuesday_matches_weekly_and_later_days_stay_causal(self):
         # Rejilla W-TUE con un hueco: el 13-oct queda a 5 días hábiles del 6-oct y antes del 20-oct.
         weekly = pd.to_datetime(["2026-10-06", "2026-10-20"])

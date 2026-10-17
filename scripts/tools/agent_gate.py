@@ -68,6 +68,7 @@ DENY = [
     "scripts/acm_g8.py", "scripts/s01b.py", "scripts/dashboard_alerts.py", "scripts/usd_factor.py",
     "scripts/book_risk.py", "scripts/metals_fairvalue_g8.py", "scripts/nzd_tp_synth.py", "scripts/real_yields_g8.py",
     "scripts/aud_nowcast.py", "scripts/tools/*", "scripts/health_monitor.py", "docs/js/health.js",
+    "sources/policy_evidence.json",  # F1: renewals are packaged for OWNER, never silently discarded/AUTO.
     "sources/freshness_*.csv", "sources/nowcast_aud.json", "tests/test_p8_aud_nowcast.py", "tests/test_exclusions.py", "tests/test_f3_freshness.py", "tests/frozen_data.py",
     ".github/*",
 ]
@@ -101,6 +102,8 @@ def validate_diff(base, result):
     def git(*args):
         return subprocess.run(["git"] + list(args), capture_output=True, text=True, check=True).stdout
     reasons = []
+    if "sources/policy_evidence.json" in result["changed"]:
+        reasons.append("policy evidence renewal requires OWNER review of official URLs, dates and rate consistency")
     for line in git("diff", "--raw", "--no-renames", base, "HEAD").splitlines():
         meta, path = line.split("\t", 1)
         mode = meta.split()[1]

@@ -153,6 +153,14 @@ Una discordancia exige investigar la decisión más reciente, no forzar el valor
 El calendario no excluye decisiones extraordinarias: la comprobación periódica
 sigue siendo necesaria. La compuerta existente conserva revisión para ese JSON.
 
+F1 (OWNER): si verificaste una renovación de `sources/policy_evidence.json`,
+guarda las URLs oficiales concretas, la fecha de consulta, el tipo y la próxima
+reunión en un acta `ACTA_AGENTE_*`. Compara el tipo con la serie/decisión vigente;
+si discrepa, no certifiques la evidencia y explica el conflicto. Haz commit del
+JSON y del acta para que la compuerta abra un PR OWNER. El empaquetado conserva
+también una edición del JSON cuyo commit final se hubiera omitido; no autoriza
+integración automática ni renovación sin verificación real.
+
 `OFFICIAL_GOLD_DEMAND.csv` está RETIRADO: era anual y estimado. Su copia en
 `docs/actas/evidence/` es exclusivamente documental. No restaurarla ni usarla
 como fallback. CHF BE continúa sin equivalente de mercado (Suiza no emite bonos indexados); ni CPI mensual ni

@@ -3020,7 +3020,8 @@ function briefAge(b) {
     var lim = (dow === 0 || dow === 1) ? 78 : 30;
     return { h: h, late: h > lim, lim: lim };
 }
-function briefSec(sec) {
+function briefSec(sec, numbering) {
+    if (numbering === '00-07') return String(sec || '');
     return String(sec || '')
         .replace('§06/§07', '§METALES')
         .replace('§09 COT', 'COT · fuera de la página')
@@ -3074,7 +3075,7 @@ function render(b) {
         h += '</tbody></table></div>';
     }
     h += '<ul class="brief-list">';
-    (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(briefSec(x.sec)) + '</span>' + esc(x.text) + '</li>'; });
+    (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(briefSec(x.sec, b.section_numbering)) + '</span>' + esc(x.text) + '</li>'; });
     h += '</ul>';
     if (b.walls && b.walls.length) {
         h += '<div class="brief-walls">';
