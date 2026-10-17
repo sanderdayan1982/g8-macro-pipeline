@@ -338,8 +338,8 @@
 </header>
     <aside id="publication-health" class="dqm-attn" style="margin:12px 24px;overflow-x:auto" aria-live="polite">Comprobando frescura por publicación…</aside>
 <nav class="desk-nav" id="desk-nav" aria-label="secciones">
-    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-acm" data-key="4">4 TP</a><a href="#publication-health" data-key="5">5 Salud</a><a href="#section-gold" data-key="6">6 Gold</a><a href="#section-silver" data-key="7">7 Silver</a><a href="#section-options" data-key="8">8 Walls</a><a href="#section-factor" data-key="u">u Factor</a>
-    <span class="desk-nav-hint">teclas 0–9 · u</span>
+    <a href="#section-brief" data-key="0">0 Brief</a><a href="#section-attribution" data-key="1">1 Rates</a><a href="#section-floors" data-key="2">2 Floors</a><a href="#section-acm" data-key="3">3 TP</a><a href="#section-gold" data-key="4">4 Gold</a><a href="#section-silver" data-key="5">5 Silver</a><a href="#section-options" data-key="6">6 Walls</a><a href="#section-factor" data-key="7">7 Factor</a><a href="#publication-health" data-key="s">s Salud</a>
+    <span class="desk-nav-hint">teclas 0–7 · s</span>
     <button type="button" id="nav-refresh" style="background:none;border:1px solid #1c2330;color:#8a93a6;font:inherit;padding:2px 8px;border-radius:2px;cursor:pointer;margin-left:8px" title="Borra la caché local (15 min) de CSV/JSON y recarga con los datos que el pipeline acaba de publicar" onclick="if(window.G8NET&&G8NET.clearCache)G8NET.clearCache();location.reload();">↻ datos</button>
 </nav>
 <main class="dashboard-main">
@@ -349,7 +349,7 @@
          la MISMA lectura que llega por Telegram). El navegador no calcula nada aquí. -->
     <section class="dashboard-section" id="section-brief">
         <div class="section-header">
-            <h2 class="section-title">00 — Brief · lectura de 8 segundos</h2>
+            <h2 class="section-title">00 — BRIEF — LECTURA DE 8 SEGUNDOS</h2>
             <span class="section-meta" id="brief-meta">as-of por capa · gates · extremos vigentes · fuente: data/alerts/brief.json</span>
         </div>
         <div class="section-body">
@@ -361,7 +361,7 @@
     <!-- ══ 01 — LONG-END ATTRIBUTION MATRIX ══════════════════════════════ -->
     <section class="dashboard-section" id="section-attribution">
         <div class="section-header">
-            <h2 class="section-title">01 — Long-End Attribution Matrix G8</h2>
+            <h2 class="section-title">01 — LONG-END ATTRIBUTION MATRIX G8</h2>
             <span class="section-meta">y10 = RNY (expected path) + TP (duration premium) · NOM = REAL + BE · Z 252D</span>
         </div>
         <div class="section-body">
@@ -377,6 +377,7 @@
                 'use strict';
                 var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
                 var GREEN = '#2fbf71', RED = '#e0485a', GOLD = '#fdb813', AMBER = '#ff8c42', WHITE = '#eef1f6', MUTE = '#aeb6c6';
+                var chfNowcast = null;
                 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
                 function nz(x) { return x != null && isFinite(x); }
                 function bp(x) { if (!nz(x)) return '·'; var r = Math.round(x); return r === 0 ? '0' : (r > 0 ? '+' : '') + r; }   /* E2: sign after rounding */
@@ -398,7 +399,7 @@
                     if (cl.status === 'STALE' && v.ccy === 'AUD' && cl.lag_bd != null && cl.lag_bd <= 8)
                         return '<span title="' + esc(tip + ' · RBA publica la tabla F2 una vez por semana (viernes, datos hasta el miércoles)') + '" style="color:' + MUTE + '">semanal RBA ' + esc(String(cl.date).slice(5)) + '</span>';
                     if (cl.status === 'STALE' && cl.quality === 'SNB_CURVE_MONTHLY')
-                        return '<span title="' + esc(tip + ' · el SNB publica la curva diaria una vez al mes') + '" style="color:' + MUTE + '">mensual SNB ' + esc(String(cl.date).slice(5)) + '</span>';
+                        return '<span title="' + esc(tip + ' · el SNB publica la curva diaria una vez al mes') + '" style="color:' + MUTE + '">mensual SNB ' + esc(String(cl.date).slice(5)) + '</span>' + nowcastBadge(v, leg);
                     if (cl.status === 'STALE') return '<span title="' + esc(tip) + '" style="color:' + AMBER + '">atrasado ' + esc(cl.date) + '</span>';
                     if (cl.status === 'SHORT') return '<span title="' + esc(tip + (cl.first ? ' · serie desde ' + cl.first + ', t0 ' + cl.t0_needed : '')) + '">sin historia</span>';
                     return '<span title="' + esc(tip) + '">sin feed</span>';
@@ -411,6 +412,17 @@
                     if (nz(v.resid)) return bp(v.resid);
                     if (!nz(v.d_fit)) return '<span title="sin ΔFIT: ACM ' + esc(v.avail || 'NO_DATA') + '">sin ACM</span>';
                     return ctx(v, 'nominal', null);
+                }
+                /* U1: el cubo mensual sigue en s01b.py. El badge sale de CHF_NOWCAST_shadow.json. */
+                function nowcastBadge(v, leg) {
+                    if (!chfNowcast || v.ccy !== 'CHF' || leg !== 'y2') return '';
+                    var t = (chfNowcast.tenors || {})['2Y'];
+                    if (!t || t.last_value == null || t.official == null) return '';
+                    var dbp = Math.round((Number(t.last_value) - Number(t.official)) * 100);
+                    var when = String(t.last_date || '').slice(5);
+                    return ' <span style="color:' + AMBER + '" title="CHF_NOWCAST_shadow.json · ' + esc(t.last_label || 'NOWCAST') +
+                        ' · oficial ' + esc(t.official) + ' el ' + esc(t.anchor_date || '') + '">nowcast 2Y: ' +
+                        Number(t.last_value).toFixed(2) + '% · ' + (dbp > 0 ? '+' : '') + dbp + 'e pb al ' + esc(when) + '</span>';
                 }
                 function render(j) {
                     var el = document.getElementById('s01b-panel');
@@ -463,8 +475,13 @@
                 async function init() {
                     var el = document.getElementById('s01b-panel');
                     try {
-                        var r = await window.G8NET.fetchChain([RAW + 'S01B.json'], { corsOk: true });
+                        var pair = await Promise.all([
+                            window.G8NET.fetchChain([RAW + 'S01B.json'], { corsOk: true }),
+                            window.G8NET.fetchChain([RAW + 'CHF_NOWCAST_shadow.json'], { corsOk: true }).catch(function () { return { ok: false }; })
+                        ]);
+                        var r = pair[0];
                         if (!r.ok) throw new Error(r.error || 'fetch failed');
+                        if (pair[1] && pair[1].ok) { try { chfNowcast = JSON.parse(pair[1].text); } catch (e2) { chfNowcast = null; } }
                         render(JSON.parse(r.text));
                     } catch (e) {
                         el.innerHTML = '<div class="attr-err">S01B.json unreachable — ' + esc(e.message) + ' · run scripts/s01b.py (workflow daily_update.yml) to publish data/S01B.json</div>';
@@ -492,7 +509,7 @@
     <!-- ══ 02 — MONEY MARKET FLOOR SPREADS ════════════════════════════════ -->
     <section class="dashboard-section" id="section-floors">
         <div class="section-header">
-            <h2 class="section-title">02 — Money Market Floor Spreads · Tipos oficiales G8</h2>
+            <h2 class="section-title">02 — MONEY MARKET FLOOR SPREADS · TIPOS OFICIALES G8</h2>
             <span class="section-meta">RFR − deposit floor / policy ref · bps · domestic reserve pressure · T+1 fixings</span>
         </div>
         <div class="section-body">
@@ -525,7 +542,7 @@
     </style>
     <section class="dashboard-section" id="section-acm">
         <div class="section-header">
-            <h2 class="section-title">04 — Term Premium ACM 10Y G8 (time series)</h2>
+            <h2 class="section-title">03 — TERM PREMIUM ACM 10Y G8 (TIME SERIES)</h2>
             <span class="section-meta">8 currencies · zero-coupon · Adrian-Crump-Moench · K per file (QUALITY) · own engine · daily</span>
         </div>
         <div class="section-body">
@@ -552,7 +569,7 @@
 <!-- ══ 06 — GOLD FAIR VALUE / MDP (Kalman TVP · MMT) ═══════════════════════ -->
 <section class="dashboard-section" id="section-gold">
     <div class="section-header">
-        <h2 class="section-title">06 — Gold Fair Value · MDP (Kalman TVP / MMT)</h2>
+        <h2 class="section-title">04 — GOLD FAIR VALUE / MDP (KALMAN TVP / MMT)</h2>
         <span class="section-meta">log(XAU) = α + β·[BE + slope + log NFA] + γ·DXY · MDP = residual z · forward-filter</span>
     </div>
     <div class="section-body">
@@ -568,7 +585,7 @@
 <!-- ══ 07 — SILVER FAIR VALUE / MDP (Kalman TVP · dual) ════════════════════ -->
 <section class="dashboard-section" id="section-silver">
     <div class="section-header">
-        <h2 class="section-title">07 — Silver Fair Value · MDP (Kalman TVP / dual)</h2>
+        <h2 class="section-title">05 — SILVER FAIR VALUE / MDP (KALMAN TVP / DUAL)</h2>
         <span class="section-meta">log(XAG) = α + βm·log(XAU) + βi·copper⊥gold · monetary + industrial channel · MDP z</span>
     </div>
     <div class="section-body">
@@ -583,7 +600,7 @@
 
 <section class="dashboard-section" id="section-options">
     <div class="section-header">
-        <h2 class="section-title">08 — Options Surface · CME FX Walls (Gate 0)</h2>
+        <h2 class="section-title">06 — OPTIONS SURFACE · CME FX WALLS (GATE 0)</h2>
         <span class="section-meta">settle + OI per strike · front chain · Databento GLBX.MDP3 licensed · T+1</span>
     </div>
     <div class="section-body">
@@ -649,7 +666,7 @@
 
 <section class="dashboard-section" id="section-factor">
     <div class="section-header">
-        <h2 class="section-title">10 — Factor USD · Residuales · Libro (CONTEXT)</h2>
+        <h2 class="section-title">07 — FACTOR USD · RESIDUALES · LIBRO (CONTEXT)</h2>
         <span class="section-meta">BCE ref. rates 14:15 CET triangulados · f = −media(7 patas) · Σ EWMA λ=0,97 · β factor completo · sin voto · ACTA_UF1</span>
     </div>
     <div class="section-body">
@@ -2427,6 +2444,7 @@ function fmtD(d) {
    (calendario oficial verificado, acta A5). Solo contexto: el impulso de tipos lo mide 6-POL-G8 en TradingView. */
 var CB_OF = { USD: 'US', EUR: 'EA', GBP: 'GB', JPY: 'JP', CAD: 'CA', AUD: 'AU', NZD: 'NZ', CHF: 'CH' };
 var _cbNext = null;
+var _cbShadow = null;
 function todayCompact() { return new Date().toISOString().slice(0, 10).replace(/-/g, ''); }
 function policyInfo(flr) {
     var t = todayCompact(), obs = (flr || []).filter(function (x) { return x.d && x.d <= t && x.v != null && isFinite(x.v); });
@@ -2441,6 +2459,18 @@ function bdBetween(a, b) {   /* días hábiles L-V entre hoy (a) y la reunión (
     return n;
 }
 function fmtC(d) { return d ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : '—'; }
+function shadowDays(ccy) {
+    var block = _cbShadow && _cbShadow.currencies && _cbShadow.currencies[ccy];
+    if (!block || block.days_to_next_cb_meeting == null || !isFinite(Number(block.days_to_next_cb_meeting))) return null;
+    return { bd: Number(block.days_to_next_cb_meeting), soon: block.CB_EVENT_48H === true };
+}
+function loadCbShadow() {
+    var url = RAW + 'CB_EVENT_48H_shadow.json';
+    var p = (window.G8NET && window.G8NET.fetchChain)
+        ? window.G8NET.fetchChain([url], { corsOk: true }).then(function (r) { if (!r.ok) throw new Error('CB_EVENT_48H_shadow.json'); return r.text; })
+        : fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('CB_EVENT_48H_shadow.json HTTP ' + r.status); return r.text(); });
+    return p.then(function (t) { _cbShadow = JSON.parse(t); }).catch(function (e) { console.warn('[fls] CB_EVENT_48H_shadow.json', e.message); _cbShadow = null; });
+}
 function policyCells(p, pol) {
     if (p.noBadge) { var dot = '<td><span class="attr-sub" title="Fila de plazo (90d): el tipo oficial va en la fila overnight">·</span></td>'; return dot + dot + dot; }
     var cb = CB_OF[p.ccy], nx = _cbNext && _cbNext[cb];
@@ -2452,8 +2482,12 @@ function policyCells(p, pol) {
     if (!_cbNext) meet = '<span class="attr-sub" title="data/manual/cb_meetings.csv no disponible">calendario n/d</span>';
     else if (!nx) meet = '<span class="attr-z attr-z-md" title="Sin fecha futura en el calendario oficial — actualizar cb_meetings.csv (revisión trimestral)">SIN FECHA</span>';
     else {
-        var bd = bdBetween(today, nx.date), soon = bd <= 2;
-        meet = '<span class="attr-val"' + (soon ? ' style="color:#fdb813"' : '') + ' title="' + (nx.note || '').replace(/"/g, '&quot;') + ' · fuente: ' + nx.source + '">' + nx.date + '</span>' +
+        var shadow = shadowDays(p.ccy);
+        var today = new Date().toISOString().slice(0, 10);
+        var bd = shadow ? shadow.bd : bdBetween(today, nx.date);
+        var soon = shadow ? shadow.soon : bd <= 2;
+        var via = shadow ? ' · días hábiles del banco (CB_EVENT_48H_shadow.json)' : ' · lunes a viernes (calendario de sombra no disponible)';
+        meet = '<span class="attr-val"' + (soon ? ' style="color:#fdb813"' : '') + ' title="' + (nx.note || '').replace(/"/g, '&quot;') + ' · fuente: ' + nx.source + via + '">' + nx.date + '</span>' +
                '<span class="attr-sub">' + (bd === 0 ? 'hoy' : bd + ' d.h.') + (soon ? ' · evento ≤48h' : '') + '</span>';
     }
     return '<td>' + rate + '</td><td>' + since + '</td><td>' + meet + '</td>';
@@ -2618,6 +2652,7 @@ function init() {
             .catch(function (e) { console.warn('[fls]', p.ccy, e.message); });
     });
     jobs.push(loadCbCalendar());
+    jobs.push(loadCbShadow());
     Promise.all(jobs).then(function () {
         var rows = '';
         PAIRS.forEach(function (p) {
@@ -2731,7 +2766,66 @@ function deltaOI(cur, prev) {
         d.toLocaleString() + ' (' + (pctv > 0 ? '+' : '') + pctv.toFixed(1) + '%)</span></span>' + alert;
 }
 
-function render(doc) {
+function fmtC2Level(ccy, k) {
+    if (k == null || !isFinite(Number(k)) || Number(k) === 0) return '·';
+    var v = INV[ccy] ? 1 / Number(k) : Number(k);
+    return ccy === 'JPY' ? v.toFixed(2) : v.toFixed(4);
+}
+function fmtC2Dist(ccy, wall, ref) {
+    if (!wall || wall.k == null) return '·';
+    var d;
+    if (INV[ccy] && isFinite(Number(ref)) && Number(wall.k)) {
+        var uk = 1 / Number(wall.k), ur = 1 / Number(ref);
+        d = Number(((uk - ur) / ur * 100).toFixed(2));
+    } else {
+        d = Number(wall.dist_pct);
+    }
+    if (!isFinite(d)) return '·';
+    return (d > 0 ? '+' : '') + d.toFixed(2) + '%';
+}
+function fmtC2Pct(wall) {
+    if (!wall || wall.pct_oi_1d == null || !isFinite(Number(wall.pct_oi_1d))) return 'ΔOI ·';
+    var p = Number(wall.pct_oi_1d);
+    return 'ΔOI ' + (p > 0 ? '+' : '') + p.toFixed(2) + '%';
+}
+function c2Chips(wall) {
+    if (!wall) return '';
+    var s = '';
+    if (wall.near_pin_05pct) s += ' <span class="uf-flag" title="near_pin_05pct">PIN≤0,5%</span>';
+    if (wall.chip_15pct_strike) s += ' <span class="uf-flag" title="chip_15pct_strike">15%</span>';
+    return s;
+}
+function userWalls(ccy, block) {
+    if (!block) return { call: null, put: null, nearCall: null, nearPut: null, status: null, dte: null, dteBd: null, roll: false };
+    var swap = !!INV[ccy];
+    return {
+        call: swap ? block.put_wall : block.call_wall,
+        put: swap ? block.call_wall : block.put_wall,
+        nearCall: swap ? block.nearest_put_wall : block.nearest_call_wall,
+        nearPut: swap ? block.nearest_call_wall : block.nearest_put_wall,
+        status: block.map_status,
+        dte: block.dte_calendar,
+        dteBd: block.dte_bd,
+        roll: block.roll_window_7d === true
+    };
+}
+function c2Side(ccy, label, absW, nearW, ref) {
+    var same = absW && nearW && Number(absW.k) === Number(nearW.k);
+    var body = '<div><b>' + label + '</b> ' + fmtC2Level(ccy, absW && absW.k) + ' ' + fmtC2Dist(ccy, absW, ref) +
+        ' <span class="attr-sub">' + fmtC2Pct(absW) + '</span>' + c2Chips(absW);
+    if (nearW && !same) {
+        body += '<br><span class="near">near ' + fmtC2Level(ccy, nearW.k) + ' ' + fmtC2Dist(ccy, nearW, ref) +
+            ' <span class="attr-sub">' + fmtC2Pct(nearW) + '</span>' + c2Chips(nearW) + '</span>';
+    }
+    return body + '</div>';
+}
+function mapBadge(status) {
+    if (!status) return '';
+    var col = status === 'READABLE' ? '#2fbf71' : status === 'THIN_ONE_SIDED' ? '#ff8c42' : '#8a93a6';
+    return '<div style="color:' + col + ';font-size:10px;margin-top:3px">' + status + '</div>';
+}
+
+function render(doc, shadow) {
     var el = document.getElementById('opt-surface');
     var g0 = doc.gate0 || {};
     var html = '<div class="dqm-bar" style="margin-bottom:10px">' +
@@ -2753,6 +2847,7 @@ function render(doc) {
                 '<td>' + vBadge(g.verdict || 'NA') + '</td></tr>';
             return;
         }
+        var sh = userWalls(ccy, shadow && shadow.currencies && shadow.currencies[ccy]);
         var prev = (doc.prev || {})[ccy];
         /* user-pair C/P counts: CME calls on XXX/USD are user-puts on USD/XXX */
         var uC = inv ? d.n_put : d.n_call;
@@ -2768,18 +2863,25 @@ function render(doc) {
         var invTag = inv ? ' <span class="attr-mix" style="background:#13202e;color:#5d8aa8"' +
             ' title="CME quotes ' + ROOT[ccy] + ' as ' + ccy + '/USD — display inverted to your pair; native values in tooltips">INV</span>' : '';
         var refSub = inv ? '<span class="attr-sub">native ' + ROOT[ccy] + ' ' + fmtNative(ccy, d.ref) + '</span>' : '';
+        var dte = '';
+        if (sh.dte != null) {
+            dte = '<span class="attr-sub">' + sh.dte + ' d / ' + (sh.dteBd == null ? '·' : sh.dteBd + ' d.h.') + '</span>';
+            if (sh.roll) dte += ' <span class="uf-flag" title="EXPIRING_≤7D_USE_NEXT_MONTH">ROLL ≤7D</span>';
+        }
+        var c2 = c2Side(ccy, 'CALL WALL', sh.call, sh.nearCall, d.ref) + c2Side(ccy, 'PUT WALL', sh.put, sh.nearPut, d.ref);
         html += '<tr>' +
-            '<td><span class="attr-ccy">' + PAIR[ccy] + '</span>' + invTag + '</td>' +
+            '<td><span class="attr-ccy">' + PAIR[ccy] + '</span>' + invTag + mapBadge(sh.status) + '</td>' +
             '<td><span class="attr-val">' + fmtUser(ccy, d.ref) + '</span>' + refSub + '</td>' +
-            '<td><span class="dqm-src">' + d.front + '</span></td>' +
+            '<td><span class="dqm-src">' + d.front + '</span>' + dte + '</td>' +
             '<td><span class="attr-val" title="user-pair convention' + (inv ? ' (CME C/P swapped)' : '') + '">' +
                 uC + '/' + uP + '</span> ' + pata + '</td>' +
             '<td><span class="attr-val">' + d.oi_front.toLocaleString() + '</span>' + deltaOI(d, prev) + '</td>' +
-            '<td>' + chips + '</td>' +
+            '<td>' + chips + c2 + '</td>' +
             '<td title="' + gtitle + '">' + vBadge(g.verdict || '—') + '</td></tr>';
     });
 
-    html += '<tr><td><span class="attr-ccy" style="color:#5d6678">NZD</span></td>' +
+    var nzd = userWalls('NZD', shadow && shadow.currencies && shadow.currencies.NZD);
+    html += '<tr><td><span class="attr-ccy" style="color:#5d6678">NZD</span>' + mapBadge(nzd.status || 'NO_CME_OPTIONS') + '</td>' +
         '<td colspan="5" class="dqm-src">excluded — VOI census: dead market (Gate 0 decision)</td>' +
         '<td>' + vBadge('NA') + '</td></tr>';
 
@@ -2804,9 +2906,15 @@ function render(doc) {
 async function init() {
     var el = document.getElementById('opt-surface');
     try {
-        var r = await window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true });
+        var pair = await Promise.all([
+            window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true }),
+            window.G8NET.fetchChain([RAW + 'CME_OPTIONS_C1_shadow.json'], { corsOk: true }).catch(function () { return { ok: false }; })
+        ]);
+        var r = pair[0];
         if (!r.ok) throw new Error(r.error || 'fetch failed');
-        render(JSON.parse(r.text));
+        var shadow = null;
+        if (pair[1] && pair[1].ok) { try { shadow = JSON.parse(pair[1].text); } catch (e2) { shadow = null; } }
+        render(JSON.parse(r.text), shadow);
     } catch (e) {
         el.innerHTML = '<div class="attr-err">OPTIONS_SURFACE.json unreachable — ' + e.message +
             ' · run the CME Options Surface workflow (Actions) or check the secret DATABENTO_API_KEY</div>';
@@ -2845,6 +2953,14 @@ function briefAge(b) {
     var h = (Date.now() - t) / 3600000, dow = new Date().getUTCDay();
     var lim = (dow === 0 || dow === 1) ? 78 : 30;
     return { h: h, late: h > lim, lim: lim };
+}
+function briefSec(sec) {
+    return String(sec || '')
+        .replace('§06/§07', '§METALES')
+        .replace('§04', '§03')
+        .replace('§08', '§06')
+        .replace('§10', '§07')
+        .replace('§METALES', '§04/§05');
 }
 function render(b) {
     var el = document.getElementById('brief-body');
@@ -2891,7 +3007,7 @@ function render(b) {
         h += '</tbody></table></div>';
     }
     h += '<ul class="brief-list">';
-    (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(x.sec) + '</span>' + esc(x.text) + '</li>'; });
+    (b.bullets || []).forEach(function (x) { h += '<li><span class="sec">' + esc(briefSec(x.sec)) + '</span>' + esc(x.text) + '</li>'; });
     h += '</ul>';
     if (b.walls && b.walls.length) {
         h += '<div class="brief-walls">';
