@@ -87,9 +87,10 @@ class Base(object):
         return (rc_o, H.read(ro, self.fname)), (rc_n, H.read(rn, self.fname)), rn, calls, clock
 
     def primary(self, calls):
-        # Acta P-4: fetch_bis_policy AU/GB consulta además al banco central (1 intento, después del BIS);
-        # los contratos de reintento/aplazamiento de este lote se refieren a la fuente principal (BIS).
-        if self.script == "fetch_bis_policy":
+        # Acta P-4: fetch_bis_policy AU/GB consulta además al banco central (1 intento, después del BIS) y
+        # fetch_bis_policy / fetch_bis_ocr consultan el bulk oficial de respaldo si la API falla;
+        # los contratos de reintento/aplazamiento de este lote se refieren a la fuente principal (stats.bis.org).
+        if self.script in ("fetch_bis_policy", "fetch_bis_ocr"):
             return [c for c in calls if "stats.bis.org" in c]
         return calls
 

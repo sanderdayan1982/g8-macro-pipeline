@@ -38,34 +38,35 @@ Si un workflow de datos falló (p. ej. push rechazado, fuente caída que ya volv
 programada (festivos, retrasos), pide el relanzamiento escribiendo `.agent/recovery.json` (no se comitea):
 ```json
 [{"workflow": "cme_options.yml", "reason": "run 123 falló: push rechazado; sesión 2026-10-02 sin guardar"},
- {"workflow": "intraday_fetch.yml", "inputs": {"group": "ASIA"}, "reason": "RBA F1 publicó a las 22:15Z del 05-oct"}]
+ {"workflow": "intraday_fetch.yml", "inputs": {"group": "ASIA"}, "reason": "RBA F1 publicó a las 22:15Z del 05-oct"},
+ {"workflow": "feed_recovery.yml", "reason": "NZD_OCR / NZD_BOND_10Y con LAST_FETCH_FAILED; refrescar feeds diarios y snapshots"}]
 ```
 Lista cerrada: `daily_update.yml`, `intraday_fetch.yml` (group ASIA/EU/US/LATE/ALL), `cme_options.yml`, `metals_update.yml`,
-`usd_factor.yml`. Máximo 3 por pasada, cada uno con su motivo y evidencia. La compuerta (código de main) los valida, no
+`usd_factor.yml`, `feed_recovery.yml`. Máximo 3 por pasada, cada uno con su motivo y evidencia. La compuerta (código de main) los valida, no
 relanza lo que ya está en marcha y te lo confirma en Telegram. Comprueba en la siguiente pasada que el dato llegó.
 
-## Mapa del dashboard: qué revisar en cada sección
-Regla común (acta P-8): **dato oficial lo más fresco posible; si la fuente es más lenta que el resto, estimación etiquetada
-(«EST», con su error y la fecha del último dato oficial); nunca un número congelado sin marca.** Revisa todas las secciones
-en cada ejecución; en el informe pon una línea por sección: OK / atrasado (fecha y causa) / arreglado.
+## Mapa del dashboard (`§00–§07`): qué revisar en cada sección
+Regla común (acta P-8 / U1 / U2): **prioridad estricta de frescura: 1º DIARIA → 2º SEMANAL → 3º MENSUAL (en muy última instancia; prohibido trimestral o más lento). Dato oficial lo más fresco posible; si la fuente oficial es semanal, proyección diaria en paralelo (`SHADOW` / `EST`) etiquetada; nunca un número congelado sin marca.** Revisa todas las secciones en cada ejecución; en el informe ordena las incidencias por prioridad (`1º DIARIA`, `2º SEMANAL`, `3º MENSUAL`).
 
-| Sección | Ficheros de `data/` | Ritmo normal |
+| Sección | Ficheros de `data/` (titular + shadow) | Ritmo y prioridad |
 |---|---|---|
+| Cabecera Salud | `_ingest/health.json`, `_ingest/latest/*.json`, `_ingest/watch_state.json` | continuo (1º DIARIA) |
 | §00 Brief | `alerts/brief.json` (`generated_utc`, `dqm`, `book[].flags`) | varias veces al día; ATRASADO si > 30 h (78 h en fin de semana) |
-| §01 Matriz 10Y / §04 ACM | `ACM_G8_*.csv`, `RY_G8_*.csv`, `CHF_NOM_10Y.csv`, `NZD_BOND_10Y.csv`, `AUD_NOWCAST.csv` | diario T+1; AUD oficial semanal + estimación diaria; CHF curva mensual + nowcast |
-| §01-b Lectura 22 s. | `S01B.json` (+ `s01b/log`, `s01b/snap`) | una evaluación por sesión (`--final`); provisional a mediodía |
-| §02 Suelos | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `NZD_CASH_ON.csv`, `FLOOR_*.csv`, `*_BILL_*.csv` | diario T+1 |
-| §03 Tipos oficiales | `*_POLICY.csv`, `NZD_OCR.csv`, `manual/policy_decisions.csv` | por evento; RBA y BoE directos (acta P-4), resto BIS semanal + decisiones verificadas |
-| §05 Calidad | lo calcula el navegador con el registro de §05; `_ingest/latest/*.json`, `_ingest/watch_state.json` | continuo |
-| §06/§07 Metales | `MFV_G8_*.csv/json` | semanal (COT, martes) |
-| §08 Opciones | `OPTIONS_SURFACE.json`, `options/canonical/<fecha>/` | diario (workflow *CME Options Surface*) |
-| §09 COT | `pos_g8_cot.json` | semanal (CFTC, viernes con datos del martes) |
-| §10 Factor USD / libro | `USD_FACTOR.json`, `BOOK_RISK.json`, `usd_factor/*.csv` | diario (tipos BCE ~16:00 CET) |
+| §01 Matriz 10Y | `ACM_G8_*.csv`, `RY_G8_*.csv`, `CHF_NOM_10Y.csv`, `NZD_BOND_10Y.csv`, `AUD_NOWCAST.csv`, `CHF_CPI_YOY.csv`, `EUR_RY_EA_AAA_shadow.json` (A4) | 1º DIARIA T+1 (`EUR_RY_EA_AAA_shadow.json` diario); 2º SEMANAL (AUD RBA F2 oficial + `AUD_NOWCAST.csv` diario); 3º MENSUAL último recurso (`CHF_CPI_YOY.csv` BFS y curva SNB fin de mes + RSS diario) |
+| §01-b Lectura 22 s. y CTF | `S01B.json` (+ `s01b/log`, `s01b/snap`) | 1º DIARIA: una evaluación definitiva por sesión (`--final`); provisional a mediodía |
+| §02 Suelos y Tipos oficiales | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `NZD_CASH_ON.csv`, `FLOOR_*.csv`, `*_BILL_*.csv`, `*_POLICY.csv`, `NZD_OCR.csv`, `manual/policy_decisions.csv`, `manual/cb_meetings.csv`, `CB_EVENT_48H_shadow.json` (C2) | 1º DIARIA T+1 (SONIA T+2 canal gratuito IADB); tipos por evento + RBA/BoE directos + BIS semanal (`WS_CBPOL` con respaldo oficial `g8common.bis_bulk`) |
+| §03 Prima por plazo ACM | `ACM_G8_USD/EUR/JPY/GBP/CAD/AUD/NZD/CHF.csv` | 1º DIARIA T+1 (recalculado en `daily_update.yml` y pasada intradía `LATE`) |
+| §04/§05 Metales MDP | `MFV_G8_state.json`, `MFV_G8_XAU.csv`, `MFV_G8_XAG.csv`, `MFV_G8_shadow_state.json` (B2) | 1º DIARIA en shadow (`MFV_G8_shadow_state.json`); 2º SEMANAL en titular (`MFV_G8_state.json`, viernes CFTC) |
+| §06 Opciones CME | `OPTIONS_SURFACE.json`, `CME_OPTIONS_C1_shadow.json` (C1), `options/canonical/<fecha>/` | 1º DIARIA (workflow *CME Options Surface*) |
+| §07 Factor USD / libro | `USD_FACTOR.json`, `BOOK_RISK.json`, `usd_factor/*.csv` | 1º DIARIA (tipos BCE ~16:00 CET) |
+| COT (insumo §00/§04/§05) | `pos_g8_cot.json`, `POS_G8_COT_shadow.json` (B3) | 2º SEMANAL (CFTC viernes con datos del martes) |
+
 Si una sección va más atrás de lo que permite su ritmo, busca la causa (paso de Actions, descargador, fuente) y arréglala
 si está en la lista permitida; si no, informe con la propuesta.
 
 ## Procedimiento
-1. **Diagnóstico** (sin cambiar nada):
+1. **Diagnóstico priorizado** (sin cambiar nada):
+   - Lee `.agent/diagnosis.md` (o ejecuta `python scripts/tools/agent_doctor.py --out-md .agent/diagnosis.md --out-json .agent/diagnosis.json`): lista todas las incidencias abiertas ordenadas estrictamente por **1º DIARIA → 2º SEMANAL → 3º MENSUAL**, incluyendo fallos `LAST_FETCH_FAILED`, artefactos shadow (`B2/B3/C1/C2/A4`) y alertas de silencio de workflows (`watch_state.json`).
    - `python scripts/health_monitor.py --out .agent/health.json` y léelo: incidencias, UNKNOWN y última evaluación DEFINITIVA CTF. Un JSON provisional reciente no demuestra que CTF haya cerrado.
    - `python scripts/freshness_report.py --out .agent/freshness.json --compare-dir .agent/cmp` y léelo.
    - `data/_ingest/watch_state.json` (avisos activos) y `data/_ingest/latest/*.json` (último resultado de cada descargador,
@@ -74,9 +75,10 @@ si está en la lista permitida; si no, informe con la propuesta.
    - Últimas ejecuciones: `gh run list -L 10` y, de las fallidas o con avisos, `gh run view <id> --log-failed`
      (y `--log | grep -E "AVISO|ERROR"` en *Daily Data Update*).
    - Ritmos conocidos que NO son fallos: RBA F2/F16 semanal (viernes, datos hasta el miércoles); BIS WS_CBPOL semanal;
-     SNB `snbgwdzid` semanal; ACM con `_FFILL` mientras falten tramos. Compara siempre con el presupuesto de §05.
-2. **Por cada feed atrasado o caído**, anota la evidencia (fichero, última fecha, error) y busca la causa en la fuente
-   primaria. ¿Publica la institución algo más reciente? ¿Cambió la URL, la cabecera o el Series ID? ¿Bloquea Actions (403)?
+     SNB `snbgwdzid` semanal; ACM con `_FFILL` mientras falten tramos. Compara siempre con el presupuesto de la cabecera de salud.
+2. **Por cada feed atrasado o caído**, actúa siguiendo el orden **1º DIARIA → 2º SEMANAL → 3º MENSUAL**: anota la evidencia (fichero, última fecha, error) y busca la causa en la fuente primaria. ¿Publica la institución algo más reciente? ¿Cambió la URL, la cabecera o el Series ID? ¿Bloquea Actions (403)?
+   - **Respaldo oficial BIS (`WS_CBPOL`)**: tanto `fetch_bis_policy.py` como `fetch_bis_ocr.py` usan `g8common.bis_bulk` (`https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip` con verificación de ≥20 observaciones de solapamiento exacto) cuando la API REST `stats.bis.org` falla o devuelve HTML/vacío.
+   - **Silencio del Mac (`Mac Local Fetch`)**: si `watch_state.json` marca silencio del job del Mac para `NZD_BOND_10Y.csv` o `CHF_NOM_10Y.csv`, pide `feed_recovery.yml` en `.agent/recovery.json` (que ejecuta `fetch_nzd_b2.py --no-hist` y `real_yields_g8.py NZD` desde Actions) y repórtalo en `.agent/report.md`.
    - Bloqueo de IPs: busca y prueba endpoints oficiales alternativos autorizados, formatos CSV/SDMX/RSS o un distribuidor oficial ya accesible. No eludas controles de acceso ni contrates servicios. No des por resuelto un bloqueo porque el Mac siga siendo una opción: documenta si el ejecutor funciona realmente y qué dato alcanzó.
    - URL o formato cambiados: arregla el descargador; añade un test con un extracto real de la fuente
      (`tests/fixtures/agent/`) que falle con el formato viejo y pase con el nuevo.

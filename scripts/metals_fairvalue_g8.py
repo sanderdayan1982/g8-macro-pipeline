@@ -914,17 +914,21 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
     for j, dn in enumerate(driver_names):
         df[f"B_{dn.upper()}"] = np.round(out["beta_filt"][:, j], 6)
 
-    # ---- gates institucionales
+    # ---- gates institucionales (unificados con el panel de validación de §04/§05)
     issues = []
     vr = metrics["var_ratio"]
     vr_min = min_varratio(len(driver_names) - 1)   # nº drivers sin la constante
     if vr is None or vr < vr_min:
         issues.append(f"var_ratio={vr:.3f}<{vr_min:.2f} (MDP casi vacío para {len(driver_names)-1} drivers)")
+    elif vr > 1.0:
+        issues.append(f"var_ratio={vr:.3f}>1.00 (Var(MDP) supera Var(px))")
     if metrics["ljung_p"] is not None and not np.isnan(metrics["ljung_p"]) and metrics["ljung_p"] > 0.10:
         issues.append(f"Ljung-Box p={metrics['ljung_p']:.3f}>0.10 (MDP ruido blanco)")
     if np.isnan(hl) or not (1.0 < hl <= 520):
         issues.append(f"half-life fuera de (1,520]: {hl}")
-    ic4 = metrics.get("ic_4w"); ic8 = metrics.get("ic_8w")
+    elif hl > 156:
+        issues.append(f"half-life={hl:.1f}w>156w (reversión demasiado lenta para horizonte táctico)")
+    ic4 = metrics.get("ic_4w"); ic8 = metrics.get("ic_8w"); hit8 = metrics.get("hit_8w")
     # Convención: señal = −MDP_z (MDP alto/caro ⇒ retorno futuro esperado NEGATIVO).
     # Un IC POSITIVO confirma reversión (el modelo funciona). Un IC NEGATIVO significa
     # que el activo hace MOMENTUM: lo caro sigue subiendo. Eso NO es "señal débil" —
@@ -935,6 +939,10 @@ def build_metal(name, tuesdays, fixed_delta, bridge, log):
     elif ic_ref < -0.05:
         issues.append(f"IC NEGATIVO (8w={ic8}) — la señal predice AL REVÉS: el activo "
                       f"hace MOMENTUM, no reversión. NO operar como mean-reversion sin invertir signo")
+    elif ic8 is not None and not np.isnan(ic8) and ic8 < 0.10:
+        issues.append(f"IC8w={ic8:.3f}<0.10 (por debajo del mínimo institucional)")
+    if hit8 is not None and not np.isnan(hit8) and hit8 < 0.52:
+        issues.append(f"hit8w={hit8:.3f}<0.52 (acierto direccional insuficiente)")
     sign_regime = "REVERSION" if (ic_ref is not None and ic_ref > 0) else \
                   ("MOMENTUM" if (ic_ref is not None and ic_ref < -0.05) else "INDETERMINADO")
     if len(panel) < BURN + 100:

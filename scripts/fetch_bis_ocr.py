@@ -44,6 +44,7 @@ import io
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from g8common import ingest as _ingest  # noqa: E402  (lote 3: HTTP con reintentos + publicación segura)
 from g8common import policy_decisions as _pd  # noqa: E402  (Acta P-1)
+from g8common import bis_bulk as _bulk  # noqa: E402  (respaldo oficial WS_CBPOL bulk zip)
 
 requests = None   # lo asigna main(): sustituto de requests.get basado en g8http
 
@@ -172,12 +173,34 @@ def main() -> int:
         print(f"ERROR: policy_decisions.csv inválido: {exc}", file=sys.stderr)
         decisions = []
 
+    bis_rc = 0
     try:
         rows = fetch_bis_ocr_data(date_from, today)
         if not rows:
             raise ValueError("No NZD OCR rows returned from BIS")
+    except requests.HTTPError as exc:
+        print(f"ERROR: BIS HTTP error for NZ: {exc}", file=sys.stderr)
+        rows, bis_rc = None, 1
+    except requests.RequestException as exc:
+        print(f"ERROR: BIS network error for NZ: {exc}", file=sys.stderr)
+        rows, bis_rc = None, 1
     except Exception as exc:
         print(f"ERROR: NZD OCR fetch failed: {exc}", file=sys.stderr)
+        rows, bis_rc = None, 1
+
+    if rows is None:
+        try:
+            response = _ctx.requests(provider='bis', max_attempts=1).get(_bulk.URL, timeout=60)
+            backup = _bulk.parse(response.content, 'NZ', date_from.date().isoformat(), today.date().isoformat())
+            published = _pd.read_published(os.path.join(_ctx.root, 'data', OUTPUT_PATH.name))
+            overlap = _bulk.verify_overlap(backup, published)
+            rows = backup
+            _ctx.degraded('BIS API failed; official WS_CBPOL bulk fallback verified on %d observations' % overlap)
+            print('BIS bulk fallback: %d observations; latest %s' % (len(rows), rows[-1][0]))
+        except Exception as exc:
+            _ctx.fail('BIS bulk fallback unavailable: %s' % exc)
+
+    if rows is None:
         # Acta P-1: BIS caído → último CSV publicado + decisiones verificadas. El fallo sigue en rc=1.
         rows = _pd.read_published(os.path.join(_ctx.root, "data", OUTPUT_PATH.name))
         rows, added, warns = _pd.apply(rows, "NZ", decisions, today.date())
@@ -186,7 +209,7 @@ def main() -> int:
         if added:
             _rep = _ctx.publish(OUTPUT_PATH.name, render_csv(rows), retain_from=date_from.strftime("%Y%m%d"))
             print(f"Publicación {OUTPUT_PATH.name} (BIS caído, decisión verificada): {_rep['status']} +{added} filas")
-        return _ctx.finish(1)
+        return _ctx.finish(bis_rc)
 
     rows, added, warns = _pd.apply(rows, "NZ", decisions, today.date())
     for w in warns:

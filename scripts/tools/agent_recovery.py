@@ -20,6 +20,7 @@ ALLOWED = {                       # workflows de DATOS idempotentes; nunca el pr
     "cme_options.yml": {},
     "metals_update.yml": {},
     "usd_factor.yml": {},
+    "feed_recovery.yml": {},
 }
 MAX_DISPATCH = 3
 

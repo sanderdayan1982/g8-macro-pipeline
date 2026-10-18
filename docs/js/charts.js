@@ -593,26 +593,39 @@
     // INIT
     // ─────────────────────────────────────────────────────────────────────────
 
+    function isVisibleSection(id) {
+        const el = document.getElementById(id);
+        return !!(el && !(typeof el.closest === 'function' && el.closest('.legacy-hidden')));
+    }
+
     async function init() {
         console.log('[G8 Dashboard v5] Initializing...');
-        setLoading('chart-rfr');
-        setLoading('chart-xccy');
+        const wantLegacy = isVisibleSection('chart-rfr') || isVisibleSection('curves-grid') || isVisibleSection('chart-xccy');
+        if (wantLegacy) {
+            setLoading('chart-rfr');
+            setLoading('chart-xccy');
+            const cg = document.getElementById('curves-grid');
+            if (cg) cg.innerHTML = '<div class="chart-loading">Loading curves</div>';
+        }
         setLoading('chart-acm');
-        document.getElementById('curves-grid').innerHTML = '<div class="chart-loading">Loading curves</div>';
         /* B1: §05 retirado; renderQualityGrid ya sale si no hay #quality-grid */
         try {
-            /* A5 (2026-10-16): §03 retirada — sin carga de policy aquí (la §02 lee los tipos oficiales). */
-            const [rfrData, billsData, acmData] = await Promise.all([
-                global.G8DataLoader.loadAllRFR(),
-                global.G8DataLoader.loadAllBills(),
-                global.G8DataLoader.loadACM()
-            ]);
-            /* v5.7: header (count · dots · LAST UPDATE) is owned by G8DQM + §00 brief only.
-               This call used to race G8DQM.syncHeader and overwrite it with a second count. */
-            renderRFRChart(rfrData);
-            renderCurvesGrid(billsData);
-            renderXCCYChart(rfrData, billsData);
-            renderACMChart(acmData);
+            if (wantLegacy) {
+                const [rfrData, billsData, acmData] = await Promise.all([
+                    global.G8DataLoader.loadAllRFR(),
+                    global.G8DataLoader.loadAllBills(),
+                    global.G8DataLoader.loadACM()
+                ]);
+                renderRFRChart(rfrData);
+                renderCurvesGrid(billsData);
+                renderXCCYChart(rfrData, billsData);
+                renderACMChart(acmData);
+            } else {
+                /* U1: #section-rfr, #section-curves y #section-xccy están retiradas (.legacy-hidden).
+                   Evita descargar 41 CSVs y renderizar 10 gráficos Plotly ocultos en cada carga. */
+                const acmData = await global.G8DataLoader.loadACM();
+                renderACMChart(acmData);
+            }
             console.log('[G8 Dashboard v5] Render complete');
             console.log('[G8 Dashboard v5] Load stats:', global.G8DataLoader.loadStats);
         } catch (err) {

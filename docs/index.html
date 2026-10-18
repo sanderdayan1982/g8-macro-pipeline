@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <style>
 /* ===== METALS MODULE CSS (EN · audited v2) ===== */
@@ -192,7 +191,6 @@
     .fls-press{background:#3d1420;color:#ff5c72}
     .legacy-hidden{display:none}
     /* ── Synthetic / proxy badges (attribution v2) ─────────────────────── */
-    .attr-q-synth{background:#13202e;color:#5d8aa8}
     .attr-formula{display:block;font-size:9px;color:#465063;margin-top:2px;font-family:'JetBrains Mono',monospace}
     /* ── Manual editable nominal input (CHF/NZD) ───────────────────────── */
     .attr-edit{display:flex;align-items:center;gap:6px;margin-top:5px}
@@ -1005,10 +1003,9 @@ function mapProxy(map, url) {
 function localProxy(url) { return mapProxy(LOCAL_PROXY_MAP, url); }
 function backupProxy(url) { return mapProxy(BACKUP_PROXY_MAP, url); }
 
-/* v2.7.0 (audit 2026-09-24): 60 → 15 min. The pipeline republishes several times a day and a
-   60-min localStorage copy already caused a false "JSON is v1.1" incident (17-sep). raw.github
-   caches ~5 min on its side anyway. The "↻ datos" button in the nav clears the cache on demand. */
-var CACHE_MS = 15 * 60 * 1000;
+/* Economía de red y créditos: 30 min en días laborables y 60 min en fin de semana (mercados cerrados).
+   El botón "↻ datos" de la barra superior limpia la caché bajo demanda en cualquier momento. */
+var CACHE_MS = (function () { var d = new Date().getDay(); return (d === 0 || d === 6) ? 60 * 60 * 1000 : 30 * 60 * 1000; })();
 var TIMEOUT_MS = 5000;   /* per-attempt; trimmed from 8000 so a fully-dead
                             3-tier cascade resolves in ~15s, not ~24s (audit v2.4 — B2) */
 
@@ -1527,8 +1524,11 @@ var MANUAL_LINKS = {
 var MANUAL_REPO = {};
 var MANUAL_REPO_KEYS = { NZD: 'NZD_NOM_RBNZ', CHF: 'CHF_NOM_MANUAL' };
 var manualReady = (function () {
-    return fetch(RAW + 'manual/manual_inputs.json', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : null; })
+    var u = RAW + 'manual/manual_inputs.json';
+    var req = (window.G8NET && window.G8NET.fetchChain)
+        ? window.G8NET.fetchChain([u], { corsOk: true }).then(function (r) { return r.ok && r.text ? JSON.parse(r.text) : null; })
+        : fetch(u).then(function (r) { return r.ok ? r.json() : null; });
+    return req
         .then(function (j) {
             if (!j) return;
             Object.keys(MANUAL_REPO_KEYS).forEach(function (ccy) {
@@ -1794,9 +1794,17 @@ function qBadge(q, kind) {
     return '<span class="attr-q ' + cls + '">' + String(q).replace(/_/g, ' ') + '</span>';
 }
 
+function escAttr(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function tpFlag(d) {
     if (!d || !d.tpConf || !d.tpConf.lo) return '';
-    return '<span class="tp-flag" title="' + d.tpConf.why + '">⚠ lvl</span>';
+    return '<span class="tp-flag" title="' + escAttr(d.tpConf.why) + '">⚠ lvl</span>';
 }
 
 /* Staleness badge for a DAILY leg (real/BE/market nominal). Monthly ACM legs are
@@ -1946,17 +1954,17 @@ function build(data) {
         var nomCell;
         if (d.manual) {
             nomCell = '<td><span class="attr-val">' + fmtVal(d.nom) + '</span>' + fmtDelta(d.nom) +
-                '<span class="attr-edit" title="' + d.manual.tv + ' · click to edit, Enter to save">' +
-                '<input class="attr-input" type="number" step="0.001" value="' + d.manual.v +
-                '" data-ccy="' + d.manual.ccy + '" inputmode="decimal">' +
-                '<a class="attr-edit-src" href="' + d.manual.link + '" target="_blank" rel="noopener">↗ src</a>' +
+                '<span class="attr-edit" title="' + escAttr(d.manual.tv) + ' · click to edit, Enter to save">' +
+                '<input class="attr-input" type="number" step="0.001" value="' + escAttr(d.manual.v) +
+                '" data-ccy="' + escAttr(d.manual.ccy) + '" inputmode="decimal">' +
+                '<a class="attr-edit-src" href="' + escAttr(d.manual.link) + '" target="_blank" rel="noopener">↗ src</a>' +
                 '</span></td>';
         } else {
             nomCell = cell(fmtVal(d.nom), fmtDelta(d.nom), d.lagMax ? lagTag(c, d.nomAsOf, d.lagMax) || staleTag(d.nom) : staleTag(d.nom));
         }
         html += '<tr><td><span class="attr-ccy">' + c + '</span>' +
-            '<span class="attr-sub">' + (d.lagMax ? asOfLine(d) : (/^\d{8}$/.test(String(d.asOf || '')) ? isoNorm(d.asOf) : (d.asOf || ''))) + '</span>' +
-            (d.formula ? '<span class="attr-formula">' + d.formula + '</span>' : '') + '</td>' +
+            '<span class="attr-sub">' + (d.lagMax ? asOfLine(d) : escAttr(/^\d{8}$/.test(String(d.asOf || '')) ? isoNorm(d.asOf) : (d.asOf || ''))) + '</span>' +
+            (d.formula ? '<span class="attr-formula">' + escAttr(d.formula) + '</span>' : '') + '</td>' +
             nomCell +
             cell(fmtVal(d.tp) + tpFlag(d), fmtDelta(d.tp), fmtZ(d.tp)) +
             cell(fmtVal(d.rny), fmtDelta(d.rny)) +
@@ -2002,14 +2010,14 @@ function build(data) {
         }
         /* v2.7.0 (audit 2026-09-24): the BREAKEVEN spread column was hard-wired to "—".
            BE_x − BE_USD = inflation-expectation differential (the piece of the nominal spread
-           that is NOT real-rate). CHF BE is a constant → level only, no z (a z of a constant
-           minus USD BE would just be −z(USD BE)). GBP is RPI-based (≈ +0.8–1.0 pp vs CPI). */
+           that is NOT real-rate). CHF uses monthly IPC a/a (BFS, no linker) → level only, no z.
+           GBP is RPI-based (≈ +0.8–1.0 pp vs CPI). */
         function beSpread(ccy, dd, u) {
             if (!dd.be || !u.be) return '<span class="attr-na">—</span>';
             if (ccy === 'CHF') {
                 var v0 = dd.be.last - u.be.last;
-                return '<span class="' + (v0 > 0 ? 'attr-up' : 'attr-dn') + '" title="CHF BE = constante SNB (sin linker): nivel indicativo, sin z">' +
-                    (v0 > 0 ? '+' : '') + v0.toFixed(2) + '</span><span class="attr-z attr-z-lo">const</span>';
+                return '<span class="' + (v0 > 0 ? 'attr-up' : 'attr-dn') + '" title="CHF: IPC a/a (BFS, mensual) − US BE 10Y (sin linker en CHF; nivel indicativo, sin z)">' +
+                    (v0 > 0 ? '+' : '') + v0.toFixed(2) + '</span><span class="attr-z attr-z-lo">IPC a/a</span>';
             }
             var out = sp(dd.be, u.be);
             return ccy === 'GBP' ? '<span title="GBP BE en base RPI (≈ +0,8–1,0 pp sobre IPC): el nivel del diferencial no es comparable; usar z y Δ">' + out + ' <span class="attr-z attr-z-lo">RPI</span></span>' : out;
@@ -2039,9 +2047,9 @@ function build(data) {
 
     html += '</tbody></table>' +
         '<div class="attr-note">EUR real/BE = German inflation-linked Bunds (Bundesbank, daily) interpolated to 10Y — DE-only, hence PROXY · JPY real/BE = on-the-run 10Y JGBi (JSDA) · ' +
-        'CHF real = NOM − manual BE constant (SNB CPI fcst; no CHF linker market) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv is fresh (else RBNZ SoE constant) · ' +
+        'CHF real = ex post (NOM − IPC a/a BFS, mensual; no CHF linker market) · NZD real/BE = NZ inflation-indexed bonds interpolated to 10Y when RY_G8_NZD.csv is fresh (else unavailable) · ' +
         'TP = own ACM K=3 for all eight (model order read from each file\'s QUALITY column; NZD short sample 2009+, CHF with NOWCAST tail) — the AUD/EUR anchor-proxy formula is only a fallback when a file is stale · ' +
-        'GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · BE spread vs USD: CHF = constant (no z) · ' +
+        'GBP BE on RPI basis (not directly comparable to CPI/HICP breakevens) · BE spread vs USD: CHF = IPC a/a vs US BE (no z) · ' +
         '<b style="color:#9d7bd8">NZD / CHF live via the operator Mac</b>: RBNZ B2 and the SNB data portal reject datacenter IPs, so a launchd job on the Mac fetches them daily (fetch_nzd_b2.py / fetch_chf_snb.py) and pushes the CSVs through the GitHub API; Actions then runs the ACM and real-yield builds. NZD nominal = RBNZ B2 10Y daily close (manual_inputs.json only as fallback when the file exceeds its budget). CHF nominal = SNB 10Y spot (curve month-end + official RSS daily); CHF TP = own ACM K=3 on the SNB zero curve, NOWCAST rows flagged until the SNB publishes the month; without a current SNB print or a monthly fallback from the current/previous month CHF shows NO DISPONIBLE (acta P-9: nothing older than monthly).</div>';
 
     document.getElementById('attr-matrix').innerHTML = html;
@@ -2290,7 +2298,7 @@ function assemble(raw) {
         };
         if (chCpi) data.CHF.cpiMonth = chCpi[chCpi.length - 1].d.slice(0, 7);
         if (chNow) data.CHF.tpConf = { lo: true, why: 'Last ' + nowN + ' rows are NOWCAST: SNB publishes the daily curve monthly; until then the last fitted curve is shifted in parallel by the daily 10Y spot (RSS). Level factor only — replaced by real curve rows on the 1st.' };
-        G8DQM.report('CHF_NOM_SNB', { lastDate: chSnbLast.d.replace(/-/g, ''), value: chSnbLast.v, via: 'data/CHF_NOM_10Y.csv (SNB local fetch, ' + chSnbLast.src + ')' });
+        if (window.G8DQM && G8DQM.report) G8DQM.report('CHF_NOM_SNB', { lastDate: chSnbLast.d.replace(/-/g, ''), value: chSnbLast.v, via: 'data/CHF_NOM_10Y.csv (SNB local fetch, ' + chSnbLast.src + ')' });
     } else if (raw.chfFred && raw.chfFred.length >= 12 && raw.EUR && raw.EUR.acm &&
                monthsBehind(raw.chfFred[raw.chfFred.length - 1].d) <= 1) {   /* P-9: mensual solo si es del mes anterior o actual */
         var chfNom = raw.chfFred;
@@ -2310,12 +2318,12 @@ function assemble(raw) {
             asOf: chfLast.slice(0, 7) + ' · FRED',
             formula: 'NOM=FRED OECD 10Y (monthly) · TP=TP_EUR+0.4·(NOM_CHF−NOM_EUR) · BE/REAL unavailable: quarterly source excluded'
         };
-        G8DQM.report('CHF_NOM_SNB', { lastDate: chfLast.replace(/-/g, ''), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'FRED CH10Y (OECD)' });
+        if (window.G8DQM && G8DQM.report) G8DQM.report('CHF_NOM_SNB', { lastDate: chfLast.replace(/-/g, ''), value: data.CHF.nom ? data.CHF.nom.last : null, via: 'FRED CH10Y (OECD)' });
     } else {
         /* P-9 (acta P-9, regla del propietario: ningún dato más viejo que mensual): sin SNB vigente ni respaldo mensual
            reciente, CHF queda NO DISPONIBLE. Se retira el respaldo congelado (ACM K=5 del cubo SNB de 2025-07). */
         delete data.CHF;
-        G8DQM.report('CHF_NOM_SNB', { status: 'DEAD', lastDate: chSnbLast ? chSnbLast.d.replace(/-/g, '') : null, value: null,
+        if (window.G8DQM && G8DQM.report) G8DQM.report('CHF_NOM_SNB', { status: 'DEAD', lastDate: chSnbLast ? chSnbLast.d.replace(/-/g, '') : null, value: null,
                                       via: 'NO DISPONIBLE: SNB sin dato vigente y sin respaldo mensual reciente (acta P-9)' });
     }
 
@@ -2369,8 +2377,10 @@ function assemble(raw) {
         RY_QUALITY.NZD = ryFresh ? { tier: 1, instr: 'NZ IIB', hz: '10Y' } : { tier: 3, instr: 'Unavailable', hz: '—' };
         if (acmFresh && /SHORT/i.test(nzQ)) data.NZD.tpConf = { lo: true, why: 'Estimation sample ' + (nzQ.match(/(\d+)m/) || [,'?'])[1] + ' months (RBNZ B2 bonds only open from 2009; documented exception, min 120): Monte Carlo shape corr median 0.99 / p10 0.96 — z-scores and deltas usable, LEVEL low-confidence, not cross-comparable.' };
         else if (acmFresh && nzAcm.length < 150) data.NZD.tpConf = { lo: true, why: 'Short daily sample (n=' + nzAcm.length + ' < 150) — TP shape informative, level not cross-comparable.' };
-        if (useLive) G8DQM.report('NZD_NOM_RBNZ', { lastDate: b2Last.d.replace(/-/g, ''), value: b2Last.v, via: 'data/NZD_BOND_10Y.csv (B2 local fetch)' });
-        else G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' + (b2Last ? ' (B2 ' + b2St + ')' : ' (B2 unreachable)') });
+        if (window.G8DQM && G8DQM.report) {
+            if (useLive) G8DQM.report('NZD_NOM_RBNZ', { lastDate: b2Last.d.replace(/-/g, ''), value: b2Last.v, via: 'data/NZD_BOND_10Y.csv (B2 local fetch)' });
+            else G8DQM.report('NZD_NOM_RBNZ', { status: 'MANUAL', lastDate: nzdM.date, value: nzdM.v, via: 'manual input' + (b2Last ? ' (B2 ' + b2St + ')' : ' (B2 unreachable)') });
+        }
     }
 
     var ok = CCYS.some(function (c) { return data[c]; });
@@ -2381,7 +2391,7 @@ function assemble(raw) {
     }
     try { build(data); } catch (e) {
         document.getElementById('attr-matrix').innerHTML =
-            '<div class="attr-err">Render error: ' + e.message + '</div>';
+            '<div class="attr-err">Render error: ' + escAttr(e.message) + '</div>';
     }
 }
 
@@ -2531,7 +2541,6 @@ function policyCells(p, pol) {
     else if (!nx) meet = '<span class="attr-z attr-z-md" title="Sin fecha futura en el calendario oficial — actualizar cb_meetings.csv (revisión trimestral)">SIN FECHA</span>';
     else {
         var shadow = shadowDays(p.ccy);
-        var today = new Date().toISOString().slice(0, 10);
         var useShadow = !!(shadow && shadow.fresh);
         var bd = useShadow ? shadow.bd : bdBetween(today, nx.date);
         var soon = useShadow ? shadow.soon : bd <= 2;
@@ -2982,7 +2991,8 @@ async function init() {
         if (pair[1] && pair[1].ok) { try { shadow = JSON.parse(pair[1].text); } catch (e2) { shadow = null; } }
         render(JSON.parse(r.text), shadow);
     } catch (e) {
-        el.innerHTML = '<div class="attr-err">OPTIONS_SURFACE.json unreachable — ' + e.message +
+        var msg = String(e && e.message || e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        el.innerHTML = '<div class="attr-err">OPTIONS_SURFACE.json unreachable — ' + msg +
             ' · run the CME Options Surface workflow (Actions) or check the secret DATABENTO_API_KEY</div>';
         if (window.G8DQM && window.G8DQM.report) {
             try { window.G8DQM.report('OPTIONS_SURFACE', { status: 'DEAD', error: e.message }); } catch (e2) {}
@@ -3008,7 +3018,7 @@ if (document.readyState === 'loading') {
 (function () {
 'use strict';
 var RAW_B = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/alerts/brief.json';
-function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function fmtK(p, v) { if (v == null) return '—'; return (p === 'USD/JPY' ? Number(v).toFixed(2) : Number(v).toFixed(4)); }
 /* v2.7.0 (audit 2026-09-24): the brief had no age check — a pipeline that stopped publishing
    left yesterday's (or last week's) reading on screen with no warning. Age vs the daily publish
@@ -3303,7 +3313,8 @@ async function renderMetal(metal, ids) {
         st = (typeof sjson === 'string') ? JSON.parse(sjson) : sjson;
         st = st.metals ? st.metals[metal] : null;
     } catch (e) {
-        host.innerHTML = '<div class="attr-err">MFV state.json unavailable — ' + e.message +
+        var msg = String(e && e.message || e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        host.innerHTML = '<div class="attr-err">MFV state.json unavailable — ' + msg +
             ' · run metals_fairvalue_g8.py and push data/ to the repo</div>';
         reportDQM(FID_STATE, false, e.message);
         return;
@@ -3729,8 +3740,8 @@ function drawMatrix(id, st, cot) {
     h += '</tbody></table>' +
         '<div class="mfv-mtx-note">' + (cot && cot.row
             ? 'Active cell = MDP row × COT column. COT: Managed Money ' + cot.row.ccy + ' z ' + (cot.row.mm_z >= 0 ? '+' : '') + Number(cot.row.mm_z).toFixed(2) +
-              ' · ' + (cot.row.state || '—') + ' (extreme ≥ ' + cot.thr.ext + 'σ) · report ' + (cot.date || '—') + ' (§09). '
-            : 'Active row set by current MDP; COT column pending pos_g8_cot.json (§09). ') +
+              ' · ' + (cot.row.state || '—') + ' (extreme ≥ ' + cot.thr.ext + 'σ) · report ' + (cot.date || '—') + ' (COT CFTC). '
+            : 'Active row set by current MDP; COT column pending pos_g8_cot.json (COT CFTC). ') +
         '★ signal = fundamental and positioning aligned in favor of the reversion. Not a trigger while QUALITY = REVIEW.</div>';
     el.innerHTML = h;
 }

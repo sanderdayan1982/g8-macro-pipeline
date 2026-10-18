@@ -31,7 +31,7 @@ FROZEN = [
     ("scripts/cme_options_collector.py", "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9"),
     ("scripts/build_options_summary.py", "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019"),
     (".github/workflows/cme_options.yml", "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab"),
-    ("scripts/dashboard_alerts.py", "e7554e4451330ff9b8e47e1d17d23da19c11a349f311a4665b91b5d6463ca477"),
+    ("scripts/dashboard_alerts.py", "1d8d24fb0ebc6284cf66ebadbf4151e3ac567b368de947a27236eec8d784befe"),
     ("scripts/s01b.py", "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5"),
     ("scripts/usd_factor.py", "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3"),
     ("scripts/book_risk.py", "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50"),

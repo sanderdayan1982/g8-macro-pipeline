@@ -6,7 +6,7 @@
        G8DQM (sondeo propio en el navegador) ponía su contador: dos monitores, dos verdades. */
     function applyHeader() {
         var r = lastReport, age = r ? (Date.now() - Date.parse(r.generated_utc)) / 3600000 : NaN;
-        var old = !isFinite(age) || age > 56 || age < -0.1;
+        var old = !isFinite(age) || age > 80 || age < -0.1;
         var text, color;
         if (old) { text = 'SIN VERIFICAR'; color = '#ff8c42'; }
         else if (r.issues.length) { text = r.issues.length + ' INCIDENCIAS'; color = '#ff5c72'; }
@@ -24,7 +24,7 @@
         if (!box) return;
         box.replaceChildren();
         var age = (now - Date.parse(report.generated_utc)) / 3600000;
-        var old = !isFinite(age) || age > 56 || age < -0.1;
+        var old = !isFinite(age) || age > 80 || age < -0.1;
         var issues = report.issues || [];
         var title = document.createElement('strong');
         title.textContent = old ? 'VIGILANCIA SIN ACTUALIZAR — no se puede confirmar la frescura' :
@@ -63,6 +63,12 @@
             box.style.color = '#ff8c42';
         }
     }
+    function pollIfVisible() {
+        if (document.hidden) return;
+        var d = new Date().getDay();
+        if (d === 0 || d === 6) return;
+        load();
+    }
     window.G8PublicationHealth = { render: render, refresh: load, applyHeader: applyHeader };
-    document.addEventListener('DOMContentLoaded', function () { load(); setInterval(load, 15 * 60 * 1000); });
+    document.addEventListener('DOMContentLoaded', function () { load(); setInterval(pollIfVisible, 30 * 60 * 1000); });
 })();

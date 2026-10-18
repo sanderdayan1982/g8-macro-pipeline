@@ -8,11 +8,11 @@
   command = ""
   # Skip the deploy (and its 15 credits) unless the published site changed.
   # Exit 0 = skip build, exit 1 = build. Data/bot commits don't touch docs/;
-  # docs/actas/ are records, not part of the dashboard.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs ':!docs/actas' netlify.toml"
+  # docs/actas/ and docs/*.md are records/docs, not part of the live dashboard.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs ':!docs/actas' ':!docs/*.md' netlify.toml"
 
 # ----------------------------------------------------------------------------
-# Headers — security + caching
+# Headers — security + caching (optimized to save Netlify bandwidth & requests)
 # ----------------------------------------------------------------------------
 
 [[headers]]
@@ -26,14 +26,19 @@
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=300"
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=300"
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/proxy/*"
+  [headers.values]
+    Cache-Control = "public, max-age=900, stale-while-revalidate=3600"

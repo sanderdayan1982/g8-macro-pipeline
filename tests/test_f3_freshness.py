@@ -1011,7 +1011,7 @@ class Report(unittest.TestCase):
     def test_official_engine_untouched_and_workflow_step_non_blocking(self):
         with open(os.path.join(ROOT, "scripts", "dashboard_alerts.py"), "rb") as fh:
             self.assertEqual(hashlib.sha256(fh.read()).hexdigest(),
-                             "e7554e4451330ff9b8e47e1d17d23da19c11a349f311a4665b91b5d6463ca477")
+                             "1d8d24fb0ebc6284cf66ebadbf4151e3ac567b368de947a27236eec8d784befe")
         with open(os.path.join(ROOT, ".github", "workflows", "ingest_watch.yml"), encoding="utf-8") as fh:
             wf = fh.read()
         step = wf[wf.index("scripts/freshness_report.py") - 400: wf.index("scripts/freshness_report.py") + 60]

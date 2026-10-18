@@ -145,12 +145,17 @@
     async function loadCSV(filename) {
         if (csvCache.has(filename)) return csvCache.get(filename);
 
-        const url = `${REPO_RAW_BASE}/${filename}?t=${Date.now()}`;
-
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const text = await response.text();
+            let text;
+            if (global.G8NET && typeof global.G8NET.fetchText === 'function') {
+                const res = await global.G8NET.fetchText(`data/${filename}`);
+                text = res.text;
+            } else {
+                const url = `${REPO_RAW_BASE}/${filename}?t=${Date.now()}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                text = await response.text();
+            }
 
             const parsed = Papa.parse(text, {
                 header: true,

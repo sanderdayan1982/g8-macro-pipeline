@@ -187,6 +187,9 @@ def ffill_join(a, b):
 # v2.5.1 (auditoría 24-sep-2026): la Salud del navegador descuenta una unión de festivos G8 y este DQM no, así que
 # el brief marcaba STALE lo que la Salud daba LIVE (p.ej. TONA en la Silver Week japonesa 21-23 sep). Misma unión.
 G8_HOLIDAYS = {
+    "2025-01-01", "2025-01-20", "2025-02-17", "2025-04-18", "2025-04-21", "2025-05-05", "2025-05-26", "2025-06-19",
+    "2025-07-04", "2025-08-04", "2025-08-25", "2025-09-01", "2025-10-13", "2025-11-11", "2025-11-27", "2025-12-25",
+    "2025-12-26",
     "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-06-19",
     "2026-07-03", "2026-08-03", "2026-08-31", "2026-09-07", "2026-10-12", "2026-11-11", "2026-11-26", "2026-12-25",
     "2026-12-28", "2026-01-12", "2026-02-11", "2026-02-23", "2026-03-20", "2026-04-29", "2026-05-05", "2026-05-06",
@@ -477,6 +480,26 @@ def check_real_vs_usd(st, lines):
 # ═════════════════════════════════════════════════════════════════════════════
 # §04/§05 metales MDP
 # ═════════════════════════════════════════════════════════════════════════════
+def metals_display_breaches(cur):
+    """Mismos umbrales institucionales de display-gate que metals.js (renderMetal)."""
+    if not isinstance(cur, dict):
+        return []
+    breaches = []
+    vr = cur.get("var_ratio")
+    hl = cur.get("halflife")
+    ic = cur.get("ic_8w")
+    ht = cur.get("hit_8w")
+    if isinstance(vr, (int, float)) and vr > 1.0:
+        breaches.append("var-ratio %.2f >1" % vr)
+    if isinstance(hl, (int, float)) and hl > 156:
+        breaches.append("half-life %.0fw >156" % round(hl))
+    if isinstance(ic, (int, float)) and ic < 0.10:
+        breaches.append("IC8w %.2f <0.10" % ic)
+    if isinstance(ht, (int, float)) and ht < 0.52:
+        breaches.append("hit8w %.0f%% <52%%" % round(100.0 * ht))
+    return breaches
+
+
 def check_metals(st, lines):
     s = st.setdefault("metals", {})
     js = read_json("MFV_G8_state.json")
@@ -490,6 +513,8 @@ def check_metals(st, lines):
         z = cur.get("mdp_z")
         prev = s.get(m, {})
         zb = band_z(z, prev.get("zband"))
+        breaches = metals_display_breaches(cur)
+        disp_q = "REVIEW" if breaches else cur.get("quality")
         chg = []
         if prev.get("regime") and prev["regime"] != cur.get("regime"):
             chg.append("régimen %s → %s" % (prev["regime"], cur.get("regime")))
@@ -512,6 +537,7 @@ def check_metals(st, lines):
             lines.append("§0%s %s MDP z %+.2f · %s · %s" % ("4" if m == "XAU" else "5", m, z or 0.0,
                                                            cur.get("regime"), " · ".join(chg)))
         s[m] = {"regime": cur.get("regime"), "zband": zb, "mband": mb, "quality": cur.get("quality"),
+                "display_quality": disp_q, "gate_breaches": breaches,
                 "z": None if z is None else round(z, 3),
                 "date": ser[-1][0].isoformat() if ser else None}
 
@@ -1206,7 +1232,9 @@ def build_brief(st, wall_lines):
     rl += ["%s real Δ1w extremo" % k for k, v in ru.items() if v.get("mband") == "EXT"]
     b["bullets"].append({"sec": "§01 REAL 10Y vs USD", "text": " · ".join(rl) if rl else "ningún diferencial real en extremo de su año"})
     m = st.get("metals", {})
-    ml = ["%s z %+.2f %s%s" % (k, v["z"] or 0, v["regime"], " (|z|≥2)" if v.get("zband") else "") for k, v in m.items()]
+    ml = ["%s z %+.2f %s%s%s" % (k, v["z"] or 0, v["regime"], " (|z|≥2)" if v.get("zband") else "",
+                                 " [REVIEW]" if (v.get("display_quality") or v.get("quality")) == "REVIEW" else "")
+          for k, v in m.items()]
     b["bullets"].append({"sec": "§04/§05 Metales MDP", "text": (" · ".join(ml) if ml else "sin dato") + " — valoración, no timing"})
     cl = []
     for c in (js.get("currencies") or []):
