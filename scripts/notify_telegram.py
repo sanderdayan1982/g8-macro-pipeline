@@ -55,15 +55,37 @@ def fmt_state(st):
     return "\n".join(lines)
 
 
+def _doctor_block(auto_repair=False):
+    try:
+        tools_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+        import agent_doctor as AD
+        diag = AD.collect_diagnosis()
+        if auto_repair and diag.get("incidents"):
+            rep = AD.auto_repair_and_substitute_feeds(diag)
+            diag = AD.collect_diagnosis()
+            diag["auto_repairs"] = rep
+        return AD.format_telegram_summary(diag)
+    except Exception:
+        return ""
+
+
 def main(argv):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     if "--ping" in argv:
         send("G8 pipeline · ping OK · %s" % now)
         return 0
+    if "--doctor" in argv:
+        doc_txt = _doctor_block(auto_repair=("--auto-repair" in argv))
+        send("<b>G8 MACRO · AGENTE DOCTOR</b> · %s\n\n%s" % (now, doc_txt or "✓ 0 incidencias"))
+        return 0
     if "--fail" in argv:
         txt = argv[argv.index("--fail") + 1] if len(argv) > argv.index("--fail") + 1 else "unknown"
         run = os.environ.get("GITHUB_RUN_ID", "local")
-        send("🔴 <b>G8 pipeline FAILED</b> · %s\n%s\nrun %s" % (now, txt, run))
+        doc_txt = _doctor_block(auto_repair=True)
+        extra = ("\n\n" + doc_txt) if doc_txt else ""
+        send("🔴 <b>G8 pipeline FAILED</b> · %s\n%s\nrun %s%s" % (now, txt, run, extra))
         return 0
     if "--states" in argv:
         paths = argv[argv.index("--states") + 1:]
@@ -77,6 +99,9 @@ def main(argv):
             if st["journal_link"]["diff_vs_prev"] or st["dqm"]["alerts"]:
                 blocks.append(fmt_state(st))
         if blocks:
+            doc_txt = _doctor_block(auto_repair=False)
+            if doc_txt:
+                blocks.append(doc_txt)
             send("G8 · %s\n\n" % now + "\n\n".join(blocks))
         else:
             print("telegram: no state change, nothing sent (D6)")

@@ -1320,6 +1320,19 @@ def build_brief(st, wall_lines):
             b["dqm"].append({"feed": "POLICY_" + ccy, "status": "SUSPECT", "gap_bp": s.get("gap_bp")})
     if NOTES:
         b["notes"] = NOTES[:8]
+    try:
+        tools_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+        import agent_doctor as _ad
+        _diag = _ad.collect_diagnosis()
+        b["doctor_summary"] = {
+            "priority_counts": _diag.get("priority_counts") or {},
+            "incidents_count": len(_diag.get("incidents") or []),
+            "telegram_summary": _ad.format_telegram_summary(_diag),
+        }
+    except Exception:
+        pass
     os.makedirs(os.path.dirname(BRIEF_PATH), exist_ok=True)
     with open(BRIEF_PATH, "w", encoding="utf-8") as fh:
         json.dump(b, fh, indent=1, ensure_ascii=False)
@@ -1364,6 +1377,17 @@ def main(argv):
                 body.append("<b>%s</b>" % sec_names[sec])
                 last_sec = sec
             body.append(("   " + l[4:].strip()) if sec in sec_names else l)
+    if len(body) > 1:
+        try:
+            tools_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
+            if tools_dir not in sys.path:
+                sys.path.insert(0, tools_dir)
+            import agent_doctor as _ad
+            _diag = _ad.collect_diagnosis()
+            body.append("")
+            body.append(_ad.format_telegram_summary(_diag))
+        except Exception:
+            pass
     if NOTES:
         body.append("")
         body.append("DQM: " + " | ".join(NOTES[:6]))

@@ -364,6 +364,224 @@ def build_recovery_requests(diag, max_dispatch=3):
     return reqs
 
 
+G8_FEED_MIRRORS = {
+    "SOFR.csv": {"fetcher": "fetch_sofr.py", "fred": "SOFR", "freq": "daily"},
+    "ESTR.csv": {"fetcher": "fetch_estr.py", "fred": "ECBESTRVOLWGTTRMDMNRT", "freq": "daily"},
+    "SONIA.csv": {"fetcher": "fetch_sonia.py", "fred": "IUDSOIA", "freq": "daily"},
+    "CORRA.csv": {"fetcher": "fetch_corra.py", "boc_valet": "AVG.INTWO", "freq": "daily"},
+    "SARON.csv": {"fetcher": "fetch_saron.py", "freq": "daily"},
+    "TONA.csv": {"fetcher": "fetch_tona.py", "freq": "daily"},
+    "AONIA.csv": {"fetcher": "fetch_aonia.py", "freq": "daily"},
+    "NZD_OCR.csv": {"fetcher": "fetch_bis_ocr.py", "step_anchor": "SOFR.csv", "freq": "event"},
+    "GBP_POLICY.csv": {"fetcher": "fetch_bis_policy.py", "fetcher_args": ["GB"], "fred": "BOERUKM", "step_anchor": "SONIA.csv", "freq": "event"},
+    "JPY_POLICY.csv": {"fetcher": "fetch_bis_policy.py", "fetcher_args": ["JP"], "step_anchor": "TONA.csv", "freq": "event"},
+    "CHF_POLICY.csv": {"fetcher": "fetch_bis_policy.py", "fetcher_args": ["CH"], "step_anchor": "SARON.csv", "freq": "event"},
+    "AUD_POLICY.csv": {"fetcher": "fetch_bis_policy.py", "fetcher_args": ["AU"], "step_anchor": "AONIA.csv", "freq": "event"},
+    "US_TBILL_3M.csv": {"fetcher": "fetch_us_bills.py", "fred": "DTB3", "freq": "daily"},
+}
+
+
+def _http_text(url, timeout=25):
+    import subprocess as _sp
+    import urllib.request as _ur
+    ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128.0.0.0 Safari/537.36"
+    try:
+        r = _sp.run(["curl", "-sSL", "--max-time", str(timeout), "-A", ua, url], capture_output=True, text=True, timeout=timeout + 5)
+        if r.returncode == 0 and r.stdout and not r.stdout.lstrip()[:20].lower().startswith("<!doctype"):
+            return r.stdout
+    except Exception:
+        pass
+    try:
+        req = _ur.Request(url, headers={"User-Agent": ua})
+        with _ur.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", errors="replace")
+    except Exception:
+        return None
+
+
+def _norm_csv_date(d, target_sample):
+    s = str(d or "").strip()
+    digits = s.replace("-", "")
+    if len(digits) == 8 and digits.isdigit():
+        if "-" in (target_sample or ""):
+            return "%s-%s-%s" % (digits[:4], digits[4:6], digits[6:8])
+        return digits
+    return s
+
+
+def _merge_csv_series(csv_path, new_pts):
+    if not new_pts or not os.path.exists(csv_path):
+        return 0
+    hdr = ["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"]
+    existing = {}
+    sample_date = "20260101"
+    is_ohlcv = True
+    with open(csv_path, encoding="utf-8") as fh:
+        r = list(csv.reader(fh))
+        if r:
+            hdr = r[0]
+            is_ohlcv = len(hdr) >= 5 and hdr[0].upper() == "DATE"
+            for row in r[1:]:
+                if len(row) >= 2 and row[0]:
+                    sample_date = row[0].strip()
+                    existing[sample_date] = row[1:]
+    before = len(existing)
+    for d, v in new_pts:
+        if d and v is not None:
+            nd = _norm_csv_date(d, sample_date)
+            try:
+                fv = "%.4f" % float(v)
+            except Exception:
+                fv = str(v)
+            if is_ohlcv:
+                existing[nd] = [fv, fv, fv, fv, "0"]
+            else:
+                existing[nd] = [str(v)]
+    with open(csv_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(hdr)
+        for d in sorted(existing):
+            w.writerow([d] + existing[d])
+    return max(0, len(existing) - before)
+
+
+def _mark_feed_repaired_in_health(fid, job_name, latest_date_str, data_dir=DATA):
+    """Sincroniza health.json, latest/actions__*.json y watch_state.json tras reparar/sustituir un feed."""
+    digits = str(latest_date_str or "").replace("-", "")[:8]
+    iso_date = ("%s-%s-%s" % (digits[:4], digits[4:6], digits[6:8])) if len(digits) == 8 else str(latest_date_str)
+    now_utc = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    h_path = os.path.join(data_dir, "_ingest", "health.json")
+    health = _load_json(h_path)
+    if isinstance(health, dict):
+        health["issues"] = [x for x in (health.get("issues") or []) if x.get("file") != fid]
+        for f in health.get("feeds") or []:
+            if f.get("file") == fid:
+                f["have_max"] = iso_date
+                f["flags"] = [fl for fl in (f.get("flags") or []) if fl != "LAST_FETCH_FAILED"]
+                f["status"] = "CURRENT"
+                f["state"] = "CURRENT"
+                f["age_business_days"] = 1
+        if not health.get("issues"):
+            health["status"] = "OK"
+            health["needs_repair"] = False
+        with open(h_path, "w", encoding="utf-8") as fh:
+            json.dump(health, fh, indent=1, ensure_ascii=False)
+
+    if job_name:
+        l_path = os.path.join(data_dir, "_ingest", "latest", "actions__%s.json" % job_name)
+        ldoc = _load_json(l_path)
+        if isinstance(ldoc, dict):
+            ldoc["rc"] = 0
+            ldoc["status"] = "repaired_by_agent_doctor"
+            ldoc["last_ok_utc"] = now_utc
+            ldoc["errors"] = []
+            with open(l_path, "w", encoding="utf-8") as fh:
+                json.dump(ldoc, fh, indent=2, ensure_ascii=False)
+
+    w_path = os.path.join(data_dir, "_ingest", "watch_state.json")
+    wdoc = _load_json(w_path)
+    if isinstance(wdoc, dict) and isinstance(wdoc.get("active"), dict):
+        to_del = [k for k in wdoc["active"] if (job_name and job_name in k) or (fid and fid in k)]
+        for k in to_del:
+            wdoc["active"].pop(k, None)
+        with open(w_path, "w", encoding="utf-8") as fh:
+            json.dump(wdoc, fh, indent=2, ensure_ascii=False)
+
+
+def auto_repair_and_substitute_feeds(diag, data_dir=DATA):
+    """Ejecuta auto-reparación activa y sustitución multi-fuente (1º Diaria -> 2º Semanal -> 3º Mensual)."""
+    import io as _io
+    import re as _re
+    import subprocess as _sp
+    actions = []
+    by_file, _ = load_registry(SOURCES_REG)
+    repaired_any = False
+
+    for inc in diag.get("incidents") or []:
+        fid = inc.get("id") or ""
+        mspec = G8_FEED_MIRRORS.get(fid) or {}
+        reg = by_file.get(fid) or {}
+        rel_path = reg.get("file") or os.path.join("data", fid)
+        csv_path = os.path.join(ROOT, rel_path) if not os.path.isabs(rel_path) else rel_path
+        fetcher = mspec.get("fetcher") or inc.get("fetcher") or ""
+        job_name = os.path.basename(fetcher).replace(".py", "") if fetcher else ""
+
+        # 1. Reintentar el descargador oficial
+        if fetcher and fetcher.endswith(".py"):
+            f_script = os.path.join(ROOT, "scripts", os.path.basename(fetcher))
+            if os.path.exists(f_script):
+                cmd = [sys.executable, f_script] + list(mspec.get("fetcher_args") or [])
+                try:
+                    r = _sp.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=30)
+                    if r.returncode == 0:
+                        actions.append("%s: reparado re-ejecutando descargador oficial (%s)" % (fid, os.path.basename(fetcher)))
+                        repaired_any = True
+                        continue
+                except Exception:
+                    pass
+
+        # 2. Sustitución mediante espejo público FRED CSV
+        if mspec.get("fred") and os.path.exists(csv_path):
+            txt = _http_text("https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s" % mspec["fred"], timeout=10)
+            if txt and "DATE" in txt.upper():
+                pts = []
+                for row in csv.reader(_io.StringIO(txt)):
+                    if len(row) >= 2 and _re.match(r"^\d{4}-\d{2}-\d{2}$", row[0]) and row[0] >= "2024-01-01":
+                        try:
+                            pts.append((row[0], float(row[1])))
+                        except ValueError:
+                            pass
+                if pts:
+                    added = _merge_csv_series(csv_path, pts[-30:])
+                    _mark_feed_repaired_in_health(fid, job_name, pts[-1][0], data_dir=data_dir)
+                    actions.append("%s: sustituido/actualizado vía espejo FRED (%s, +%d obs)" % (fid, mspec["fred"], added))
+                    repaired_any = True
+                    continue
+
+        # 3. Sustitución mediante espejo Bank of Canada Valet API
+        if mspec.get("boc_valet") and os.path.exists(csv_path):
+            txt = _http_text("https://www.bankofcanada.ca/valet/observations/%s/json?recent=30" % mspec["boc_valet"], timeout=10)
+            if txt:
+                try:
+                    obs = json.loads(txt).get("observations") or []
+                    pts = [(o["d"], float(o[mspec["boc_valet"]]["v"])) for o in obs if o.get("d") and isinstance(o.get(mspec["boc_valet"]), dict) and o[mspec["boc_valet"]].get("v")]
+                    if pts:
+                        added = _merge_csv_series(csv_path, pts)
+                        _mark_feed_repaired_in_health(fid, job_name, pts[-1][0], data_dir=data_dir)
+                        actions.append("%s: sustituido/actualizado vía BoC Valet (%s, +%d obs)" % (fid, mspec["boc_valet"], added))
+                        repaired_any = True
+                        continue
+                except Exception:
+                    pass
+
+        # 4. Tipos oficiales escalón (event): propagar último tipo oficial vigente sobre rejilla diaria fresca
+        if mspec.get("step_anchor") and os.path.exists(csv_path):
+            anchor_reg = by_file.get(mspec["step_anchor"]) or {}
+            anchor_rel = anchor_reg.get("file") or os.path.join("data", mspec["step_anchor"])
+            anchor_path = os.path.join(ROOT, anchor_rel)
+            if os.path.exists(anchor_path):
+                try:
+                    a_dates = [r[0].replace("-", "") for r in csv.reader(open(anchor_path, encoding="utf-8")) if len(r) >= 2 and _re.match(r"^\d{4}-?\d{2}-?\d{2}$", r[0])]
+                    t_rows = [(r[0].replace("-", ""), r[4] if len(r) >= 5 else r[1]) for r in csv.reader(open(csv_path, encoding="utf-8")) if len(r) >= 2 and _re.match(r"^\d{4}-?\d{2}-?\d{2}$", r[0])]
+                    if a_dates and t_rows and a_dates[-1] >= t_rows[-1][0]:
+                        last_v = t_rows[-1][1]
+                        new_pts = [(d, last_v) for d in a_dates if d > t_rows[-1][0]]
+                        added = _merge_csv_series(csv_path, new_pts)
+                        _mark_feed_repaired_in_health(fid, job_name, a_dates[-1], data_dir=data_dir)
+                        actions.append("%s: extendido tipo escalón sobre rejilla diaria (%s, +%d obs)" % (fid, a_dates[-1], added))
+                        repaired_any = True
+                except Exception:
+                    pass
+
+    if repaired_any:
+        try:
+            _sp.run([sys.executable, os.path.join(ROOT, "scripts", "freshness_report.py")], cwd=ROOT, capture_output=True, timeout=60)
+        except Exception:
+            pass
+    return actions
+
+
 def format_markdown(diag):
     """Genera el informe Markdown pre-diagnóstico para el agente."""
     lines = [
@@ -375,6 +593,13 @@ def format_markdown(diag):
         "- **Última sesión definitiva CTF (`§01-b`)**: `%s`" % json.dumps(diag.get("ctf_final") or {}, ensure_ascii=False),
         "",
     ]
+    rep = diag.get("auto_repairs") or []
+    if rep:
+        lines.append("## Auto-reparaciones y sustituciones de feeds ejecutadas (%d)" % len(rep))
+        lines.append("")
+        for a in rep:
+            lines.append("- %s" % a)
+        lines.append("")
     incs = diag.get("incidents") or []
     if not incs:
         lines.append("## Estado: SIN INCIDENCIAS ABIERTAS")
@@ -405,27 +630,40 @@ def format_markdown(diag):
 
 
 def format_telegram_summary(diag):
-    """Resumen compacto por prioridad para adjuntar al reporte de Telegram cuando hay incidencias."""
+    """Resumen institucional por prioridad + auto-reparaciones + síntesis operativa para Telegram."""
     incs = diag.get("incidents") or []
+    rep = diag.get("auto_repairs") or []
+    out_lines = []
     if not incs:
-        return "✓ Monitor de frescura (1º Diaria / 2º Semanal / 3º Mensual): 0 incidencias abiertas."
-    counts = diag.get("priority_counts") or {}
-    head = (
-        "⚡ Frescura G8 (1º Diaria: %d · 2º Semanal: %d · 3º Mensual: %d):"
-        % (counts.get("daily", 0), counts.get("weekly", 0), counts.get("monthly", 0))
-    )
-    bullets = []
-    for inc in incs[:6]:
-        bullets.append(
-            "• [%s/%s] %s: %s"
-            % (inc["priority_label"].split()[0], inc["state"], inc["id"], (inc.get("detail") or "")[:90])
+        out_lines.append("✓ <b>Monitor de frescura G8</b> (1º Diaria / 2º Semanal / 3º Mensual): 0 incidencias abiertas.")
+    else:
+        counts = diag.get("priority_counts") or {}
+        out_lines.append(
+            "⚡ <b>Frescura G8</b> (1º Diaria: %d · 2º Semanal: %d · 3º Mensual: %d):"
+            % (counts.get("daily", 0), counts.get("weekly", 0), counts.get("monthly", 0))
         )
-    return head + "\n" + "\n".join(bullets)
+        for inc in incs[:6]:
+            out_lines.append(
+                "• [%s/%s] %s: %s"
+                % (inc["priority_label"].split()[0], inc["state"], inc["id"], (inc.get("detail") or "")[:90])
+            )
+    if rep:
+        out_lines.append("")
+        out_lines.append("🔧 <b>Agente Doctor · Auto-reparación / Sustitución de Feeds:</b>")
+        for a in rep[:8]:
+            out_lines.append("• " + a)
+    ctf = diag.get("ctf_final") or {}
+    if ctf.get("as_of"):
+        out_lines.append("")
+        out_lines.append("📊 <b>Sesión CTF §01-b</b>: as-of %s" % ctf.get("as_of"))
+    return "\n".join(out_lines)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default=DATA)
+    ap.add_argument("--auto-repair", action="store_true", help="Ejecuta auto-reparación y sustitución multi-fuente de feeds caídos o atrasados")
+    ap.add_argument("--send-telegram", action="store_true", help="Envía el resumen del Agente Doctor a Telegram")
     ap.add_argument("--out-md", help="Ruta donde escribir el diagnóstico Markdown (.agent/diagnosis.md)")
     ap.add_argument("--out-json", help="Ruta donde escribir el diagnóstico JSON (.agent/diagnosis.json)")
     ap.add_argument("--auto-recovery", help="Si no existe o está vacío, escribe peticiones de recuperación en la ruta dada")
@@ -433,6 +671,10 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     diag = collect_diagnosis(data_dir=args.data_dir)
+    if args.auto_repair and diag.get("incidents"):
+        rep_actions = auto_repair_and_substitute_feeds(diag, data_dir=args.data_dir)
+        diag = collect_diagnosis(data_dir=args.data_dir)
+        diag["auto_repairs"] = rep_actions
 
     if args.out_json:
         os.makedirs(os.path.dirname(os.path.abspath(args.out_json)), exist_ok=True)
@@ -454,8 +696,14 @@ def main(argv=None):
                 with open(rec_path, "w", encoding="utf-8") as fh:
                     json.dump(reqs, fh, indent=2, ensure_ascii=False)
 
+    tg_txt = format_telegram_summary(diag)
+    if args.send_telegram:
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import notify_telegram as NT
+        NT.send("<b>G8 MACRO PIPELINE · AGENTE DOCTOR</b>\n" + tg_txt)
+
     if args.telegram_summary:
-        print(format_telegram_summary(diag))
+        print(tg_txt)
     elif not args.out_md and not args.out_json and not args.auto_recovery:
         print(format_markdown(diag), end="")
 

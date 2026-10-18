@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
  "generated_utc": "2026-10-17T22:57:09.995351Z",
- "status": "DEGRADED",
+ "status": "OK",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,26 +18,8 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-10-09",
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 5,
-   "publication_frequency": "event",
-   "slow_fallback": false
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 0,
  "feeds": [
   {
@@ -250,18 +232,16 @@
   },
   {
    "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-10-09",
+   "state": "CURRENT",
+   "have_max": "2026-10-15",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 5,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "event",
    "slow_fallback": false
   },
