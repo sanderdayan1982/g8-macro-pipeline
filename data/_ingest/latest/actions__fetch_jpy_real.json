@@ -6,7 +6,7 @@
   "RY_G8_JPY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261019T214413Z_actions_fetch-jpy-real_b36e:b18981f52da4",
+   "download_id": "20261020T003659Z_actions_fetch-jpy-real_4bc9:b18981f52da4",
    "dropped_by_source": 0,
    "file": "RY_G8_JPY.csv",
    "held": [],
@@ -17,34 +17,53 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-10-19T21:44:15Z",
- "gh_run_id": "39329731502",
+ "finished_utc": "2026-10-20T00:37:05Z",
+ "gh_run_id": "39347881567",
  "job": "fetch_jpy_real",
- "last_ok_utc": "2026-10-19T21:44:15Z",
+ "last_ok_utc": "2026-10-20T00:37:05Z",
  "not_before": {},
  "rc": 0,
  "requests": [
   {
    "attempts": [
     {
+     "cls": "NO_PUBLICATION",
+     "detail": "404: sin publicación para esa fecha",
+     "n": 1,
+     "secs": 2.43,
+     "status": 404
+    }
+   ],
+   "cls": "NO_PUBLICATION",
+   "date_header": "Tue, 20 Oct 2026 00:37:01 GMT",
+   "detail": "404: sin publicación para esa fecha",
+   "last_modified": null,
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 404,
+   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261020.csv"
+  },
+  {
+   "attempts": [
+    {
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 1.78,
+     "secs": 3.42,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 19 Oct 2026 21:44:14 GMT",
+   "date_header": "Tue, 20 Oct 2026 00:37:04 GMT",
    "detail": "",
-   "last_modified": "Mon, 19 Oct 2026 01:00:05 GMT",
+   "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
-   "url": "https://market.jsda.or.jp/en/statistics/bonds/prices/otc/files/2026/ES261019.csv"
+   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261019.csv"
   }
  ],
- "run_id": "20261019T214413Z_actions_fetch-jpy-real_b36e",
- "started_utc": "2026-10-19T21:44:13Z",
+ "run_id": "20261020T003659Z_actions_fetch-jpy-real_4bc9",
+ "started_utc": "2026-10-20T00:36:59Z",
  "step": "jpy_real"
 }
