@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-21T16:46:13Z",
+ "generated_utc": "2026-10-21T16:46:50Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -7,8 +7,8 @@
   "cot": "2026-10-13",
   "options": "2026-10-19",
   "metals": "2026-10-20",
-  "s01b": "2026-10-20",
-  "factor": "2026-10-20"
+  "s01b": "2026-10-21",
+  "factor": "2026-10-21"
  },
  "gates": {
   "pos_twin": {
@@ -46,11 +46,11 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna · ΔTP22 USD +19 EUR +12 GBP +15 JPY -11 AUD +7 NZD +5 CAD +8 CHF +2"
+   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD +25 EUR +14 GBP +18 JPY -11 AUD +5 NZD +6 CAD +11 CHF +4"
   },
   {
    "sec": "§07 Factor USD",
-   "text": "f USD 21 s. +1.01 % (z +0.54) · dispersión MIXTO p59.9 · S 59 %"
+   "text": "f USD 21 s. +0.64 % (z +0.32) · dispersión MIXTO UN NOMBRE EUR p32.5 · S 59 %"
   }
  ],
  "dqm": [],
@@ -459,12 +459,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 11,
+   "daily": 16,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 11,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 11 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] FLOOR_CAD.csv: rc=1 (failing_since=2026-10-21T16:45:27Z)\n• [1º/ERROR] NZD_OCR.csv: Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN\n• [1º/ERROR] fetch_sofr: rc=1 (failing_since=2026-10-21T16:45:23Z)\n• [1º/WARNING] actions:fetch_bis_ocr:NZD_OCR.csv:regression_blocked: Actions fetch_bis_ocr → NZD_OCR.csv: REGRESSION_BLOCKED, se conserva lo publicado — la des\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "incidents_count": 16,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 16 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] FLOOR_CAD.csv: LAST_FETCH_FAILED\n• [1º/ERROR] FLOOR_EUR.csv: LAST_FETCH_FAILED\n• [1º/ERROR] FLOOR_USD.csv: LAST_FETCH_FAILED\n• [1º/ERROR] NZD_OCR.csv: Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN\n• [1º/ERROR] SOFR.csv: CAUSA_EJECUTADA_CON_FALLO, LAST_FETCH_FAILED, OVERDUE\n• [1º/ERROR] fetch_sofr: rc=1 (failing_since=2026-10-21T16:45:23Z)"
  }
 }
