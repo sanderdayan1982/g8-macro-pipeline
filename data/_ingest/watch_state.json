@@ -4,9 +4,17 @@
    "sent_ts": 1792532169.409948,
    "text": "Actions fetch_bis_ocr → NZD_OCR.csv: REGRESSION_BLOCKED, se conserva lo publicado — la descarga termina en 20261009 y lo publicado en 20261015"
   },
+  "actions:fetch_bis_ocr:degraded": {
+   "sent_ts": 1792615877.463818,
+   "text": "Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
+  },
   "actions:fetch_bis_policy_AU:degraded": {
    "sent_ts": 1792614996.848653,
    "text": "Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
+  },
+  "actions:fetch_bis_policy_CH:degraded": {
+   "sent_ts": 1792615877.463818,
+   "text": "Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
   },
   "actions:fetch_bis_policy_JP:degraded": {
    "sent_ts": 1792541107.581422,
@@ -16,13 +24,25 @@
    "sent_ts": 1792601211.4256084,
    "text": "Actions fetch_floor_spreads: el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla). Se conserva lo publicado; el dato no se actualizó."
   },
+  "actions:fetch_jpy_real:fail": {
+   "sent_ts": 1792615877.463818,
+   "text": "Actions fetch_jpy_real: descarga fallida — FAIL_TRANSIENT presupuesto insuficiente para el siguiente reintento (429) (https://market.jsda.or.jp/en/statistics/bonds/prices/otc/files/2026/ES261014.csv). Se conserva lo publicado; el dato no se actualizó."
+  },
   "actions:fetch_sofr:fail": {
    "sent_ts": 1792601211.4256084,
    "text": "Actions fetch_sofr: el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla). Se conserva lo publicado; el dato no se actualizó."
   },
+  "actions:fetch_us_bills:fail": {
+   "sent_ts": 1792615877.463818,
+   "text": "Actions fetch_us_bills: el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla). Se conserva lo publicado; el dato no se actualizó."
+  },
   "actions:job:daily:step:bis_ocr": {
    "sent_ts": 1792601211.4256084,
    "text": "Actions daily: el paso bis_ocr terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+  },
+  "actions:job:intraday:step:acm_g8": {
+   "sent_ts": 1792615877.463818,
+   "text": "Actions intraday: el paso acm_g8 terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:job:intraday:step:bis_ocr": {
    "sent_ts": 1792541107.581422,
