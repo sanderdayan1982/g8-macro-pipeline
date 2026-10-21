@@ -6,7 +6,7 @@
   "SONIA.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261021T204634Z_actions_fetch-sonia_7bc9:92232a6dafc4",
+   "download_id": "20261021T213044Z_actions_fetch-sonia_c2dc:92232a6dafc4",
    "dropped_by_source": 0,
    "file": "SONIA.csv",
    "held": [],
@@ -17,25 +17,32 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-10-21T20:46:36Z",
- "gh_run_id": "39672729599",
+ "finished_utc": "2026-10-21T21:31:25Z",
+ "gh_run_id": "39679322429",
  "job": "fetch_sonia",
- "last_ok_utc": "2026-10-21T20:46:36Z",
+ "last_ok_utc": "2026-10-21T21:31:25Z",
  "not_before": {},
  "rc": 0,
  "requests": [
   {
    "attempts": [
     {
+     "cls": "FAIL_TRANSIENT",
+     "detail": "timeout: The read operation timed out",
+     "n": 1,
+     "secs": 30.45,
+     "status": null
+    },
+    {
      "cls": "OK",
      "detail": "",
-     "n": 1,
-     "secs": 1.95,
+     "n": 2,
+     "secs": 0.39,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Wed, 21 Oct 2026 20:46:36 GMT",
+   "date_header": "Wed, 21 Oct 2026 21:31:25 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
@@ -44,7 +51,7 @@
    "url": "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=22%2FOct%2F2021&Dateto=21%2FOct%2F2026&SeriesCodes=IUDSOIA&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
   }
  ],
- "run_id": "20261021T204634Z_actions_fetch-sonia_7bc9",
- "started_utc": "2026-10-21T20:46:34Z",
+ "run_id": "20261021T213044Z_actions_fetch-sonia_c2dc",
+ "started_utc": "2026-10-21T21:30:44Z",
  "step": "sonia"
 }
