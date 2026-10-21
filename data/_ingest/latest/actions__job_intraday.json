@@ -1,29 +1,14 @@
 {
- "deadline_utc": "2026-10-21T21:03:42Z",
+ "deadline_utc": "2026-10-21T23:41:01Z",
  "executor": "actions",
  "failed": [
   {
-   "name": "jpy_real",
-   "rc": 1,
-   "status": "FAILED"
-  },
-  {
-   "name": "sofr",
+   "name": "us_bills",
    "rc": 1,
    "status": "FAILED"
   },
   {
    "name": "floors",
-   "rc": 1,
-   "status": "FAILED"
-  },
-  {
-   "name": "bis_ocr",
-   "rc": 1,
-   "status": "FAILED"
-  },
-  {
-   "name": "us_bills",
    "rc": 1,
    "status": "FAILED"
   },
@@ -41,180 +26,22 @@
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "39672729599",
+ "run_id": "39692780443",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_tona.py",
-   "name": "tona",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-21T20:43:42Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aonia.py",
-   "name": "aonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-10-21T20:43:43Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aud_bills.py",
-   "name": "aud_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-21T20:43:44Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_bills.py",
-   "name": "jpy_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-21T20:43:45Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_real.py",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
    "kept_valid_outputs": [
-    "_ingest/latest/actions__fetch_jpy_real.json",
-    "_ingest/runs/actions/fetch_jpy_real/2026-10.jsonl"
+    "_ingest/latest/actions__fetch_us_bills.json",
+    "_ingest/runs/actions/fetch_us_bills/2026-10.jsonl"
    ],
-   "name": "jpy_real",
+   "name": "us_bills",
    "phase": "fetch",
    "rc": 1,
-   "secs": 164.4,
-   "started_utc": "2026-10-21T20:43:47Z",
+   "secs": 0.9,
+   "started_utc": "2026-10-21T23:21:01Z",
    "status": "FAILED"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_estr.py",
-   "name": "estr",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.1,
-   "started_utc": "2026-10-21T20:46:31Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_sonia.py",
-   "name": "sonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-21T20:46:33Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_bills.py",
-   "name": "eur_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 29.8,
-   "started_utc": "2026-10-21T20:46:36Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_gbp_bills.py",
-   "name": "gbp_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 3.2,
-   "started_utc": "2026-10-21T20:47:06Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_real.py",
-   "name": "eur_real",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 3.1,
-   "started_utc": "2026-10-21T20:47:09Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py GBP",
-   "name": "real_yields",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-21T20:47:12Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_chf_cpi.py",
-   "name": "chf_cpi",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 4.2,
-   "started_utc": "2026-10-21T20:47:13Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_sofr.py",
-   "kept_valid_outputs": [
-    "_ingest/latest/actions__fetch_sofr.json",
-    "_ingest/runs/actions/fetch_sofr/2026-10.jsonl"
-   ],
-   "name": "sofr",
-   "phase": "fetch",
-   "rc": 1,
-   "secs": 0.4,
-   "started_utc": "2026-10-21T20:47:17Z",
-   "status": "FAILED"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_corra.py",
-   "name": "corra",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-10-21T20:47:18Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_cad_bills.py",
-   "name": "cad_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-10-21T20:47:18Z",
-   "status": "OK"
   },
   {
    "allowed_s": 180.0,
@@ -229,94 +56,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 1,
-   "secs": 2.5,
-   "started_utc": "2026-10-21T20:47:19Z",
-   "status": "FAILED"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_acm.py",
-   "name": "acm_tp",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-10-21T20:47:22Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py GB",
-   "name": "bis_gb",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 33.5,
-   "started_utc": "2026-10-21T20:47:24Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py JP",
-   "name": "bis_jp",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 10.9,
-   "started_utc": "2026-10-21T20:47:58Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py CH",
-   "name": "bis_ch",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 9.2,
-   "started_utc": "2026-10-21T20:48:09Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py AU",
-   "name": "bis_au",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 14.2,
-   "started_utc": "2026-10-21T20:48:18Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_ocr.py",
-   "kept_valid_outputs": [
-    "_ingest/evidence/NZD_OCR.csv.jsonl",
-    "_ingest/latest/actions__fetch_bis_ocr.json",
-    "_ingest/runs/actions/fetch_bis_ocr/2026-10.jsonl"
-   ],
-   "name": "bis_ocr",
-   "phase": "fetch",
-   "rc": 1,
-   "secs": 8.8,
-   "started_utc": "2026-10-21T20:48:32Z",
-   "status": "FAILED"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
-   "kept_valid_outputs": [
-    "_ingest/latest/actions__fetch_us_bills.json",
-    "_ingest/runs/actions/fetch_us_bills/2026-10.jsonl"
-   ],
-   "name": "us_bills",
-   "phase": "fetch",
-   "rc": 1,
-   "secs": 1.1,
-   "started_utc": "2026-10-21T20:48:41Z",
+   "secs": 2.4,
+   "started_utc": "2026-10-21T23:21:02Z",
    "status": "FAILED"
   },
   {
@@ -329,8 +70,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 1,
-   "secs": 14.3,
-   "started_utc": "2026-10-21T20:48:42Z",
+   "secs": 15.9,
+   "started_utc": "2026-10-21T23:21:04Z",
    "status": "FAILED"
   },
   {
@@ -349,8 +90,8 @@
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 1,
-   "secs": 90.0,
-   "started_utc": "2026-10-21T20:48:57Z",
+   "secs": 136.8,
+   "started_utc": "2026-10-21T23:21:20Z",
    "status": "FAILED"
   },
   {
@@ -361,7 +102,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.7,
-   "started_utc": "2026-10-21T20:50:27Z",
+   "started_utc": "2026-10-21T23:23:37Z",
    "status": "OK"
   },
   {
@@ -372,7 +113,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.9,
-   "started_utc": "2026-10-21T20:50:28Z",
+   "started_utc": "2026-10-21T23:23:38Z",
    "status": "OK"
   },
   {
@@ -383,11 +124,11 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.6,
-   "started_utc": "2026-10-21T20:50:28Z",
+   "started_utc": "2026-10-21T23:23:39Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-21T20:50:29Z"
+ "written_utc": "2026-10-21T23:23:39Z"
 }
