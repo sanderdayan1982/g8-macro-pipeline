@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-21T16:46:14.554466Z",
+ "generated_utc": "2026-10-21T18:02:20.072317Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -105,57 +105,6 @@
    "status": "ERROR",
    "age_business_days": 4,
    "publication_frequency": "event",
-   "slow_fallback": false
-  },
-  {
-   "file": "USD_FACTOR.json",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-21",
-   "calendar": "TARGET",
-   "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
-   "status": "LATE",
-   "age_business_days": 1,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "usd_factor/ecb_rates.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-21",
-   "calendar": "TARGET",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "usd_factor/canonical.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-21",
-   "calendar": "TARGET",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
    "slow_fallback": false
   }
  ],
@@ -1500,33 +1449,31 @@
   },
   {
    "file": "USD_FACTOR.json",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-21",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
-   "status": "LATE",
-   "age_business_days": 1,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "S01B.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-10-20",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-20",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
-   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
+   "reason": "Vista PROVISIONAL de la sesión 2026-10-21; el cierre definitivo llega con su pasada programada. Último cierre 2026-10-20 al día.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "PENDING",
+   "age_business_days": 0,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1940,35 +1887,29 @@
   },
   {
    "file": "usd_factor/ecb_rates.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-21",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "usd_factor/canonical.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-21",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -2031,14 +1972,14 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-21T16:46:13Z",
+   "have_max": "2026-10-21T18:02:19Z",
    "flags": []
   },
   {
    "file": "BOOK_RISK.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-20",
+   "have_max": "2026-10-21",
    "flags": []
   },
   {
