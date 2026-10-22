@@ -280,9 +280,17 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
                 "Actions %s: %d paso(s) sin terminar por el plazo global del job: %s. Esos feeds no se "
                 "actualizaron en esta ejecución." % (job, len(lim), ", ".join("%s %s" % (x["name"], x["status"]) for x in lim[:8])))
         run = str(led.get("run_id"))
+        led_time = led.get("written_utc") or ""
         for st in led.get("failed") or []:
             if (run, st["name"]) in covered:
                 continue                              # su descargador ya informa del fallo con más detalle
+            step_name = st["name"]
+            if (any(lg is not led and (lg.get("written_utc") or "") > led_time
+                    and any(s.get("name") == step_name and s.get("status") == "OK" for s in (lg.get("steps") or []))
+                    for lg in ledgers.values())
+                    or any(p.get("step") == step_name and p.get("rc") == 0 and (p.get("finished_utc") or "") > led_time
+                           for p in pointers.values())):
+                continue
             alerts["actions:job:%s:step:%s" % (job, st["name"])] = (
                 "Actions %s: el paso %s terminó con código %s (ver el registro del job). Sus salidas válidas se "
                 "conservan; las inválidas se restauraron al último válido." % (job, st["name"], st.get("rc")))
@@ -313,7 +321,7 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
         elif not exists:
             alerts[k] = _keep(txt, " — su registro ya no existe: sin evidencia de recuperación")
         else:
-            still = _still_open(k, pointers.get(job), ledgers.get(job))
+            still = _still_open(k, pointers.get(job), ledgers.get(job), pointers=pointers, ledgers=ledgers)
             if still:
                 alerts[k] = _keep(txt, still)
 
@@ -323,12 +331,19 @@ def check_actions(root, now_utc, alerts, info, prev_active=None, retired_keys=No
 _NEEDS_SUCCESS = (":fail", ":no_success", ":invalid", ":regression_blocked", ":degraded")
 
 
-def _still_open(k, pointer, ledger):
+def _still_open(k, pointer, ledger, pointers=None, ledgers=None):
     """Texto de «sigue abierta» si no hay evidencia de recuperación para la clave k; None si la hay."""
     if k.startswith("actions:job:"):
         parts = k.split(":")
         if len(parts) >= 5 and parts[3] == "step":
-            ok = any(st.get("name") == parts[4] and st.get("status") == "OK" for st in (ledger or {}).get("steps") or [])
+            step_name = parts[4]
+            steps = (ledger or {}).get("steps") or []
+            ok = any(st.get("name") == step_name and st.get("status") == "OK" for st in steps)
+            if not ok and not any(st.get("name") == step_name for st in steps):
+                ok = (any(st.get("name") == step_name and st.get("status") == "OK"
+                          for lg in (ledgers or {}).values() for st in (lg.get("steps") or []))
+                      or any(p.get("step") == step_name and p.get("rc") == 0
+                             for p in (pointers or {}).values()))
             return None if ok else " — sigue abierta: el paso no ha vuelto a terminar correctamente"
         return None                                   # plazos/restauraciones: incidencias de una ejecución concreta
     if k.startswith("actions:held:") or k.endswith(":silence"):

@@ -133,6 +133,8 @@ def classify(provider, status, headers, body, not_found_is_no_publication=False,
     body_l = (body or b"")[:4000].lower()
     ra = parse_retry_after(headers, now)
     if 200 <= status < 300:
+        if provider == "fred_api" and not body_l.strip():
+            return FAIL_TRANSIENT, None, "HTTP %s vacío en FRED API" % status
         return OK, None, ""
     if provider == "github":
         if status == 401:

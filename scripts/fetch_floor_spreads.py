@@ -85,6 +85,9 @@ def fetch_usd():
             data = json.loads(http_get(url))
             out = [(o["date"], float(o["value"]))
                    for o in data.get("observations", []) if o.get("value") not in (".", "", None)]
+        except (ValueError, KeyError) as e:
+            print(f"::warning title=FRED_API_JSON::Respuesta JSON inválida/vacía en IORB ({e}); se usa fredgraph sin clave")
+            out = None
         except _ingest.HTTPError as e:                      # F7: clave rechazada → endpoint sin clave, visible
             if e.g8cls != "FAIL_AUTH":
                 raise

@@ -40,6 +40,11 @@ def main():
         print("FINAL_FAILED: %s: %s" % (target, exc), file=sys.stderr)
         return 1
     print("FINAL_VERIFIED: " + target)
+    try:
+        import health_monitor as _hm
+        _hm.main([])
+    except Exception:
+        pass
     return 0
 
 

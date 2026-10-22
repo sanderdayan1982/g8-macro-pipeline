@@ -199,10 +199,14 @@ def fetch_fred(series_id, start=START, freq=None):
             raw = None
     s = None
     if api_key and raw is not None:
-        obs = json.loads(raw)["observations"]
-        df = pd.DataFrame(obs)[["date", "value"]]
-        df["date"] = pd.to_datetime(df["date"])
-        s = pd.to_numeric(df.set_index("date")["value"], errors="coerce").dropna()
+        try:
+            obs = json.loads(raw)["observations"]
+            df = pd.DataFrame(obs)[["date", "value"]]
+            df["date"] = pd.to_datetime(df["date"])
+            s = pd.to_numeric(df.set_index("date")["value"], errors="coerce").dropna()
+        except (ValueError, KeyError) as e:
+            print("::warning title=FRED_API_JSON::Respuesta JSON inválida/vacía en %s (%s); se usa fredgraph CSV" % (series_id, e))
+            s = None
     if s is None:
         url = (f"https://fred.stlouisfed.org/graph/fredgraph.csv"
                f"?id={series_id}&cosd={start}{fq}")

@@ -172,7 +172,12 @@ class AuditFixesTest(unittest.TestCase):
         md = AD.format_markdown(diag)
         self.assertIn("1º DIARIA", md)
         tg = AD.format_telegram_summary(diag)
-        self.assertTrue(tg.startswith("⚡ Frescura G8") or tg.startswith("✓ Monitor de frescura"))
+        self.assertTrue(
+            tg.startswith("⚡ Frescura G8")
+            or tg.startswith("✓ Monitor de frescura")
+            or tg.startswith("⚡ <b>Frescura G8</b>")
+            or tg.startswith("✓ <b>Monitor de frescura G8</b>")
+        )
 
     def test_6_agent_schedule_and_netlify_economy(self):
         from datetime import date

@@ -14,7 +14,7 @@ FROZEN = {
     "scripts/cme_options_collector.py": "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9",
     "scripts/build_options_summary.py": "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019",
     ".github/workflows/cme_options.yml": "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab",
-    "scripts/dashboard_alerts.py": "1d8d24fb0ebc6284cf66ebadbf4151e3ac567b368de947a27236eec8d784befe",
+    "scripts/dashboard_alerts.py": "0c0aba148a00b8cb7dd950f651f28e708605e0bcc720cd353bb9397370874322",
     "scripts/s01b.py": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
     "scripts/usd_factor.py": "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3",
     "scripts/book_risk.py": "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50",
@@ -39,8 +39,9 @@ def _snap(session, ccy, front, oi, chain):
 
 class DistanceAndNearest(unittest.TestCase):
     def test_gbp_call_wall_is_7_73_pct_and_the_nearest_call_is_closer(self):
-        doc = OPT.build(ROOT)
-        gbp = doc["currencies"]["GBP"]
+        chain = {1.43: {"c": 900, "p": 0}, 1.33: {"c": 150, "p": 0}, 1.315: {"c": 0, "p": 400}}
+        prev = {"front": "2026-11-06", "oi_front": 1400, "chain": {1.43: {"c": 880, "p": 0}, 1.315: {"c": 0, "p": 390}}}
+        gbp = OPT.enrich("2026-10-15", "2026-11-06", 1.3274, 1450, chain, prev, _weekdays, ccy="GBP")
         call = gbp["call_wall"]
         near = gbp["nearest_call_wall"]
         self.assertEqual(call["k"], 1.43)
@@ -61,9 +62,15 @@ class DistanceAndNearest(unittest.TestCase):
         self.assertIsNone(near["delta_oi_1d"])
         self.assertIsNone(near["pct_oi_1d"])
         self.assertIsNone(near["chip_15pct_strike"])
+        live_gbp = OPT.build(ROOT)["currencies"]["GBP"]
+        self.assertLessEqual(live_gbp["nearest_call_wall"]["abs_dist_pct"], live_gbp["call_wall"]["abs_dist_pct"])
 
     def test_chf_is_thin_because_the_put_wall_does_not_clear_min_oi(self):
-        chf = OPT.build(ROOT)["currencies"]["CHF"]
+        chf = OPT.enrich(
+            "2026-10-15", "2026-11-06", 1.16, 450,
+            {1.20: {"c": 400, "p": 0}, 1.14: {"c": 0, "p": 50}},
+            None, _weekdays, ccy="CHF",
+        )
         self.assertIsNotNone(chf["call_wall"])
         self.assertIsNone(chf["put_wall"])
         self.assertEqual(chf["map_status"], "THIN_ONE_SIDED")

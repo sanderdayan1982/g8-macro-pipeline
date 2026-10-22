@@ -555,24 +555,8 @@ def auto_repair_and_substitute_feeds(diag, data_dir=DATA):
                 except Exception:
                     pass
 
-        # 4. Tipos oficiales escalón (event): propagar último tipo oficial vigente sobre rejilla diaria fresca
-        if mspec.get("step_anchor") and os.path.exists(csv_path):
-            anchor_reg = by_file.get(mspec["step_anchor"]) or {}
-            anchor_rel = anchor_reg.get("file") or os.path.join("data", mspec["step_anchor"])
-            anchor_path = os.path.join(ROOT, anchor_rel)
-            if os.path.exists(anchor_path):
-                try:
-                    a_dates = [r[0].replace("-", "") for r in csv.reader(open(anchor_path, encoding="utf-8")) if len(r) >= 2 and _re.match(r"^\d{4}-?\d{2}-?\d{2}$", r[0])]
-                    t_rows = [(r[0].replace("-", ""), r[4] if len(r) >= 5 else r[1]) for r in csv.reader(open(csv_path, encoding="utf-8")) if len(r) >= 2 and _re.match(r"^\d{4}-?\d{2}-?\d{2}$", r[0])]
-                    if a_dates and t_rows and a_dates[-1] >= t_rows[-1][0]:
-                        last_v = t_rows[-1][1]
-                        new_pts = [(d, last_v) for d in a_dates if d > t_rows[-1][0]]
-                        added = _merge_csv_series(csv_path, new_pts)
-                        _mark_feed_repaired_in_health(fid, job_name, a_dates[-1], data_dir=data_dir)
-                        actions.append("%s: extendido tipo escalón sobre rejilla diaria (%s, +%d obs)" % (fid, a_dates[-1], added))
-                        repaired_any = True
-                except Exception:
-                    pass
+        # Nota: No propagar fechas sintéticas con step_anchor sobre CSVs oficiales (BIS_POLICY / NZD_OCR),
+        # ya que adelanta max_date por delante de la publicación oficial del BIS y dispara REGRESSION_BLOCKED.
 
     if repaired_any:
         try:

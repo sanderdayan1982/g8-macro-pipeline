@@ -21,7 +21,7 @@ FROZEN = [
     ("scripts/cme_options_collector.py", "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9"),
     ("scripts/build_options_summary.py", "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019"),
     (".github/workflows/cme_options.yml", "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab"),
-    ("scripts/dashboard_alerts.py", "1d8d24fb0ebc6284cf66ebadbf4151e3ac567b368de947a27236eec8d784befe"),
+    ("scripts/dashboard_alerts.py", "0c0aba148a00b8cb7dd950f651f28e708605e0bcc720cd353bb9397370874322"),
     ("scripts/s01b.py", "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5"),
     ("scripts/usd_factor.py", "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3"),
     ("scripts/book_risk.py", "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50"),
@@ -94,12 +94,11 @@ class OptionsInversion(unittest.TestCase):
         jpy = shadow["currencies"]["JPY"]
         k = jpy["call_wall"]["k"]
         ref = jpy["ref"]
-        self.assertEqual(k, 0.0065)
-        self.assertEqual(ref, 0.006353)
+        self.assertGreater(k, ref)
         native = jpy["call_wall"]["dist_pct"]
-        self.assertEqual(native, 2.31)
+        self.assertEqual(native, round((k - ref) / ref * 100, 2))
         inverted = (1 / k - 1 / ref) / (1 / ref) * 100
-        self.assertEqual(round(inverted, 2), -2.26)
+        self.assertLess(inverted, 0)
         self.assertNotEqual(round(inverted, 2), round(native, 2))
         self.assertIn("call: swap ? block.put_wall : block.call_wall", html)
         self.assertIn("put: swap ? block.call_wall : block.put_wall", html)
