@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-22T23:03:05.701708Z",
- "status": "CURRENT",
+ "generated_utc": "2026-10-22T23:21:25.771052Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,8 +18,60 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
+ "needs_repair": true,
+ "issues": [
+  {
+   "file": "MFV_G8_state.json",
+   "state": "NO_OBS_DATE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAU.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAG.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  }
+ ],
  "unknown_count": 0,
  "feeds": [
   {
@@ -1832,7 +1884,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-22T21:37:16Z",
+   "have_max": "2026-10-22T23:21:24Z",
    "flags": []
   },
   {
