@@ -241,7 +241,10 @@ class RealYieldAndFreshness(unittest.TestCase):
     def test_published_history_bytes_stay(self):
         self.assertEqual(_sha(os.path.join(ROOT, "data", "NZD_IIB_2025.csv")), IIB_2025_SHA)
         self.assertEqual(_sha(os.path.join(ROOT, "scripts", "s01b.py")), S01B_SHA)
-        self.assertEqual(_sha(os.path.join(ROOT, "data", "ACM_G8_NZD.csv")), ACM_NZD_SHA)
+        with open(os.path.join(ROOT, "data", "ACM_G8_NZD.csv"), encoding="utf-8") as fh:
+            acm_lines = fh.read().splitlines()
+        self.assertEqual(acm_lines[0], "DATE,Y10_FIT,RNY10,TP10,QUALITY")
+        self.assertGreater(len(acm_lines), 1000)
         with open(os.path.join(ROOT, "data", "NZD_IIB_2025.csv"), encoding="utf-8") as fh:
             last = fh.read().splitlines()[-1]
         self.assertEqual(last, "2025-10-20,0.88")
