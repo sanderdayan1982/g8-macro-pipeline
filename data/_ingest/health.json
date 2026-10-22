@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-22T00:28:37.754638Z",
+ "generated_utc": "2026-10-22T00:56:50.199133Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -402,6 +402,57 @@
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_state.json",
+   "state": "NO_OBS_DATE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAU.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAG.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-10-20",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   }
  ],
  "unknown_count": 0,
@@ -458,7 +509,7 @@
    "file": "TONA.csv",
    "state": "CURRENT",
    "have_max": "2026-10-20",
-   "expected_obs": "2026-10-19",
+   "expected_obs": "2026-10-20",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1773,324 +1824,54 @@
   },
   {
    "file": "MFV_G8_state.json",
-   "state": "VERIFIED_INPUTS",
+   "state": "NO_OBS_DATE",
    "have_max": "2026-10-20",
-   "expected_obs": "2026-10-13",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_XAU.csv",
-   "state": "VERIFIED_INPUTS",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-20",
-   "expected_obs": "2026-10-13",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_XAG.csv",
-   "state": "VERIFIED_INPUTS",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-20",
-   "expected_obs": "2026-10-13",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-14",
-      "used_observation": "2026-10-14"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-20",
-      "used_observation": "2026-10-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-10-19",
-      "used_observation": "2026-10-19"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-10-16",
-      "used_observation": "2026-10-16"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_walkforward_XAU.csv",
@@ -2251,7 +2032,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-22T00:28:37Z",
+   "have_max": "2026-10-22T00:56:49Z",
    "flags": []
   },
   {

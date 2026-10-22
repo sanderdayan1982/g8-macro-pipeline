@@ -1,25 +1,39 @@
 {
  "deadline_utc": null,
  "executor": "actions",
- "failed": [],
+ "failed": [
+  {
+   "name": "metals_fairvalue",
+   "rc": 1,
+   "status": "FAILED"
+  }
+ ],
  "job": "metals",
  "reserve_s": null,
  "restored": [],
- "run_id": "39524704832",
+ "run_id": "39702705648",
  "steps": [
   {
    "allowed_s": 1080.0,
    "cap_s": 1080.0,
    "cmd": "python scripts/metals_fairvalue_g8.py",
+   "kept_valid_outputs": [
+    "MFV_G8_XAG.csv",
+    "MFV_G8_XAU.csv",
+    "MFV_G8_state.json",
+    "MFV_G8_walkforward_XAG.csv",
+    "MFV_G8_walkforward_XAU.csv",
+    "_ingest/metals_provenance.json"
+   ],
    "name": "metals_fairvalue",
    "phase": "fetch",
-   "rc": 0,
-   "secs": 39.0,
-   "started_utc": "2026-10-21T01:00:38Z",
-   "status": "OK"
+   "rc": 1,
+   "secs": 4.2,
+   "started_utc": "2026-10-22T00:56:44Z",
+   "status": "FAILED"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-21T01:01:17Z"
+ "written_utc": "2026-10-22T00:56:49Z"
 }
