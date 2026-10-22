@@ -1,14 +1,28 @@
 {
  "errors": [],
  "executor": "actions",
- "failing_since_utc": "2026-10-22T00:09:40Z",
- "files": {},
- "finished_utc": "2026-10-22T00:12:18Z",
- "gh_run_id": "39697423412",
+ "failing_since_utc": null,
+ "files": {
+  "RY_G8_JPY.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20261022T002613Z_actions_fetch-jpy-real_df0a:21bf07b13d47",
+   "dropped_by_source": 0,
+   "file": "RY_G8_JPY.csv",
+   "held": [],
+   "new": 0,
+   "repo_max": "20261021",
+   "revised": [],
+   "src_max": "20261021",
+   "status": "NOOP"
+  }
+ },
+ "finished_utc": "2026-10-22T00:28:36Z",
+ "gh_run_id": "39699610580",
  "job": "fetch_jpy_real",
- "last_ok_utc": "2026-10-21T21:33:35Z",
+ "last_ok_utc": "2026-10-22T00:28:36Z",
  "not_before": {},
- "rc": 1,
+ "rc": 0,
  "requests": [
   {
    "attempts": [
@@ -16,33 +30,33 @@
      "cls": "FAIL_TRANSIENT",
      "detail": "HTTP 502",
      "n": 1,
-     "secs": 1.36,
+     "secs": 1.21,
      "status": 502
     },
     {
      "cls": "FAIL_TRANSIENT",
      "detail": "HTTP 502",
      "n": 2,
-     "secs": 0.19,
+     "secs": 0.1,
      "status": 502
     },
     {
      "cls": "FAIL_TRANSIENT",
      "detail": "HTTP 502",
      "n": 3,
-     "secs": 0.17,
+     "secs": 0.1,
      "status": 502
     },
     {
      "cls": "FAIL_TRANSIENT",
      "detail": "HTTP 502",
      "n": 4,
-     "secs": 0.78,
+     "secs": 0.46,
      "status": 502
     }
    ],
    "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:03 GMT",
+   "date_header": "Thu, 22 Oct 2026 00:28:35 GMT",
    "detail": "HTTP 502",
    "last_modified": null,
    "not_before_epoch": null,
@@ -53,145 +67,24 @@
   {
    "attempts": [
     {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
+     "cls": "OK",
+     "detail": "",
      "n": 1,
-     "secs": 0.69,
-     "status": 502
-    },
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 2,
-     "secs": 0.25,
-     "status": 502
+     "secs": 0.56,
+     "status": 200
     }
    ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:14 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
+   "cls": "OK",
+   "date_header": "Thu, 22 Oct 2026 00:28:36 GMT",
+   "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
-   "status": 502,
+   "status": 200,
    "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261021.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 0.6,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:14 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261020.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 1.02,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:15 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261019.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 0.72,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:16 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261016.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 0.6,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:17 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261015.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 0.61,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:17 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261014.csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 502",
-     "n": 1,
-     "secs": 0.75,
-     "status": 502
-    }
-   ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Thu, 22 Oct 2026 00:12:18 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 502)",
-   "last_modified": null,
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 502,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261013.csv"
   }
  ],
- "run_id": "20261022T000940Z_actions_fetch-jpy-real_d536",
- "started_utc": "2026-10-22T00:09:40Z",
+ "run_id": "20261022T002613Z_actions_fetch-jpy-real_df0a",
+ "started_utc": "2026-10-22T00:26:13Z",
  "step": "jpy_real"
 }
