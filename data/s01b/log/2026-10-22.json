@@ -1,0 +1,1372 @@
+{
+ "schema": "s01b-log-1",
+ "version": "s01b v1.3.3",
+ "run_id": "2026-10-22T213715Z",
+ "t": "2026-10-22",
+ "final_run": true,
+ "fx_effective": "2026-10-22",
+ "params": {
+  "P_ON": 80.0,
+  "P_OFF": 60.0,
+  "P_HI": 95.0,
+  "MIN_POP": 252,
+  "FX_THR": -0.005,
+  "FX_FAIL_STREAK": 3,
+  "H": 22,
+  "MAX_LAG_BD": 3
+ },
+ "inputs_sha": {
+  "ACM_G8_USD.csv": "83e20504ec62a2b3221b3e84de05afe4ee3cc6d9d3776f5456084093cf0db410",
+  "ACM_G8_EUR.csv": "c81e3ff27b5edb2946947a6f3914f1f08ac02c328bb5b76f6dfc2d6f02306935",
+  "ACM_G8_GBP.csv": "ac30ce3e5e0541fcc44af02fe45ca74068f71c61f095e2eed5c3d0754787ee1d",
+  "ACM_G8_JPY.csv": "6dc042e329fd3863cfbb586765fc150303c110a08c5e8bfc886f76fadb650f39",
+  "ACM_G8_AUD.csv": "912be6e9c6343019150cec138f961035737a3de810ffe8e2921c54a776004f80",
+  "ACM_G8_NZD.csv": "c1c30ac712804bea35a31e3a1323123dceebb4949c00414254f95d4a32694e98",
+  "ACM_G8_CAD.csv": "c3908ce43573197a368fe59f6a1d81bc975a0d852dabe2142917f57f63107b44",
+  "ACM_G8_CHF.csv": "d6374ffc8eb8f533cdc0a7b20cb3b449b2ad00c62c18c0c97dd8ead7af09fc4f",
+  "AUD_NOWCAST.csv": "5c7f5be34923690ae924a30b92e5695082aaf7de231f050914e808b9bb199168",
+  "usd_factor/canonical.csv": "f83f896eef52f5752f53f77114f4b13fd8448f51fbad9db90b3ec9e932ecec87"
+ },
+ "rows": [
+  {
+   "ccy": "USD",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [],
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": 1.03,
+   "d_tp": 15.37,
+   "tp_t": 1.5782,
+   "tp_t0": 1.4245,
+   "rny_t": 3.5183,
+   "rny_t0": 3.508,
+   "fit_t": 5.0965,
+   "fit_t0": 4.9325,
+   "quality_t": "ACM_K3_538m",
+   "quality_t0": "ACM_K3_538m",
+   "d_fit": 16.4,
+   "d_nom": 17.0,
+   "resid": 0.6,
+   "d_2y": 10.0,
+   "d_be": 4.0,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-21",
+     "value": 5.13,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 4.81,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-21",
+     "value": 2.37,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": 0.658,
+   "n_pop": 1257,
+   "theta": 19.85,
+   "theta_off": 7.16,
+   "theta95": 44.14,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 17,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "EUR",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [],
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": -11.53,
+   "d_tp": 11.27,
+   "tp_t": 1.2291,
+   "tp_t0": 1.1164,
+   "rny_t": 2.1509,
+   "rny_t0": 2.2662,
+   "fit_t": 3.38,
+   "fit_t0": 3.3826,
+   "quality_t": "ACM_K3_266m",
+   "quality_t0": "ACM_K3_266m",
+   "d_fit": -0.26,
+   "d_nom": -6.24,
+   "resid": -5.98,
+   "d_2y": -10.74,
+   "d_be": 1.59,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-22",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-22",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-22",
+     "value": 3.3872,
+     "lag_bd": 0,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 3.0282,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-22",
+     "value": 2.2558,
+     "lag_bd": 0,
+     "quality": null,
+     "status": "OK"
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": -2.276,
+   "n_pop": 1257,
+   "theta": 21.49,
+   "theta_off": 10.02,
+   "theta95": 42.23,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 17,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "GBP",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [],
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": 7.83,
+   "d_tp": 8.13,
+   "tp_t": 1.9734,
+   "tp_t0": 1.8921,
+   "rny_t": 3.3659,
+   "rny_t0": 3.2876,
+   "fit_t": 5.3394,
+   "fit_t0": 5.1797,
+   "quality_t": "ACM_K3_417m",
+   "quality_t0": "ACM_K3_417m",
+   "d_fit": 15.97,
+   "d_nom": 15.69,
+   "resid": -0.28,
+   "d_2y": 13.71,
+   "d_be": 0.74,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-21",
+     "value": 5.3682,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 4.7108,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-21",
+     "value": 3.3823,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": 0.095,
+   "n_pop": 816,
+   "theta": 23.83,
+   "theta_off": 10.93,
+   "theta95": 43.78,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 17,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "JPY",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [],
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-18",
+   "d_rny": 8.69,
+   "d_tp": -14.62,
+   "tp_t": 1.9821,
+   "tp_t0": 2.1283,
+   "rny_t": 0.9349,
+   "rny_t0": 0.848,
+   "fit_t": 2.917,
+   "fit_t0": 2.9763,
+   "quality_t": "ACM_K3_484m",
+   "quality_t0": "ACM_K3_484m",
+   "d_fit": -5.93,
+   "d_nom": -6.82,
+   "resid": -0.89,
+   "d_2y": 6.5,
+   "d_be": 0.73,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-22",
+     "t0": "2026-09-18"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-18"
+    },
+    "be": {
+     "t": "2026-10-22",
+     "t0": "2026-09-18"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-22",
+     "value": 2.922,
+     "lag_bd": 0,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 1.914,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-22",
+     "value": 2.1594,
+     "lag_bd": 0,
+     "quality": null,
+     "status": "OK"
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": 0.082,
+   "n_pop": 1255,
+   "theta": 13.54,
+   "theta_off": 7.01,
+   "theta95": 24.54,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 7,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "AUD",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [
+    "CTX_EST",
+    "ACM_FFILL"
+   ],
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": -3.65,
+   "d_tp": 4.91,
+   "tp_t": 1.3172,
+   "tp_t0": 1.2681,
+   "rny_t": 3.9429,
+   "rny_t0": 3.9794,
+   "fit_t": 5.26,
+   "fit_t0": 5.2475,
+   "quality_t": "ACM_K3_381m_FFILL",
+   "quality_t0": "ACM_K3_381m",
+   "d_fit": 1.25,
+   "d_nom": -2.15,
+   "resid": -3.4,
+   "d_2y": -7.51,
+   "d_be": -6.85,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-21",
+     "value": 5.2715,
+     "lag_bd": 1,
+     "quality": "EST_AUD_V2",
+     "status": "OK",
+     "estimate": true
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 4.9279,
+     "lag_bd": 1,
+     "quality": "EST_AUD_V2",
+     "status": "OK",
+     "estimate": true
+    },
+    "be": {
+     "date": "2026-10-21",
+     "value": 2.3405,
+     "lag_bd": 1,
+     "quality": "EST_AUD_V2",
+     "status": "OK",
+     "estimate": true
+    }
+   },
+   "acm_input_asof_t": "2026-10-14",
+   "acm_input_asof_t0": "2026-09-22",
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": -1.392,
+   "n_pop": 1257,
+   "theta": 18.56,
+   "theta_off": 8.13,
+   "theta95": 32.97,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 7,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "NZD",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [
+    "SHORT"
+   ],
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": -0.16,
+   "d_tp": 8.23,
+   "tp_t": 1.9845,
+   "tp_t0": 1.9022,
+   "rny_t": 3.0719,
+   "rny_t0": 3.0735,
+   "fit_t": 5.0563,
+   "fit_t0": 4.9757,
+   "quality_t": "ACM_K3_SHORT_SAMPLE_137m",
+   "quality_t0": "ACM_K3_SHORT_SAMPLE_137m",
+   "d_fit": 8.06,
+   "d_nom": 8.0,
+   "resid": -0.06,
+   "d_2y": 6.0,
+   "d_be": -6.7,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-21",
+     "value": 5.03,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 3.93,
+     "lag_bd": 1,
+     "quality": "RBNZ_B2",
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-21",
+     "value": 2.2245,
+     "lag_bd": 1,
+     "quality": "IIB_PROXY_THIN_MARKET",
+     "status": "OK"
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": -0.872,
+   "n_pop": 1253,
+   "theta": 24.44,
+   "theta_off": 9.2,
+   "theta95": 45.79,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 7,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "CAD",
+   "t": "2026-10-22",
+   "avail": "OK",
+   "flags": [],
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-21",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": 0.51,
+   "d_tp": 8.54,
+   "tp_t": 1.2496,
+   "tp_t0": 1.1642,
+   "rny_t": 2.5436,
+   "rny_t0": 2.5385,
+   "fit_t": 3.7932,
+   "fit_t0": 3.7027,
+   "quality_t": "ACM_K3_261m",
+   "quality_t0": "ACM_K3_261m",
+   "d_fit": 9.05,
+   "d_nom": 4.0,
+   "resid": -5.05,
+   "d_2y": 7.0,
+   "d_be": -3.0,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": "2026-10-21",
+     "t0": "2026-09-22"
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-21",
+     "value": 4.19,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-10-21",
+     "value": 3.32,
+     "lag_bd": 1,
+     "quality": "BOC_VALET",
+     "status": "OK"
+    },
+    "be": {
+     "date": "2026-10-21",
+     "value": 2.28,
+     "lag_bd": 1,
+     "quality": null,
+     "status": "OK"
+    }
+   },
+   "acm_input_asof_t": "2026-10-21",
+   "acm_input_asof_t0": "2026-09-22",
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": 0.074,
+   "n_pop": 1257,
+   "theta": 18.77,
+   "theta_off": 8.09,
+   "theta95": 35.81,
+   "colour": "white",
+   "emitter": true,
+   "state_before": {
+    "signal": "OFF",
+    "persist": 17,
+    "fx_fail_streak": 0,
+    "avail": "OK",
+    "last_eval": "2026-10-21",
+    "initialized": true
+   }
+  },
+  {
+   "ccy": "CHF",
+   "t": "2026-10-22",
+   "avail": "NO_QUAL",
+   "flags": [
+    "NOWCAST"
+   ],
+   "signal": "NA",
+   "persist": 0,
+   "fx_fail_streak": 0,
+   "t0": "2026-09-22",
+   "acm_asof_t": "2026-10-22",
+   "acm_asof_t0": "2026-09-22",
+   "d_rny": -7.3,
+   "d_tp": 4.2,
+   "tp_t": -0.0671,
+   "tp_t0": -0.1091,
+   "rny_t": 0.5942,
+   "rny_t0": 0.6672,
+   "fit_t": 0.5271,
+   "fit_t0": 0.5581,
+   "quality_t": "ACM_K3_NOWCAST_PARALLEL",
+   "quality_t0": "ACM_K3_465m",
+   "d_fit": -3.1,
+   "d_nom": -3.9,
+   "resid": -0.8,
+   "d_2y": null,
+   "d_be": null,
+   "context_asof": {
+    "nominal": {
+     "t": "2026-10-22",
+     "t0": "2026-09-22"
+    },
+    "y2": {
+     "t": null,
+     "t0": "2026-09-22"
+    },
+    "be": {
+     "t": null,
+     "t0": null
+    }
+   },
+   "context_last": {
+    "nominal": {
+     "date": "2026-10-22",
+     "value": 0.525,
+     "lag_bd": 0,
+     "quality": "SNB_10Y_DAILY_RSS",
+     "status": "OK"
+    },
+    "y2": {
+     "date": "2026-09-30",
+     "value": 0.287,
+     "lag_bd": 16,
+     "quality": "SNB_CURVE_MONTHLY",
+     "status": "STALE"
+    },
+    "be": {
+     "status": "NONE",
+     "quality": "NO_MARKET",
+     "n_obs": 0
+    }
+   },
+   "fx_asof_t": "2026-10-22",
+   "fx_asof_t0": "2026-09-22",
+   "d_fx": null,
+   "n_pop": 1242,
+   "theta": 17.32,
+   "theta_off": 5.3,
+   "theta95": 37.06,
+   "colour": "white",
+   "emitter": false,
+   "state_before": {
+    "signal": "NA",
+    "persist": 0,
+    "fx_fail_streak": 0,
+    "avail": "NO_QUAL",
+    "last_eval": "2026-10-21",
+    "initialized": false
+   }
+  }
+ ],
+ "events": [],
+ "state_after": {
+  "USD": {
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "EUR": {
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "GBP": {
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "JPY": {
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "AUD": {
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "NZD": {
+   "signal": "OFF",
+   "persist": 8,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "CAD": {
+   "signal": "OFF",
+   "persist": 18,
+   "fx_fail_streak": 0,
+   "avail": "OK",
+   "last_eval": "2026-10-22",
+   "initialized": true
+  },
+  "CHF": {
+   "signal": "NA",
+   "persist": 0,
+   "fx_fail_streak": 0,
+   "avail": "NO_QUAL",
+   "last_eval": "2026-10-22",
+   "initialized": false
+  }
+ },
+ "output": {
+  "schema": "s01b-1",
+  "version": "s01b v1.3.3",
+  "run_id": "2026-10-22T213715Z",
+  "as_of": "2026-10-22",
+  "fx_effective": "2026-10-22",
+  "generated_utc": "2026-10-22T21:37:15Z",
+  "status": "CONTEXT",
+  "note": "compatible con tensión fiscal — CONTEXT, sin voto · umbral expanding a t−1 (P80 firmado, ΔTP>0, histéresis p60) · FX ≤ −0,5 % log sobre la misma ventana · CHF solo lectura",
+  "currencies": {
+   "USD": {
+    "ccy": "USD",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [],
+    "signal": "OFF",
+    "persist": 18,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": 1.03,
+    "d_tp": 15.37,
+    "tp_t": 1.5782,
+    "tp_t0": 1.4245,
+    "rny_t": 3.5183,
+    "rny_t0": 3.508,
+    "fit_t": 5.0965,
+    "fit_t0": 4.9325,
+    "quality_t": "ACM_K3_538m",
+    "quality_t0": "ACM_K3_538m",
+    "d_fit": 16.4,
+    "d_nom": 17.0,
+    "resid": 0.6,
+    "d_2y": 10.0,
+    "d_be": 4.0,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-21",
+      "value": 5.13,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 4.81,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-21",
+      "value": 2.37,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": 0.658,
+    "n_pop": 1257,
+    "theta": 19.85,
+    "theta_off": 7.16,
+    "theta95": 44.14,
+    "colour": "white",
+    "emitter": true
+   },
+   "EUR": {
+    "ccy": "EUR",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [],
+    "signal": "OFF",
+    "persist": 18,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": -11.53,
+    "d_tp": 11.27,
+    "tp_t": 1.2291,
+    "tp_t0": 1.1164,
+    "rny_t": 2.1509,
+    "rny_t0": 2.2662,
+    "fit_t": 3.38,
+    "fit_t0": 3.3826,
+    "quality_t": "ACM_K3_266m",
+    "quality_t0": "ACM_K3_266m",
+    "d_fit": -0.26,
+    "d_nom": -6.24,
+    "resid": -5.98,
+    "d_2y": -10.74,
+    "d_be": 1.59,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-22",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-22",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-22",
+      "value": 3.3872,
+      "lag_bd": 0,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 3.0282,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-22",
+      "value": 2.2558,
+      "lag_bd": 0,
+      "quality": null,
+      "status": "OK"
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": -2.276,
+    "n_pop": 1257,
+    "theta": 21.49,
+    "theta_off": 10.02,
+    "theta95": 42.23,
+    "colour": "white",
+    "emitter": true
+   },
+   "GBP": {
+    "ccy": "GBP",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [],
+    "signal": "OFF",
+    "persist": 18,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": 7.83,
+    "d_tp": 8.13,
+    "tp_t": 1.9734,
+    "tp_t0": 1.8921,
+    "rny_t": 3.3659,
+    "rny_t0": 3.2876,
+    "fit_t": 5.3394,
+    "fit_t0": 5.1797,
+    "quality_t": "ACM_K3_417m",
+    "quality_t0": "ACM_K3_417m",
+    "d_fit": 15.97,
+    "d_nom": 15.69,
+    "resid": -0.28,
+    "d_2y": 13.71,
+    "d_be": 0.74,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-21",
+      "value": 5.3682,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 4.7108,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-21",
+      "value": 3.3823,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": 0.095,
+    "n_pop": 816,
+    "theta": 23.83,
+    "theta_off": 10.93,
+    "theta95": 43.78,
+    "colour": "white",
+    "emitter": true
+   },
+   "JPY": {
+    "ccy": "JPY",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [],
+    "signal": "OFF",
+    "persist": 8,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-18",
+    "d_rny": 8.69,
+    "d_tp": -14.62,
+    "tp_t": 1.9821,
+    "tp_t0": 2.1283,
+    "rny_t": 0.9349,
+    "rny_t0": 0.848,
+    "fit_t": 2.917,
+    "fit_t0": 2.9763,
+    "quality_t": "ACM_K3_484m",
+    "quality_t0": "ACM_K3_484m",
+    "d_fit": -5.93,
+    "d_nom": -6.82,
+    "resid": -0.89,
+    "d_2y": 6.5,
+    "d_be": 0.73,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-22",
+      "t0": "2026-09-18"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-18"
+     },
+     "be": {
+      "t": "2026-10-22",
+      "t0": "2026-09-18"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-22",
+      "value": 2.922,
+      "lag_bd": 0,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 1.914,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-22",
+      "value": 2.1594,
+      "lag_bd": 0,
+      "quality": null,
+      "status": "OK"
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": 0.082,
+    "n_pop": 1255,
+    "theta": 13.54,
+    "theta_off": 7.01,
+    "theta95": 24.54,
+    "colour": "white",
+    "emitter": true
+   },
+   "AUD": {
+    "ccy": "AUD",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [
+     "CTX_EST",
+     "ACM_FFILL"
+    ],
+    "signal": "OFF",
+    "persist": 8,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": -3.65,
+    "d_tp": 4.91,
+    "tp_t": 1.3172,
+    "tp_t0": 1.2681,
+    "rny_t": 3.9429,
+    "rny_t0": 3.9794,
+    "fit_t": 5.26,
+    "fit_t0": 5.2475,
+    "quality_t": "ACM_K3_381m_FFILL",
+    "quality_t0": "ACM_K3_381m",
+    "d_fit": 1.25,
+    "d_nom": -2.15,
+    "resid": -3.4,
+    "d_2y": -7.51,
+    "d_be": -6.85,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-21",
+      "value": 5.2715,
+      "lag_bd": 1,
+      "quality": "EST_AUD_V2",
+      "status": "OK",
+      "estimate": true
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 4.9279,
+      "lag_bd": 1,
+      "quality": "EST_AUD_V2",
+      "status": "OK",
+      "estimate": true
+     },
+     "be": {
+      "date": "2026-10-21",
+      "value": 2.3405,
+      "lag_bd": 1,
+      "quality": "EST_AUD_V2",
+      "status": "OK",
+      "estimate": true
+     }
+    },
+    "acm_input_asof_t": "2026-10-14",
+    "acm_input_asof_t0": "2026-09-22",
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": -1.392,
+    "n_pop": 1257,
+    "theta": 18.56,
+    "theta_off": 8.13,
+    "theta95": 32.97,
+    "colour": "white",
+    "emitter": true
+   },
+   "NZD": {
+    "ccy": "NZD",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [
+     "SHORT"
+    ],
+    "signal": "OFF",
+    "persist": 8,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": -0.16,
+    "d_tp": 8.23,
+    "tp_t": 1.9845,
+    "tp_t0": 1.9022,
+    "rny_t": 3.0719,
+    "rny_t0": 3.0735,
+    "fit_t": 5.0563,
+    "fit_t0": 4.9757,
+    "quality_t": "ACM_K3_SHORT_SAMPLE_137m",
+    "quality_t0": "ACM_K3_SHORT_SAMPLE_137m",
+    "d_fit": 8.06,
+    "d_nom": 8.0,
+    "resid": -0.06,
+    "d_2y": 6.0,
+    "d_be": -6.7,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-21",
+      "value": 5.03,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 3.93,
+      "lag_bd": 1,
+      "quality": "RBNZ_B2",
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-21",
+      "value": 2.2245,
+      "lag_bd": 1,
+      "quality": "IIB_PROXY_THIN_MARKET",
+      "status": "OK"
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": -0.872,
+    "n_pop": 1253,
+    "theta": 24.44,
+    "theta_off": 9.2,
+    "theta95": 45.79,
+    "colour": "white",
+    "emitter": true
+   },
+   "CAD": {
+    "ccy": "CAD",
+    "t": "2026-10-22",
+    "avail": "OK",
+    "flags": [],
+    "signal": "OFF",
+    "persist": 18,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-21",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": 0.51,
+    "d_tp": 8.54,
+    "tp_t": 1.2496,
+    "tp_t0": 1.1642,
+    "rny_t": 2.5436,
+    "rny_t0": 2.5385,
+    "fit_t": 3.7932,
+    "fit_t0": 3.7027,
+    "quality_t": "ACM_K3_261m",
+    "quality_t0": "ACM_K3_261m",
+    "d_fit": 9.05,
+    "d_nom": 4.0,
+    "resid": -5.05,
+    "d_2y": 7.0,
+    "d_be": -3.0,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": "2026-10-21",
+      "t0": "2026-09-22"
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-21",
+      "value": 4.19,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-10-21",
+      "value": 3.32,
+      "lag_bd": 1,
+      "quality": "BOC_VALET",
+      "status": "OK"
+     },
+     "be": {
+      "date": "2026-10-21",
+      "value": 2.28,
+      "lag_bd": 1,
+      "quality": null,
+      "status": "OK"
+     }
+    },
+    "acm_input_asof_t": "2026-10-21",
+    "acm_input_asof_t0": "2026-09-22",
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": 0.074,
+    "n_pop": 1257,
+    "theta": 18.77,
+    "theta_off": 8.09,
+    "theta95": 35.81,
+    "colour": "white",
+    "emitter": true
+   },
+   "CHF": {
+    "ccy": "CHF",
+    "t": "2026-10-22",
+    "avail": "NO_QUAL",
+    "flags": [
+     "NOWCAST"
+    ],
+    "signal": "NA",
+    "persist": 0,
+    "fx_fail_streak": 0,
+    "t0": "2026-09-22",
+    "acm_asof_t": "2026-10-22",
+    "acm_asof_t0": "2026-09-22",
+    "d_rny": -7.3,
+    "d_tp": 4.2,
+    "tp_t": -0.0671,
+    "tp_t0": -0.1091,
+    "rny_t": 0.5942,
+    "rny_t0": 0.6672,
+    "fit_t": 0.5271,
+    "fit_t0": 0.5581,
+    "quality_t": "ACM_K3_NOWCAST_PARALLEL",
+    "quality_t0": "ACM_K3_465m",
+    "d_fit": -3.1,
+    "d_nom": -3.9,
+    "resid": -0.8,
+    "d_2y": null,
+    "d_be": null,
+    "context_asof": {
+     "nominal": {
+      "t": "2026-10-22",
+      "t0": "2026-09-22"
+     },
+     "y2": {
+      "t": null,
+      "t0": "2026-09-22"
+     },
+     "be": {
+      "t": null,
+      "t0": null
+     }
+    },
+    "context_last": {
+     "nominal": {
+      "date": "2026-10-22",
+      "value": 0.525,
+      "lag_bd": 0,
+      "quality": "SNB_10Y_DAILY_RSS",
+      "status": "OK"
+     },
+     "y2": {
+      "date": "2026-09-30",
+      "value": 0.287,
+      "lag_bd": 16,
+      "quality": "SNB_CURVE_MONTHLY",
+      "status": "STALE"
+     },
+     "be": {
+      "status": "NONE",
+      "quality": "NO_MARKET",
+      "n_obs": 0
+     }
+    },
+    "fx_asof_t": "2026-10-22",
+    "fx_asof_t0": "2026-09-22",
+    "d_fx": null,
+    "n_pop": 1242,
+    "theta": 17.32,
+    "theta_off": 5.3,
+    "theta95": 37.06,
+    "colour": "white",
+    "emitter": false
+   }
+  },
+  "events": [],
+  "baseline": false
+ },
+ "engine_sha256": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
+ "acm_engine_sha256": "7034ee9a2b5ac065ff51fe9044c1e752b2a4650dc6ab3bab29105299a67b435b",
+ "snapshot_sha256": "c70fe09746371f30bd94c68a1ca00d353a84b7c7568b66fe2e91134cbf6a00e6"
+}
