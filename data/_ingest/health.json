@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-22T13:18:37.102003Z",
+ "generated_utc": "2026-10-22T15:48:31.044742Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -20,93 +20,6 @@
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
  "needs_repair": true,
  "issues": [
-  {
-   "file": "SOFR.csv",
-   "state": "STALE",
-   "have_max": "2026-10-19",
-   "expected_obs": "2026-10-21",
-   "calendar": "US_REPO",
-   "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": "EJECUTADA_CON_FALLO",
-   "flags": [
-    "CAUSA_EJECUTADA_CON_FALLO",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 3,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "FLOOR_USD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
-   "calendar": "US",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "event+daily",
-   "slow_fallback": false,
-   "announced_max": "2026-10-21"
-  },
-  {
-   "file": "FLOOR_EUR.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-22",
-   "expected_obs": "2026-10-20",
-   "calendar": "TARGET",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 0,
-   "publication_frequency": "event+daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "FLOOR_CAD.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-20",
-   "calendar": "CA",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "event+daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-10-15",
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 5,
-   "publication_frequency": "event",
-   "slow_fallback": false
-  },
   {
    "file": "US_BILL_3M.csv",
    "state": "OVERDUE",
@@ -197,6 +110,23 @@
    "slow_fallback": false
   },
   {
+   "file": "RY_G8_AUD.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-14",
+   "expected_obs": "2026-10-14",
+   "calendar": "AU",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 6,
+   "publication_frequency": "weekly:FRI",
+   "slow_fallback": false
+  },
+  {
    "file": "AUD_NOM_2Y.csv",
    "state": "CURRENT",
    "have_max": "2026-10-14",
@@ -224,10 +154,28 @@
    "cause": "EJECUTADA_CON_FALLO",
    "flags": [
     "CAUSA_EJECUTADA_CON_FALLO",
-    "RULE_PROVISIONAL"
+    "RULE_PROVISIONAL",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "LATE",
+   "status": "ERROR",
    "age_business_days": 3,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "RY_G8_CAD.csv",
+   "state": "PENDING_TIME_UNKNOWN",
+   "have_max": "2026-10-20",
+   "expected_obs": "2026-10-20",
+   "calendar": "CA",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -344,6 +292,24 @@
    "slow_fallback": false
   },
   {
+   "file": "RY_G8_NZD.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-20",
+   "expected_obs": "2026-10-20",
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
    "file": "MFV_G8_state.json",
    "state": "NO_OBS_DATE",
    "have_max": "2026-10-20",
@@ -399,19 +365,16 @@
  "feeds": [
   {
    "file": "SOFR.csv",
-   "state": "STALE",
-   "have_max": "2026-10-19",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-21",
    "calendar": "US_REPO",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": "EJECUTADA_CON_FALLO",
-   "flags": [
-    "CAUSA_EJECUTADA_CON_FALLO",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 3,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -462,16 +425,16 @@
   },
   {
    "file": "CORRA.csv",
-   "state": "DUE",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
+   "expected_obs": "2026-10-21",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -493,20 +456,18 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-21",
+   "have_max": "2026-10-22",
    "expected_obs": "2026-10-20",
    "calendar": "US",
    "basis": "PROVISIONAL",
-   "reason": null,
+   "reason": "Última fecha efectiva vigente. Las fechas futuras publicadas por FRED se conservan como anuncios y no cuentan como observaciones actuales.",
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false,
-   "announced_max": "2026-10-21"
+   "announced_max": "2026-10-22"
   },
   {
    "file": "FLOOR_EUR.csv",
@@ -517,35 +478,31 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
   {
    "file": "FLOOR_CAD.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-20",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
   {
    "file": "GB_POLICY.csv",
    "state": "VERIFIED_POLICY",
-   "have_max": "2026-10-20",
+   "have_max": "2026-10-21",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
@@ -553,7 +510,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 2,
+   "age_business_days": 1,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/2026/september-2026",
@@ -563,7 +520,7 @@
   {
    "file": "JP_POLICY.csv",
    "state": "VERIFIED_POLICY",
-   "have_max": "2026-10-13",
+   "have_max": "2026-10-20",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
@@ -571,7 +528,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 7,
+   "age_business_days": 2,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/k260918a.pdf",
@@ -581,7 +538,7 @@
   {
    "file": "CH_POLICY.csv",
    "state": "VERIFIED_POLICY",
-   "have_max": "2026-10-13",
+   "have_max": "2026-10-20",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
@@ -589,7 +546,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 7,
+   "age_business_days": 2,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.snb.ch/en/publications/communication/press-releases-restricted/pre_20260924",
@@ -616,20 +573,21 @@
   },
   {
    "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-10-15",
+   "state": "VERIFIED_POLICY",
+   "have_max": "2026-10-16",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
+   "reason": "Tipo vigente contrastado con decisión oficial; verificación limitada a siete días y a la próxima reunión. No es una nueva observación diaria.",
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 5,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 4,
    "publication_frequency": "event",
-   "slow_fallback": false
+   "slow_fallback": false,
+   "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/09/ocr-increased-by-25-basis-points-to-2-75",
+   "evidence_expires_utc": "2026-10-24T22:56:21+00:00",
+   "next_decision": "2026-10-28"
   },
   {
    "file": "US_BILL_3M.csv",
@@ -860,80 +818,94 @@
   },
   {
    "file": "JPY_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
+   "expected_obs": "2026-10-21",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "JPY_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
+   "expected_obs": "2026-10-21",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "JPY_BILL_3Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
+   "expected_obs": "2026-10-21",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "JPY_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
+   "expected_obs": "2026-10-21",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "JPY_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-21",
-   "expected_obs": "2026-10-20",
+   "expected_obs": "2026-10-21",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "JPY_BILL_20Y.csv",
+   "state": "PENDING_TIME_UNKNOWN",
+   "have_max": "2026-10-21",
+   "expected_obs": "2026-10-21",
+   "calendar": "JP",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "PENDING",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "CAD_BILL_3M.csv",
    "state": "CURRENT",
    "have_max": "2026-10-21",
    "expected_obs": "2026-10-20",
-   "calendar": "JP",
+   "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
@@ -943,44 +915,30 @@
    "slow_fallback": false
   },
   {
-   "file": "CAD_BILL_3M.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-20",
-   "expected_obs": "2026-10-20",
-   "calendar": "CA",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "PENDING",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
    "file": "CAD_BILL_6M.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-20",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "CAD_BILL_1Y.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-20",
+   "state": "CURRENT",
+   "have_max": "2026-10-21",
    "expected_obs": "2026-10-20",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1052,8 +1010,10 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
    "age_business_days": 6,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1086,9 +1046,10 @@
    "cause": "EJECUTADA_CON_FALLO",
    "flags": [
     "CAUSA_EJECUTADA_CON_FALLO",
-    "RULE_PROVISIONAL"
+    "RULE_PROVISIONAL",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "LATE",
+   "status": "ERROR",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1117,8 +1078,10 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [],
-   "status": "PENDING",
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1140,15 +1103,15 @@
   },
   {
    "file": "RY_G8_JPY.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-10-22",
-   "expected_obs": "2026-10-21",
+   "expected_obs": "2026-10-22",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1756,9 +1719,10 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN"
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1766,30 +1730,30 @@
   {
    "file": "USD_FACTOR.json",
    "state": "CURRENT",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-21",
+   "have_max": "2026-10-22",
+   "expected_obs": "2026-10-22",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "S01B.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-10-21",
+   "have_max": "2026-10-22",
    "expected_obs": "2026-10-21",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
-   "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
+   "reason": "Vista PROVISIONAL de la sesión 2026-10-22; el cierre definitivo llega con su pasada programada. Último cierre 2026-10-21 al día.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "PENDING",
+   "age_business_days": 0,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1934,8 +1898,8 @@
   {
    "file": "usd_factor/ecb_rates.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-21",
+   "have_max": "2026-10-22",
+   "expected_obs": "2026-10-22",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1948,8 +1912,8 @@
   {
    "file": "usd_factor/canonical.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-21",
+   "have_max": "2026-10-22",
+   "expected_obs": "2026-10-22",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2018,14 +1982,14 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-22T13:18:36Z",
+   "have_max": "2026-10-22T15:48:30Z",
    "flags": []
   },
   {
    "file": "BOOK_RISK.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-21",
+   "have_max": "2026-10-22",
    "flags": []
   },
   {
