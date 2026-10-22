@@ -1,28 +1,29 @@
 {
  "errors": [],
  "executor": "actions",
- "failing_since_utc": "2026-10-21T21:31:30Z",
+ "failing_since_utc": null,
  "files": {
   "GB_POLICY.csv": {
    "backfill": 0,
-   "detail": "la descarga termina en 20261012 y lo publicado en 20261020",
-   "download_id": "20261021T213130Z_actions_fetch-bis-policy-gb_764b:dd4720b4432e",
-   "dropped_by_source": 0,
+   "detail": "",
+   "download_id": "20261022T000548Z_actions_fetch-bis-policy-gb_35c5:1ef13db1b301",
+   "dropped_by_source": 1,
    "file": "GB_POLICY.csv",
    "held": [],
    "new": 0,
    "repo_max": "20261020",
    "revised": [],
-   "src_max": "20261012",
-   "status": "REGRESSION_BLOCKED"
+   "src_max": "20261020",
+   "status": "PUBLISH",
+   "written": true
   }
  },
- "finished_utc": "2026-10-21T21:31:40Z",
- "gh_run_id": "39679322429",
+ "finished_utc": "2026-10-22T00:05:52Z",
+ "gh_run_id": "39697423412",
  "job": "fetch_bis_policy_GB",
- "last_ok_utc": "2026-10-21T20:47:58Z",
+ "last_ok_utc": "2026-10-22T00:05:52Z",
  "not_before": {},
- "rc": 1,
+ "rc": 0,
  "requests": [
   {
    "attempts": [
@@ -30,12 +31,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 6.87,
+     "secs": 2.97,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Wed, 21 Oct 2026 21:31:30 GMT",
+   "date_header": "Thu, 22 Oct 2026 00:05:48 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
@@ -49,32 +50,21 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "redirects": [
-      {
-       "status": 302,
-       "to": "https://www.bankofengland.co.uk/boeapps/database/ErrorPage.asp?ei=1809&ui=26253232854"
-      }
-     ],
-     "secs": 2.79,
+     "secs": 1.0,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Wed, 21 Oct 2026 21:31:40 GMT",
+   "date_header": "Thu, 22 Oct 2026 00:05:52 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
-   "redirects": [
-    {
-     "status": 302,
-     "to": "https://www.bankofengland.co.uk/boeapps/database/ErrorPage.asp?ei=1809&ui=26253232854"
-    }
-   ],
+   "redirects": [],
    "status": 200,
-   "url": "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=22%2FOct%2F2021&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
+   "url": "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=23%2FOct%2F2021&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
   }
  ],
- "run_id": "20261021T213130Z_actions_fetch-bis-policy-gb_764b",
- "started_utc": "2026-10-21T21:31:30Z",
+ "run_id": "20261022T000548Z_actions_fetch-bis-policy-gb_35c5",
+ "started_utc": "2026-10-22T00:05:48Z",
  "step": "bis_gb"
 }
