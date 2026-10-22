@@ -8,6 +8,10 @@
    "sent_ts": 1792627944.915496,
    "text": "Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
   },
+  "actions:fetch_bis_ocr:no_success": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions fetch_bis_ocr: sin descarga correcta desde la última correcta, 2026-10-18T11:36:08Z; límite 96 h. El job se ejecuta pero falla o el proveedor le hace esperar una y otra vez."
+  },
   "actions:fetch_bis_policy_AU:degraded": {
    "sent_ts": 1792614996.848653,
    "text": "Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
@@ -23,10 +27,6 @@
   "actions:fetch_floor_spreads:fail": {
    "sent_ts": 1792601211.4256084,
    "text": "Actions fetch_floor_spreads: el script terminó con error tras obtener respuesta (p. ej. formato inesperado al procesarla). Se conserva lo publicado; el dato no se actualizó."
-  },
-  "actions:fetch_jpy_real:fail": {
-   "sent_ts": 1792627944.915496,
-   "text": "Actions fetch_jpy_real: descarga fallida — FAIL_TRANSIENT presupuesto insuficiente para el siguiente reintento (HTTP 502) (https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261013.csv). Se conserva lo publicado; el dato no se actualizó."
   },
   "actions:fetch_sofr:fail": {
    "sent_ts": 1792601211.4256084,
@@ -44,33 +44,49 @@
    "sent_ts": 1792618421.722896,
    "text": "Actions daily: el paso bis_ocr terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
   },
+  "actions:job:daily:step:floors": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions daily: el paso floors terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+  },
+  "actions:job:daily:step:jpy_real": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions daily: el paso jpy_real terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+  },
+  "actions:job:daily:step:real_yields": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions daily: el paso real_yields terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+  },
+  "actions:job:daily:step:us_bills": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions daily: el paso us_bills terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+  },
   "actions:job:intraday:step:acm_g8": {
-   "sent_ts": 1792615877.463818,
-   "text": "Actions intraday: el paso acm_g8 terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions intraday: el paso acm_g8 terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
   },
   "actions:job:intraday:step:bis_ocr": {
    "sent_ts": 1792627944.915496,
    "text": "Actions intraday: el paso bis_ocr terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
   },
   "actions:job:intraday:step:floors": {
-   "sent_ts": 1792618421.722896,
-   "text": "Actions intraday: el paso floors terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions intraday: el paso floors terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
   },
   "actions:job:intraday:step:jpy_real": {
    "sent_ts": 1792627944.915496,
    "text": "Actions intraday: el paso jpy_real terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
-  },
-  "actions:job:intraday:step:real_yields": {
-   "sent_ts": 1792618421.722896,
-   "text": "Actions intraday: el paso real_yields terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:job:intraday:step:sofr": {
    "sent_ts": 1792627944.915496,
    "text": "Actions intraday: el paso sofr terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
   },
   "actions:job:intraday:step:us_bills": {
-   "sent_ts": 1792618421.722896,
-   "text": "Actions intraday: el paso us_bills terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions intraday: el paso us_bills terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido. — sigue abierta: el paso no ha vuelto a terminar correctamente"
+  },
+  "actions:job:metals:step:metals_fairvalue": {
+   "sent_ts": 1792683171.8248873,
+   "text": "Actions metals: el paso metals_fairvalue terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   }
  },
  "pending": []
