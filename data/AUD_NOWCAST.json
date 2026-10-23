@@ -1,14 +1,14 @@
 {
  "model": "EST_AUD_V2",
- "generated_utc": "2026-10-23T01:30:02Z",
+ "generated_utc": "2026-10-23T21:35:49Z",
  "config": "sources/nowcast_aud.json",
  "status": "OK",
  "warnings": [],
  "targets": {
   "NOM2Y": {
    "source": "RBA F2 FCMYGBAG2D",
-   "base_date": "2026-10-14",
-   "base_value": 4.919,
+   "base_date": "2026-10-21",
+   "base_value": 4.917,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -18,18 +18,18 @@
     {
      "name": "US_2Y",
      "lag_bd": 1,
-     "last": "2026-10-21"
+     "last": "2026-10-22"
     }
    ],
    "beta": {
     "AU_BILL_6M": 0.8949,
-    "US_2Y": 0.3015
+    "US_2Y": 0.298
    },
-   "r2": 0.454,
+   "r2": 0.45,
    "n_obs": 756,
    "window": [
-    "2023-10-16",
-    "2026-10-14"
+    "2023-10-23",
+    "2026-10-21"
    ],
    "err_bp_by_h": {
     "1": 3.6,
@@ -40,7 +40,7 @@
     "6": 7.8,
     "7": 8.5,
     "8": 9.0,
-    "9": 9.5,
+    "9": 9.6,
     "10": 10.1
    },
    "drivers_reach": "2026-10-22",
@@ -48,8 +48,8 @@
   },
   "NOM10": {
    "source": "RBA F2 FCMYGBAG10D (via real_yields_g8.py)",
-   "base_date": "2026-10-14",
-   "base_value": 5.314,
+   "base_date": "2026-10-21",
+   "base_value": 5.277,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -59,18 +59,18 @@
     {
      "name": "US_10Y",
      "lag_bd": 1,
-     "last": "2026-10-21"
+     "last": "2026-10-22"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.5683,
-    "US_10Y": 0.5354
+    "AU_BILL_6M": 0.5697,
+    "US_10Y": 0.5316
    },
-   "r2": 0.459,
+   "r2": 0.455,
    "n_obs": 756,
    "window": [
-    "2023-10-16",
-    "2026-10-14"
+    "2023-10-23",
+    "2026-10-21"
    ],
    "err_bp_by_h": {
     "1": 3.8,
@@ -89,8 +89,8 @@
   },
   "BE10": {
    "source": "RBA F2 (10Y nominal − indexado FCMYGBAGID, via real_yields_g8.py)",
-   "base_date": "2026-10-14",
-   "base_value": 2.331,
+   "base_date": "2026-10-21",
+   "base_value": 2.343,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -100,18 +100,18 @@
     {
      "name": "US_BE10",
      "lag_bd": 1,
-     "last": "2026-10-21"
+     "last": "2026-10-22"
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.133,
-    "US_BE10": 0.4071
+    "AU_BILL_6M": 0.1333,
+    "US_BE10": 0.4081
    },
    "r2": 0.289,
    "n_obs": 756,
    "window": [
-    "2023-10-16",
-    "2026-10-14"
+    "2023-10-23",
+    "2026-10-21"
    ],
    "err_bp_by_h": {
     "1": 1.6,
@@ -129,5 +129,5 @@
    "last_estimate": "2026-10-22"
   }
  },
- "rows_estimated_now": 6
+ "rows_estimated_now": 1
 }
