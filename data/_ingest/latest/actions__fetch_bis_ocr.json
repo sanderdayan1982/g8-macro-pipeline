@@ -1,28 +1,33 @@
 {
- "errors": [],
+ "errors": [
+  {
+   "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
+   "kind": "DEGRADED"
+  }
+ ],
  "executor": "actions",
- "failing_since_utc": "2026-10-23T00:03:51Z",
+ "failing_since_utc": null,
  "files": {
   "NZD_OCR.csv": {
    "backfill": 0,
-   "detail": "la descarga termina en 20250711 y lo publicado en 20261016",
-   "download_id": "20261023T000351Z_actions_fetch-bis-ocr_6ac4:434257104318",
+   "detail": "",
+   "download_id": "20261023T000351Z_actions_fetch-bis-ocr_6ac4:e016d5bb8dcd",
    "dropped_by_source": 0,
    "file": "NZD_OCR.csv",
    "held": [],
    "new": 0,
    "repo_max": "20261016",
    "revised": [],
-   "src_max": "20250711",
-   "status": "REGRESSION_BLOCKED"
+   "src_max": "20261016",
+   "status": "NOOP"
   }
  },
  "finished_utc": "2026-10-23T00:03:59Z",
  "gh_run_id": "39875716804",
  "job": "fetch_bis_ocr",
- "last_ok_utc": "2026-10-22T21:34:11Z",
+ "last_ok_utc": "2026-10-23T00:03:59Z",
  "not_before": {},
- "rc": 1,
+ "rc": 0,
  "requests": [
   {
    "attempts": [

@@ -1,13 +1,7 @@
 {
  "deadline_utc": "2026-10-23T00:31:48Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "bis_ocr",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "daily",
  "reserve_s": "700",
  "restored": [],
@@ -83,17 +77,12 @@
    "allowed_s": 240.0,
    "cap_s": 240.0,
    "cmd": "python scripts/fetch_bis_ocr.py",
-   "kept_valid_outputs": [
-    "_ingest/evidence/NZD_OCR.csv.jsonl",
-    "_ingest/latest/actions__fetch_bis_ocr.json",
-    "_ingest/runs/actions/fetch_bis_ocr/2026-10.jsonl"
-   ],
    "name": "bis_ocr",
    "phase": "fetch",
-   "rc": 1,
+   "rc": 0,
    "secs": 8.8,
    "started_utc": "2026-10-23T00:03:50Z",
-   "status": "FAILED"
+   "status": "OK"
   },
   {
    "allowed_s": 240.0,

@@ -188,17 +188,20 @@ def main() -> int:
         print(f"ERROR: NZD OCR fetch failed: {exc}", file=sys.stderr)
         rows, bis_rc = None, 1
 
-    if rows is None:
+    published = _pd.read_published(os.path.join(_ctx.root, 'data', OUTPUT_PATH.name))
+    if rows is None or (published and rows[-1][0] < published[-1][0]):
         try:
             response = _ctx.requests(provider='bis', max_attempts=1).get(_bulk.URL, timeout=60)
             backup = _bulk.parse(response.content, 'NZ', date_from.date().isoformat(), today.date().isoformat())
-            published = _pd.read_published(os.path.join(_ctx.root, 'data', OUTPUT_PATH.name))
             overlap = _bulk.verify_overlap(backup, published)
+            if published and backup[-1][0] < published[-1][0]:
+                backup = backup + [r for r in published if r[0] > backup[-1][0]]
             rows = backup
             _ctx.degraded('BIS API failed; official WS_CBPOL bulk fallback verified on %d observations' % overlap)
             print('BIS bulk fallback: %d observations; latest %s' % (len(rows), rows[-1][0]))
         except Exception as exc:
-            _ctx.fail('BIS bulk fallback unavailable: %s' % exc)
+            if rows is None:
+                _ctx.fail('BIS bulk fallback unavailable: %s' % exc)
 
     if rows is None:
         # Acta P-1: BIS caído → último CSV publicado + decisiones verificadas. El fallo sigue en rc=1.

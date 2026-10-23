@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-23T00:24:41.660501Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-10-23T00:45:46.735741Z",
+ "status": "CURRENT",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,26 +18,8 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-10-16",
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 5,
-   "publication_frequency": "event",
-   "slow_fallback": false
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 0,
  "feeds": [
   {
@@ -250,20 +232,21 @@
   },
   {
    "file": "NZD_OCR.csv",
-   "state": "UNKNOWN_SCHEDULE",
+   "state": "VERIFIED_POLICY",
    "have_max": "2026-10-16",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
+   "reason": "Tipo vigente contrastado con decisión oficial; verificación limitada a siete días y a la próxima reunión. No es una nueva observación diaria.",
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 5,
    "publication_frequency": "event",
-   "slow_fallback": false
+   "slow_fallback": false,
+   "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/09/ocr-increased-by-25-basis-points-to-2-75",
+   "evidence_expires_utc": "2026-10-24T22:56:21+00:00",
+   "next_decision": "2026-10-28"
   },
   {
    "file": "US_BILL_3M.csv",
