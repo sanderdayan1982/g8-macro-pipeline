@@ -45,6 +45,10 @@ Dashboard de **composición macro** del Sistema Institucional G8 de Sander: atri
 7. En **§07**, comprueba cuánto riesgo común acumularía una nueva posición. `SIN LIBRO` y `SIN CANDIDATO` indican ausencia de esos inputs; no un riesgo calculado de cero.
 8. Contrasta la tesis con la suite de TradingView y aplica allí las reglas de ejecución y riesgo del operador.
 
+### Conexión con Mesa Macro y TradingView
+
+[Mesa Macro FX](https://github.com/sanderdayan1982/mesa-macro-fx) aporta banco central, Tesoro, transmisión bancaria y precio del dinero por divisa. Macro Pipeline aporta composición de rendimientos, modelos, opciones y riesgo de factor; la suite de TradingView mantiene el embudo operativo. La conexión es un contraste de análisis por mecanismo y fecha: no una nueva suma automática de votos. Antes de comparar spreads, confirma el ancla: por ejemplo, Pipeline usa CORRA menos target BoC, mientras Mesa utiliza también CORRA menos depósito como referencia principal. Las escalas, ventanas y estados de ambos motores no son intercambiables.
+
 Las condiciones de cálculo viven en los motores y contratos del repositorio. Las actas documentan las decisiones; no deben utilizarse para atribuir a un bloque actual una función retirada.
 
 ## Frecuencias, calidad y límites de interpretación
@@ -85,7 +89,7 @@ Horarios **UTC** del código de workflows revisado el 23-oct-2026. En **Africa/M
 | `validate.yml` | Push / PR | Validación de humo del repositorio. |
 | `acm_validate.yml`, `ry_validate.yml` | Manual | Validaciones de modelos/series correspondientes. |
 
-El informe de vigilancia tiene un límite operativo de 56 horas. Fuentes sin calendario confirmado se muestran UNKNOWN; las estimaciones no sustituyen publicaciones oficiales. El mantenimiento tiene compuertas de alcance y pruebas; no garantiza que una fuente externa publique ni autoriza cambios de metodología.
+La cabecera de Salud considera el informe sin verificar cuando supera 80 horas. Los controles internos de vigilancia y cada fuente conservan sus propias caducidades; ese límite de la cabecera no sustituye los presupuestos por feed. Fuentes sin calendario confirmado se muestran UNKNOWN; las estimaciones no sustituyen publicaciones oficiales. El mantenimiento tiene compuertas de alcance y pruebas; no garantiza que una fuente externa publique ni autoriza cambios de metodología.
 
 ## Brief y alertas Telegram
 
