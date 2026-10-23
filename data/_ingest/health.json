@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-23T23:23:51.085895Z",
- "status": "CURRENT",
+ "generated_utc": "2026-10-23T23:58:21.144686Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -20,7 +20,7 @@
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
  "needs_repair": false,
  "issues": [],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -131,14 +131,14 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-10-23",
+   "have_max": "2026-10-24",
    "expected_obs": "2026-10-22",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
+   "reason": "Fecha futura: no es una observación corriente",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "UNKNOWN",
    "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false
@@ -1832,7 +1832,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-23T23:23:50Z",
+   "have_max": "2026-10-23T23:50:27Z",
    "flags": []
   },
   {
