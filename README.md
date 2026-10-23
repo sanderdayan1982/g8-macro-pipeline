@@ -1,131 +1,124 @@
 # G8 Macro Pipeline
 
-Pipeline de datos y dashboard de **composición macro** para el Sistema Institucional G8
-(MMT/Mosler, timeframe diario, operador único). Repo `sanderdayan1982/g8-macro-pipeline` ·
-front-end en `docs/` publicado por Netlify sin build en **g8-institutional.netlify.app**.
+Dashboard de **composición macro** del Sistema Institucional G8 de Sander: atribución del tramo largo, fontanería monetaria doméstica, metales, opciones y exposición al factor USD.
 
-> Doctrina: el dashboard **no es un paso del embudo**. El embudo 7+1 (RISK-G8 → XCCY/PSI →
-> Curva/RTF10 → POL → IYDT → POS → FFVA → cockpit) vive en TradingView. Aquí se consulta el
-> contexto de composición (long-end, fontanería, metales, walls, COT) al formar tesis de
-> long-end y en la revisión semanal. Ninguna sección es una señal de entrada.
+- **Dashboard:** [g8-institutional.netlify.app](https://g8-institutional.netlify.app/)
+- **Interfaz actual:** `docs/index.html`, **v2.7.1**.
+- **Documentación revisada:** 23-oct-2026. La numeración de esta página sigue los títulos visibles del dashboard, no los identificadores históricos de las actas.
+- **Universo:** USD, EUR, GBP, JPY, AUD, NZD, CAD y CHF; oro y plata en sus bloques propios.
 
-## Prioridad de fuentes
+> **Función del dashboard:** aportar contexto de composición para formar y revisar la tesis macro. **No es un paso adicional del embudo ni una señal de entrada.** El embudo operativo vive en TradingView: RISK-G8 → XCCY/PSI → Curva/RTF10 → POL → IYDT → POS → FFVA → cockpit. Los walls aportan contexto/permiso (Gate 0), nunca el disparador de ejecución.
 
-Diario primero, semanal como segunda opción y mensual solo como último recurso documentado. Consultar diariamente una serie mensual no la convierte en diaria. Mensual es el máximo permitido. Fuentes trimestrales o más lentas quedan excluidas, incluso como respaldo. Si falta una alternativa equivalente admisible, se muestra NO DISPONIBLE. La aplicación del modelo ACM es diaria; su muestra de estimación mensual no es la frecuencia de publicación. Se corrige el registro de ACM y se aplica un límite operativo de cuatro días hábiles (el calendario de publicación puede detectar retrasos antes).
+## Mapa actual de la pantalla
 
-## Fiabilidad operativa (2026-10-04)
+| Sección visible | Qué contiene | Fuente o motor principal |
+|---|---|---|
+| **00 · Brief** | Lectura resumida, fechas por capa, gates, libro G8, diferenciales nominales y reales frente a USD, extremos y walls. Comparte la lectura generada para Telegram. | `data/alerts/brief.json` · `scripts/dashboard_alerts.py` |
+| **01 · Long-End Attribution Matrix G8** | Dos descomposiciones: NOM = REAL + BE; Y10 = RNY + TP. Incluye lectura de 22 sesiones **§01-b**, CTF y persistencia, con contexto y calidad por pata. | `ACM_G8_*.csv`, `RY_G8_*.csv`, `S01B.json` · `acm_g8.py`, `real_yields_g8.py`, `s01b.py` |
+| **02 · Money Market Floor Spreads / tipos oficiales G8** | Diferencia RFR menos suelo o referencia administrada; selector por divisa. Incluye tipo oficial, último cambio y próxima reunión. | CSV de RFR, `FLOOR_*.csv`, `*_POLICY.csv`, `NZD_OCR.csv` y calendario/decisiones oficiales |
+| **03 · Term Premium ACM 10Y G8** | Serie temporal de la prima por plazo a 10 años; selector de las ocho divisas y avisos de calidad del ajuste. | `ACM_G8_*.csv` · `scripts/acm_g8.py` |
+| **04 · Gold Fair Value / MDP** | Valor de referencia variable y residual del oro bajo el modelo Kalman TVP; drivers, validación y cruce con posicionamiento. | `MFV_G8_XAU.csv`, `MFV_G8_state.json` · `scripts/metals_fairvalue_g8.py` |
+| **05 · Silver Fair Value / MDP** | Modelo de plata con canal monetario y, si la validación lo admite, canal industrial de cobre depurado del oro. | `MFV_G8_XAG.csv`, `MFV_G8_state.json` · `scripts/metals_fairvalue_g8.py` |
+| **06 · Options Surface / CME FX Walls** | Settlement y open interest por strike de la cadena frontal; convención de cotización del operador y clasificación Gate 0. | `OPTIONS_SURFACE.json`, `options/canonical/` · colector CME y `build_options_summary.py` |
+| **07 · Factor USD / residuales / libro** | Factor común, betas, residuales, dispersión, matriz de cruces, riesgo del libro y PRE-TRADE. Contexto, sin voto. | `USD_FACTOR.json`, `BOOK_RISK.json` · `usd_factor.py`, `book_risk.py` |
+| **Salud · barra superior** | Fecha observada, publicación esperada, disponibilidad e incidencias de las fuentes. | `data/_ingest/health.json` · `scripts/health_monitor.py`, `docs/js/health.js` |
 
-Vigilancia de publicaciones un día sí y un día no (ancla 4-oct-2026), a las 18:13 de Malabo en `data/_ingest/health.json`, visible en el dashboard con fecha de observación, publicación esperada e incidencias. Las fuentes sin calendario confirmado figuran como UNKNOWN; las estimaciones no sustituyen al dato oficial. Se mantienen los límites de frescura del registro.
+**Navegación:** teclas `0`–`7` para los bloques y `s` para Salud. El botón **↻ datos** borra la caché local de datos y recarga; no obliga a la fuente original a publicar una observación nueva.
 
-Recogidas adicionales gratuitas: Asia 00:23/03:17, Europa 13:17, América 15:47 y cierre 23:17 UTC laborables, además del proceso diario. GitHub puede retrasar los cron. El cierre CTF conserva la sesión correcta cuando el proceso termina después de medianoche.
+### Cambios de organización ya aplicados
 
-El mantenimiento se evalúa en los mismos días alternos, a las 18:17 de Malabo: revisión preventiva o reparación ante incidencias. No se activa automáticamente en los días de descanso. El informe de vigilancia caduca a las 56 horas (48 horas de intervalo y 8 de margen operativo). Prueba los cambios sin credenciales de escritura y los clasifica desde una copia confiable de la compuerta. Solo integra reparaciones permitidas con pruebas; cambios de modelo, calendarios o definiciones requieren revisión. Las alternativas deben aportar evidencia oficial, unidades, fechas y comparación de al menos 20 observaciones equivalentes.
+- Tipos oficiales quedó integrado en **§02**; el impulso de política pertenece a **6-POL-G8** en TradingView.
+- El antiguo Data Quality Monitor independiente se retiró: hay un único monitor de **Salud** en la cabecera.
+- COT ya no tiene una sección propia en la web: su dueño operativo es **0-POS-G8**. `data/pos_g8_cot.json` permanece como insumo del brief y del cruce MDP × COT de metales.
+- FFVA fue retirado del pipeline del dashboard. Su dueño operativo es **9-FFVA** en TradingView.
+- El antiguo XCCY G8 Command Center quedó cancelado. El código legado no define el XCCY operativo de la suite.
+- Algunas actas y comentarios conservan la numeración anterior: metales §06/§07, walls §08 y factor USD §10 corresponden hoy a **§04/§05, §06 y §07**, respectivamente. No son bloques adicionales.
 
-Persisten dependencias del Mac para fuentes bloqueadas en Actions y entradas manuales. Este control detecta y comunica problemas; no garantiza publicaciones de terceros ni completa automáticamente calendarios desconocidos. Véase [acta de auditoría y cambios](docs/actas/ACTA_RELIABILITY_20261004.md).
+## Lectura operativa y relación con la suite
 
-## Estado (2026-09-13, auditoría institucional)
+1. Comprueba **Salud** y las fechas de las capas que vas a utilizar. La fecha de actualización del sitio no sustituye a la fecha de observación de cada serie.
+2. Usa **§00** para localizar qué merece revisión; abre el bloque de origen antes de construir una explicación detallada.
+3. En **§01/§03**, separa expectativas de tipos, prima por plazo, rendimiento real y breakeven. No sumes las dos descomposiciones entre sí: son lecturas distintas del mismo nominal.
+4. En **§02**, interpreta la presión doméstica respecto al ancla de cada moneda. El contrato fija AMPLE ≤ 2 pb, TIGHT > 2 y ≤ 10 pb, PRESSURE > 10 pb.
+5. En **§04/§05**, distingue precio, referencia del modelo y residual MDP. El valor del modelo no es una orden ni una promesa de convergencia.
+6. En **§06**, verifica sesión, vencimiento, cotización e integridad de la cadena antes de interpretar un wall. El OI de CME no representa todo el mercado OTC de FX.
+7. En **§07**, comprueba cuánto riesgo común acumularía una nueva posición. `SIN LIBRO` y `SIN CANDIDATO` indican ausencia de esos inputs; no un riesgo calculado de cero.
+8. Contrasta la tesis con la suite de TradingView y aplica allí las reglas de ejecución y riesgo del operador.
 
-| Componente | Estado |
+Las condiciones de cálculo viven en los motores y contratos del repositorio. Las actas documentan las decisiones; no deben utilizarse para atribuir a un bloque actual una función retirada.
+
+## Frecuencias, calidad y límites de interpretación
+
+**Prioridad:** diario, después semanal y mensual únicamente como último recurso documentado. Fuentes trimestrales o más lentas quedan excluidas, incluso como respaldo. Consultar diariamente una serie mensual no la convierte en diaria.
+
+- **ACM:** aplicación diaria del modelo; su muestra de estimación mensual no es la frecuencia de publicación del resultado. El número de factores y la calidad se declaran en cada archivo.
+- **NZD ACM:** muestra corta documentada (`ACM_K3_SHORT_SAMPLE_*`). Forma, z y variaciones son la lectura prevista; nivel de baja confianza. Respaldo sintético AUD solo cuando no hay un ajuste real fresco admisible.
+- **CHF ACM:** entre publicaciones de la curva SNB puede usar desplazamiento paralelo anclado al 10Y diario (`ACM_K3_NOWCAST_PARALLEL`). Es NOWCAST, no una nueva curva oficial completa.
+- **AUD:** las patas oficiales de la RBA pueden publicar semanalmente. Cuando se usa `EST_AUD_V1`, la interfaz lo marca como estimación; la estimación no sustituye la identidad del dato oficial.
+- **BE/REAL:** las antiguas constantes trimestrales CHF/NZD están desactivadas. CHF queda sin esas patas si no hay fuente admisible. NZD utiliza sus IIB; si faltan o caducan, muestra NO DISPONIBLE. CPI observada no se presenta como breakeven.
+- **Metales:** el modelo principal es semanal. Hay procesos de actualización y una comparación diaria SHADOW; una ejecución del workflow no cambia por sí sola la frecuencia del modelo.
+- **Opciones:** settlement y OI deben corresponder a la misma sesión T; OI llega T+1. USD/JPY, USD/CAD y USD/CHF invierten el strike y permutan call/put respecto al contrato CME.
+- **SHADOW:** una etiqueta de estimación o ensayo no autoriza a mezclar esa lectura con el cálculo principal. Revisa el estado, la sesión y el alcance declarado.
+
+## Fuentes y dependencias de publicación
+
+Los CSV/JSON se publican en `data/`; la interfaz los consume desde el repositorio y aplica las reglas de calidad. Fuentes y presupuestos se registran en `sources/registry.csv`. El contrato entre suite y dashboard está en [`sources/suite_contract.json`](sources/suite_contract.json).
+
+Continúan existiendo fuentes dependientes del **Mac** del operador, en particular recogidas de NZD y CHF que no se obtienen de forma equivalente desde Actions. Actions consume los CSV publicados. Si la recogida o publicación se interrumpe, los datos pueden caducar; consultar el monitor de Salud y su evidencia, no asumir disponibilidad por el mero hecho de que una tabla conserve números.
+
+`data/manual/manual_inputs.json` conserva los inputs manuales admitidos. Los BE trimestrales retirados siguen desactivados. En las claves con edición local, un valor del navegador solo prevalece según la regla de fecha implementada; no crea una nueva fuente oficial.
+
+## Automatizaciones configuradas
+
+Horarios **UTC** del código de workflows revisado el 23-oct-2026. En **Africa/Malabo** se suma una hora. Son horarios programados, no garantía de finalización o de dato nuevo: GitHub puede retrasar un cron y una fuente puede no publicar.
+
+| Workflow | Programación UTC | Función |
+|---|---|---|
+| `daily_update.yml` | 21:30, lunes a viernes | Recogidas diarias, motores de tipos/ACM/real yields, alertas y publicación. |
+| `intraday_fetch.yml` | 00:23, 03:17, 13:17, 15:47 y 23:17, lunes a viernes | Recogidas adicionales de fuentes oficiales. |
+| `usd_factor.yml` | 15:30 y 17:30, lunes a viernes | Factor USD, riesgo del libro, alertas y publicación. Un festivo TARGET puede producir NO_NEW_DATA. |
+| `cme_options.yml` | 13:30 y 17:00, todos los días en el cron | Colector y resumen de opciones con guardas de calendario, disponibilidad y coste. |
+| `g8_port_run.yml` | Viernes 21:05 y sábado 09:05 | COT, generación POS y controles asociados. No ejecuta un FFVA web. |
+| `metals_update.yml` | Sábado 07:00; lunes a viernes 22:45 | Actualización de metales y procesos asociados; distinguir la salida principal semanal de la salida diaria SHADOW. |
+| `ingest_watch.yml` | 17:13, lunes/miércoles/viernes | Vigilancia de publicaciones y evidencias de salud. |
+| `maintenance_agent.yml` | 17:17, lunes/miércoles/viernes | Evaluación y mantenimiento sujeto a compuerta. |
+| `validate.yml` | Push / PR | Validación de humo del repositorio. |
+| `acm_validate.yml`, `ry_validate.yml` | Manual | Validaciones de modelos/series correspondientes. |
+
+El informe de vigilancia tiene un límite operativo de 56 horas. Fuentes sin calendario confirmado se muestran UNKNOWN; las estimaciones no sustituyen publicaciones oficiales. El mantenimiento tiene compuertas de alcance y pruebas; no garantiza que una fuente externa publique ni autoriza cambios de metodología.
+
+## Brief y alertas Telegram
+
+`scripts/dashboard_alerts.py` **v2.6** genera `data/alerts/brief.json` y procesa las alertas a partir de los archivos del repositorio. El brief y Telegram comparten la lectura generada; la web no recalcula ese resumen.
+
+Las alertas usan cambios de estado e histéresis según el código; la llegada de una nueva sesión de opciones tiene su tratamiento propio. La sección de factor incluye cambios de banda de dispersión, extremos del factor y condiciones de riesgo del libro. El silencio de Telegram no certifica frescura ni equivale a permiso de operación. Revisar el as-of de cada capa y el monitor de Salud.
+
+Las credenciales se gestionan como secrets o fuera del repositorio. Este README no contiene valores de claves.
+
+## Estructura del repositorio
+
+| Directorio | Contenido |
 |---|---|
-| Dashboard `docs/index.html` | **v2.6.1** — §00 brief (libro G8 + walls §08), §02 una divisa a la vez, las 8 divisas con floor + ACM propio; loader/charts `docs/js/` **v5.6** |
-| Alertas Telegram `scripts/dashboard_alerts.py` | **v1.9** — un mensaje/día solo en cambios; genera `data/alerts/brief.json`; vigila los feeds del Mac; diferencial REAL vs USD |
-| CI de humo `validate.yml` | **Activo** — en cada push: sintaxis Python/JS/YAML, registry, `dashboard_alerts.py --dry-run` |
-| Feeds locales (Mac) | **Activo** — `fetch_nzd_b2.py` v1.4 + `fetch_chf_snb.py` v1.0 + `push_nzd_to_github.py` v1.2, launchd 08:00 (ver *Eslabón Mac*) |
-| Fase 1 (feeds macro) | Sellada |
-| Fase 2 — port FFVA (Databento futuros) | **RETIRADO** (A4, 2026-10-16): FFVA vive solo en TradingView (9-FFVA) |
-| Opciones CME (§08 strike walls) | Activo — Databento, ~$0.05/sesión, tope $0.25/sesión en código |
-| COT (§09) | Activo — CFTC SODA, gratis, semanal (vie 21:05 + sáb 09:05 UTC) |
-| XCCY G8 Command Center (proyecto anterior) | **Cancelado** (mayo 2026). Su código sigue en `docs/` como `.legacy-hidden`; el XCCY operativo es el script TradingView v2.6.1 |
+| `docs/` | Interfaz estática publicada por Netlify: `index.html`, CSS y JS. |
+| `docs/actas/` | Decisiones, especificaciones y evidencia histórica; pueden conservar numeración anterior. |
+| `scripts/` | Recogidas, motores, alertas y herramientas de validación. |
+| `data/` | Series, estados, informes de salud y resultados publicados. |
+| `sources/` | Registro, calendarios, presupuestos y contrato de la suite. |
+| `mac/` | Recogidas y publicación que dependen del Mac. |
+| `tests/` | Pruebas de lógica, equivalencia, contratos y fiabilidad. |
+| `gates/` | Compuertas y decisiones preregistradas. |
+| `.github/workflows/` | Automatizaciones de Actions. |
 
-## Secciones del dashboard
+## Trabajar y publicar cambios
 
-| § | Sección | Fuente en `data/` |
-|---|---|---|
-| 00 | Brief · lectura de 8 segundos (as-of por capa, gates, libro G8 con spread nominal y REAL vs USD, extremos vigentes, walls §08) | `alerts/brief.json` |
-| 01 | Long-End Attribution Matrix (NOM = REAL + BE · Y10 = RNY + TP, ACM propio, 8 divisas) | `ACM_G8_*.csv`, `RY_G8_*.csv`, `NZD_BOND_10Y.csv`, `CHF_NOM_10Y.csv`, `manual/manual_inputs.json` (BE NZD/CHF) |
-| 02 | Money-market floor spreads (RFR − suelo administrado), selector por divisa | `SOFR/ESTR/SONIA/TONA/CORRA/AONIA.csv`, `NZD_CASH_ON.csv`, `CHF_SARON.csv`, `FLOOR_*.csv`, `*_POLICY.csv`, `NZD_OCR.csv` |
-| 03 | Policy rates | `*_POLICY.csv`, `FLOOR_*.csv`, `NZD_OCR.csv` |
-| 04 | ACM term premium (Adrian-Crump-Moench) | `ACM_G8_*.csv` |
-| 05 | Data Quality Monitor | `sources/registry.csv` (presupuestos) |
-| 06/07 | Oro / plata — MDP (Monetary Disorder Premium, Kalman TVP) | `MFV_G8_*.csv`, `MFV_G8_state.json` |
-| 08 | CME FX strike walls (Gate 0 = permiso, nunca trigger) | `OPTIONS_SURFACE.json`, `options/canonical/<sesión>/` |
-| 09 | COT positioning (TFF + Disagg MM) · v1.1 columna P3y/EXT (percentil de %OI vs 156 informes anteriores) | `pos_g8_cot.json` |
-| 10 | Factor USD · residuales · matriz de cruces · libro por factores · PRE-TRADE (CONTEXT, sin voto — `docs/actas/ACTA_UF1.md`) | `USD_FACTOR.json`, `BOOK_RISK.json`, `usd_factor/canonical.csv`, `book.csv`, `candidate.csv` |
+- Lee [`CLAUDE.md`](CLAUDE.md) y las actas aplicables antes de cambiar el sistema.
+- No modificar fórmulas, calibraciones, ventanas, pesos o metodología sin autorización explícita del propietario.
+- Verificar fuentes primarias, unidades y fechas; los fallos deben ser visibles.
+- Para cambios funcionales, ejecutar las pruebas y controles exigidos por el repositorio, incluida la validación de humo:
 
-## Workflows (GitHub Actions)
+```bash
+python -m unittest discover -s tests -p 'test_*.py'
+bash scripts/tools/validate_smoke.sh
+```
 
-| Workflow | Cron (UTC) | Qué hace |
-|---|---|---|
-| `daily_update.yml` | 18:00 lun–vie | Scrapers de tasas/RFR/floors → ACM (USD EUR JPY GBP CAD AUD **NZD CHF**) → synth NZD (solo fallback) → real yields (+NZD) → alertas → commit |
-| `cme_options.yml` | 13:30 + 17:00 | Colector Databento de opciones (T+1, tope $0.25/sesión) → resumen → alertas → commit |
-| `g8_port_run.yml` | vie 21:05 + sáb 09:05 | COT (CFTC) → generador POS → twin-test POS → Telegram diff → commit. FFVA retirado (A4) |
-| `metals_update.yml` | semanal | `metals_fairvalue_g8.py` (MDP) |
-| `usd_factor.yml` | 15:30 + 17:30 lun–vie | BCE ref. rates → `usd_factor.py` (factor, β EWMA, residuales, dispersión, PCA, twins) → `book_risk.py` (cubos, VaR, Euler, estrés, PRE-TRADE, snapshots) → alertas → commit. Festivo TARGET = NO_NEW_DATA, no fallo |
-| `acm_validate.yml`, `ry_validate.yml` | manual | Validaciones ACM/real yields |
-| `validate.yml` | push / PR | CI de humo: compila `scripts/`, valida YAML, registry y JS inline, corre `dashboard_alerts.py --dry-run` (sin secrets, sin datos) |
-
-Secrets: `FRED_API_KEY`, `DATABENTO_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
-
-## Alertas Telegram
-
-`scripts/dashboard_alerts.py` corre al final de `daily_update` y `cme_options`. Lee solo el repo
-(coste $0), compara contra `data/alerts/state.json` y envía **solo cambios de estado** con
-histéresis (umbrales de nivel = los del dashboard; umbrales de movimiento = percentiles
-rolling 252 d — Regla 8, nada inventado). Cubre §01/§02/§03/§04/§05/§06-07/§08/§09 para todas
-las divisas con dato, y §10 (banda de dispersión, |z21| del factor, cuota del libro sobre la cesta, COLA — v2.3). En cada sesión nueva de opciones manda la tarjeta completa de walls
-(cadena completa, convención del operador para USD/JPY, USD/CAD, USD/CHF).
-
-## Eslabón Mac (NZD y CHF) — arquitectura
-
-La RBNZ (tabla B2) y el portal de datos del SNB rechazan las IP de datacenter y las huellas TLS
-que no son de navegador: **GitHub Actions nunca llama a esos endpoints**. Un job launchd en el
-Mac del operador (`Trading_Sander/g8-nzd`, 08:00 hora local, `nzd_local_run.sh`) hace:
-
-1. `fetch_nzd_b2.py` v1.4 — B2 daily close (`curl_cffi` impersonando Safari) → `NZD_BILL_30D/60D/90D`,
-   `NZD_BOND_1Y/2Y/5Y/10Y`, `NZD_CASH_ON`, `NZD_IIB_<año>` (bonos indexados, descubiertos por
-   cabecera); empalma el fichero histórico 1985-2017 (cacheado) — bonos disponibles solo desde 2009.
-2. `fetch_chf_snb.py` v1.0 — cubo `rendeiduebd` (curva cupón cero NSS 1J–10J/20J/30J, diaria
-   desde 1988, **publicada mensualmente**) → `CHF_SPOT_<n>Y`; SARON (`zirepo` + fixing RSS diario)
-   → `CHF_SARON`; 10Y spot diario (curva + RSS R10) → `CHF_NOM_10Y` (columna `Source`).
-3. `push_nzd_to_github.py` v1.2 — sube `data/NZD_*.csv` y `data/CHF_*.csv` por la API REST
-   (token classic `public_repo` en `~/.g8/github_token`), solo si el contenido cambió.
-
-Actions consume esos CSV: `acm_g8.py NZD/CHF`, `real_yields_g8.py NZD`, floors §02, brief.
-Cada uno de esos ficheros está en `sources/registry.csv` con presupuesto de frescura
-(5 días hábiles; curva SNB 25): **si el Mac no corre, §05 pasa a STALE/DEAD y el Telegram avisa**.
-`repo_delete_files.py` (Mac) borra por API ficheros retirados del repo.
-
-## Excepciones documentadas (calidad declarada en cada fichero)
-
-- **NZD ACM K=3 con 136 meses** (`QUALITY=ACM_K3_SHORT_SAMPLE_<n>m`): no existe curva NZ abierta
-  antes de 2009. Monte Carlo con la dinámica NZ estimada (5 tenores + 8 pb de ruido, refit NS):
-  correlación de forma del TP mediana 0,99, p10 0,96, peor 0,78. Decisión 2026-09-13: forma
-  (z, deltas) utilizable, **nivel de baja confianza** (badge "lvl" en §01). `MIN_OBS_OVERRIDE` en
-  `acm_g8.py`. Fallback: `nzd_tp_synth.py` (proxy AUD, `QUALITY=SYNTH_AUD_ANCHOR`), solo si no hay ajuste real fresco.
-- **CHF NOWCAST** (`QUALITY=ACM_K3_NOWCAST_PARALLEL`): entre la última curva publicada por el SNB
-  (fin de mes) y hoy, la última curva ajustada se desplaza en paralelo por el 10Y diario del RSS.
-  Solo factor nivel; las filas se sustituyen por curva real el día 1. Badge "lvl" mientras dure.
-- **BE/REAL sin fuente admisible**: las constantes trimestrales CHF y NZD están desactivadas. CHF queda NO DISPONIBLE para estas dos patas. NZD conserva sus IIB diarios; si faltan o están atrasados, BE/REAL queda NO DISPONIBLE. No se sustituye un breakeven por inflación CPI observada.
-- **Convención de usuario en walls**: USD/JPY, USD/CAD, USD/CHF se muestran invertidos (1/k) con
-  call↔put intercambiados respecto al contrato CME; §00 y §08 comparten esa conversión (INV).
-
-## Inputs manuales (principio 6 — una sola fuente)
-
-`data/manual/manual_inputs.json` conserva el nominal NZD como fallback. Las claves BE de NZD y CHF están desactivadas, sin valor ni fecha, porque sus fuentes trimestrales están prohibidas. `index.html` y `dashboard_alerts.py` leen las **mismas claves**
-(`NZD_BE_MANUAL`, `CHF_BE_MANUAL`, `NZD_NOM_RBNZ`); el valor tecleado en el navegador (localStorage)
-solo manda si su fecha es más reciente. Expiry por feed en `sources/registry.csv`.
-
-## Deuda registrada
-
-- Twin-test POS: exige ≥3 fechas-reporte antes de un FAILED válido (el brief lo etiqueta como *muestra insuficiente*); depende del export Pine semanal.
-- Curva SNB con rezago de hasta un mes (publicación mensual): el TP CHF diario es NOWCAST hasta el día 1.
-- NZD ACM: excepción de muestra corta hasta que la B2 acumule 240 meses (2029).
-- 2027: sincronizar umbrales XCCY copiados en `f_mx_thr` del FFVA (única deuda estructural de la suite).
-
-## Cómo trabajar en este repo
-
-GitHub web UI únicamente (lápiz / *Upload files*) · Netlify publica `docs/` sin build ·
-calibraciones y pesos congelados no se tocan sin gate nuevo pre-registrado (Regla 32) ·
-todo fallo debe ser ruidoso (Ley 2).
-
-
+Netlify publica **`docs/` sin build**. `netlify.toml` evita reconstrucciones cuando no cambian los archivos que se publican; los cambios únicamente en este README no requieren modificar el dashboard ni sus motores.
