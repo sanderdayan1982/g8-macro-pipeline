@@ -2,7 +2,7 @@
  "alerts": [],
  "credentials": {
   "cls": "OK",
-  "days_left": 308.19,
+  "days_left": 307.19,
   "detail": "",
   "excess": [
    "repo",
@@ -26,7 +26,7 @@
  "executor": "mac-primary",
  "families": {
   "CH-CURVA": {
-   "download_id": "20261025T183031Z_mac-primary_nzchf-tona_298c:CH-CURVA:e69f6860ea22",
+   "download_id": "20261026T183015Z_mac-primary_nzchf-tona_9b20:CH-CURVA:e69f6860ea22",
    "download_kind": "FRESH",
    "fetch_rc": "0",
    "files": {
@@ -176,7 +176,7 @@
    "status": "NOOP"
   },
   "CH-DIARIO": {
-   "download_id": "20261025T183031Z_mac-primary_nzchf-tona_298c:CH-DIARIO:09ea2bb50ad0",
+   "download_id": "20261026T183015Z_mac-primary_nzchf-tona_9b20:CH-DIARIO:09a10e7cfbb6",
    "download_kind": "FRESH",
    "fetch_rc": "0",
    "files": {
@@ -185,14 +185,44 @@
      "detail": "",
      "dropped_by_source": 0,
      "held": [],
-     "new": 0,
+     "new": 1,
      "repo_max": "20261023",
      "revised": [],
-     "src_max": "20261023",
-     "status": "NOOP"
+     "src_max": "20261026",
+     "status": "PUBLISH"
     },
     "CHF_SARON.csv": {
      "backfill": 0,
+     "detail": "",
+     "dropped_by_source": 0,
+     "held": [],
+     "new": 1,
+     "repo_max": "20261022",
+     "revised": [],
+     "src_max": "20261023",
+     "status": "PUBLISH"
+    }
+   },
+   "held": [],
+   "hold_new_from": null,
+   "outcome": {
+    "accepted_server_utc": "2026-10-26T18:31:13Z",
+    "attempts": 1,
+    "commit": "a22ec14f9ad63e3cd7166087b70943a85b6dc35d",
+    "detail": "",
+    "observed_on_branch_utc": "2026-10-26T18:31:14Z",
+    "status": "PUBLISHED"
+   },
+   "published": true,
+   "status": "PUBLISHED"
+  },
+  "JP-TONA": {
+   "download_id": "20261026T183015Z_mac-primary_nzchf-tona_9b20:JP-TONA:3957c77551d5",
+   "download_kind": "FRESH",
+   "fetch_rc": "0",
+   "files": {
+    "TONA.csv": {
+     "backfill": 20,
      "detail": "",
      "dropped_by_source": 0,
      "held": [],
@@ -200,52 +230,24 @@
      "repo_max": "20261022",
      "revised": [],
      "src_max": "20261022",
-     "status": "NOOP"
+     "status": "PUBLISH"
     }
    },
    "held": [],
    "hold_new_from": null,
    "outcome": {
-    "accepted_server_utc": null,
+    "accepted_server_utc": "2026-10-26T18:31:25Z",
     "attempts": 1,
-    "commit": null,
+    "commit": "a16101c9dda7eee7c7febf7cb8275dc4709d3bdf",
     "detail": "",
-    "observed_on_branch_utc": null,
-    "status": "NOOP"
+    "observed_on_branch_utc": "2026-10-26T18:31:25Z",
+    "status": "PUBLISHED"
    },
-   "status": "NOOP"
-  },
-  "JP-TONA": {
-   "download_id": "20261025T183031Z_mac-primary_nzchf-tona_298c:JP-TONA:e2ef68cd7fc9",
-   "download_kind": "FRESH",
-   "fetch_rc": "0",
-   "files": {
-    "TONA.csv": {
-     "backfill": 0,
-     "detail": "",
-     "dropped_by_source": 0,
-     "held": [],
-     "new": 0,
-     "repo_max": "20261021",
-     "revised": [],
-     "src_max": "20261021",
-     "status": "NOOP"
-    }
-   },
-   "held": [],
-   "hold_new_from": null,
-   "outcome": {
-    "accepted_server_utc": null,
-    "attempts": 1,
-    "commit": null,
-    "detail": "",
-    "observed_on_branch_utc": null,
-    "status": "NOOP"
-   },
-   "status": "NOOP"
+   "published": true,
+   "status": "PUBLISHED"
   },
   "NZ-B2": {
-   "download_id": "20261025T183031Z_mac-primary_nzchf-tona_298c:NZ-B2:4aef630f54ca",
+   "download_id": "20261026T183015Z_mac-primary_nzchf-tona_9b20:NZ-B2:4aef630f54ca",
    "download_kind": "FRESH",
    "fetch_rc": "0",
    "files": {
@@ -412,14 +414,14 @@
    "files": {
     "CHF_NOM_10Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261023",
-     "rows": 7843,
+     "max_date": "20261026",
+     "rows": 7844,
      "status": "WRITTEN"
     },
     "CHF_SARON.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261022",
-     "rows": 6890,
+     "max_date": "20261023",
+     "rows": 6891,
      "status": "WRITTEN"
     },
     "CHF_SPOT_10Y.csv": {
@@ -495,7 +497,7 @@
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-10-25T18:30:28Z",
+   "finished_utc": "2026-10-26T18:30:13Z",
    "rc": 0,
    "requests": [
     {
@@ -597,7 +599,7 @@
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-10-25T18:30:09Z",
+   "finished_utc": "2026-10-26T18:30:07Z",
    "rc": 0,
    "requests": [
     {
@@ -612,12 +614,12 @@
    "files": {
     "TONA.csv": {
      "kept_from_previous": 20,
-     "max_date": "20261021",
-     "rows": 1255,
+     "max_date": "20261022",
+     "rows": 1256,
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-10-25T18:30:31Z",
+   "finished_utc": "2026-10-26T18:30:15Z",
    "rc": 0,
    "requests": [
     {
@@ -633,12 +635,12 @@
   "nzd": "0",
   "tona": "0"
  },
- "finished_utc": "2026-10-25T18:33:19Z",
+ "finished_utc": "2026-10-26T18:31:26Z",
  "heartbeat": {
   "status": "NOT_ATTEMPTED"
  },
  "job": "nzchf-tona",
- "run_id": "20261025T183031Z_mac-primary_nzchf-tona_298c",
- "started_utc": "2026-10-25T18:30:31Z",
+ "run_id": "20261026T183015Z_mac-primary_nzchf-tona_9b20",
+ "started_utc": "2026-10-26T18:30:15Z",
  "version": "push_nzd_to_github v2.2"
 }
