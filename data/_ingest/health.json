@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-27T01:38:10.999497Z",
+ "generated_utc": "2026-10-27T02:05:56.539374Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -109,9 +109,155 @@
    "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/09/ocr-increased-by-25-basis-points-to-2-75",
    "evidence_expires_utc": "2026-10-24T22:56:21+00:00",
    "next_decision": "2026-10-28"
+  },
+  {
+   "file": "CAD_NOM_2Y.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-23",
+   "expected_obs": "2026-10-22",
+   "calendar": "CA",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "AUD_NOM_2Y.csv",
+   "state": "NO_PUBLICATION",
+   "have_max": "2026-10-21",
+   "expected_obs": "2026-10-21",
+   "calendar": "AU",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 4,
+   "publication_frequency": "weekly:FRI",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_USD.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-23",
+   "expected_obs": "2026-10-22",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_EUR.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-23",
+   "expected_obs": "2026-10-23",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_JPY.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-26",
+   "expected_obs": "2026-10-23",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 1,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_GBP.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-23",
+   "expected_obs": "2026-10-23",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_CAD.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-23",
+   "expected_obs": "2026-10-23",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_AUD.csv",
+   "state": "CURRENT",
+   "have_max": "2026-10-26",
+   "expected_obs": "2026-10-23",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": null,
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
+   "age_business_days": 1,
+   "publication_frequency": "derived",
+   "slow_fallback": false
   }
  ],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -685,8 +831,10 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -757,8 +905,10 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "flags": [
+    "LAST_FETCH_FAILED"
+   ],
+   "status": "ERROR",
    "age_business_days": 4,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1013,15 +1163,15 @@
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "VERIFIED_SPARSE",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-21",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "UNKNOWN",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false,
@@ -1251,9 +1401,10 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED"
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1268,9 +1419,10 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN"
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1286,9 +1438,10 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED"
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1303,9 +1456,10 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN"
+    "INPUT_VERSION_UNKNOWN",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1321,9 +1475,10 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED"
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1339,9 +1494,10 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED"
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "LAST_FETCH_FAILED"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1923,7 +2079,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-27T01:38:10Z",
+   "have_max": "2026-10-27T02:05:55Z",
    "flags": []
   },
   {
