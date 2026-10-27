@@ -1,103 +1,69 @@
 {
- "deadline_utc": "2026-10-27T02:22:45Z",
+ "deadline_utc": "2026-10-27T03:42:28Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "acm_g8",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "40436083046",
+ "run_id": "40443764522",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
-   "name": "us_bills",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_tona.py",
+   "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.5,
-   "started_utc": "2026-10-27T02:02:45Z",
+   "secs": 1.5,
+   "started_utc": "2026-10-27T03:22:28Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_floor_spreads.py",
-   "name": "floors",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aonia.py",
+   "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-27T02:02:48Z",
+   "secs": 0.8,
+   "started_utc": "2026-10-27T03:22:30Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py USD AUD",
-   "name": "real_yields",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 17.3,
-   "started_utc": "2026-10-27T02:02:50Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
-   "kept_valid_outputs": [
-    "ACM_G8_EUR.csv",
-    "ACM_G8_GBP.csv",
-    "ACM_G8_JPY.csv",
-    "ACM_G8_USD.csv"
-   ],
-   "name": "acm_g8",
-   "phase": "fetch",
-   "rc": 1,
-   "secs": 164.8,
-   "started_utc": "2026-10-27T02:03:07Z",
-   "status": "FAILED"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py NZD",
-   "name": "acm_nzd",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aud_bills.py",
+   "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
    "secs": 0.7,
-   "started_utc": "2026-10-27T02:05:52Z",
+   "started_utc": "2026-10-27T03:22:31Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py CHF",
-   "name": "acm_chf",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_bills.py",
+   "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-10-27T02:05:53Z",
+   "secs": 3.2,
+   "started_utc": "2026-10-27T03:22:32Z",
    "status": "OK"
   },
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/aud_nowcast.py",
-   "name": "aud_nowcast",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_real.py",
+   "name": "jpy_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-27T02:05:54Z",
+   "secs": 3.6,
+   "started_utc": "2026-10-27T03:22:35Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-27T02:05:54Z"
+ "written_utc": "2026-10-27T03:22:38Z"
 }

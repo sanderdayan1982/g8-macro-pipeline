@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-27T02:05:56.539374Z",
+ "generated_utc": "2026-10-27T03:22:40.619130Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -109,152 +109,6 @@
    "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/09/ocr-increased-by-25-basis-points-to-2-75",
    "evidence_expires_utc": "2026-10-24T22:56:21+00:00",
    "next_decision": "2026-10-28"
-  },
-  {
-   "file": "CAD_NOM_2Y.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-23",
-   "expected_obs": "2026-10-22",
-   "calendar": "CA",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
-  {
-   "file": "AUD_NOM_2Y.csv",
-   "state": "NO_PUBLICATION",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-21",
-   "calendar": "AU",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 4,
-   "publication_frequency": "weekly:FRI",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_USD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-23",
-   "expected_obs": "2026-10-22",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_EUR.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-23",
-   "expected_obs": "2026-10-23",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_JPY.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-26",
-   "expected_obs": "2026-10-23",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_GBP.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-23",
-   "expected_obs": "2026-10-23",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_CAD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-23",
-   "expected_obs": "2026-10-23",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 2,
-   "publication_frequency": "derived",
-   "slow_fallback": false
-  },
-  {
-   "file": "ACM_G8_AUD.csv",
-   "state": "CURRENT",
-   "have_max": "2026-10-26",
-   "expected_obs": "2026-10-23",
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
-   "age_business_days": 1,
-   "publication_frequency": "derived",
-   "slow_fallback": false
   }
  ],
  "unknown_count": 1,
@@ -831,10 +685,8 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -905,10 +757,8 @@
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "LAST_FETCH_FAILED"
-   ],
-   "status": "ERROR",
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 4,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -975,16 +825,16 @@
   },
   {
    "file": "RY_G8_JPY.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-10-26",
+   "state": "CURRENT",
+   "have_max": "2026-10-27",
    "expected_obs": "2026-10-26",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 1,
+   "status": "CURRENT",
+   "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1005,7 +855,7 @@
   },
   {
    "file": "NZD_BILL_30D.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1013,13 +863,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_60D.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1027,13 +877,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_90D.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1041,14 +891,14 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_1Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1056,13 +906,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_2Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1070,13 +920,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_5Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1084,14 +934,14 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_10Y.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1099,14 +949,14 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2030.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1114,13 +964,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2035.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1128,14 +978,14 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2040.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1143,13 +993,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2050.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-22",
    "expected_obs": "2026-10-22",
    "calendar": "NZ",
@@ -1157,7 +1007,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1401,10 +1251,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1419,10 +1268,9 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
+    "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1438,10 +1286,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1456,10 +1303,9 @@
    "reason": null,
    "cause": null,
    "flags": [
-    "INPUT_VERSION_UNKNOWN",
-    "LAST_FETCH_FAILED"
+    "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1475,10 +1321,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1494,10 +1339,9 @@
    "cause": null,
    "flags": [
     "INPUT_VERSION_UNKNOWN",
-    "EXTERNAL_INPUTS_UNVERSIONED",
-    "LAST_FETCH_FAILED"
+    "EXTERNAL_INPUTS_UNVERSIONED"
    ],
-   "status": "ERROR",
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -2079,7 +1923,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-27T02:05:55Z",
+   "have_max": "2026-10-27T03:22:39Z",
    "flags": []
   },
   {
