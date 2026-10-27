@@ -48,7 +48,19 @@ jobs:
             '17 23 * * 1-5') group=LATE;;
             *) group="${GROUP_INPUT:-ALL}";;
           esac
+          echo "group=$group" >> "$GITHUB_OUTPUT"
           python scripts/tools/refresh_feeds.py "$group"
+      # acta P-13: segundo pase del MISMO grupo con --cap 360. Reintentar solo acm_g8
+      # ocultaría fallos de otras fuentes (22-oct: us_bills/floors/real_yields/USD).
+      - name: Retry official feeds after a transient collection failure
+        id: feeds_retry
+        if: steps.feeds.outcome == 'failure'
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          JSDA_BASE: ${{ vars.JSDA_BASE }}
+          G8_STEP_LOG: ${{ runner.temp }}/intraday_steps.jsonl
+        run: python scripts/tools/refresh_feeds.py "${{ steps.feeds.outputs.group }}" --cap 360
       - name: Refresh brief and health
         if: always()
         env:
@@ -67,5 +79,5 @@ jobs:
           git commit -m 'chore: intraday official feeds'
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
       - name: Surface collection failure
-        if: always() && steps.feeds.outcome == 'failure'
+        if: always() && steps.feeds.outcome == 'failure' && steps.feeds_retry.outcome != 'success'
         run: exit 1

@@ -33,6 +33,9 @@ GROUPS = {
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("group", choices=list(GROUPS) + ["ALL"])
+    # acta P-13: el primer pase sigue en 180 s; el reintento del workflow pasa --cap 360
+    # para que CAD/AUD quepan tras un FAIL_TRANSIENT del BCE. No toca el motor ACM.
+    ap.add_argument("--cap", type=int, default=180)
     a = ap.parse_args()
     os.environ.setdefault("G8_JOB_DEADLINE_EPOCH", str(time.time() + 20 * 60))
     os.environ.setdefault("G8_JOB_RESERVE_S", "300")
@@ -43,7 +46,7 @@ def main():
     jobs = GROUPS[a.group] if a.group != "ALL" else list(dict.fromkeys(job for group in GROUPS.values() for job in group))
     guard = str(ROOT / "scripts/tools/g8step.py")
     for name, script, *args in jobs:
-        result = subprocess.call([sys.executable, guard, "--name", name, "--cap", "180", "--", sys.executable,
+        result = subprocess.call([sys.executable, guard, "--name", name, "--cap", str(a.cap), "--", sys.executable,
                                   str(ROOT / "scripts" / script)] + args, cwd=ROOT)
         rc = max(rc, bool(result))
     ledger = subprocess.call([sys.executable, guard, "--ledger", "intraday"], cwd=ROOT)
