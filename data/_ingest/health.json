@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-28T01:45:31.606517Z",
+ "generated_utc": "2026-10-28T02:14:39.997993Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -39,7 +39,7 @@
    "next_decision": "2026-12-09"
   }
  ],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -941,15 +941,15 @@
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "VERIFIED_SPARSE",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-21",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "UNKNOWN",
    "age_business_days": 4,
    "publication_frequency": "daily",
    "slow_fallback": false,
@@ -1851,7 +1851,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-28T01:45:30Z",
+   "have_max": "2026-10-28T02:14:39Z",
    "flags": []
   },
   {
