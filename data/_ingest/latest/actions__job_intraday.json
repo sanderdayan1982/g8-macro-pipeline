@@ -1,175 +1,21 @@
 {
- "deadline_utc": "2026-10-30T21:56:59Z",
+ "deadline_utc": "2026-10-30T23:37:58Z",
  "executor": "actions",
  "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "41132258230",
+ "run_id": "41143568448",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_tona.py",
-   "name": "tona",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.1,
-   "started_utc": "2026-10-30T21:36:59Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aonia.py",
-   "name": "aonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-10-30T21:37:01Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_aud_bills.py",
-   "name": "aud_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-10-30T21:37:02Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_bills.py",
-   "name": "jpy_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 3.5,
-   "started_utc": "2026-10-30T21:37:02Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_jpy_real.py",
-   "name": "jpy_real",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
+   "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
    "secs": 2.5,
-   "started_utc": "2026-10-30T21:37:06Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_estr.py",
-   "name": "estr",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.5,
-   "started_utc": "2026-10-30T21:37:09Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_sonia.py",
-   "name": "sonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-10-30T21:37:10Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_bills.py",
-   "name": "eur_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 9.5,
-   "started_utc": "2026-10-30T21:37:11Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_gbp_bills.py",
-   "name": "gbp_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-30T21:37:21Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_real.py",
-   "name": "eur_real",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.2,
-   "started_utc": "2026-10-30T21:37:23Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py GBP",
-   "name": "real_yields",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-10-30T21:37:25Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_chf_cpi.py",
-   "name": "chf_cpi",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-10-30T21:37:26Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_sofr.py",
-   "name": "sofr",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-10-30T21:37:29Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_corra.py",
-   "name": "corra",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-30T21:37:30Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_cad_bills.py",
-   "name": "cad_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-10-30T21:37:30Z",
+   "started_utc": "2026-10-30T23:17:58Z",
    "status": "OK"
   },
   {
@@ -179,85 +25,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.7,
-   "started_utc": "2026-10-30T21:37:31Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_acm.py",
-   "name": "acm_tp",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.5,
-   "started_utc": "2026-10-30T21:37:34Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py GB",
-   "name": "bis_gb",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 8.6,
-   "started_utc": "2026-10-30T21:37:35Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py JP",
-   "name": "bis_jp",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 8.9,
-   "started_utc": "2026-10-30T21:37:44Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py CH",
-   "name": "bis_ch",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 7.4,
-   "started_utc": "2026-10-30T21:37:53Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_policy.py AU",
-   "name": "bis_au",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 8.4,
-   "started_utc": "2026-10-30T21:38:00Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_bis_ocr.py",
-   "name": "bis_ocr",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 9.6,
-   "started_utc": "2026-10-30T21:38:09Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.17/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
-   "name": "us_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 3.7,
-   "started_utc": "2026-10-30T21:38:18Z",
+   "secs": 1.9,
+   "started_utc": "2026-10-30T23:18:00Z",
    "status": "OK"
   },
   {
@@ -267,8 +36,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 13.1,
-   "started_utc": "2026-10-30T21:38:22Z",
+   "secs": 16.5,
+   "started_utc": "2026-10-30T23:18:02Z",
    "status": "OK"
   },
   {
@@ -278,8 +47,8 @@
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 0,
-   "secs": 69.7,
-   "started_utc": "2026-10-30T21:38:35Z",
+   "secs": 85.2,
+   "started_utc": "2026-10-30T23:18:19Z",
    "status": "OK"
   },
   {
@@ -289,8 +58,8 @@
    "name": "acm_nzd",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-10-30T21:39:45Z",
+   "secs": 0.7,
+   "started_utc": "2026-10-30T23:19:44Z",
    "status": "OK"
   },
   {
@@ -300,8 +69,8 @@
    "name": "acm_chf",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-10-30T21:39:45Z",
+   "secs": 0.9,
+   "started_utc": "2026-10-30T23:19:45Z",
    "status": "OK"
   },
   {
@@ -311,12 +80,12 @@
    "name": "aud_nowcast",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.4,
-   "started_utc": "2026-10-30T21:39:46Z",
+   "secs": 0.6,
+   "started_utc": "2026-10-30T23:19:45Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-10-30T21:39:47Z"
+ "written_utc": "2026-10-30T23:19:46Z"
 }
