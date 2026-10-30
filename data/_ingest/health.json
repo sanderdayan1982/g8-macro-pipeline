@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-30T18:36:44.944518Z",
+ "generated_utc": "2026-10-30T20:12:41.569003Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -55,24 +55,6 @@
    "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/09/ocr-increased-by-25-basis-points-to-2-75",
    "evidence_expires_utc": "2026-10-28T00:00:00+00:00",
    "next_decision": "2026-12-09"
-  },
-  {
-   "file": "RY_G8_AUD.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-10-21",
-   "expected_obs": "2026-10-28",
-   "calendar": "AU",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
-   "flags": [
-    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 7,
-   "publication_frequency": "weekly:FRI",
-   "slow_fallback": false
   }
  ],
  "unknown_count": 0,
@@ -704,13 +686,14 @@
    "expected_obs": "2026-10-28",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-02T04:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
    "flags": [
-    "CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO",
+    "CAUSA_SIN_PASADA_PROGRAMADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "LATE",
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-02T04:00:00Z",
    "age_business_days": 7,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1401,7 +1384,7 @@
   },
   {
    "file": "pos_g8_cot.json",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-20",
    "expected_obs": "2026-10-20",
    "calendar": "US",
@@ -1409,7 +1392,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 8,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1779,16 +1762,16 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "AWAITING_PUBLICATION",
-   "have_max": "2026-10-28",
+   "state": "VERIFIED_CANONICAL",
+   "have_max": "2026-10-29",
    "expected_obs": "2026-10-29",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-10-30T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
+   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "expected_publication_utc": "2026-10-30T21:00:00+00:00"
@@ -1894,7 +1877,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-30T18:36:44Z",
+   "have_max": "2026-10-30T20:12:40Z",
    "flags": []
   },
   {
