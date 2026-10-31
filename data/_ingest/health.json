@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-10-30T23:19:48.033698Z",
+ "generated_utc": "2026-10-31T00:59:04.247517Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -91,7 +91,7 @@
   },
   {
    "file": "SONIA.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-28",
    "expected_obs": "2026-10-28",
    "calendar": "GB",
@@ -152,7 +152,7 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-10-30",
+   "have_max": "2026-10-31",
    "expected_obs": "2026-10-28",
    "calendar": "US",
    "basis": "PROVISIONAL",
@@ -168,7 +168,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-10-30",
+   "have_max": "2026-10-31",
    "expected_obs": "2026-10-29",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -428,9 +428,9 @@
   },
   {
    "file": "GBP_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -442,9 +442,9 @@
   },
   {
    "file": "GBP_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -456,9 +456,9 @@
   },
   {
    "file": "GBP_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -470,9 +470,9 @@
   },
   {
    "file": "GBP_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -484,9 +484,9 @@
   },
   {
    "file": "GBP_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -726,9 +726,9 @@
   },
   {
    "file": "RY_G8_GBP.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-28",
+   "expected_obs": "2026-10-29",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1754,19 +1754,19 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "VERIFIED_CANONICAL",
+   "state": "AWAITING_PUBLICATION",
    "have_max": "2026-10-29",
-   "expected_obs": "2026-10-29",
+   "expected_obs": "2026-10-30",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
+   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-11-02T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "expected_publication_utc": "2026-10-30T21:00:00+00:00"
+   "expected_publication_utc": "2026-11-02T21:00:00+00:00"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -1869,7 +1869,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-10-30T23:19:47Z",
+   "have_max": "2026-10-31T00:42:03Z",
    "flags": []
   },
   {
@@ -1915,9 +1915,9 @@
    "state": "CALENDAR_OK",
    "flags": [],
    "have_max": "2027-12-17",
-   "expected_obs": "2026-10-30",
+   "expected_obs": "2026-12-18",
    "publication_frequency": "event",
-   "reason": "Próxima decisión oficial 2026-10-30; última fecha publicada 2027-12-17"
+   "reason": "Próxima decisión oficial 2026-12-18; última fecha publicada 2027-12-17"
   },
   {
    "file": "manual/cb_meetings.csv:CH",
