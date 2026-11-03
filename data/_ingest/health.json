@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-03T00:24:49.112930Z",
+ "generated_utc": "2026-11-03T03:03:44.942039Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -75,7 +75,7 @@
    "next_decision": "2026-12-09"
   }
  ],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -186,7 +186,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-02",
+   "have_max": "2026-11-03",
    "expected_obs": "2026-10-30",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -194,7 +194,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
@@ -977,15 +977,15 @@
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "VERIFIED_SPARSE",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-30",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "UNKNOWN",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false,
@@ -1381,7 +1381,7 @@
    "file": "S01B.json",
    "state": "NOT_MONITORED",
    "have_max": "2026-11-02",
-   "expected_obs": "2026-10-30",
+   "expected_obs": "2026-11-02",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
@@ -1879,7 +1879,7 @@
    "state": "CURRENT",
    "status": "CURRENT",
    "have_max": "2026-11-02",
-   "expected_obs": "2026-10-30",
+   "expected_obs": "2026-11-02",
    "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre",
    "flags": []
   },
