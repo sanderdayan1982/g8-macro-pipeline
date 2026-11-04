@@ -1056,7 +1056,7 @@ def build_book(st):
                     be_e = [x for x in (read_series("AUD_NOWCAST.csv", col="BE10") or []) if x[0] == est[-1][0]]
                     if be_e:                                        # V2: breakeven estimado; real = nominal − breakeven
                         r["be"], r["real"] = be_e[0][1], round(est[-1][1] - be_e[0][1], 4)
-                    r["flags"].append("NOM/REAL/BE EST %s ±%s pb (RBA %s; vs USD y alertas con RBA)" % (
+                    r["flags"].append("NOM/REAL/BE EST %s ±%s pb (curva F2 RBA %s; vs USD y alertas con RBA)" % (
                         est[-1][0].strftime("%d-%m"), ("%.0f" % err[0][1]) if err else "?", nom[-1][0].strftime("%d-%m")))
             if c == "NZD":
                 r["flags"].append("REAL IIB (B2)")
@@ -1127,6 +1127,12 @@ def build_book(st):
             else:
                 r["flags"].append("RFR = OCR (sin cash B2)")
         r["rfr"] = rf[-1][1] if rf else None
+        if c == "AUD" and rf:
+            # AONIA se publica T+1: si la política oficial ya cambió (AU_POLICY), se avisa sin sustituir el dato.
+            pol = read_series("AU_POLICY.csv")
+            if pol and pol[-1][0] > rf[-1][0] and abs(pol[-1][1] - rf[-1][1]) > 1e-9:
+                r["flags"].append("RFR AONIA %s; cash rate %.2f desde %s (AONIA T+1; RBA MR 2026-30 rba.gov.au)" % (
+                    rf[-1][0].strftime("%d-%m"), pol[-1][1], pol[-1][0].strftime("%d-%m")))
         if c == "CHF":
             sar = read_series("CHF_SARON.csv", col="Value", datecol="Date")
             if sar and bdays_between(sar[-1][0], TODAY) <= 7:
