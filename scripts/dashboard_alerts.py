@@ -1131,8 +1131,17 @@ def build_book(st):
             # AONIA se publica T+1: si la política oficial ya cambió (AU_POLICY), se avisa sin sustituir el dato.
             pol = read_series("AU_POLICY.csv")
             if pol and pol[-1][0] > rf[-1][0] and abs(pol[-1][1] - rf[-1][1]) > 1e-9:
-                r["flags"].append("RFR AONIA %s; cash rate %.2f desde %s (AONIA T+1; RBA MR 2026-30 rba.gov.au)" % (
-                    rf[-1][0].strftime("%d-%m"), pol[-1][1], pol[-1][0].strftime("%d-%m")))
+                # Fecha de la decisión (announced_date) desde el Acta P-1; si no se encuentra, se omite.
+                _dec = ""
+                try:
+                    for _ln in open(os.path.join(ROOT, "data", "manual", "policy_decisions.csv"), encoding="utf-8"):
+                        _p = _ln.strip().split(",")
+                        if len(_p) > 3 and _p[0] == "AU" and _p[1] == pol[-1][0].strftime("%Y-%m-%d"):
+                            _dec = "decisión %s; " % datetime.strptime(_p[3], "%Y-%m-%d").strftime("%d-%m")
+                except Exception:
+                    _dec = ""
+                r["flags"].append("RFR AONIA %s; cash rate %.2f (%sdesde %s; AONIA T+1; RBA MR 2026-30 rba.gov.au)" % (
+                    rf[-1][0].strftime("%d-%m"), pol[-1][1], _dec, pol[-1][0].strftime("%d-%m")))
         if c == "CHF":
             sar = read_series("CHF_SARON.csv", col="Value", datecol="Date")
             if sar and bdays_between(sar[-1][0], TODAY) <= 7:
