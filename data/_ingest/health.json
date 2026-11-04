@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-04T01:36:02.538242Z",
+ "generated_utc": "2026-11-04T02:45:57.774139Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -111,7 +111,7 @@
    "next_decision": "2026-12-09"
   }
  ],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -1013,15 +1013,15 @@
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "VERIFIED_SPARSE",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-10-30",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "UNKNOWN",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false,
@@ -1462,32 +1462,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1510,34 +1510,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1570,32 +1570,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1618,34 +1618,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1678,32 +1678,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1726,34 +1726,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-02",
-      "used_observation": "2026-11-02"
+      "latest_observation": "2026-11-03",
+      "used_observation": "2026-11-03"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-10-30",
-      "used_observation": "2026-10-30"
+      "latest_observation": "2026-11-02",
+      "used_observation": "2026-11-02"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1923,7 +1923,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-04T00:43:45Z",
+   "have_max": "2026-11-04T02:45:57Z",
    "flags": []
   },
   {
