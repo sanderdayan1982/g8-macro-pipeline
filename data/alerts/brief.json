@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-04T14:07:37Z",
+ "generated_utc": "2026-11-04T15:31:19Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -356,8 +356,9 @@
   {
    "ccy": "AUD",
    "flags": [
-    "NOM/REAL/BE EST 03-11 ±6 pb (RBA 28-10; vs USD y alertas con RBA)",
+    "NOM/REAL/BE EST 03-11 ±6 pb (curva F2 RBA 28-10; vs USD y alertas con RBA)",
     "TP curva arrastrada (ffill)",
+    "RFR AONIA 03-11; cash rate 4.85 desde 04-11 (AONIA T+1; RBA MR 2026-30 rba.gov.au)",
     "vs USD z suelo",
     "COT DIV LF/AM"
    ],
@@ -453,12 +454,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 10,
+   "daily": 5,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 10,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 10 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] AU_POLICY.csv: Verificación oficial con fecha futura: no se puede certificar.\n• [1º/UNKNOWN] CH_POLICY.csv: Verificación oficial con fecha futura: no se puede certificar.\n• [1º/UNKNOWN] GB_POLICY.csv: Verificación oficial con fecha futura: no se puede certificar."
+  "incidents_count": 5,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 5 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] NZD_CASH_ON.csv: Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash disp\n• [1º/LATE] SOFR.csv: CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA, OVERDUE"
  }
 }
