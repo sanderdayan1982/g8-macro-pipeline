@@ -1088,7 +1088,7 @@ async function fetchAny(url, opts) {
             cachePut(url, { text: text, via: via });
             return { ok: true, text: text, via: via, ms: ms };
         } catch (e) {
-            lastErr = e.name === 'AbortError' ? 'timeout ' + TIMEOUT_MS + 'ms' : e.message;
+            lastErr = (e.name === 'AbortError' || e.name === 'TimeoutError') ? 'timeout ' + TIMEOUT_MS + 'ms via ' + attempts[i].via : e.message;
         }
     }
     if (opts.staleOk) {
@@ -2982,7 +2982,7 @@ async function init() {
     var el = document.getElementById('opt-surface');
     try {
         var pair = await Promise.all([
-            window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true }),
+            window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true, staleOk: true }),
             window.G8NET.fetchChain([RAW + 'CME_OPTIONS_C1_shadow.json'], { corsOk: true }).catch(function () { return { ok: false }; })
         ]);
         var r = pair[0];
