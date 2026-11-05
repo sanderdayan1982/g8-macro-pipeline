@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-05T06:58:41.668515Z",
+ "generated_utc": "2026-11-05T10:55:01.761130Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -58,22 +58,25 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-03",
-   "expected_obs": "2026-11-03",
+   "expected_obs": "2026-11-04",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-06T08:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-06T08:00:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "SONIA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-02",
    "expected_obs": "2026-11-02",
    "calendar": "GB",
@@ -81,7 +84,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1017,7 +1020,7 @@
    "file": "CHF_NOM_10Y.csv",
    "state": "CURRENT",
    "have_max": "2026-11-04",
-   "expected_obs": "2026-11-03",
+   "expected_obs": "2026-11-04",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1032,7 +1035,7 @@
    "file": "CHF_SARON.csv",
    "state": "CURRENT",
    "have_max": "2026-11-03",
-   "expected_obs": "2026-11-02",
+   "expected_obs": "2026-11-03",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1895,7 +1898,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-05T06:58:41Z",
+   "have_max": "2026-11-05T10:55:00Z",
    "flags": []
   },
   {
