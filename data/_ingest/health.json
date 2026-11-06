@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-06T19:57:38.200373Z",
+ "generated_utc": "2026-11-06T21:08:13.134136Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -37,24 +37,6 @@
    "evidence_source": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
    "evidence_expires_utc": "2026-11-05T00:00:00+00:00",
    "next_decision": "2026-12-17"
-  },
-  {
-   "file": "ACM_TP_10Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-03",
-   "expected_obs": "2026-11-04",
-   "calendar": "US",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "CONSULTADA_SIN_NOVEDAD",
-   "flags": [
-    "CAUSA_CONSULTADA_SIN_NOVEDAD",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 3,
-   "publication_frequency": "daily",
-   "slow_fallback": false
   }
  ],
  "unknown_count": 0,
@@ -786,19 +768,16 @@
   },
   {
    "file": "ACM_TP_10Y.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-03",
+   "state": "CURRENT",
+   "have_max": "2026-11-05",
    "expected_obs": "2026-11-04",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "CONSULTADA_SIN_NOVEDAD",
-   "flags": [
-    "CAUSA_CONSULTADA_SIN_NOVEDAD",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "age_business_days": 3,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1379,7 +1358,7 @@
   },
   {
    "file": "pos_g8_cot.json",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-10-27",
    "expected_obs": "2026-10-27",
    "calendar": "US",
@@ -1387,7 +1366,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 8,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
@@ -1757,16 +1736,16 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "AWAITING_PUBLICATION",
-   "have_max": "2026-11-04",
+   "state": "VERIFIED_CANONICAL",
+   "have_max": "2026-11-05",
    "expected_obs": "2026-11-05",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-11-06T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
+   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "expected_publication_utc": "2026-11-06T21:00:00+00:00"
@@ -1872,7 +1851,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-06T19:57:37Z",
+   "have_max": "2026-11-06T21:08:12Z",
    "flags": []
   },
   {
