@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-06T21:08:24Z",
+ "generated_utc": "2026-11-06T21:36:35Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -30,11 +30,11 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "CAD−USD -86 bp (z suelo)"
+   "text": "CAD−USD -88 bp (z suelo)"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
-   "text": "CAD−USD real -83 bp (z suelo)"
+   "text": "CAD−USD real -81 bp (z suelo) · NZD−USD real -15 bp (z suelo)"
   },
   {
    "sec": "§04/§05 Metales MDP",
@@ -46,7 +46,7 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -41 EUR -32 GBP -36 JPY -43 AUD -22 NZD -48 CAD -28 CHF -11"
+   "text": "CTF ON: ninguna · ΔTP22 USD -41 EUR -35 GBP -35 JPY -43 AUD -22 NZD -55 CAD -26 CHF -11"
   },
   {
    "sec": "§07 Factor USD",
@@ -301,9 +301,9 @@
    "real": 1.1199,
    "be": 2.113,
    "nom_asof": "2026-11-06",
-   "tp": 1.096,
-   "tp_z": -0.7755040100124262,
-   "tp_asof": "2026-11-04",
+   "tp": 1.0772,
+   "tp_z": -0.9670143014835765,
+   "tp_asof": "2026-11-05",
    "rfr": 2.442,
    "floor_bp": -5.8,
    "floor_badge": "AMPLE",
@@ -320,9 +320,9 @@
    "real": 1.9037,
    "be": 3.2279,
    "nom_asof": "2026-11-05",
-   "tp": 1.7874,
-   "tp_z": -1.5764250475015082,
-   "tp_asof": "2026-11-04",
+   "tp": 1.7978,
+   "tp_z": -1.492312169662976,
+   "tp_asof": "2026-11-05",
    "rfr": 3.7335,
    "floor_bp": -1.65,
    "floor_badge": "AMPLE",
@@ -383,21 +383,22 @@
    "ccy": "NZD",
    "flags": [
     "REAL IIB (B2)",
-    "TP ACM K=3 short sample"
+    "TP ACM K=3 short sample",
+    "REAL vs USD z suelo"
    ],
-   "nom": 4.81,
-   "real": 2.5289,
-   "be": 2.2811,
-   "nom_asof": "2026-11-04",
-   "tp": 1.5644,
-   "tp_z": 0.008482049161215342,
-   "tp_asof": "2026-11-04",
+   "nom": 4.74,
+   "real": 2.4891,
+   "be": 2.2509,
+   "nom_asof": "2026-11-05",
+   "tp": 1.5045,
+   "tp_z": -0.3409465718637611,
+   "tp_asof": "2026-11-05",
    "rfr": 2.84,
    "floor_bp": 9.0,
    "floor_badge": "TIGHT",
    "vs_usd_bp": -16.0,
-   "real_vs_usd_bp": -11.1,
-   "real_vs_usd_z": -1.95,
+   "real_vs_usd_bp": -15.1,
+   "real_vs_usd_z": -2.09,
    "lf_z": -1.57,
    "cot_state": "STRETCH-"
   },
@@ -409,19 +410,19 @@
     "COT DIV LF/AM",
     "walls PROXY"
    ],
-   "nom": 4.04,
-   "real": 1.81,
-   "be": 2.23,
-   "nom_asof": "2026-11-04",
-   "tp": 1.1141,
-   "tp_z": -0.12883776777203101,
-   "tp_asof": "2026-11-04",
+   "nom": 4.02,
+   "real": 1.83,
+   "be": 2.19,
+   "nom_asof": "2026-11-05",
+   "tp": 1.1327,
+   "tp_z": 0.02736423608348872,
+   "tp_asof": "2026-11-05",
    "rfr": 2.52,
    "floor_bp": 2.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -86.0,
-   "real_vs_usd_bp": -83.0,
-   "real_vs_usd_z": -1.87,
+   "vs_usd_bp": -88.0,
+   "real_vs_usd_bp": -81.0,
+   "real_vs_usd_z": -1.78,
    "lf_z": -1.33,
    "cot_state": "NEUTRAL"
   },
@@ -438,9 +439,9 @@
    "real": -1.05,
    "be": 1.5,
    "nom_asof": "2026-11-06",
-   "tp": -0.1175,
-   "tp_z": -0.25166027275053465,
-   "tp_asof": "2026-11-05",
+   "tp": -0.1253,
+   "tp_z": -0.35491913083927595,
+   "tp_asof": "2026-11-06",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
@@ -453,12 +454,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 5,
+   "daily": 4,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 5,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 5 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] ACM_TP_10Y.csv: CAUSA_CONSULTADA_SIN_NOVEDAD, RULE_PROVISIONAL, OVERDUE\n• [1º/LATE] GB_POLICY.csv: Verificación oficial caducada (2026-11-05T00:00:00+00:00): requiere nueva consulta de deci"
+  "incidents_count": 4,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 4 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] GB_POLICY.csv: Verificación oficial caducada (2026-11-05T00:00:00+00:00): requiere nueva consulta de deci"
  }
 }
