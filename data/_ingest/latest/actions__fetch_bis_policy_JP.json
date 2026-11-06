@@ -1,12 +1,17 @@
 {
- "errors": [],
+ "errors": [
+  {
+   "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
+   "kind": "DEGRADED"
+  }
+ ],
  "executor": "actions",
  "failing_since_utc": null,
  "files": {
   "JP_POLICY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261105T213944Z_actions_fetch-bis-policy-jp_d9e0:25692e27c912",
+   "download_id": "20261106T014225Z_actions_fetch-bis-policy-jp_e41a:25692e27c912",
    "dropped_by_source": 0,
    "file": "JP_POLICY.csv",
    "held": [],
@@ -17,10 +22,10 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-11-05T21:39:56Z",
- "gh_run_id": "42114037826",
+ "finished_utc": "2026-11-06T01:42:30Z",
+ "gh_run_id": "42145509057",
  "job": "fetch_bis_policy_JP",
- "last_ok_utc": "2026-11-05T21:39:56Z",
+ "last_ok_utc": "2026-11-06T01:42:30Z",
  "not_before": {},
  "rc": 0,
  "requests": [
@@ -30,21 +35,40 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 12.0,
+     "secs": 0.43,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Thu, 05 Nov 2026 21:39:44 GMT",
+   "date_header": "Fri, 06 Nov 2026 01:42:25 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.JP/all?format=csv"
+  },
+  {
+   "attempts": [
+    {
+     "cls": "OK",
+     "detail": "",
+     "n": 1,
+     "secs": 1.52,
+     "status": 200
+    }
+   ],
+   "cls": "OK",
+   "date_header": "Fri, 06 Nov 2026 01:42:26 GMT",
+   "detail": "",
+   "last_modified": "Wed, 04 Nov 2026 10:08:55 GMT",
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 200,
+   "url": "https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip"
   }
  ],
- "run_id": "20261105T213944Z_actions_fetch-bis-policy-jp_d9e0",
- "started_utc": "2026-11-05T21:39:44Z",
+ "run_id": "20261106T014225Z_actions_fetch-bis-policy-jp_e41a",
+ "started_utc": "2026-11-06T01:42:25Z",
  "step": "bis_jp"
 }
