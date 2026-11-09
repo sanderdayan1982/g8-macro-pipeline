@@ -1,12 +1,12 @@
 {
  "errors": [],
  "executor": "actions",
- "failing_since_utc": "2026-11-09T21:37:07Z",
+ "failing_since_utc": null,
  "files": {
   "EUR_BILL_10Y.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261109T213707Z_actions_fetch-eur-bills_681c:90ffb5a2cf6e",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:90ffb5a2cf6e",
    "dropped_by_source": 0,
    "file": "EUR_BILL_10Y.csv",
    "held": [],
@@ -19,7 +19,7 @@
   "EUR_BILL_1Y.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261109T213707Z_actions_fetch-eur-bills_681c:6b2a5d6e8dbb",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:6b2a5d6e8dbb",
    "dropped_by_source": 0,
    "file": "EUR_BILL_1Y.csv",
    "held": [],
@@ -32,9 +32,35 @@
   "EUR_BILL_2Y.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261109T213707Z_actions_fetch-eur-bills_681c:8ba2c3d983f2",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:8ba2c3d983f2",
    "dropped_by_source": 0,
    "file": "EUR_BILL_2Y.csv",
+   "held": [],
+   "new": 0,
+   "repo_max": "20261106",
+   "revised": [],
+   "src_max": "20261106",
+   "status": "NOOP"
+  },
+  "EUR_BILL_3M.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:d5c9fd3cdc99",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_3M.csv",
+   "held": [],
+   "new": 0,
+   "repo_max": "20261106",
+   "revised": [],
+   "src_max": "20261106",
+   "status": "NOOP"
+  },
+  "EUR_BILL_5Y.csv": {
+   "backfill": 0,
+   "detail": "",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:ac094df49e6d",
+   "dropped_by_source": 0,
+   "file": "EUR_BILL_5Y.csv",
    "held": [],
    "new": 0,
    "repo_max": "20261106",
@@ -45,7 +71,7 @@
   "EUR_BILL_6M.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261109T213707Z_actions_fetch-eur-bills_681c:d07aaeb68420",
+   "download_id": "20261109T230147Z_actions_fetch-eur-bills_1556:d07aaeb68420",
    "dropped_by_source": 0,
    "file": "EUR_BILL_6M.csv",
    "held": [],
@@ -56,51 +82,30 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-11-09T21:42:53Z",
- "gh_run_id": "42703854380",
+ "finished_utc": "2026-11-09T23:02:51Z",
+ "gh_run_id": "42716516967",
  "job": "fetch_eur_bills",
- "last_ok_utc": "2026-11-09T13:22:51Z",
+ "last_ok_utc": "2026-11-09T23:02:51Z",
  "not_before": {},
- "rc": 1,
+ "rc": 0,
  "requests": [
   {
    "attempts": [
     {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 504",
+     "cls": "OK",
+     "detail": "",
      "n": 1,
-     "secs": 30.5,
-     "status": 504
-    },
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 504",
-     "n": 2,
-     "secs": 30.5,
-     "status": 504
-    },
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 504",
-     "n": 3,
-     "secs": 30.5,
-     "status": 504
-    },
-    {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 504",
-     "n": 4,
-     "secs": 30.84,
-     "status": 504
+     "secs": 1.33,
+     "status": 200
     }
    ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Mon, 09 Nov 2026 21:41:30 GMT",
-   "detail": "HTTP 504",
-   "last_modified": null,
+   "cls": "OK",
+   "date_header": "Mon, 09 Nov 2026 23:01:48 GMT",
+   "detail": "",
+   "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
    "redirects": [],
-   "status": 504,
+   "status": 200,
    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_3M?format=csvdata&startPeriod=2021-11-10&endPeriod=2026-11-09"
   },
   {
@@ -109,12 +114,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 3.21,
+     "secs": 1.37,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 09 Nov 2026 21:41:32 GMT",
+   "date_header": "Mon, 09 Nov 2026 23:01:49 GMT",
    "detail": "",
    "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
@@ -128,12 +133,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 3.03,
+     "secs": 1.3,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 09 Nov 2026 21:41:35 GMT",
+   "date_header": "Mon, 09 Nov 2026 23:01:50 GMT",
    "detail": "",
    "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
@@ -147,12 +152,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 3.09,
+     "secs": 12.59,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 09 Nov 2026 21:41:38 GMT",
+   "date_header": "Mon, 09 Nov 2026 23:02:03 GMT",
    "detail": "",
    "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
@@ -166,24 +171,24 @@
      "cls": "FAIL_TRANSIENT",
      "detail": "HTTP 504",
      "n": 1,
-     "secs": 30.5,
+     "secs": 30.68,
      "status": 504
     },
     {
-     "cls": "FAIL_TRANSIENT",
-     "detail": "HTTP 504",
+     "cls": "OK",
+     "detail": "",
      "n": 2,
-     "secs": 30.67,
-     "status": 504
+     "secs": 3.27,
+     "status": 200
     }
    ],
-   "cls": "FAIL_TRANSIENT",
-   "date_header": "Mon, 09 Nov 2026 21:42:50 GMT",
-   "detail": "presupuesto insuficiente para el siguiente reintento (HTTP 504)",
-   "last_modified": null,
+   "cls": "OK",
+   "date_header": "Mon, 09 Nov 2026 23:02:47 GMT",
+   "detail": "",
+   "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
    "redirects": [],
-   "status": 504,
+   "status": 200,
    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_5Y?format=csvdata&startPeriod=2021-11-10&endPeriod=2026-11-09"
   },
   {
@@ -192,12 +197,12 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 3.08,
+     "secs": 3.19,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 09 Nov 2026 21:42:53 GMT",
+   "date_header": "Mon, 09 Nov 2026 23:02:50 GMT",
    "detail": "",
    "last_modified": "Mon, 09 Nov 2026 11:00:00 GMT",
    "not_before_epoch": null,
@@ -206,7 +211,7 @@
    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?format=csvdata&startPeriod=2021-11-10&endPeriod=2026-11-09"
   }
  ],
- "run_id": "20261109T213707Z_actions_fetch-eur-bills_681c",
- "started_utc": "2026-11-09T21:37:07Z",
+ "run_id": "20261109T230147Z_actions_fetch-eur-bills_1556",
+ "started_utc": "2026-11-09T23:01:47Z",
  "step": "eur_bills"
 }
