@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-09T23:23:13.358770Z",
+ "generated_utc": "2026-11-09T23:57:26.952071Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -88,7 +88,7 @@
   },
   {
    "file": "TONA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-05",
    "expected_obs": "2026-11-05",
    "calendar": "JP",
@@ -96,7 +96,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -118,15 +118,19 @@
   },
   {
    "file": "AONIA.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-10T23:53:00Z",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -234,7 +238,7 @@
   {
    "file": "AU_POLICY.csv",
    "state": "VERIFIED_POLICY",
-   "have_max": "2026-11-06",
+   "have_max": "2026-11-09",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
@@ -242,7 +246,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 0,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.rba.gov.au/media-releases/2026/mr-26-30.html",
@@ -621,43 +625,55 @@
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-10T23:53:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-10T23:53:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-10T23:53:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1851,7 +1867,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-09T23:23:12Z",
+   "have_max": "2026-11-09T23:57:26Z",
    "flags": []
   },
   {
