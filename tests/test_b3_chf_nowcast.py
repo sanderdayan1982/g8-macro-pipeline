@@ -20,6 +20,18 @@ def _weekdays(day):
     return day.weekday() < 5
 
 
+def _last_official_row(rel):
+    """Última fila de datos del CSV oficial, con el redondeo que el propio CSV imprime."""
+    last = None
+    with open(os.path.join(ROOT, rel), encoding="utf-8") as fh:
+        for line in fh:
+            text = line.strip()
+            if text and not text.startswith("#") and not text.lower().startswith("date"):
+                last = text
+    date_s, value_s = last.split(",")[:2]
+    return date_s[:10], float(value_s)
+
+
 class Bridge(unittest.TestCase):
     def test_anchor_plus_tenor_weighted_daily_move(self):
         official = [(date(2026, 9, 30), 1.0)]
@@ -73,17 +85,30 @@ class PublishedFiles(unittest.TestCase):
         y5 = summary["tenors"]["5Y"]
         self.assertEqual(summary["mode"], "SHADOW")
         self.assertEqual(summary["quality"], "NOWCAST")
-        self.assertEqual((y2["anchor_date"], y2["official"], y2["w_nom10"]), ("2026-09-30", 0.287, 0.2))
-        self.assertEqual((y5["anchor_date"], y5["official"], y5["w_nom10"]), ("2026-09-30", 0.453, 0.5))
+        for tenor, rel, weight in (
+            (y2, "data/CHF_SPOT_2Y.csv", 0.2),
+            (y5, "data/CHF_SPOT_5Y.csv", 0.5),
+        ):
+            anchor_date, official = _last_official_row(rel)
+            self.assertEqual(tenor["anchor_date"], anchor_date)
+            self.assertEqual(tenor["official"], official)
+            self.assertEqual(tenor["w_nom10"], weight)
         self.assertEqual(y2["last_label"], "NOWCAST")
-        self.assertGreater(y2["last_date"], "2026-09-30")
+        self.assertGreater(y2["last_date"], y2["anchor_date"])
         dates = [row["date"] for row in y2["series"]]
-        self.assertIn("2026-10-01", dates)
+        self.assertEqual(dates[0], y2["anchor_date"])
+        self.assertEqual(y2["series"][0]["label"], "OFFICIAL")
+        if len(dates) > 1:
+            self.assertGreater(dates[1], y2["anchor_date"])
+            for prev, nxt in zip(dates, dates[1:]):
+                self.assertGreater(nxt, prev)
+            for row in y2["series"][1:]:
+                self.assertEqual(row["label"], "NOWCAST")
         self.assertNotIn("2026-10-03", dates)
         with open(os.path.join(ROOT, "data", "CHF_SPOT_2Y_daily_shadow.csv"), encoding="utf-8") as fh:
             lines = fh.read().splitlines()
         self.assertEqual(lines[0], "DATE,VALUE,LABEL,W_NOM10,SARON,SARON_DATE,NOM10,NOM10_DATE")
-        self.assertTrue(lines[1].startswith("2026-09-30,0.287000,OFFICIAL"))
+        self.assertTrue(lines[1].startswith(f'{y2["anchor_date"]},{y2["official"]:.6f},OFFICIAL'))
         self.assertTrue(lines[-1].startswith(y2["last_date"]))
         self.assertIn(",NOWCAST,", lines[-1])
         with open(os.path.join(ROOT, "data", B.SHADOW_JSON), encoding="utf-8") as fh:

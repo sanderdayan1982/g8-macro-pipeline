@@ -45,3 +45,11 @@ jobs:
       # E1 (2026-09-21) / E2 (2026-09-22): la equivalencia s01b sobre las sesiones congeladas sigue incluida.
       - name: Smoke checks (syntax · tests · s01b equivalence · YAML · registry · JS · brief dry-run · imports)
         run: bash scripts/tools/validate_smoke.sh
+
+      # SALUD-TESTS-01: la suite en rojo en main avisa por Telegram (Ley 2, fallos ruidosos)
+      - name: Alert on failure
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=validate run=${{ github.run_number }} — suite de tests en rojo en main, ver Actions"
