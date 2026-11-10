@@ -29,7 +29,7 @@ jobs:
     # recalibrar con data/_ingest/latest/actions__job_daily.json tras 2 semanas.
     env:
       G8_JOB: daily
-      G8_JOB_RESERVE_S: '700'
+      G8_JOB_RESERVE_S: '740'
       # R2-1: cada paso g8step copia data/ antes de ejecutarse y, al terminar, restaura al último válido lo que
       # quede vacío, ilegible, retrocedido o escrito por un paso cortado → «git add data/» solo ve salidas válidas.
       G8_STEP_GUARD: data
@@ -328,6 +328,12 @@ jobs:
         timeout-minutes: 2
         run: python scripts/tools/g8step.py --name cme_options_shadow --phase post --cap 40 --min 5 -- python scripts/cme_options_shadow.py
 
+      - name: Shadow CME FXVOL (IV30 / RR25 / BF25 / OI futuros)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python scripts/tools/g8step.py --name cme_fxvol_shadow --phase post --cap 40 --min 5 -- python scripts/cme_fxvol_shadow.py
+
       - name: Shadow CHF nowcast
         if: always()
         continue-on-error: true
@@ -354,6 +360,8 @@ jobs:
             data/CB_EVENT_48H_shadow.json \
             data/CME_OPTIONS_C1_shadow.json \
             data/options/shadow_history.json \
+            data/CME_FXVOL_shadow.json \
+            data/options/fxvol_history.csv \
             data/CHF_NOWCAST_shadow.json \
             data/CHF_SPOT_2Y_daily_shadow.csv \
             data/CHF_SPOT_5Y_daily_shadow.csv \
