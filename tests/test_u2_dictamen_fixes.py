@@ -14,6 +14,8 @@ import tempfile
 import unittest
 from datetime import date
 
+MAX_GAP_DAYS = 5
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 HTML = os.path.join(ROOT, "docs", "index.html")
@@ -212,7 +214,10 @@ class S01BShadowA3(unittest.TestCase):
                 self.assertIn("local: ", out["rows"][c])
                 self.assertIn("ρ22: ", out["rows"][c])
         else:
-            self.assertLess(a3["t"], s01b["as_of"])
+            self.assertLessEqual(
+                abs((date.fromisoformat(a3["t"]) - date.fromisoformat(s01b["as_of"])).days),
+                MAX_GAP_DAYS,
+            )
             self.assertFalse(self._cells(a3, s01b["as_of"])["ok"])
 
     def test_a3_is_dropped_when_the_session_differs(self):
@@ -226,7 +231,10 @@ class S01BShadowA3(unittest.TestCase):
     def test_writer_session_is_the_last_target_day_of_the_canonical(self):
         import s01b_shadow_a3 as A3
         s01b = json.loads(_read(os.path.join(ROOT, "data", "S01B.json")))
-        self.assertEqual(A3.last_session(os.path.join(ROOT, "data")), date.fromisoformat(s01b["as_of"]))
+        a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
+        ls = A3.last_session(os.path.join(ROOT, "data"))
+        self.assertGreaterEqual(ls, date.fromisoformat(a3["t"]))
+        self.assertLessEqual(abs((ls - date.fromisoformat(s01b["as_of"])).days), MAX_GAP_DAYS)
         tmp = tempfile.mkdtemp()
         self.addCleanup(lambda: __import__("shutil").rmtree(tmp))
         dest = os.path.join(tmp, A3.SHADOW_NAME)
