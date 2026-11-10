@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-09T23:57:26.952071Z",
+ "generated_utc": "2026-11-10T00:25:58.150946Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -31,7 +31,7 @@
    "cause": null,
    "flags": [],
    "status": "LATE",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
@@ -52,7 +52,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -67,7 +67,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -82,21 +82,21 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 2,
+   "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "TONA.csv",
-   "state": "DUE",
-   "have_max": "2026-11-05",
+   "state": "CURRENT",
+   "have_max": "2026-11-06",
    "expected_obs": "2026-11-05",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -112,25 +112,21 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AONIA.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-06",
+   "state": "CURRENT",
+   "have_max": "2026-11-09",
    "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-10T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -138,7 +134,7 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-09",
+   "have_max": "2026-11-10",
    "expected_obs": "2026-11-05",
    "calendar": "US",
    "basis": "PROVISIONAL",
@@ -162,7 +158,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
@@ -177,7 +173,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
@@ -192,7 +188,7 @@
    "cause": null,
    "flags": [],
    "status": "LATE",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
@@ -210,7 +206,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/k261030a.pdf",
@@ -228,7 +224,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.snb.ch/en/publications/communication/press-releases-restricted/pre_20260924",
@@ -246,7 +242,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.rba.gov.au/media-releases/2026/mr-26-30.html",
@@ -264,7 +260,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 6,
+   "age_business_days": 7,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.rbnz.govt.nz/news-and-events/news/2026/10/ocr-held-at-2-75-percent",
@@ -408,77 +404,77 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "GBP_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "GBP_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "GBP_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "GBP_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "GBP_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -619,61 +615,49 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-06",
+   "state": "CURRENT",
+   "have_max": "2026-11-09",
    "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-10T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-06",
+   "state": "CURRENT",
+   "have_max": "2026-11-09",
    "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-10T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-06",
+   "state": "CURRENT",
+   "have_max": "2026-11-09",
    "expected_obs": "2026-11-09",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-10T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-10T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -688,7 +672,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 3,
+   "age_business_days": 4,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
   },
@@ -703,7 +687,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 3,
+   "age_business_days": 4,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
   },
@@ -718,22 +702,22 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "RY_G8_GBP.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "PENDING",
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -748,7 +732,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -763,7 +747,7 @@
    "cause": null,
    "flags": [],
    "status": "PENDING",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -778,7 +762,7 @@
    "cause": null,
    "flags": [],
    "status": "PENDING",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -793,7 +777,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -836,7 +820,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -879,7 +863,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -894,7 +878,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -923,7 +907,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -966,7 +950,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 2,
+   "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "verified_download_utc": "2026-11-09T18:30:08Z"
@@ -996,7 +980,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1011,7 +995,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1152,7 +1136,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 6,
+   "age_business_days": 7,
    "publication_frequency": "monthly:BD1",
    "slow_fallback": true
   },
@@ -1198,7 +1182,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1215,7 +1199,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1233,7 +1217,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1250,7 +1234,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1268,7 +1252,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1286,7 +1270,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1303,7 +1287,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1320,7 +1304,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false,
    "frequency_note": "Salida diaria estimada; curva oficial mensual + nominal 10Y diario (NOWCAST)"
@@ -1338,7 +1322,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1353,7 +1337,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1368,7 +1352,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 0,
+   "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1383,7 +1367,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "weekly:FRI",
    "slow_fallback": false
   },
@@ -1398,7 +1382,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "weekly",
    "slow_fallback": false,
    "input_evidence": {
@@ -1506,7 +1490,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "weekly",
    "slow_fallback": false,
    "input_evidence": {
@@ -1614,7 +1598,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED"
    ],
    "status": "CURRENT",
-   "age_business_days": 4,
+   "age_business_days": 5,
    "publication_frequency": "weekly",
    "slow_fallback": false,
    "input_evidence": {
@@ -1752,19 +1736,19 @@
   },
   {
    "file": "OPTIONS_SURFACE.json",
-   "state": "VERIFIED_CANONICAL",
+   "state": "AWAITING_PUBLICATION",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Sesión diaria coherente entre estado, 12 archivos canónicos y resumen; calendario operativo del colector, sin certificar calidad de mercado por la sola frescura.",
+   "reason": "Resumen y 12 archivos canónicos coherentes. Próxima sesión pendiente de ventana de publicación: 2026-11-10T21:00:00+00:00. El OI del viernes espera al siguiente día laborable; no se compra ni descarga dato adicional.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 1,
+   "status": "PENDING",
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "expected_publication_utc": "2026-11-09T21:00:00+00:00"
+   "expected_publication_utc": "2026-11-10T21:00:00+00:00"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -1821,7 +1805,7 @@
     "INPUT_VERSION_UNKNOWN"
    ],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -1850,7 +1834,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 6,
+   "age_business_days": 7,
    "publication_frequency": "monthly:BD1",
    "slow_fallback": true
   },
@@ -1867,7 +1851,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-09T23:57:26Z",
+   "have_max": "2026-11-10T00:25:57Z",
    "flags": []
   },
   {
