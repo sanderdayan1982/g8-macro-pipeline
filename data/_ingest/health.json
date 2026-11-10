@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-10T07:28:16.193970Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-11-10T10:56:13.853939Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -18,27 +18,8 @@
   "CHF_CPI_YOY.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "GB_POLICY.csv",
-   "state": "EVIDENCE_EXPIRED",
-   "have_max": "2026-11-06",
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "PROVISIONAL",
-   "reason": "Verificación oficial caducada (2026-11-05T00:00:00+00:00): requiere nueva consulta de decisión y calendario. No basta repetir el último tipo.",
-   "cause": null,
-   "flags": [],
-   "status": "LATE",
-   "age_business_days": 2,
-   "publication_frequency": "event",
-   "slow_fallback": false,
-   "evidence_source": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
-   "evidence_expires_utc": "2026-11-05T00:00:00+00:00",
-   "next_decision": "2026-12-17"
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 1,
  "feeds": [
   {
@@ -58,23 +39,23 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "DUE",
-   "have_max": "2026-11-06",
-   "expected_obs": "2026-11-06",
+   "state": "CURRENT",
+   "have_max": "2026-11-09",
+   "expected_obs": "2026-11-09",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "SONIA.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-05",
+   "have_max": "2026-11-06",
    "expected_obs": "2026-11-05",
    "calendar": "GB",
    "basis": "OFICIAL_GENERAL",
@@ -82,7 +63,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 3,
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -179,20 +160,20 @@
   },
   {
    "file": "GB_POLICY.csv",
-   "state": "EVIDENCE_EXPIRED",
-   "have_max": "2026-11-06",
+   "state": "VERIFIED_POLICY",
+   "have_max": "2026-11-09",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Verificación oficial caducada (2026-11-05T00:00:00+00:00): requiere nueva consulta de decisión y calendario. No basta repetir el último tipo.",
+   "reason": "Tipo vigente contrastado con decisión oficial; verificación limitada a siete días y a la próxima reunión. No es una nueva observación diaria.",
    "cause": null,
    "flags": [],
-   "status": "LATE",
-   "age_business_days": 2,
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
-   "evidence_expires_utc": "2026-11-05T00:00:00+00:00",
+   "evidence_expires_utc": "2026-11-17T10:39:00+00:00",
    "next_decision": "2026-12-17"
   },
   {
@@ -1017,7 +998,7 @@
    "file": "CHF_NOM_10Y.csv",
    "state": "CURRENT",
    "have_max": "2026-11-09",
-   "expected_obs": "2026-11-06",
+   "expected_obs": "2026-11-09",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1032,7 +1013,7 @@
    "file": "CHF_SARON.csv",
    "state": "CURRENT",
    "have_max": "2026-11-06",
-   "expected_obs": "2026-11-05",
+   "expected_obs": "2026-11-06",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1895,7 +1876,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-10T07:28:15Z",
+   "have_max": "2026-11-10T10:56:13Z",
    "flags": []
   },
   {
