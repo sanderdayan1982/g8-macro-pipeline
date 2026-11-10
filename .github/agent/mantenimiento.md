@@ -171,3 +171,5 @@ el **REAL ex post** = nominal 10Y SNB − IPC a/a oficial (BFS, `scripts/fetch_c
 y en la columna BE el «IPC a/a», siempre etiquetado como tal y NUNCA como breakeven. Si la BFS cambia el fichero
 (nº de pedido cc-e-05.02.08, hoja Index_m, columna «% m-12»), arregla `fetch_chf_cpi.py` con su test y acta. No uses el
 IPC para ninguna otra divisa ni como breakeven.
+
+> **Regla SALUD-1 (10-nov-2026).** Todo cambio autorizado a un archivo con hash congelado en `tests/` actualiza ese hash **en el mismo commit**, con un comentario que cite la orden que lo autoriza. Un commit que cambia un archivo congelado sin actualizar su hash no se sube a `main`.

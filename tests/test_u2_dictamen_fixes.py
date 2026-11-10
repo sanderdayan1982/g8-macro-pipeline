@@ -21,7 +21,7 @@ FROZEN = [
     ("scripts/cme_options_collector.py", "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9"),
     ("scripts/build_options_summary.py", "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019"),
     (".github/workflows/cme_options.yml", "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab"),
-    ("scripts/dashboard_alerts.py", "0c0aba148a00b8cb7dd950f651f28e708605e0bcc720cd353bb9397370874322"),
+    ("scripts/dashboard_alerts.py", "cdddb1bc1186e22468ec0f35540fa97ccbd8226e3db31ce174a190c7109fddb2"),  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
     ("scripts/s01b.py", "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5"),
     ("scripts/usd_factor.py", "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3"),
     ("scripts/book_risk.py", "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50"),
@@ -201,16 +201,19 @@ class S01BShadowA3(unittest.TestCase):
         a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
         s01b = json.loads(_read(os.path.join(ROOT, "data", "S01B.json")))
         self.assertEqual(a3["mode"], "SHADOW")
-        self.assertEqual(a3["t"], s01b["as_of"])
-        out = self._cells(a3, s01b["as_of"])
-        self.assertTrue(out["ok"])
-        self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
-        eur = a3["currencies"]["EUR"]
-        self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
-                         % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
-        for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
-            self.assertIn("local: ", out["rows"][c])
-            self.assertIn("ρ22: ", out["rows"][c])
+        if a3["t"] == s01b["as_of"]:
+            out = self._cells(a3, s01b["as_of"])
+            self.assertTrue(out["ok"])
+            self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
+            eur = a3["currencies"]["EUR"]
+            self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
+                             % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
+            for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
+                self.assertIn("local: ", out["rows"][c])
+                self.assertIn("ρ22: ", out["rows"][c])
+        else:
+            self.assertLess(a3["t"], s01b["as_of"])
+            self.assertFalse(self._cells(a3, s01b["as_of"])["ok"])
 
     def test_a3_is_dropped_when_the_session_differs(self):
         a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))

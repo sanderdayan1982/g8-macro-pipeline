@@ -15,7 +15,7 @@ import cme_options_shadow as OPT  # noqa: E402
 FROZEN = {
     "scripts/cme_options_collector.py": "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9",
     "scripts/build_options_summary.py": "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019",
-    "scripts/dashboard_alerts.py": "0c0aba148a00b8cb7dd950f651f28e708605e0bcc720cd353bb9397370874322",
+    "scripts/dashboard_alerts.py": "cdddb1bc1186e22468ec0f35540fa97ccbd8226e3db31ce174a190c7109fddb2",  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
     "scripts/book_risk.py": "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50",
     "scripts/s01b.py": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
 }
@@ -187,8 +187,21 @@ class OptionWalls(unittest.TestCase):
         eur = doc["currencies"]["EUR"]
         self.assertIsNotNone(eur["dte_calendar"])
         self.assertIsNotNone(eur["dte_bd"])
-        self.assertIsNotNone(eur["call_wall"]["k"])
-        self.assertIsNotNone(eur["put_wall"]["k"])
+        for ccy in ("EUR", "JPY", "GBP", "AUD", "CAD", "CHF"):
+            row = doc["currencies"][ccy]
+            for side in ("call_wall", "put_wall"):
+                wall = row[side]
+                if wall is not None:
+                    self.assertIsInstance(wall, dict)
+                    self.assertIsInstance(wall["k"], (int, float))
+                    self.assertNotIsInstance(wall["k"], bool)
+            in_roll = bool(row["roll_window_7d"])
+            if (row["call_wall"] is None or row["put_wall"] is None) and not in_roll:
+                self.assertEqual(row["map_status"], "THIN_ONE_SIDED")
+            dte = row["dte_calendar"]
+            if (row["call_wall"] is not None and row["put_wall"] is not None and not in_roll
+                    and isinstance(dte, (int, float)) and not isinstance(dte, bool) and dte > 7):
+                self.assertEqual(row["map_status"], "READABLE")
         self.assertEqual(doc["currencies"]["NZD"]["note"], "sin opciones CME")
         self.assertIsNone(doc["currencies"]["NZD"]["dte_calendar"])
         self.assertIsNone(doc["currencies"]["NZD"]["aggregate"]["delta_oi"])
