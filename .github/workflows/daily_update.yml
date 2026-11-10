@@ -29,7 +29,7 @@ jobs:
     # recalibrar con data/_ingest/latest/actions__job_daily.json tras 2 semanas.
     env:
       G8_JOB: daily
-      G8_JOB_RESERVE_S: '700'
+      G8_JOB_RESERVE_S: '740'
       # R2-1: cada paso g8step copia data/ antes de ejecutarse y, al terminar, restaura al último válido lo que
       # quede vacío, ilegible, retrocedido o escrito por un paso cortado → «git add data/» solo ve salidas válidas.
       G8_STEP_GUARD: data
