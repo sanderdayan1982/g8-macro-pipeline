@@ -634,6 +634,9 @@
         <div id="opt-surface">
             <div class="attr-err" style="color:#5d6678">Loading OPTIONS_SURFACE.json from pipeline repo…</div>
         </div>
+        <div id="opt-fxvol" style="margin-top:18px">
+          <div class="attr-err" style="color:#5d6678">Loading CME_FXVOL_shadow.json…</div>
+        </div>
         <div class="section-footer">
             <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor, ~$0.40/mo) — collector v1.1.0 with availability/cost/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session; reference = settle of the next QUARTERLY future, the contract the option exercises into (summary v1.1 [F1] — v1.0 used the nearest future, wrong for monthly serials). Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
         </div>
@@ -1322,6 +1325,9 @@ var FEED_REGISTRY = {
 
     OPTIONS_SURFACE: Object.assign(
         repo('OPTIONS_SURFACE.json', 'CME FX Options Surface (walls)', 'daily', 4, '06'),
+        { externalReport: true }),
+    CME_FXVOL: Object.assign(
+        repo('CME_FXVOL_shadow.json', 'CME FX implied vol IV30-G8 (SHADOW)', 'daily', 4, '06'),
         { externalReport: true }),
 
     /* ── 00 COT positioning — repo (pos_g8_cot_collector.py). Fuera de la página. ──
@@ -2996,6 +3002,172 @@ async function init() {
             ' · run the CME Options Surface workflow (Actions) or check the secret DATABENTO_API_KEY</div>';
         if (window.G8DQM && window.G8DQM.report) {
             try { window.G8DQM.report('OPTIONS_SURFACE', { status: 'DEAD', error: e.message }); } catch (e2) {}
+        }
+    }
+}
+
+function boot(tries) {
+    tries = tries || 0;
+    if ((!window.G8NET || !window.G8NET.fetchChain) && tries < 50) {
+        return setTimeout(function () { boot(tries + 1); }, 120);
+    }
+    init();
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { boot(0); });
+} else { boot(0); }
+})();
+</script>
+
+<script>
+/* IV30-G8 — Section 06b module · v1 (SHADOW)
+   Reads data/CME_FXVOL_shadow.json. SHADOW: no vota, no crea situación, no cambia tamaño.
+   Convención nativa CME (XXX/USD). El signo de RR25 se invierte solo en JPY, CAD y CHF. */
+(function () {
+'use strict';
+
+var RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
+var ORDER = ['EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF'];
+var PAIR = { EUR: 'EURUSD', JPY: 'USDJPY', GBP: 'GBPUSD', AUD: 'AUDUSD', CAD: 'USDCAD', CHF: 'USDCHF' };
+var FLIP = { JPY: 1, CAD: 1, CHF: 1 };
+
+function esc(t) {
+    return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function num(v) {
+    return v == null || !isFinite(Number(v)) ? null : Number(v);
+}
+function thou(n) {
+    var s = String(Math.round(Number(n)));
+    var neg = s.charAt(0) === '-';
+    var body = neg ? s.slice(1) : s;
+    return (neg ? '-' : '') + body.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function level(v) {
+    var n = num(v);
+    return n == null ? '—' : n.toFixed(2);
+}
+function signed(v) {
+    var n = num(v);
+    if (n == null) return '—';
+    var s = n.toFixed(2);
+    return n > 0 ? '+' + s : s;
+}
+function pairRR(ccy, v) {
+    var n = num(v);
+    if (n == null) return null;
+    return FLIP[ccy] ? -n : n;
+}
+function gateCell(g) {
+    if (g === 'PROXY') return '<span class="uf-flag uf-flag-mute" title="solo nota informativa">PROXY</span>';
+    return esc(g || '—');
+}
+function ivTitle(d) {
+    var exp2 = d.exp2 ? (d.exp2 + ' (' + d.dte2 + ')') : '—';
+    return d.mode + ', ' + d.exp1 + ' (' + d.dte1 + ') / ' + exp2 + ', ' + d.und1 + ', ' + d.n1 + '/' + (d.n2 == null ? '—' : d.n2);
+}
+function flujo(ccy, q) {
+    if (q === 'DINERO_NUEVO_COMPRADOR') return 'dinero nuevo comprador de ' + ccy;
+    if (q === 'DINERO_NUEVO_VENDEDOR') return 'dinero nuevo vendedor de ' + ccy;
+    if (q === 'CIERRE_CORTOS') return 'cierre de cortos en ' + ccy;
+    if (q === 'LIQUIDACION_LARGOS') return 'liquidación de largos en ' + ccy;
+    if (q === 'OI_PLANO') return 'OI plano';
+    if (q === 'PRECIO_PLANO') return 'precio plano';
+    if (q === 'ROLL') return 'roll (no se lee)';
+    return '—';
+}
+function oiLine(fut) {
+    var a = fut && fut['1d'];
+    var b = fut && fut['1w'];
+    function one(block) {
+        var n = block ? num(block.d_oi_pct) : null;
+        if (n == null) return '—';
+        var s = n.toFixed(2);
+        return (n > 0 ? '+' : '') + s + '%';
+    }
+    return 'ΔOI ' + one(a) + ' · ' + one(b);
+}
+
+function render(doc, surface) {
+    var el = document.getElementById('opt-fxvol');
+    var session = doc.session || '—';
+    var html = '<div><b>IV30-G8 · VOL IMPLÍCITA CME · SKEW 25Δ · OI FUTUROS</b> ' +
+        '<span class="uf-flag">SHADOW · no vota · sesión ' + esc(session) + '</span></div>';
+    var latest = surface && surface.latest_session;
+    if (latest && String(latest) !== String(doc.session)) {
+        html += '<div class="attr-sub">sesión distinta de §06 (' + esc(doc.session) + ' vs ' + esc(latest) + ')</div>';
+    }
+    html += '<table class="attr-table"><thead><tr>' +
+        '<th>Par</th><th>Gate 0</th><th>IV30 %</th><th>ΔIV 1d · 1w · 1m</th><th>Pct IV</th>' +
+        '<th>RR25 (par)</th><th>ΔRR 1d · 1w</th><th>Pct RR</th><th>BF25</th>' +
+        '<th>OI fut.</th><th>Flujo 1d · 1w</th></tr></thead><tbody>';
+    ORDER.forEach(function (ccy) {
+        var d = (doc.currencies || {})[ccy];
+        if (!d || d.status !== 'OK') {
+            html += '<tr><td>' + PAIR[ccy] + '</td><td>' + gateCell(d && d.gate0) + '</td>' +
+                '<td colspan="9">' + esc((d && d.reason) || 'NA') + '</td></tr>';
+            return;
+        }
+        var iv = d.d_iv || {};
+        var rr = d.d_rr || {};
+        var pctIv = d.iv_pct == null ? 'HIST_SHORT' : (Number(d.iv_pct).toFixed(1) + ' / ' + d.hist_n);
+        var pctRr;
+        if (d.rr_pct == null) pctRr = 'HIST_SHORT';
+        else {
+            var p = FLIP[ccy] ? (100 - Number(d.rr_pct)) : Number(d.rr_pct);
+            pctRr = p.toFixed(1);
+        }
+        var rrNative = num(d.rr25);
+        var rrShow = pairRR(ccy, d.rr25);
+        var drr1 = pairRR(ccy, rr['1d']);
+        var drrW = pairRR(ccy, rr['1w']);
+        var fut = d.fut || {};
+        var f1 = fut['1d'] || {};
+        var fw = fut['1w'] || {};
+        html += '<tr>' +
+            '<td>' + PAIR[ccy] + '</td>' +
+            '<td>' + gateCell(d.gate0) + '</td>' +
+            '<td title="' + esc(ivTitle(d)) + '">' + level(d.iv30_atm) + '</td>' +
+            '<td>' + signed(iv['1d']) + ' · ' + signed(iv['1w']) + ' · ' + signed(iv['1m']) + '</td>' +
+            '<td>' + esc(pctIv) + '</td>' +
+            '<td title="' + esc('nativo CME: ' + (rrNative == null ? '—' : rrNative.toFixed(2))) + '">' + level(rrShow) + '</td>' +
+            '<td>' + signed(drr1) + ' · ' + signed(drrW) + '</td>' +
+            '<td>' + esc(pctRr) + '</td>' +
+            '<td>' + level(d.bf25) + '</td>' +
+            '<td>' + (fut.oi_total == null ? '—' : thou(fut.oi_total)) +
+                '<div class="attr-sub">' + oiLine(fut) + '</div></td>' +
+            '<td>1d ' + flujo(ccy, f1.quadrant) + ' · 1w ' + flujo(ccy, fw.quadrant) + '</td>' +
+            '</tr>';
+    });
+    html += '<tr><td>NZDUSD</td><td>' + gateCell('NA') + '</td>' +
+        '<td colspan="9">sin opciones CME (NO_CME_OPTIONS)</td></tr>';
+    html += '</tbody></table>' +
+        '<div class="attr-sub">IV30-G8 = vol implícita ATM a 30 días constantes (Black-76 sobre settlement oficial CME, Databento). No es el CVOL oficial: el 17-ago-2026 quedó entre un 3,5 % y un 8,1 % por debajo, en las seis divisas. RR25 en convención del par: positivo = el mercado paga más por protegerse de que el par SUBA. SHADOW: no vota, no crea situación, no cambia tamaño.</div>';
+    el.innerHTML = html;
+    if (window.G8DQM && window.G8DQM.report) {
+        try {
+            window.G8DQM.report('CME_FXVOL', { lastDate: doc.session, via: 'repo (IV30-G8 §06b SHADOW)' });
+        } catch (e) { /* non-fatal */ }
+    }
+}
+
+async function init() {
+    var el = document.getElementById('opt-fxvol');
+    try {
+        var pair = await Promise.all([
+            window.G8NET.fetchChain([RAW + 'CME_FXVOL_shadow.json'], { corsOk: true, staleOk: true }),
+            window.G8NET.fetchChain([RAW + 'OPTIONS_SURFACE.json'], { corsOk: true, staleOk: true }).catch(function () { return { ok: false }; })
+        ]);
+        var r = pair[0];
+        if (!r.ok) throw new Error(r.error || 'fetch failed');
+        var surface = null;
+        if (pair[1] && pair[1].ok) { try { surface = JSON.parse(pair[1].text); } catch (e2) { surface = null; } }
+        render(JSON.parse(r.text), surface);
+    } catch (e) {
+        var msg = String(e && e.message || e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        el.innerHTML = '<div class="attr-err">CME_FXVOL_shadow.json unreachable — ' + msg + '</div>';
+        if (window.G8DQM && window.G8DQM.report) {
+            try { window.G8DQM.report('CME_FXVOL', { status: 'DEAD', error: e.message }); } catch (e2) {}
         }
     }
 }

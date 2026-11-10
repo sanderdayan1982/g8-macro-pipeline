@@ -1,0 +1,1639 @@
+{
+ "_doc": "Vectores de prueba FXVOL-SHADOW v1.0 · salida esperada de FXVOL_ref_build.py sobre data/options/canonical tal como está en main a 10-nov-2026 (112 sesiones, 2026-06-01..2026-11-06). Excluir generated_utc. Tolerancias: iv30_atm/rr25/bf25/d_iv/d_rr ±0,01; iv_pct/rr_pct ±0,1; d_oi_pct ±0,01; px_chg_pct ±0,001; enteros, fechas y etiquetas exactos.",
+ "2026-08-17": {
+  "version": "FXVOL-SHADOW v1.0",
+  "status": "SHADOW",
+  "session": "2026-08-17",
+  "prev_session": "2026-08-14",
+  "sessions_total": 54,
+  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+  "method": {
+   "model": "Black-76 sobre settlement oficial, sin descuento",
+   "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+   "min_dte": 7,
+   "target_dte": 30,
+   "delta_min": 0.05,
+   "min_points": 5,
+   "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+   "pct_window": [
+    60,
+    252
+   ],
+   "lookback_1w": 5,
+   "lookback_1m": 21,
+   "oi_flat_pct": {
+    "1d": 1.0,
+    "1w": 2.0
+   },
+   "roll_window_days": [
+    -9,
+    3
+   ]
+  },
+  "fut_roll_window": {
+   "start": "2026-09-07",
+   "end": "2026-09-19",
+   "active": false
+  },
+  "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+  "currencies": {
+   "EUR": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.02,
+    "rr25": -0.07,
+    "bf25": 0.14,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6EU6",
+    "F1": 1.1585,
+    "n1": 18,
+    "n2": 18,
+    "d_iv": {
+     "1d": 0.19,
+     "1w": 0.16,
+     "1m": -0.03
+    },
+    "d_rr": {
+     "1d": 0.17,
+     "1w": 0.21,
+     "1m": 0.43
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 805517,
+     "px_contract": "6EU6",
+     "px_settle": 1.1585,
+     "1d": {
+      "d_oi": 2176,
+      "d_oi_pct": 0.27,
+      "px_chg_pct": 0.052,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 1741,
+      "d_oi_pct": 0.22,
+      "px_chg_pct": 0.229,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "JPY": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.09,
+    "rr25": 1.9,
+    "bf25": 0.32,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6JU6",
+    "F1": 0.0062795,
+    "n1": 15,
+    "n2": 14,
+    "d_iv": {
+     "1d": -0.19,
+     "1w": -1.02,
+     "1m": 0.93
+    },
+    "d_rr": {
+     "1d": -0.13,
+     "1w": -0.2,
+     "1m": 0.47
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 388569,
+     "px_contract": "6JU6",
+     "px_settle": 0.0062795,
+     "1d": {
+      "d_oi": -247,
+      "d_oi_pct": -0.06,
+      "px_chg_pct": -0.143,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -8070,
+      "d_oi_pct": -2.03,
+      "px_chg_pct": -0.286,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "GBP": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.33,
+    "rr25": -0.27,
+    "bf25": 0.11,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6BU6",
+    "F1": 1.3538,
+    "n1": 22,
+    "n2": 21,
+    "d_iv": {
+     "1d": 0.23,
+     "1w": 0.1,
+     "1m": -0.41
+    },
+    "d_rr": {
+     "1d": 0.06,
+     "1w": 0.21,
+     "1m": 0.37
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 283536,
+     "px_contract": "6BU6",
+     "px_settle": 1.3538,
+     "1d": {
+      "d_oi": 9003,
+      "d_oi_pct": 3.28,
+      "px_chg_pct": 0.037,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     },
+     "1w": {
+      "d_oi": 33626,
+      "d_oi_pct": 13.46,
+      "px_chg_pct": 0.215,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     }
+    }
+   },
+   "AUD": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 6.76,
+    "rr25": -0.38,
+    "bf25": 0.21,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6AU6",
+    "F1": 0.7099,
+    "n1": 15,
+    "n2": 14,
+    "d_iv": {
+     "1d": 0.22,
+     "1w": -0.0,
+     "1m": -0.13
+    },
+    "d_rr": {
+     "1d": 0.12,
+     "1w": 0.2,
+     "1m": 0.44
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 285934,
+     "px_contract": "6AU6",
+     "px_settle": 0.7099,
+     "1d": {
+      "d_oi": 7335,
+      "d_oi_pct": 2.63,
+      "px_chg_pct": 0.29,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     },
+     "1w": {
+      "d_oi": 22139,
+      "d_oi_pct": 8.39,
+      "px_chg_pct": 0.659,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     }
+    }
+   },
+   "CAD": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 4.25,
+    "rr25": 0.08,
+    "bf25": 0.05,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6CU6",
+    "F1": 0.72155,
+    "n1": 24,
+    "n2": 9,
+    "d_iv": {
+     "1d": 0.14,
+     "1w": 0.12,
+     "1m": 0.09
+    },
+    "d_rr": {
+     "1d": 0.1,
+     "1w": 0.18,
+     "1m": 0.18
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 366064,
+     "px_contract": "6CU6",
+     "px_settle": 0.72155,
+     "1d": {
+      "d_oi": -1120,
+      "d_oi_pct": -0.31,
+      "px_chg_pct": 0.0,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 2773,
+      "d_oi_pct": 0.76,
+      "px_chg_pct": 0.445,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "CHF": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 6.31,
+    "rr25": 0.28,
+    "bf25": 0.18,
+    "mode": "INTERP",
+    "exp1": "2026-09-04",
+    "dte1": 18,
+    "exp2": "2026-10-09",
+    "dte2": 53,
+    "und1": "6SU6",
+    "F1": 1.23595,
+    "n1": 13,
+    "n2": 23,
+    "d_iv": {
+     "1d": 0.26,
+     "1w": -0.01,
+     "1m": -0.01
+    },
+    "d_rr": {
+     "1d": 0.15,
+     "1w": 0.19,
+     "1m": 0.34
+    },
+    "iv_pct": null,
+    "rr_pct": null,
+    "hist_n": 54,
+    "hist_from": "2026-06-01",
+    "note": "HIST_SHORT",
+    "fut": {
+     "oi_total": 112490,
+     "px_contract": "6SU6",
+     "px_settle": 1.23595,
+     "1d": {
+      "d_oi": 580,
+      "d_oi_pct": 0.52,
+      "px_chg_pct": 0.178,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 3645,
+      "d_oi_pct": 3.35,
+      "px_chg_pct": -0.242,
+      "quadrant": "DINERO_NUEVO_VENDEDOR"
+     }
+    }
+   },
+   "NZD": {
+    "status": "NA",
+    "reason": "NO_CME_OPTIONS",
+    "gate0": "NA"
+   }
+  }
+ },
+ "2026-09-15": {
+  "version": "FXVOL-SHADOW v1.0",
+  "status": "SHADOW",
+  "session": "2026-09-15",
+  "prev_session": "2026-09-14",
+  "sessions_total": 74,
+  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+  "method": {
+   "model": "Black-76 sobre settlement oficial, sin descuento",
+   "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+   "min_dte": 7,
+   "target_dte": 30,
+   "delta_min": 0.05,
+   "min_points": 5,
+   "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+   "pct_window": [
+    60,
+    252
+   ],
+   "lookback_1w": 5,
+   "lookback_1m": 21,
+   "oi_flat_pct": {
+    "1d": 1.0,
+    "1w": 2.0
+   },
+   "roll_window_days": [
+    -9,
+    3
+   ]
+  },
+  "fut_roll_window": {
+   "start": "2026-09-07",
+   "end": "2026-09-19",
+   "active": true
+  },
+  "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+  "currencies": {
+   "EUR": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.18,
+    "rr25": -0.12,
+    "bf25": 0.1,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6EZ6",
+    "F1": 1.15845,
+    "n1": 21,
+    "n2": 18,
+    "d_iv": {
+     "1d": 0.01,
+     "1w": 0.2,
+     "1m": 0.35
+    },
+    "d_rr": {
+     "1d": 0.15,
+     "1w": 0.06,
+     "1m": 0.12
+    },
+    "iv_pct": 40.5,
+    "rr_pct": 85.1,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 813786,
+     "px_contract": "6EZ6",
+     "px_settle": 1.15845,
+     "1d": {
+      "d_oi": -101041,
+      "d_oi_pct": -11.04,
+      "px_chg_pct": -0.121,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": -151101,
+      "d_oi_pct": -15.66,
+      "px_chg_pct": -0.745,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "JPY": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 9.3,
+    "rr25": 1.82,
+    "bf25": 0.24,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6JZ6",
+    "F1": 0.006495,
+    "n1": 21,
+    "n2": 17,
+    "d_iv": {
+     "1d": -0.57,
+     "1w": -1.04,
+     "1m": 2.02
+    },
+    "d_rr": {
+     "1d": -0.11,
+     "1w": -0.15,
+     "1m": -0.21
+    },
+    "iv_pct": 87.8,
+    "rr_pct": 68.9,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 428493,
+     "px_contract": "6JZ6",
+     "px_settle": 0.006495,
+     "1d": {
+      "d_oi": -108821,
+      "d_oi_pct": -20.25,
+      "px_chg_pct": -0.703,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": -69397,
+      "d_oi_pct": -13.94,
+      "px_chg_pct": -0.946,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "GBP": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.52,
+    "rr25": -0.38,
+    "bf25": 0.11,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6BZ6",
+    "F1": 1.3483,
+    "n1": 23,
+    "n2": 23,
+    "d_iv": {
+     "1d": -0.03,
+     "1w": 0.24,
+     "1m": 0.42
+    },
+    "d_rr": {
+     "1d": 0.1,
+     "1w": 0.01,
+     "1m": -0.05
+    },
+    "iv_pct": 28.4,
+    "rr_pct": 83.8,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 230057,
+     "px_contract": "6BZ6",
+     "px_settle": 1.3483,
+     "1d": {
+      "d_oi": -83163,
+      "d_oi_pct": -26.55,
+      "px_chg_pct": -0.237,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": -88742,
+      "d_oi_pct": -27.84,
+      "px_chg_pct": -0.48,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "AUD": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.31,
+    "rr25": -0.81,
+    "bf25": 0.23,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6AZ6",
+    "F1": 0.7122,
+    "n1": 19,
+    "n2": 15,
+    "d_iv": {
+     "1d": -0.13,
+     "1w": 0.38,
+     "1m": 0.76
+    },
+    "d_rr": {
+     "1d": -0.01,
+     "1w": -0.25,
+     "1m": -0.32
+    },
+    "iv_pct": 55.4,
+    "rr_pct": 41.9,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 319841,
+     "px_contract": "6AZ6",
+     "px_settle": 0.7122,
+     "1d": {
+      "d_oi": -174872,
+      "d_oi_pct": -35.35,
+      "px_chg_pct": -0.189,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": -135533,
+      "d_oi_pct": -29.76,
+      "px_chg_pct": -1.234,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "CAD": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 4.44,
+    "rr25": -0.01,
+    "bf25": 0.08,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6CZ6",
+    "F1": 0.7217,
+    "n1": 27,
+    "n2": 10,
+    "d_iv": {
+     "1d": -0.03,
+     "1w": -0.11,
+     "1m": 0.32
+    },
+    "d_rr": {
+     "1d": 0.12,
+     "1w": 0.01,
+     "1m": 0.01
+    },
+    "iv_pct": 67.6,
+    "rr_pct": 90.5,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 358250,
+     "px_contract": "6CZ6",
+     "px_settle": 0.7217,
+     "1d": {
+      "d_oi": 76,
+      "d_oi_pct": 0.02,
+      "px_chg_pct": -0.104,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": 23487,
+      "d_oi_pct": 7.02,
+      "px_chg_pct": -0.988,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "CHF": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 6.81,
+    "rr25": 0.41,
+    "bf25": 0.16,
+    "mode": "INTERP",
+    "exp1": "2026-10-09",
+    "dte1": 24,
+    "exp2": "2026-11-06",
+    "dte2": 52,
+    "und1": "6SZ6",
+    "F1": 1.23445,
+    "n1": 16,
+    "n2": 24,
+    "d_iv": {
+     "1d": -0.12,
+     "1w": 0.12,
+     "1m": 0.76
+    },
+    "d_rr": {
+     "1d": -0.03,
+     "1w": 0.04,
+     "1m": 0.28
+    },
+    "iv_pct": 60.8,
+    "rr_pct": 81.1,
+    "hist_n": 74,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 130204,
+     "px_contract": "6SZ6",
+     "px_settle": 1.23445,
+     "1d": {
+      "d_oi": -39082,
+      "d_oi_pct": -23.09,
+      "px_chg_pct": -0.283,
+      "quadrant": "ROLL"
+     },
+     "1w": {
+      "d_oi": -23480,
+      "d_oi_pct": -15.28,
+      "px_chg_pct": -1.208,
+      "quadrant": "ROLL"
+     }
+    }
+   },
+   "NZD": {
+    "status": "NA",
+    "reason": "NO_CME_OPTIONS",
+    "gate0": "NA"
+   }
+  }
+ },
+ "2026-10-30": {
+  "version": "FXVOL-SHADOW v1.0",
+  "status": "SHADOW",
+  "session": "2026-10-30",
+  "prev_session": "2026-10-29",
+  "sessions_total": 107,
+  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+  "method": {
+   "model": "Black-76 sobre settlement oficial, sin descuento",
+   "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+   "min_dte": 7,
+   "target_dte": 30,
+   "delta_min": 0.05,
+   "min_points": 5,
+   "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+   "pct_window": [
+    60,
+    252
+   ],
+   "lookback_1w": 5,
+   "lookback_1m": 21,
+   "oi_flat_pct": {
+    "1d": 1.0,
+    "1w": 2.0
+   },
+   "roll_window_days": [
+    -9,
+    3
+   ]
+  },
+  "fut_roll_window": {
+   "start": "2026-12-07",
+   "end": "2026-12-19",
+   "active": false
+  },
+  "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+  "currencies": {
+   "EUR": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 6.08,
+    "rr25": -0.34,
+    "bf25": 0.1,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6EZ6",
+    "F1": 1.11865,
+    "n1": 16,
+    "n2": 16,
+    "d_iv": {
+     "1d": 0.2,
+     "1w": -0.45,
+     "1m": -1.38
+    },
+    "d_rr": {
+     "1d": 0.04,
+     "1w": 0.16,
+     "1m": 1.18
+    },
+    "iv_pct": 77.6,
+    "rr_pct": 67.3,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 888841,
+     "px_contract": "6EZ6",
+     "px_settle": 1.11865,
+     "1d": {
+      "d_oi": -7536,
+      "d_oi_pct": -0.84,
+      "px_chg_pct": 0.04,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 13897,
+      "d_oi_pct": 1.59,
+      "px_chg_pct": -0.263,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "JPY": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.38,
+    "rr25": 2.17,
+    "bf25": 0.35,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6JZ6",
+    "F1": 0.0063755,
+    "n1": 10,
+    "n2": 11,
+    "d_iv": {
+     "1d": 0.25,
+     "1w": -0.36,
+     "1m": -2.4
+    },
+    "d_rr": {
+     "1d": 0.09,
+     "1w": -0.01,
+     "1m": -0.48
+    },
+    "iv_pct": 46.7,
+    "rr_pct": 79.4,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 387223,
+     "px_contract": "6JZ6",
+     "px_settle": 0.0063755,
+     "1d": {
+      "d_oi": 10459,
+      "d_oi_pct": 2.78,
+      "px_chg_pct": 0.362,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     },
+     "1w": {
+      "d_oi": -14069,
+      "d_oi_pct": -3.51,
+      "px_chg_pct": -0.391,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "GBP": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.74,
+    "rr25": -0.51,
+    "bf25": 0.18,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6BZ6",
+    "F1": 1.3395,
+    "n1": 17,
+    "n2": 18,
+    "d_iv": {
+     "1d": 0.08,
+     "1w": -0.55,
+     "1m": -1.68
+    },
+    "d_rr": {
+     "1d": 0.0,
+     "1w": 0.1,
+     "1m": 0.76
+    },
+    "iv_pct": 41.1,
+    "rr_pct": 75.7,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 248656,
+     "px_contract": "6BZ6",
+     "px_settle": 1.3395,
+     "1d": {
+      "d_oi": -2125,
+      "d_oi_pct": -0.85,
+      "px_chg_pct": 0.254,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -8245,
+      "d_oi_pct": -3.21,
+      "px_chg_pct": 0.172,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "AUD": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 6.88,
+    "rr25": -0.91,
+    "bf25": 0.11,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6AZ6",
+    "F1": 0.70245,
+    "n1": 10,
+    "n2": 12,
+    "d_iv": {
+     "1d": 0.14,
+     "1w": -0.33,
+     "1m": -1.68
+    },
+    "d_rr": {
+     "1d": -0.02,
+     "1w": 0.09,
+     "1m": 0.63
+    },
+    "iv_pct": 17.8,
+    "rr_pct": 41.1,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 324622,
+     "px_contract": "6AZ6",
+     "px_settle": 0.70245,
+     "1d": {
+      "d_oi": 97,
+      "d_oi_pct": 0.03,
+      "px_chg_pct": 0.014,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -8300,
+      "d_oi_pct": -2.49,
+      "px_chg_pct": -0.064,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "CAD": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 4.32,
+    "rr25": 0.01,
+    "bf25": 0.14,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6CZ6",
+    "F1": 0.71795,
+    "n1": 16,
+    "n2": 8,
+    "d_iv": {
+     "1d": -0.06,
+     "1w": -0.4,
+     "1m": -0.58
+    },
+    "d_rr": {
+     "1d": -0.1,
+     "1w": 0.11,
+     "1m": 0.42
+    },
+    "iv_pct": 39.3,
+    "rr_pct": 90.7,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 360048,
+     "px_contract": "6CZ6",
+     "px_settle": 0.71795,
+     "1d": {
+      "d_oi": -1587,
+      "d_oi_pct": -0.44,
+      "px_chg_pct": 0.202,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -7639,
+      "d_oi_pct": -2.08,
+      "px_chg_pct": 0.3,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "CHF": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 6.76,
+    "rr25": 0.8,
+    "bf25": 0.21,
+    "mode": "INTERP",
+    "exp1": "2026-11-06",
+    "dte1": 7,
+    "exp2": "2026-12-04",
+    "dte2": 35,
+    "und1": "6SZ6",
+    "F1": 1.2203,
+    "n1": 10,
+    "n2": 20,
+    "d_iv": {
+     "1d": 0.44,
+     "1w": -0.45,
+     "1m": -0.35
+    },
+    "d_rr": {
+     "1d": 0.11,
+     "1w": 0.14,
+     "1m": 0.48
+    },
+    "iv_pct": 51.4,
+    "rr_pct": 99.1,
+    "hist_n": 107,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 133727,
+     "px_contract": "6SZ6",
+     "px_settle": 1.2203,
+     "1d": {
+      "d_oi": -1429,
+      "d_oi_pct": -1.06,
+      "px_chg_pct": 0.329,
+      "quadrant": "CIERRE_CORTOS"
+     },
+     "1w": {
+      "d_oi": -2875,
+      "d_oi_pct": -2.1,
+      "px_chg_pct": 0.115,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "NZD": {
+    "status": "NA",
+    "reason": "NO_CME_OPTIONS",
+    "gate0": "NA"
+   }
+  }
+ },
+ "2026-11-02": {
+  "version": "FXVOL-SHADOW v1.0",
+  "status": "SHADOW",
+  "session": "2026-11-02",
+  "prev_session": "2026-10-30",
+  "sessions_total": 108,
+  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+  "method": {
+   "model": "Black-76 sobre settlement oficial, sin descuento",
+   "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+   "min_dte": 7,
+   "target_dte": 30,
+   "delta_min": 0.05,
+   "min_points": 5,
+   "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+   "pct_window": [
+    60,
+    252
+   ],
+   "lookback_1w": 5,
+   "lookback_1m": 21,
+   "oi_flat_pct": {
+    "1d": 1.0,
+    "1w": 2.0
+   },
+   "roll_window_days": [
+    -9,
+    3
+   ]
+  },
+  "fut_roll_window": {
+   "start": "2026-12-07",
+   "end": "2026-12-19",
+   "active": false
+  },
+  "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+  "currencies": {
+   "EUR": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 6.06,
+    "rr25": -0.34,
+    "bf25": 0.17,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6EZ6",
+    "F1": 1.1213,
+    "n1": 16,
+    "n2": 23,
+    "d_iv": {
+     "1d": -0.02,
+     "1w": -0.52,
+     "1m": -0.47
+    },
+    "d_rr": {
+     "1d": 0.0,
+     "1w": 0.15,
+     "1m": 1.01
+    },
+    "iv_pct": 76.9,
+    "rr_pct": 68.5,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 881437,
+     "px_contract": "6EZ6",
+     "px_settle": 1.1213,
+     "1d": {
+      "d_oi": -7404,
+      "d_oi_pct": -0.83,
+      "px_chg_pct": 0.237,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 23972,
+      "d_oi_pct": 2.8,
+      "px_chg_pct": 0.067,
+      "quadrant": "DINERO_NUEVO_COMPRADOR"
+     }
+    }
+   },
+   "JPY": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.03,
+    "rr25": 1.92,
+    "bf25": 0.31,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6JZ6",
+    "F1": 0.006353,
+    "n1": 10,
+    "n2": 17,
+    "d_iv": {
+     "1d": -0.35,
+     "1w": -0.71,
+     "1m": -2.03
+    },
+    "d_rr": {
+     "1d": -0.25,
+     "1w": -0.3,
+     "1m": -0.27
+    },
+    "iv_pct": 24.1,
+    "rr_pct": 63.0,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 384061,
+     "px_contract": "6JZ6",
+     "px_settle": 0.006353,
+     "1d": {
+      "d_oi": -3162,
+      "d_oi_pct": -0.82,
+      "px_chg_pct": -0.353,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -9810,
+      "d_oi_pct": -2.49,
+      "px_chg_pct": -0.392,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "GBP": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.77,
+    "rr25": -0.5,
+    "bf25": 0.15,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6BZ6",
+    "F1": 1.3411,
+    "n1": 17,
+    "n2": 26,
+    "d_iv": {
+     "1d": 0.03,
+     "1w": -0.55,
+     "1m": -0.7
+    },
+    "d_rr": {
+     "1d": 0.01,
+     "1w": 0.15,
+     "1m": 0.57
+    },
+    "iv_pct": 45.4,
+    "rr_pct": 78.7,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 249471,
+     "px_contract": "6BZ6",
+     "px_settle": 1.3411,
+     "1d": {
+      "d_oi": 815,
+      "d_oi_pct": 0.33,
+      "px_chg_pct": 0.119,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -6101,
+      "d_oi_pct": -2.39,
+      "px_chg_pct": 0.449,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "AUD": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.01,
+    "rr25": -0.97,
+    "bf25": 0.17,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6AZ6",
+    "F1": 0.69945,
+    "n1": 11,
+    "n2": 16,
+    "d_iv": {
+     "1d": 0.13,
+     "1w": -0.3,
+     "1m": -0.98
+    },
+    "d_rr": {
+     "1d": -0.06,
+     "1w": -0.02,
+     "1m": 0.06
+    },
+    "iv_pct": 27.8,
+    "rr_pct": 30.6,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 325063,
+     "px_contract": "6AZ6",
+     "px_settle": 0.69945,
+     "1d": {
+      "d_oi": 441,
+      "d_oi_pct": 0.14,
+      "px_chg_pct": -0.427,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": 378,
+      "d_oi_pct": 0.12,
+      "px_chg_pct": -0.306,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "CAD": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 4.39,
+    "rr25": -0.03,
+    "bf25": 0.17,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6CZ6",
+    "F1": 0.71625,
+    "n1": 7,
+    "n2": 10,
+    "d_iv": {
+     "1d": 0.07,
+     "1w": -0.36,
+     "1m": -0.08
+    },
+    "d_rr": {
+     "1d": -0.04,
+     "1w": 0.11,
+     "1m": 0.29
+    },
+    "iv_pct": 51.9,
+    "rr_pct": 80.6,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 352458,
+     "px_contract": "6CZ6",
+     "px_settle": 0.71625,
+     "1d": {
+      "d_oi": -7590,
+      "d_oi_pct": -2.11,
+      "px_chg_pct": -0.237,
+      "quadrant": "LIQUIDACION_LARGOS"
+     },
+     "1w": {
+      "d_oi": -8321,
+      "d_oi_pct": -2.31,
+      "px_chg_pct": 0.182,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "CHF": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 6.97,
+    "rr25": 0.78,
+    "bf25": 0.22,
+    "mode": "FLAT",
+    "exp1": "2026-12-04",
+    "dte1": 32,
+    "exp2": "2027-01-08",
+    "dte2": 67,
+    "und1": "6SZ6",
+    "F1": 1.228,
+    "n1": 20,
+    "n2": 28,
+    "d_iv": {
+     "1d": 0.21,
+     "1w": -0.27,
+     "1m": -0.2
+    },
+    "d_rr": {
+     "1d": -0.03,
+     "1w": -0.02,
+     "1m": 0.28
+    },
+    "iv_pct": 75.0,
+    "rr_pct": 96.3,
+    "hist_n": 108,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 134915,
+     "px_contract": "6SZ6",
+     "px_settle": 1.228,
+     "1d": {
+      "d_oi": 1188,
+      "d_oi_pct": 0.89,
+      "px_chg_pct": 0.631,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -793,
+      "d_oi_pct": -0.58,
+      "px_chg_pct": 1.016,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "NZD": {
+    "status": "NA",
+    "reason": "NO_CME_OPTIONS",
+    "gate0": "NA"
+   }
+  }
+ },
+ "2026-11-06": {
+  "version": "FXVOL-SHADOW v1.0",
+  "status": "SHADOW",
+  "session": "2026-11-06",
+  "prev_session": "2026-11-05",
+  "sessions_total": 112,
+  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+  "method": {
+   "model": "Black-76 sobre settlement oficial, sin descuento",
+   "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+   "min_dte": 7,
+   "target_dte": 30,
+   "delta_min": 0.05,
+   "min_points": 5,
+   "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+   "pct_window": [
+    60,
+    252
+   ],
+   "lookback_1w": 5,
+   "lookback_1m": 21,
+   "oi_flat_pct": {
+    "1d": 1.0,
+    "1w": 2.0
+   },
+   "roll_window_days": [
+    -9,
+    3
+   ]
+  },
+  "fut_roll_window": {
+   "start": "2026-12-07",
+   "end": "2026-12-19",
+   "active": false
+  },
+  "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+  "currencies": {
+   "EUR": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.54,
+    "rr25": -0.38,
+    "bf25": 0.19,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6EZ6",
+    "F1": 1.11565,
+    "n1": 13,
+    "n2": 20,
+    "d_iv": {
+     "1d": -0.02,
+     "1w": -0.55,
+     "1m": -1.11
+    },
+    "d_rr": {
+     "1d": -0.12,
+     "1w": -0.04,
+     "1m": 0.76
+    },
+    "iv_pct": 56.2,
+    "rr_pct": 60.7,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 868673,
+     "px_contract": "6EZ6",
+     "px_settle": 1.11565,
+     "1d": {
+      "d_oi": -531,
+      "d_oi_pct": -0.06,
+      "px_chg_pct": -0.756,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -20168,
+      "d_oi_pct": -2.27,
+      "px_chg_pct": -0.268,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "JPY": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 6.57,
+    "rr25": 1.86,
+    "bf25": 0.28,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6JZ6",
+    "F1": 0.006327,
+    "n1": 9,
+    "n2": 15,
+    "d_iv": {
+     "1d": -0.6,
+     "1w": -0.81,
+     "1m": -1.3
+    },
+    "d_rr": {
+     "1d": -0.52,
+     "1w": -0.31,
+     "1m": 0.04
+    },
+    "iv_pct": 11.6,
+    "rr_pct": 57.1,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 385059,
+     "px_contract": "6JZ6",
+     "px_settle": 0.006327,
+     "1d": {
+      "d_oi": 1527,
+      "d_oi_pct": 0.4,
+      "px_chg_pct": -0.417,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -2164,
+      "d_oi_pct": -0.56,
+      "px_chg_pct": -0.761,
+      "quadrant": "OI_PLANO"
+     }
+    }
+   },
+   "GBP": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 5.37,
+    "rr25": -0.56,
+    "bf25": 0.16,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6BZ6",
+    "F1": 1.3352,
+    "n1": 15,
+    "n2": 23,
+    "d_iv": {
+     "1d": 0.09,
+     "1w": -0.36,
+     "1m": -0.93
+    },
+    "d_rr": {
+     "1d": -0.14,
+     "1w": -0.05,
+     "1m": 0.2
+    },
+    "iv_pct": 14.3,
+    "rr_pct": 64.3,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 225543,
+     "px_contract": "6BZ6",
+     "px_settle": 1.3352,
+     "1d": {
+      "d_oi": -8452,
+      "d_oi_pct": -3.61,
+      "px_chg_pct": -0.788,
+      "quadrant": "LIQUIDACION_LARGOS"
+     },
+     "1w": {
+      "d_oi": -23113,
+      "d_oi_pct": -9.3,
+      "px_chg_pct": -0.321,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "AUD": {
+    "status": "OK",
+    "gate0": "CLEAN",
+    "iv30_atm": 7.52,
+    "rr25": -1.36,
+    "bf25": 0.17,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6AZ6",
+    "F1": 0.68595,
+    "n1": 11,
+    "n2": 16,
+    "d_iv": {
+     "1d": 0.53,
+     "1w": 0.63,
+     "1m": 0.08
+    },
+    "d_rr": {
+     "1d": -0.12,
+     "1w": -0.46,
+     "1m": -0.26
+    },
+    "iv_pct": 68.8,
+    "rr_pct": 1.8,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 346256,
+     "px_contract": "6AZ6",
+     "px_settle": 0.68595,
+     "1d": {
+      "d_oi": 9582,
+      "d_oi_pct": 2.85,
+      "px_chg_pct": -1.16,
+      "quadrant": "DINERO_NUEVO_VENDEDOR"
+     },
+     "1w": {
+      "d_oi": 21634,
+      "d_oi_pct": 6.66,
+      "px_chg_pct": -2.349,
+      "quadrant": "DINERO_NUEVO_VENDEDOR"
+     }
+    }
+   },
+   "CAD": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 4.35,
+    "rr25": -0.08,
+    "bf25": 0.11,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6CZ6",
+    "F1": 0.7087,
+    "n1": 6,
+    "n2": 10,
+    "d_iv": {
+     "1d": -0.02,
+     "1w": 0.03,
+     "1m": -0.12
+    },
+    "d_rr": {
+     "1d": -0.02,
+     "1w": -0.08,
+     "1m": 0.13
+    },
+    "iv_pct": 42.0,
+    "rr_pct": 67.9,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 344014,
+     "px_contract": "6CZ6",
+     "px_settle": 0.7087,
+     "1d": {
+      "d_oi": -3593,
+      "d_oi_pct": -1.03,
+      "px_chg_pct": -0.971,
+      "quadrant": "LIQUIDACION_LARGOS"
+     },
+     "1w": {
+      "d_oi": -16034,
+      "d_oi_pct": -4.45,
+      "px_chg_pct": -1.288,
+      "quadrant": "LIQUIDACION_LARGOS"
+     }
+    }
+   },
+   "CHF": {
+    "status": "OK",
+    "gate0": "PROXY",
+    "iv30_atm": 6.46,
+    "rr25": 0.59,
+    "bf25": 0.22,
+    "mode": "INTERP",
+    "exp1": "2026-12-04",
+    "dte1": 28,
+    "exp2": "2027-01-08",
+    "dte2": 63,
+    "und1": "6SZ6",
+    "F1": 1.2238,
+    "n1": 17,
+    "n2": 26,
+    "d_iv": {
+     "1d": -0.07,
+     "1w": -0.3,
+     "1m": -0.33
+    },
+    "d_rr": {
+     "1d": -0.21,
+     "1w": -0.22,
+     "1m": -0.09
+    },
+    "iv_pct": 27.7,
+    "rr_pct": 73.2,
+    "hist_n": 112,
+    "hist_from": "2026-06-01",
+    "fut": {
+     "oi_total": 130630,
+     "px_contract": "6SZ6",
+     "px_settle": 1.2238,
+     "1d": {
+      "d_oi": 366,
+      "d_oi_pct": 0.28,
+      "px_chg_pct": -0.496,
+      "quadrant": "OI_PLANO"
+     },
+     "1w": {
+      "d_oi": -3097,
+      "d_oi_pct": -2.32,
+      "px_chg_pct": 0.287,
+      "quadrant": "CIERRE_CORTOS"
+     }
+    }
+   },
+   "NZD": {
+    "status": "NA",
+    "reason": "NO_CME_OPTIONS",
+    "gate0": "NA"
+   }
+  }
+ }
+}
