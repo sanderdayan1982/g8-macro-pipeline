@@ -37,6 +37,8 @@ def _tol(path):
     parent = path[-2] if len(path) >= 2 else ""
     if parent in ("d_iv", "d_rr"):
         return 0.01
+    if path and path[-1] == "rr25_d5":
+        return 0.01  # FLUJOS-01: misma tolerancia que d_rr (es ese cambio a 5 sesiones)
     return TOL_KEYS.get(path[-1] if path else "")
 
 
@@ -124,7 +126,41 @@ class FxvolShadow(unittest.TestCase):
             self.assertEqual(cur["dte1"], 7, ccy)
         for session in SESSIONS:
             nzd = self.results[session][0]["currencies"]["NZD"]
-            self.assertEqual(nzd, {"status": "NA", "reason": "NO_CME_OPTIONS", "gate0": "NA"})
+            self.assertEqual(nzd, {
+                "status": "NA", "reason": "NO_CME_OPTIONS", "gate0": "NA",
+                "iv30_pct252": "UNAVAILABLE",
+                "rr25_d5": "UNAVAILABLE",
+                "rv21": "UNAVAILABLE",
+                "vrp": "UNAVAILABLE",
+                "vol_regime": "UNAVAILABLE",
+            })
+
+    def test_additive_fields_do_not_recompute_existing_ones(self):
+        for session in SESSIONS:
+            out = self.results[session][0]
+            for ccy in CCYS:
+                cur = out["currencies"][ccy]
+                self.assertEqual(cur["rr25_d5"], cur["d_rr"]["1w"], "%s %s" % (session, ccy))
+                self.assertLess(cur["hist_n"], 252, "%s %s" % (session, ccy))
+                self.assertEqual(cur["iv30_pct252"], "NA", "%s %s" % (session, ccy))
+                self.assertEqual(cur["iv30_pct252_days"], cur["hist_n"], "%s %s" % (session, ccy))
+                self.assertEqual(cur["rv21"], "UNAVAILABLE")
+                self.assertEqual(cur["vrp"], "UNAVAILABLE")
+                self.assertEqual(cur["vol_regime"], "UNAVAILABLE")
+
+    def test_pct252_needs_252_observations(self):
+        short, days = FX.iv30_pct252_field([1.0, 2.0, 3.0], 3.0)
+        self.assertEqual((short, days), ("NA", 3))
+        series = [float(i) for i in range(252)]
+        pct, days = FX.iv30_pct252_field(series, series[-1])
+        self.assertIsNone(days)
+        self.assertEqual(pct, 100.0)
+        self.assertEqual(pct, FX.pct_rank(series, series[-1]))
+        older = [float(i) for i in range(300)]
+        pct2, days2 = FX.iv30_pct252_field(older, 251.0)
+        self.assertIsNone(days2)
+        # solo las últimas 252 (48..299): valores <= 251 son 48..251 → 204/252
+        self.assertEqual(pct2, round(100.0 * 204 / 252.0, 1))
 
     def test_idempotent_and_under_60s(self):
         t0 = time.perf_counter()
@@ -200,6 +236,11 @@ class FxvolShadow(unittest.TestCase):
         self.assertIn("IV30-G8 — Section 06b module · v1 (SHADOW)", html)
         self.assertIn("CME_FXVOL: Object.assign(", html)
         self.assertIn("IV30-G8 · VOL IMPLÍCITA CME · SKEW 25Δ · OI FUTUROS", html)
+        self.assertIn("<th>Pct 252</th>", html)
+        self.assertIn("<th>ΔRR 5d</th>", html)
+        self.assertIn("<th>RV21</th>", html)
+        self.assertIn("<th>VRP</th>", html)
+        self.assertIn("<th>Régimen</th>", html)
         surface = html.index('id="opt-surface"')
         fxdiv = html.index('id="opt-fxvol"')
         footer = html.index('id="section-options"')

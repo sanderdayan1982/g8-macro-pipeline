@@ -47,7 +47,8 @@ class F1Config(unittest.TestCase):
                  "MFV_G8_XAU_daily_shadow.csv", "MFV_G8_XAG_daily_shadow.csv", "MFV_G8_shadow_state.json",
                  "ACM_G8_NZD_phi_shadow.json", "CB_EVENT_48H_shadow.json", "CME_OPTIONS_C1_shadow.json", "CME_FXVOL_shadow.json",
                  "CHF_NOWCAST_shadow.json", "CHF_SPOT_2Y_daily_shadow.csv", "CHF_SPOT_5Y_daily_shadow.csv",
-                 "S01B_shadow_a3.json"}
+                 "S01B_shadow_a3.json",
+                 "argos_rates.json"}  # FLUJOS-01 Sander 12-nov-2026: derivado del render, sin regla de frescura nueva
         self.assertEqual(sorted(files - covered - extra), [], "ficheros de data/ sin regla")
         self.assertIn("BOOK_RISK.json", files)                 # derivado de USD_FACTOR (libro), sin frescura propia
 
