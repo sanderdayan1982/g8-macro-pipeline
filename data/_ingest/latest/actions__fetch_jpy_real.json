@@ -6,7 +6,7 @@
   "RY_G8_JPY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261111T040538Z_actions_fetch-jpy-real_d918:0d736158f5c9",
+   "download_id": "20261111T064053Z_actions_fetch-jpy-real_7f23:0d736158f5c9",
    "dropped_by_source": 0,
    "file": "RY_G8_JPY.csv",
    "held": [],
@@ -17,34 +17,53 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-11-11T04:05:41Z",
- "gh_run_id": "42956892686",
+ "finished_utc": "2026-11-11T06:40:55Z",
+ "gh_run_id": "42974055897",
  "job": "fetch_jpy_real",
- "last_ok_utc": "2026-11-11T04:05:41Z",
+ "last_ok_utc": "2026-11-11T06:40:55Z",
  "not_before": {},
  "rc": 0,
  "requests": [
   {
    "attempts": [
     {
+     "cls": "NO_PUBLICATION",
+     "detail": "404: sin publicación para esa fecha",
+     "n": 1,
+     "secs": 0.68,
+     "status": 404
+    }
+   ],
+   "cls": "NO_PUBLICATION",
+   "date_header": "Wed, 11 Nov 2026 06:40:54 GMT",
+   "detail": "404: sin publicación para esa fecha",
+   "last_modified": null,
+   "not_before_epoch": null,
+   "redirects": [],
+   "status": 404,
+   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261111.csv"
+  },
+  {
+   "attempts": [
+    {
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 2.07,
+     "secs": 0.61,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Wed, 11 Nov 2026 04:05:40 GMT",
+   "date_header": "Wed, 11 Nov 2026 06:40:55 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
-   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261111.csv"
+   "url": "https://jsda-proxy.sanderdayan1982.workers.dev/2026/ES261110.csv"
   }
  ],
- "run_id": "20261111T040538Z_actions_fetch-jpy-real_d918",
- "started_utc": "2026-11-11T04:05:38Z",
+ "run_id": "20261111T064053Z_actions_fetch-jpy-real_7f23",
+ "started_utc": "2026-11-11T06:40:53Z",
  "step": "jpy_real"
 }
