@@ -213,6 +213,19 @@ def pct_rank(series, x):
     return round(100.0 * sum(1 for v in s if v <= x) / len(s), 1)
 
 
+def iv30_pct252_field(ivs, x):
+    """Percentil de 252 observaciones de la IV30. Con menos, NA y los días disponibles.
+
+    FLUJOS-01 Sander 12-nov-2026. La cuenta es la de pct_rank (incluye el valor de hoy,
+    redondeo a 1 decimal) con ventana fija de 252. No usa HIST_MIN ni HIST_MAX: no cambia iv_pct.
+    """
+    n = len(ivs)
+    if n < 252:
+        return "NA", n
+    s = ivs[-252:]
+    return round(100.0 * sum(1 for v in s if v <= x) / 252.0, 1), None
+
+
 def r(x, n):
     return None if x is None else round(x, n)
 
@@ -284,7 +297,15 @@ def build(repo, session=None):
         if isinstance(g, dict):
             g = g.get("verdict") or g.get("status")
         if cur["status"] != "OK":
-            out["currencies"][c] = {"status": "NA", "reason": cur["reason"], "gate0": g}
+            # FLUJOS-01 Sander 12-nov-2026: sin IV30 de la sesión no hay percentil ni ΔRR.
+            out["currencies"][c] = {
+                "status": "NA", "reason": cur["reason"], "gate0": g,
+                "iv30_pct252": "UNAVAILABLE",
+                "rr25_d5": "UNAVAILABLE",
+                "rv21": "UNAVAILABLE",
+                "vrp": "UNAVAILABLE",
+                "vol_regime": "UNAVAILABLE",
+            }
             continue
         ok = [h for h in H if h["status"] == "OK"]
         ivs = [h["iv30_atm"] for h in ok]
@@ -318,8 +339,21 @@ def build(repo, session=None):
             "hist_n": min(len(ivs), HIST_MAX),
             "hist_from": days[max(0, len(days) - HIST_MAX)],
         }
+        # FLUJOS-01 Sander 12-nov-2026. Presentación, sin voto.
+        # rr25_d5: el cambio a 5 sesiones que ya es d_rr["1w"] (LB_1W). No es otra fórmula.
+        # rv21 / vrp / vol_regime: UNAVAILABLE. La orden pide RV21 anualizada con los
+        # settlements del mismo futuro, pero no fija retorno (log o simple), divisor
+        # (N o N−1) ni factor (√252 o √365). No se inventa esa cifra ni el régimen que depende de ella.
+        pct, n_iv = iv30_pct252_field(ivs, cur["iv30_atm"])
+        e["iv30_pct252"] = pct
+        if n_iv is not None:
+            e["iv30_pct252_days"] = n_iv
         if e["iv_pct"] is None:
             e["note"] = "HIST_SHORT"
+        e["rr25_d5"] = e["d_rr"]["1w"]
+        e["rv21"] = "UNAVAILABLE"
+        e["vrp"] = "UNAVAILABLE"
+        e["vol_regime"] = "UNAVAILABLE"
         fu = cur["fut"]
         f = {"oi_total": fu["oi_total"], "px_contract": fu["px_contract"], "px_settle": fu["px_settle"]}
         for lab, n, flat in (("1d", 1, OI_FLAT_1D), ("1w", LB_1W, OI_FLAT_1W)):
@@ -335,7 +369,14 @@ def build(repo, session=None):
             f[lab] = {"d_oi": None if oi_p is None else fu["oi_total"] - oi_p, "d_oi_pct": r(oi_pct, 2), "px_chg_pct": r(px_pct, 3), "quadrant": q}
         e["fut"] = f
         out["currencies"][c] = e
-    out["currencies"]["NZD"] = {"status": "NA", "reason": "NO_CME_OPTIONS", "gate0": "NA"}
+    out["currencies"]["NZD"] = {
+        "status": "NA", "reason": "NO_CME_OPTIONS", "gate0": "NA",
+        "iv30_pct252": "UNAVAILABLE",
+        "rr25_d5": "UNAVAILABLE",
+        "rv21": "UNAVAILABLE",
+        "vrp": "UNAVAILABLE",
+        "vol_regime": "UNAVAILABLE",
+    }
     return out, hist, days
 
 

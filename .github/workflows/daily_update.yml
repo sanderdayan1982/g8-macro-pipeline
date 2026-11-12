@@ -356,6 +356,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          TZ=UTC python scripts/argos_rates.py
           git add data/ \
             data/CB_EVENT_48H_shadow.json \
             data/CME_OPTIONS_C1_shadow.json \
