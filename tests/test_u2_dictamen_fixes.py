@@ -208,17 +208,8 @@ class S01BShadowA3(unittest.TestCase):
             self.assertTrue(out["ok"])
             self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
             eur = a3["currencies"]["EUR"]
-            # Misma regla que a3Cell: null → «·»; el signo «+» solo si el número es ≥ 0.
-            # FECHAS_NO_CUADRAN deja dtp22_local vacío y el panel lo enseña así.
-            def shown(v, nd, plus):
-                if v is None:
-                    return "·"
-                s = "%.*f" % (nd, v)
-                return ("+" + s) if plus and v >= 0 else s
-            tail = "" if eur["status"] == "OK" else " · " + eur["status"]
-            self.assertEqual(out["rows"]["EUR"], "A3 · local: %s pb (β %s) · ρ22: %s%s"
-                             % (shown(eur["dtp22_local"], 1, True), shown(eur["beta_usd"], 2, False),
-                                shown(eur["rho_tp_fx_22"], 2, True), tail))
+            self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
+                             % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
             for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
                 self.assertIn("local: ", out["rows"][c])
                 self.assertIn("ρ22: ", out["rows"][c])
