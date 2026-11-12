@@ -2,7 +2,7 @@
  "alerts": [],
  "credentials": {
   "cls": "OK",
-  "days_left": 291.19,
+  "days_left": 290.19,
   "detail": "",
   "excess": [
    "repo",
@@ -26,7 +26,7 @@
  "executor": "mac-primary",
  "families": {
   "CH-CURVA": {
-   "download_id": "20261111T183017Z_mac-primary_nzchf-tona_2042:CH-CURVA:baf00ba5f02d",
+   "download_id": "20261112T183020Z_mac-primary_nzchf-tona_f1d0:CH-CURVA:baf00ba5f02d",
    "download_kind": "FRESH",
    "fetch_rc": "0",
    "files": {
@@ -176,11 +176,82 @@
    "status": "NOOP"
   },
   "CH-DIARIO": {
-   "download_id": "20261111T183017Z_mac-primary_nzchf-tona_2042:CH-DIARIO:871cdf6d30e8",
+   "download_id": "20261112T183020Z_mac-primary_nzchf-tona_f1d0:CH-DIARIO:a0ac59b62af5",
    "download_kind": "FRESH",
    "fetch_rc": "0",
    "files": {
     "CHF_NOM_10Y.csv": {
+     "backfill": 0,
+     "detail": "",
+     "dropped_by_source": 0,
+     "held": [],
+     "new": 1,
+     "repo_max": "20261111",
+     "revised": [],
+     "src_max": "20261112",
+     "status": "PUBLISH"
+    },
+    "CHF_SARON.csv": {
+     "backfill": 0,
+     "detail": "",
+     "dropped_by_source": 0,
+     "held": [],
+     "new": 1,
+     "repo_max": "20261110",
+     "revised": [],
+     "src_max": "20261111",
+     "status": "PUBLISH"
+    }
+   },
+   "held": [],
+   "hold_new_from": null,
+   "outcome": {
+    "accepted_server_utc": "2026-11-12T18:32:11Z",
+    "attempts": 1,
+    "commit": "ae0eae8e0bfa8d0b075522848c938f7bf60cb0f4",
+    "detail": "",
+    "observed_on_branch_utc": "2026-11-12T18:32:12Z",
+    "status": "PUBLISHED"
+   },
+   "published": true,
+   "status": "PUBLISHED"
+  },
+  "JP-TONA": {
+   "download_id": "20261112T183020Z_mac-primary_nzchf-tona_f1d0:JP-TONA:b20907348654",
+   "download_kind": "FRESH",
+   "fetch_rc": "0",
+   "files": {
+    "TONA.csv": {
+     "backfill": 41,
+     "detail": "",
+     "dropped_by_source": 0,
+     "held": [],
+     "new": 0,
+     "repo_max": "20261110",
+     "revised": [],
+     "src_max": "20261110",
+     "status": "PUBLISH"
+    }
+   },
+   "held": [],
+   "hold_new_from": null,
+   "outcome": {
+    "accepted_server_utc": "2026-11-12T18:32:21Z",
+    "attempts": 1,
+    "commit": "f931c49e0d5f6825b898f713c72e954b2b50adae",
+    "detail": "",
+    "observed_on_branch_utc": "2026-11-12T18:32:22Z",
+    "status": "PUBLISHED"
+   },
+   "published": true,
+   "status": "PUBLISHED"
+  },
+  "NZ-B2": {
+   "download_id": "20261112T183020Z_mac-primary_nzchf-tona_f1d0:NZ-B2:274831cc972f",
+   "download_kind": "FRESH",
+   "fetch_rc": "0",
+   "files": {
+    "NZD_BILL_30D.csv": {
      "backfill": 0,
      "detail": "",
      "dropped_by_source": 0,
@@ -191,86 +262,15 @@
      "src_max": "20261111",
      "status": "PUBLISH"
     },
-    "CHF_SARON.csv": {
-     "backfill": 0,
-     "detail": "",
-     "dropped_by_source": 0,
-     "held": [],
-     "new": 1,
-     "repo_max": "20261109",
-     "revised": [],
-     "src_max": "20261110",
-     "status": "PUBLISH"
-    }
-   },
-   "held": [],
-   "hold_new_from": null,
-   "outcome": {
-    "accepted_server_utc": "2026-11-11T18:31:41Z",
-    "attempts": 1,
-    "commit": "a8a3954c0c896533a73c1cd3980b206a77b4dafd",
-    "detail": "",
-    "observed_on_branch_utc": "2026-11-11T18:31:41Z",
-    "status": "PUBLISHED"
-   },
-   "published": true,
-   "status": "PUBLISHED"
-  },
-  "JP-TONA": {
-   "download_id": "20261111T183017Z_mac-primary_nzchf-tona_2042:JP-TONA:baa9b683083f",
-   "download_kind": "FRESH",
-   "fetch_rc": "0",
-   "files": {
-    "TONA.csv": {
-     "backfill": 41,
-     "detail": "",
-     "dropped_by_source": 0,
-     "held": [],
-     "new": 0,
-     "repo_max": "20261109",
-     "revised": [],
-     "src_max": "20261109",
-     "status": "PUBLISH"
-    }
-   },
-   "held": [],
-   "hold_new_from": null,
-   "outcome": {
-    "accepted_server_utc": "2026-11-11T18:31:51Z",
-    "attempts": 1,
-    "commit": "7743bd8bdd563d04d2d3f681bb9db1de4a411414",
-    "detail": "",
-    "observed_on_branch_utc": "2026-11-11T18:31:52Z",
-    "status": "PUBLISHED"
-   },
-   "published": true,
-   "status": "PUBLISHED"
-  },
-  "NZ-B2": {
-   "download_id": "20261111T183017Z_mac-primary_nzchf-tona_2042:NZ-B2:cd0c6f92c1dd",
-   "download_kind": "FRESH",
-   "fetch_rc": "0",
-   "files": {
-    "NZD_BILL_30D.csv": {
-     "backfill": 0,
-     "detail": "",
-     "dropped_by_source": 0,
-     "held": [],
-     "new": 1,
-     "repo_max": "20261109",
-     "revised": [],
-     "src_max": "20261110",
-     "status": "PUBLISH"
-    },
     "NZD_BILL_60D.csv": {
      "backfill": 0,
      "detail": "",
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_BILL_90D.csv": {
@@ -279,9 +279,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_BOND_10Y.csv": {
@@ -290,9 +290,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_BOND_1Y.csv": {
@@ -301,9 +301,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_BOND_2Y.csv": {
@@ -312,9 +312,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_BOND_5Y.csv": {
@@ -323,9 +323,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_CASH_ON.csv": {
@@ -356,9 +356,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_IIB_2035.csv": {
@@ -367,9 +367,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_IIB_2040.csv": {
@@ -378,9 +378,9 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     },
     "NZD_IIB_2050.csv": {
@@ -389,20 +389,20 @@
      "dropped_by_source": 0,
      "held": [],
      "new": 1,
-     "repo_max": "20261109",
+     "repo_max": "20261110",
      "revised": [],
-     "src_max": "20261110",
+     "src_max": "20261111",
      "status": "PUBLISH"
     }
    },
    "held": [],
    "hold_new_from": null,
    "outcome": {
-    "accepted_server_utc": "2026-11-11T18:31:01Z",
+    "accepted_server_utc": "2026-11-12T18:31:23Z",
     "attempts": 1,
-    "commit": "cb9aa1193fad2bcddba64774db30ab95381bfedc",
+    "commit": "e6bf06cd9d6b4818d30c8dcf0ce790ac0d272dc1",
     "detail": "",
-    "observed_on_branch_utc": "2026-11-11T18:31:03Z",
+    "observed_on_branch_utc": "2026-11-12T18:31:25Z",
     "status": "PUBLISHED"
    },
    "published": true,
@@ -415,14 +415,14 @@
    "files": {
     "CHF_NOM_10Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261111",
-     "rows": 7856,
+     "max_date": "20261112",
+     "rows": 7857,
      "status": "WRITTEN"
     },
     "CHF_SARON.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 6903,
+     "max_date": "20261111",
+     "rows": 6904,
      "status": "WRITTEN"
     },
     "CHF_SPOT_10Y.csv": {
@@ -498,7 +498,7 @@
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-11-11T18:30:14Z",
+   "finished_utc": "2026-11-12T18:30:18Z",
    "rc": 0,
    "requests": [
     {
@@ -523,44 +523,44 @@
    "files": {
     "NZD_BILL_30D.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 4458,
+     "max_date": "20261111",
+     "rows": 4459,
      "status": "WRITTEN"
     },
     "NZD_BILL_60D.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 4458,
+     "max_date": "20261111",
+     "rows": 4459,
      "status": "WRITTEN"
     },
     "NZD_BILL_90D.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 4458,
+     "max_date": "20261111",
+     "rows": 4459,
      "status": "WRITTEN"
     },
     "NZD_BOND_10Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 4462,
+     "max_date": "20261111",
+     "rows": 4463,
      "status": "WRITTEN"
     },
     "NZD_BOND_1Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 3197,
+     "max_date": "20261111",
+     "rows": 3198,
      "status": "WRITTEN"
     },
     "NZD_BOND_2Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 3885,
+     "max_date": "20261111",
+     "rows": 3886,
      "status": "WRITTEN"
     },
     "NZD_BOND_5Y.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 4462,
+     "max_date": "20261111",
+     "rows": 4463,
      "status": "WRITTEN"
     },
     "NZD_CASH_ON.csv": {
@@ -577,30 +577,30 @@
     },
     "NZD_IIB_2030.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 2216,
+     "max_date": "20261111",
+     "rows": 2217,
      "status": "WRITTEN"
     },
     "NZD_IIB_2035.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 2216,
+     "max_date": "20261111",
+     "rows": 2217,
      "status": "WRITTEN"
     },
     "NZD_IIB_2040.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 2216,
+     "max_date": "20261111",
+     "rows": 2217,
      "status": "WRITTEN"
     },
     "NZD_IIB_2050.csv": {
      "kept_from_previous": 0,
-     "max_date": "20261110",
-     "rows": 285,
+     "max_date": "20261111",
+     "rows": 286,
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-11-11T18:30:08Z",
+   "finished_utc": "2026-11-12T18:30:06Z",
    "rc": 0,
    "requests": [
     {
@@ -615,12 +615,12 @@
    "files": {
     "TONA.csv": {
      "kept_from_previous": 41,
-     "max_date": "20261109",
-     "rows": 1267,
+     "max_date": "20261110",
+     "rows": 1268,
      "status": "WRITTEN"
     }
    },
-   "finished_utc": "2026-11-11T18:30:16Z",
+   "finished_utc": "2026-11-12T18:30:20Z",
    "rc": 0,
    "requests": [
     {
@@ -636,12 +636,12 @@
   "nzd": "0",
   "tona": "0"
  },
- "finished_utc": "2026-11-11T18:31:52Z",
+ "finished_utc": "2026-11-12T18:32:22Z",
  "heartbeat": {
   "status": "NOT_ATTEMPTED"
  },
  "job": "nzchf-tona",
- "run_id": "20261111T183017Z_mac-primary_nzchf-tona_2042",
- "started_utc": "2026-11-11T18:30:17Z",
+ "run_id": "20261112T183020Z_mac-primary_nzchf-tona_f1d0",
+ "started_utc": "2026-11-12T18:30:20Z",
  "version": "push_nzd_to_github v2.2"
 }
