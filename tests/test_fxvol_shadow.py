@@ -144,8 +144,14 @@ class FxvolShadow(unittest.TestCase):
                 self.assertLess(cur["hist_n"], 252, "%s %s" % (session, ccy))
                 self.assertEqual(cur["iv30_pct252"], "NA", "%s %s" % (session, ccy))
                 self.assertEqual(cur["iv30_pct252_days"], cur["hist_n"], "%s %s" % (session, ccy))
-                self.assertEqual(cur["rv21"], "UNAVAILABLE")
-                self.assertEqual(cur["vrp"], "UNAVAILABLE")
+                # FLUJOS-01-PR2: RV21 ya está definido. VRP = IV30 − RV21 (ambos en %).
+                # El percentil 252 sigue en NA (<252), así que el régimen queda UNAVAILABLE.
+                if cur["rv21"] == "NA":
+                    self.assertEqual(cur["vrp"], "NA", "%s %s" % (session, ccy))
+                    self.assertIn("<21", cur["rv21_reason"], "%s %s" % (session, ccy))
+                else:
+                    self.assertIsInstance(cur["rv21"], float, "%s %s" % (session, ccy))
+                    self.assertEqual(cur["vrp"], round(cur["iv30_atm"] - cur["rv21"], 2), "%s %s" % (session, ccy))
                 self.assertEqual(cur["vol_regime"], "UNAVAILABLE")
 
     def test_pct252_needs_252_observations(self):
