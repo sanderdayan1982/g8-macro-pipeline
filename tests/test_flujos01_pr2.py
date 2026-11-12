@@ -104,11 +104,12 @@ class RatesComputed(unittest.TestCase):
         be[-1] = 2.10  # |Δ| iguales a 21 obs y a 1 obs → REAL_LED
         legs = {"EUR": {"nom": [3.0 + i * 0.01 for i in range(23)], "real": real, "be": be}}
         block = AR.computed_block(legs)["EUR"]
-        self.assertEqual(block["d1d"]["source"], "computed")
-        self.assertEqual(block["d22d"]["source"], "computed")
-        self.assertEqual(block["d1d"]["nominal_10y"], round((legs["EUR"]["nom"][-1] - legs["EUR"]["nom"][-2]) * 100, 2))
-        self.assertEqual(block["d22d"]["real_10y"], round((real[-1] - real[0]) * 100, 2))
-        self.assertEqual(block["driver"], "REAL_LED")
+        # FLUJOS-01-PR2 autorizado Sander 12-nov-2026 08:57
+        self.assertEqual(block["level_change_1d"]["source"], "computed")
+        self.assertEqual(block["level_change_22d"]["source"], "computed")
+        self.assertEqual(block["level_change_1d"]["nominal_10y"], round((legs["EUR"]["nom"][-1] - legs["EUR"]["nom"][-2]) * 100, 2))
+        self.assertEqual(block["level_change_22d"]["real_10y"], round((real[-1] - real[0]) * 100, 2))
+        self.assertEqual(block["dominant_driver"], "REAL_LED")
         be[-1] = 2.50
         self.assertEqual(AR.driver_field(real, be), "BE_LED")
         self.assertEqual(AR.driver_field(real, None), "UNAVAILABLE")

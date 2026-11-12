@@ -96,16 +96,14 @@ def _computed_one(row):
             "source": "computed",
         }
     return {
-        "d1d": pack(1),
-        "d22d": pack(22),
-        "driver": driver_field((row or {}).get("real"), (row or {}).get("be")),
+        "level_change_1d": pack(1),
+        "level_change_22d": pack(22),
+        "dominant_driver": driver_field((row or {}).get("real"), (row or {}).get("be")),
     }
 
 
 def computed_block(legs):
     return {ccy: _computed_one(row) for ccy, row in (legs or {}).items()}
-    m = re.search(r"\b(DEAD|STALE|DEGRADED)\b", text)
-    return m.group(1) if m else "LIVE"
 
 
 def _level(td):
@@ -198,12 +196,11 @@ def parse(doc):
                 continue
             entry[name] = _level(tds[idx])
             entry["panel_deltas_bp"][name] = _deltas(tds[idx])
-        extra = (doc.get("legs") or {}).get(ccy)
-        if extra is not None or "legs" in doc:
-            block = _computed_one(extra)
-            entry["d1d"] = block["d1d"]
-            entry["d22d"] = block["d22d"]
-            entry["driver"] = block["driver"]
+        if "legs" in doc:
+            block = _computed_one((doc.get("legs") or {}).get(ccy))
+            entry["level_change_1d"] = block["level_change_1d"]
+            entry["level_change_22d"] = block["level_change_22d"]
+            entry["dominant_driver"] = block["dominant_driver"]
         currencies[ccy] = entry
     for ccy in CCYS:
         if ccy not in seen:
