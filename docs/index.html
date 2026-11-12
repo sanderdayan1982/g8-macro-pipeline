@@ -3082,6 +3082,20 @@ function pct252Cell(d) {
     var n = num(d.iv30_pct252);
     return n == null ? 'UNAVAILABLE' : n.toFixed(1);
 }
+function rvCell(d) {
+    if (!d || d.rv21 == null || d.rv21 === 'UNAVAILABLE') return 'UNAVAILABLE';
+    if (d.rv21 === 'NA') {
+        var why = d.rv21_reason ? '<div class="attr-sub">' + esc(d.rv21_reason) + '</div>' : '';
+        return 'NA' + why;
+    }
+    var n = num(d.rv21);
+    return n == null ? 'UNAVAILABLE' : n.toFixed(2);
+}
+function vrpCell(d) {
+    if (!d || d.vrp == null || d.vrp === 'UNAVAILABLE') return 'UNAVAILABLE';
+    if (d.vrp === 'NA') return 'NA';
+    return signed(d.vrp);
+}
 function rr5Cell(ccy, d) {
     if (!d || d.rr25_d5 === 'UNAVAILABLE' || d.rr25_d5 == null) return d && d.rr25_d5 === 'UNAVAILABLE' ? 'UNAVAILABLE' : '—';
     return signed(pairRR(ccy, d.rr25_d5));
@@ -3122,7 +3136,7 @@ function render(doc, surface) {
             html += '<tr><td>' + PAIR[ccy] + '</td><td>' + gateCell(d && d.gate0) + '</td>' +
                 '<td colspan="9">' + esc((d && d.reason) || 'NA') + '</td>' +
                 '<td>' + esc(pct252Cell(d)) + '</td><td>' + rr5Cell(ccy, d) + '</td>' +
-                '<td>' + markCell(d, 'rv21') + '</td><td>' + markCell(d, 'vrp') + '</td>' +
+                '<td>' + rvCell(d) + '</td><td>' + vrpCell(d) + '</td>' +
                 '<td>' + markCell(d, 'vol_regime') + '</td></tr>';
             return;
         }
@@ -3157,8 +3171,8 @@ function render(doc, surface) {
             '<td>1d ' + flujo(ccy, f1.quadrant) + ' · 1w ' + flujo(ccy, fw.quadrant) + '</td>' +
             '<td>' + esc(pct252Cell(d)) + '</td>' +
             '<td>' + rr5Cell(ccy, d) + '</td>' +
-            '<td>' + markCell(d, 'rv21') + '</td>' +
-            '<td>' + markCell(d, 'vrp') + '</td>' +
+            '<td>' + rvCell(d) + '</td>' +
+            '<td>' + vrpCell(d) + '</td>' +
             '<td>' + markCell(d, 'vol_regime') + '</td>' +
             '</tr>';
     });
@@ -3167,7 +3181,7 @@ function render(doc, surface) {
         '<td>UNAVAILABLE</td><td>UNAVAILABLE</td><td>UNAVAILABLE</td><td>UNAVAILABLE</td><td>UNAVAILABLE</td></tr>';
     html += '</tbody></table>' +
         '<div class="attr-sub">IV30-G8 = vol implícita ATM a 30 días constantes (Black-76 sobre settlement oficial CME, Databento). No es el CVOL oficial: el 17-ago-2026 quedó entre un 3,5 % y un 8,1 % por debajo, en las seis divisas. RR25 en convención del par: positivo = el mercado paga más por protegerse de que el par SUBA. SHADOW: no vota, no crea situación, no cambia tamaño.</div>' +
-        '<div class="attr-sub">Pct 252 = percentil de 252 sesiones de la IV30 propia; con menos, NA y los días disponibles. ΔRR 5d = cambio a 5 sesiones (la misma cifra que ΔRR 1w), convención del par. RV21, VRP y régimen: UNAVAILABLE (la anualización de la realizada no está fijada; no se publica una cifra). Umbrales de régimen, si llegaran a calcularse, serían solo de presentación.</div>';
+        '<div class="attr-sub">Pct 252 = percentil de 252 sesiones de la IV30 propia; con menos, NA y los días disponibles. ΔRR 5d = cambio a 5 sesiones (la misma cifra que ΔRR 1w), convención del par. RV21 = σ muestral (N−1) de 21 rendimientos log del mismo futuro, × √252, en % (igual que IV30). El día en que cambia el contrato no entra: no hay rendimiento entre contratos distintos. VRP = IV30 − RV21, en puntos de vol. Régimen (solo presentación, sin voto): COMPRESSION si el percentil 252 &lt; 20 y VRP &gt; 0; EXPANSION si el percentil &gt; 80; NEUTRAL en el resto; UNAVAILABLE si el percentil o la VRP son NA.</div>';
     el.innerHTML = html;
     if (window.G8DQM && window.G8DQM.report) {
         try {

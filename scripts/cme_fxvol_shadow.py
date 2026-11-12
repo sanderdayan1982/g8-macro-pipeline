@@ -230,6 +230,66 @@ def r(x, n):
     return None if x is None else round(x, n)
 
 
+def rv21_field(hist):
+    """RV21 en % (puntos de vol), las mismas unidades que iv30_atm.
+
+    FLUJOS-01-PR2 Sander 12-nov-2026. 21 rendimientos logarítmicos del mismo
+    contrato, desviación típica muestral (N−1), anualizada con √252 y pasada a %.
+    El día en que cambia el contrato (px_contract) se excluye: no se calcula
+    ningún rendimiento que una dos contratos ni que cruce ese día. Si el tramo
+    final no tiene 21 rendimientos válidos, NA y el motivo.
+    Devuelve (número redondeado a 2 decimales | "NA", motivo | None).
+    """
+    if not hist:
+        return "NA", "sin historia de settlements"
+    symbol = (hist[-1].get("fut") or {}).get("px_contract")
+    if not symbol:
+        return "NA", "sin contrato"
+    roll = set()
+    prev = None
+    for i, h in enumerate(hist):
+        px = (h.get("fut") or {}).get("px_contract")
+        if px and prev and px != prev:
+            roll.add(i)
+        if px:
+            prev = px
+    prices = []
+    excluded_roll = False
+    for i in range(len(hist) - 1, -1, -1):
+        if i in roll:
+            excluded_roll = True
+            break
+        px = ((hist[i].get("fut") or {}).get("settles") or {}).get(symbol)
+        if px is None or px <= 0:
+            break
+        prices.append(px)
+    prices.reverse()
+    n_ret = len(prices) - 1
+    if n_ret < 21:
+        reason = "%d rendimientos válidos del contrato %s (<21)" % (max(n_ret, 0), symbol)
+        if excluded_roll:
+            reason += "; día de cambio de contrato excluido"
+        return "NA", reason
+    rets = [math.log(prices[j] / prices[j - 1]) for j in range(len(prices) - 21, len(prices))]
+    mu = sum(rets) / 21.0
+    var = sum((x - mu) ** 2 for x in rets) / 20.0
+    return round(math.sqrt(var) * math.sqrt(252) * 100.0, 2), None
+
+
+def vol_regime_field(pct, vrp):
+    """COMPRESSION si pct<20 y VRP>0; EXPANSION si pct>80; NEUTRAL en el resto.
+
+    Si el percentil o la VRP son NA (o no hay número), UNAVAILABLE. Presentación, sin voto.
+    """
+    if not isinstance(pct, (int, float)) or not isinstance(vrp, (int, float)):
+        return "UNAVAILABLE"
+    if pct < 20 and vrp > 0:
+        return "COMPRESSION"
+    if pct > 80:
+        return "EXPANSION"
+    return "NEUTRAL"
+
+
 def quadrant(px, oi, flat):
     if px is None or oi is None:
         return None
@@ -298,14 +358,18 @@ def build(repo, session=None):
             g = g.get("verdict") or g.get("status")
         if cur["status"] != "OK":
             # FLUJOS-01 Sander 12-nov-2026: sin IV30 de la sesión no hay percentil ni ΔRR.
-            out["currencies"][c] = {
+            rv, why = rv21_field(H)
+            row = {
                 "status": "NA", "reason": cur["reason"], "gate0": g,
                 "iv30_pct252": "UNAVAILABLE",
                 "rr25_d5": "UNAVAILABLE",
-                "rv21": "UNAVAILABLE",
-                "vrp": "UNAVAILABLE",
+                "rv21": rv,
+                "vrp": "NA",
                 "vol_regime": "UNAVAILABLE",
             }
+            if why:
+                row["rv21_reason"] = why
+            out["currencies"][c] = row
             continue
         ok = [h for h in H if h["status"] == "OK"]
         ivs = [h["iv30_atm"] for h in ok]
@@ -341,9 +405,8 @@ def build(repo, session=None):
         }
         # FLUJOS-01 Sander 12-nov-2026. Presentación, sin voto.
         # rr25_d5: el cambio a 5 sesiones que ya es d_rr["1w"] (LB_1W). No es otra fórmula.
-        # rv21 / vrp / vol_regime: UNAVAILABLE. La orden pide RV21 anualizada con los
-        # settlements del mismo futuro, pero no fija retorno (log o simple), divisor
-        # (N o N−1) ni factor (√252 o √365). No se inventa esa cifra ni el régimen que depende de ella.
+        # FLUJOS-01-PR2: RV21 en % (igual que iv30_atm). VRP = IV30 − RV21.
+        # vol_regime usa iv30_pct252; con percentil NA queda UNAVAILABLE.
         pct, n_iv = iv30_pct252_field(ivs, cur["iv30_atm"])
         e["iv30_pct252"] = pct
         if n_iv is not None:
@@ -351,9 +414,14 @@ def build(repo, session=None):
         if e["iv_pct"] is None:
             e["note"] = "HIST_SHORT"
         e["rr25_d5"] = e["d_rr"]["1w"]
-        e["rv21"] = "UNAVAILABLE"
-        e["vrp"] = "UNAVAILABLE"
-        e["vol_regime"] = "UNAVAILABLE"
+        rv, why = rv21_field(H)
+        e["rv21"] = rv
+        if why:
+            e["rv21_reason"] = why
+            e["vrp"] = "NA"
+        else:
+            e["vrp"] = round(e["iv30_atm"] - rv, 2)
+        e["vol_regime"] = vol_regime_field(e["iv30_pct252"], e["vrp"] if e["vrp"] != "NA" else None)
         fu = cur["fut"]
         f = {"oi_total": fu["oi_total"], "px_contract": fu["px_contract"], "px_settle": fu["px_settle"]}
         for lab, n, flat in (("1d", 1, OI_FLAT_1D), ("1w", LB_1W, OI_FLAT_1W)):

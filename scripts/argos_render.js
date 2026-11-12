@@ -114,7 +114,22 @@ global.G8NET.fetchChain = async function (urls) {
 };
 
 for (let i = 1; i < blocks.length; i++) {
-  vm.runInThisContext(scriptContaining(html, blocks[i][1]), { filename: blocks[i][0] + '.js' });
+  let src = scriptContaining(html, blocks[i][1]);
+  if (blocks[i][0] === 'ATTR') {
+    src = src.replace('function build(data) {', [
+      'function build(data) {',
+      '    window.__G8legs = {};',
+      '    CCYS.forEach(function (c) {',
+      '        var d = data[c];',
+      '        function vals(s) {',
+      '            if (!s || !s.series) return null;',
+      '            return s.series.map(function (x) { return x.v; }).filter(function (v) { return typeof v === "number" && isFinite(v); });',
+      '        }',
+      '        window.__G8legs[c] = d ? { nom: vals(d.nom), real: vals(d.real), be: vals(d.be) } : null;',
+      '    });',
+    ].join('\n'));
+  }
+  vm.runInThisContext(src, { filename: blocks[i][0] + '.js' });
 }
 
 function ready() {
@@ -131,6 +146,7 @@ const t0 = Date.now();
       attr: els['attr-matrix'].innerHTML,
       s01b: els['s01b-panel'].innerHTML,
       floors: els['fls-table'].innerHTML,
+      legs: global.__G8legs || null,
     }));
     return;
   }

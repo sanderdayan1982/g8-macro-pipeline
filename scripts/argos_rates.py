@@ -65,6 +65,47 @@ def _staleness(text):
     return m.group(1) if m else "LIVE"
 
 
+def obs_delta(vals, lb):
+    """Δ en pb de `lb` observaciones: (último − el de hace lb) × 100. Igual que deltaBps del panel."""
+    if not isinstance(vals, list) or len(vals) < lb + 1:
+        return "UNAVAILABLE"
+    return round((float(vals[-1]) - float(vals[-1 - lb])) * 100.0, 2)
+
+
+def driver_field(real_vals, be_vals):
+    """BE_LED si |ΔBE a 21 obs| > |Δreal a 21 obs|; si no, REAL_LED (el empate también).
+
+    Si falta alguno de los dos, UNAVAILABLE.
+    """
+    real_d = obs_delta(real_vals, 21)
+    be_d = obs_delta(be_vals, 21)
+    if real_d == "UNAVAILABLE" or be_d == "UNAVAILABLE":
+        return "UNAVAILABLE"
+    if abs(be_d) > abs(real_d):
+        return "BE_LED"
+    return "REAL_LED"
+
+
+def _computed_one(row):
+    def pack(lb):
+        src = row or {}
+        return {
+            "nominal_10y": obs_delta(src.get("nom"), lb),
+            "real_10y": obs_delta(src.get("real"), lb),
+            "breakeven_10y": obs_delta(src.get("be"), lb),
+            "source": "computed",
+        }
+    return {
+        "level_change_1d": pack(1),
+        "level_change_22d": pack(22),
+        "dominant_driver": driver_field((row or {}).get("real"), (row or {}).get("be")),
+    }
+
+
+def computed_block(legs):
+    return {ccy: _computed_one(row) for ccy, row in (legs or {}).items()}
+
+
 def _level(td):
     m = re.search(r'class="attr-val">(-?\d+\.\d+)', td)
     if m:
@@ -155,6 +196,11 @@ def parse(doc):
                 continue
             entry[name] = _level(tds[idx])
             entry["panel_deltas_bp"][name] = _deltas(tds[idx])
+        if "legs" in doc:
+            block = _computed_one((doc.get("legs") or {}).get(ccy))
+            entry["level_change_1d"] = block["level_change_1d"]
+            entry["level_change_22d"] = block["level_change_22d"]
+            entry["dominant_driver"] = block["dominant_driver"]
         currencies[ccy] = entry
     for ccy in CCYS:
         if ccy not in seen:

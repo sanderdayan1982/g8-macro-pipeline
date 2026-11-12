@@ -43,10 +43,17 @@ class ArgosRatesParity(unittest.TestCase):
         self.assertNotIn("driver", blob.lower())
         self.assertNotIn("2×2", blob)
         self.assertNotIn("cuadrante", blob.lower())
+        # FLUJOS-01-PR2 autorizado Sander 12-nov-2026 08:57
         for ccy, row in self.doc["currencies"].items():
-            self.assertEqual(row["dominant_driver"], "UNAVAILABLE", ccy)
-            self.assertEqual(row["level_change_1d"], "UNAVAILABLE", ccy)
-            self.assertEqual(row["level_change_22d"], "UNAVAILABLE", ccy)
+            block = AR._computed_one((self.raw.get("legs") or {}).get(ccy))
+            self.assertEqual(row["level_change_1d"], block["level_change_1d"], ccy)
+            self.assertEqual(row["level_change_22d"], block["level_change_22d"], ccy)
+            self.assertEqual(row["level_change_1d"]["source"], "computed", ccy)
+            self.assertEqual(row["level_change_22d"]["source"], "computed", ccy)
+            self.assertEqual(row["dominant_driver"], block["dominant_driver"], ccy)
+            self.assertNotIn("d1d", row, ccy)
+            self.assertNotIn("d22d", row, ccy)
+            self.assertNotIn("driver", row, ccy)
             self.assertEqual(row["stale"], row["staleness"] in ("STALE", "DEAD"), ccy)
             self.assertIn(row["staleness"], ("LIVE", "DEGRADED", "STALE", "DEAD"), ccy)
 
