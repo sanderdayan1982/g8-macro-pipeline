@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-13T00:00:59Z",
+ "generated_utc": "2026-11-13T00:06:57Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -22,7 +22,7 @@
  "bullets": [
   {
    "sec": "§02 Floor spreads",
-   "text": "CAD +2.0 bp TIGHT · NZD +6.0 bp TIGHT"
+   "text": "JPY -1.8 bp AMPLE (z extremo) · CAD +2.0 bp TIGHT · NZD +6.0 bp TIGHT"
   },
   {
    "sec": "§03 Term premium",
@@ -30,11 +30,11 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "ningún diferencial en extremo de su año"
+   "text": "CAD−USD -94 bp (z suelo)"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
-   "text": "CAD−USD real -84 bp (z suelo) · NZD−USD real -31 bp (z suelo) · NZD real Δ1w extremo"
+   "text": "CAD−USD real -89 bp (z suelo) · NZD−USD real -28 bp (z suelo) · NZD real Δ1w extremo"
   },
   {
    "sec": "§04/§05 Metales MDP",
@@ -46,7 +46,7 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -29 EUR -18 GBP -26 JPY -27 AUD -14 NZD -43 CAD -29 CHF -3"
+   "text": "CTF ON: ninguna · ΔTP22 USD -32 EUR -20 GBP -28 JPY -27 AUD -14 NZD -39 CAD -21 CHF -3"
   },
   {
    "sec": "§07 Factor USD",
@@ -344,8 +344,8 @@
    "tp": 1.8326,
    "tp_z": -0.11039607346187595,
    "tp_asof": "2026-11-11",
-   "rfr": 1.227,
-   "floor_bp": -2.3,
+   "rfr": 1.232,
+   "floor_bp": -1.8,
    "floor_badge": "AMPLE",
    "vs_usd_bp": -214.3,
    "real_vs_usd_bp": -191.7,
@@ -356,20 +356,20 @@
   {
    "ccy": "AUD",
    "flags": [
-    "NOM/REAL/BE EST 11-11 ±6 pb (curva F2 RBA 04-11; vs USD y alertas con RBA)",
+    "NOM/REAL/BE EST 12-11 ±7 pb (curva F2 RBA 04-11; vs USD y alertas con RBA)",
     "TP curva arrastrada (ffill)",
     "COT DIV LF/AM"
    ],
-   "nom": 5.1205,
-   "real": 2.8596,
-   "be": 2.2609,
-   "nom_asof": "2026-11-11",
+   "nom": 5.1148,
+   "real": 2.8553,
+   "be": 2.2595,
+   "nom_asof": "2026-11-12",
    "nom_rba": 5.082,
    "nom_rba_asof": "2026-11-04",
    "nom_est": true,
-   "tp": 1.1637,
-   "tp_z": 0.8198385358379687,
-   "tp_asof": "2026-11-11",
+   "tp": 1.1645,
+   "tp_z": 0.8206365785097494,
+   "tp_asof": "2026-11-12",
    "rfr": 4.85,
    "floor_bp": 0.0,
    "floor_badge": "AMPLE",
@@ -386,10 +386,10 @@
     "TP ACM K=3 short sample",
     "REAL vs USD z suelo"
    ],
-   "nom": 4.71,
-   "real": 2.4703,
-   "be": 2.2397,
-   "nom_asof": "2026-11-10",
+   "nom": 4.77,
+   "real": 2.5005,
+   "be": 2.2695,
+   "nom_asof": "2026-11-11",
    "tp": 1.5044,
    "tp_z": -0.29557149278503025,
    "tp_asof": "2026-11-11",
@@ -397,8 +397,8 @@
    "floor_bp": 6.0,
    "floor_badge": "TIGHT",
    "vs_usd_bp": -21.0,
-   "real_vs_usd_bp": -31.0,
-   "real_vs_usd_z": -2.66,
+   "real_vs_usd_bp": -27.9,
+   "real_vs_usd_z": -2.49,
    "lf_z": -1.57,
    "cot_state": "STRETCH-"
   },
@@ -406,22 +406,23 @@
    "ccy": "CAD",
    "flags": [
     "REAL vs USD z suelo",
+    "vs USD z suelo",
     "COT DIV LF/AM",
     "walls PROXY"
    ],
-   "nom": 3.98,
-   "real": 1.82,
-   "be": 2.16,
-   "nom_asof": "2026-11-09",
+   "nom": 4.04,
+   "real": 1.89,
+   "be": 2.15,
+   "nom_asof": "2026-11-10",
    "tp": 1.1316,
    "tp_z": -0.0024040616844899724,
    "tp_asof": "2026-11-10",
    "rfr": 2.52,
    "floor_bp": 2.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -90.0,
-   "real_vs_usd_bp": -84.0,
-   "real_vs_usd_z": -1.85,
+   "vs_usd_bp": -94.0,
+   "real_vs_usd_bp": -89.0,
+   "real_vs_usd_z": -2.0,
    "lf_z": -1.33,
    "cot_state": "NEUTRAL"
   },
@@ -453,12 +454,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 9,
+   "daily": 7,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 9,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 9 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] AU_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci\n• [1º/LATE] CAD_NOM_2Y.csv: CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO, RULE_PROVISIONAL, OVERDUE\n• [1º/LATE] CH_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci\n• [1º/LATE] CORRA.csv: CAUSA_CONSULTADA_SIN_NOVEDAD, RULE_PROVISIONAL, OVERDUE"
+  "incidents_count": 7,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 7 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] AU_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci\n• [1º/LATE] CH_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci\n• [1º/LATE] CORRA.csv: CAUSA_CONSULTADA_SIN_NOVEDAD, RULE_PROVISIONAL, OVERDUE\n• [1º/LATE] JP_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci"
  }
 }
