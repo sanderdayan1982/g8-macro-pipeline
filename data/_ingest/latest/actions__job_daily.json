@@ -1,11 +1,17 @@
 {
- "deadline_utc": "2026-11-13T00:29:40Z",
+ "deadline_utc": "2026-11-13T02:28:17Z",
  "executor": "actions",
- "failed": [],
+ "failed": [
+  {
+   "name": "bis_ocr",
+   "rc": 1,
+   "status": "FAILED"
+  }
+ ],
  "job": "daily",
  "reserve_s": "740",
  "restored": [],
- "run_id": "43333179969",
+ "run_id": "43348912669",
  "steps": [
   {
    "allowed_s": 240.0,
@@ -14,8 +20,8 @@
    "name": "sofr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-11-13T00:01:38Z",
+   "secs": 1.5,
+   "started_utc": "2026-11-13T02:00:08Z",
    "status": "OK"
   },
   {
@@ -25,8 +31,8 @@
    "name": "estr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 14.5,
-   "started_utc": "2026-11-13T00:01:39Z",
+   "secs": 4.9,
+   "started_utc": "2026-11-13T02:00:10Z",
    "status": "OK"
   },
   {
@@ -36,8 +42,8 @@
    "name": "sonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.1,
-   "started_utc": "2026-11-13T00:01:54Z",
+   "secs": 0.9,
+   "started_utc": "2026-11-13T02:00:15Z",
    "status": "OK"
   },
   {
@@ -47,8 +53,8 @@
    "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.2,
-   "started_utc": "2026-11-13T00:01:56Z",
+   "secs": 2.2,
+   "started_utc": "2026-11-13T02:00:15Z",
    "status": "OK"
   },
   {
@@ -58,8 +64,8 @@
    "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.7,
-   "started_utc": "2026-11-13T00:01:57Z",
+   "secs": 1.9,
+   "started_utc": "2026-11-13T02:00:18Z",
    "status": "OK"
   },
   {
@@ -69,20 +75,24 @@
    "name": "corra",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.7,
-   "started_utc": "2026-11-13T00:02:00Z",
+   "secs": 0.9,
+   "started_utc": "2026-11-13T02:00:20Z",
    "status": "OK"
   },
   {
    "allowed_s": 240.0,
    "cap_s": 240.0,
    "cmd": "python scripts/fetch_bis_ocr.py",
+   "kept_valid_outputs": [
+    "_ingest/latest/actions__fetch_bis_ocr.json",
+    "_ingest/runs/actions/fetch_bis_ocr/2026-11.jsonl"
+   ],
    "name": "bis_ocr",
    "phase": "fetch",
-   "rc": 0,
-   "secs": 4.2,
-   "started_utc": "2026-11-13T00:02:01Z",
-   "status": "OK"
+   "rc": 1,
+   "secs": 67.5,
+   "started_utc": "2026-11-13T02:00:20Z",
+   "status": "FAILED"
   },
   {
    "allowed_s": 240.0,
@@ -91,8 +101,8 @@
    "name": "bis_gb",
    "phase": "fetch",
    "rc": 0,
-   "secs": 20.3,
-   "started_utc": "2026-11-13T00:02:05Z",
+   "secs": 62.0,
+   "started_utc": "2026-11-13T02:01:28Z",
    "status": "OK"
   },
   {
@@ -102,8 +112,8 @@
    "name": "bis_jp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 9.1,
-   "started_utc": "2026-11-13T00:02:25Z",
+   "secs": 73.1,
+   "started_utc": "2026-11-13T02:02:30Z",
    "status": "OK"
   },
   {
@@ -113,8 +123,8 @@
    "name": "bis_ch",
    "phase": "fetch",
    "rc": 0,
-   "secs": 4.2,
-   "started_utc": "2026-11-13T00:02:34Z",
+   "secs": 26.0,
+   "started_utc": "2026-11-13T02:03:43Z",
    "status": "OK"
   },
   {
@@ -124,8 +134,8 @@
    "name": "bis_au",
    "phase": "fetch",
    "rc": 0,
-   "secs": 10.5,
-   "started_utc": "2026-11-13T00:02:39Z",
+   "secs": 15.3,
+   "started_utc": "2026-11-13T02:04:09Z",
    "status": "OK"
   },
   {
@@ -135,8 +145,8 @@
    "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-11-13T00:02:49Z",
+   "secs": 2.9,
+   "started_utc": "2026-11-13T02:04:25Z",
    "status": "OK"
   },
   {
@@ -146,8 +156,8 @@
    "name": "cad_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-11-13T00:02:52Z",
+   "secs": 1.1,
+   "started_utc": "2026-11-13T02:04:28Z",
    "status": "OK"
   },
   {
@@ -157,8 +167,8 @@
    "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-11-13T00:02:53Z",
+   "secs": 0.7,
+   "started_utc": "2026-11-13T02:04:29Z",
    "status": "OK"
   },
   {
@@ -168,8 +178,8 @@
    "name": "eur_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 92.5,
-   "started_utc": "2026-11-13T00:02:54Z",
+   "secs": 22.0,
+   "started_utc": "2026-11-13T02:04:29Z",
    "status": "OK"
   },
   {
@@ -179,8 +189,8 @@
    "name": "gbp_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.3,
-   "started_utc": "2026-11-13T00:04:26Z",
+   "secs": 2.7,
+   "started_utc": "2026-11-13T02:04:51Z",
    "status": "OK"
   },
   {
@@ -190,8 +200,8 @@
    "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.4,
-   "started_utc": "2026-11-13T00:04:30Z",
+   "secs": 3.8,
+   "started_utc": "2026-11-13T02:04:54Z",
    "status": "OK"
   },
   {
@@ -201,8 +211,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 0,
-   "secs": 4.8,
-   "started_utc": "2026-11-13T00:04:32Z",
+   "secs": 11.6,
+   "started_utc": "2026-11-13T02:04:58Z",
    "status": "OK"
   },
   {
@@ -212,19 +222,19 @@
    "name": "acm_tp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.4,
-   "started_utc": "2026-11-13T00:04:37Z",
+   "secs": 1.7,
+   "started_utc": "2026-11-13T02:05:10Z",
    "status": "OK"
   },
   {
-   "allowed_s": 660.0,
+   "allowed_s": 645.1,
    "cap_s": 660.0,
    "cmd": "python scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 0,
-   "secs": 101.2,
-   "started_utc": "2026-11-13T00:04:39Z",
+   "secs": 83.4,
+   "started_utc": "2026-11-13T02:05:11Z",
    "status": "OK"
   },
   {
@@ -234,8 +244,8 @@
    "name": "acm_nzd",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-11-13T00:06:21Z",
+   "secs": 0.6,
+   "started_utc": "2026-11-13T02:06:35Z",
    "status": "OK"
   },
   {
@@ -245,8 +255,8 @@
    "name": "acm_chf",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-11-13T00:06:21Z",
+   "secs": 0.7,
+   "started_utc": "2026-11-13T02:06:35Z",
    "status": "OK"
   },
   {
@@ -257,7 +267,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.2,
-   "started_utc": "2026-11-13T00:06:22Z",
+   "started_utc": "2026-11-13T02:06:36Z",
    "status": "OK"
   },
   {
@@ -267,8 +277,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 18.1,
-   "started_utc": "2026-11-13T00:06:23Z",
+   "secs": 15.4,
+   "started_utc": "2026-11-13T02:06:36Z",
    "status": "OK"
   },
   {
@@ -278,8 +288,8 @@
    "name": "eur_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.8,
-   "started_utc": "2026-11-13T00:06:41Z",
+   "secs": 2.7,
+   "started_utc": "2026-11-13T02:06:52Z",
    "status": "OK"
   },
   {
@@ -289,8 +299,8 @@
    "name": "jpy_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 4.6,
-   "started_utc": "2026-11-13T00:06:44Z",
+   "secs": 2.9,
+   "started_utc": "2026-11-13T02:06:55Z",
    "status": "OK"
   },
   {
@@ -300,8 +310,8 @@
    "name": "chf_cpi",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.3,
-   "started_utc": "2026-11-13T00:06:48Z",
+   "secs": 3.1,
+   "started_utc": "2026-11-13T02:06:58Z",
    "status": "OK"
   },
   {
@@ -311,12 +321,12 @@
    "name": "aud_nowcast",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.6,
-   "started_utc": "2026-11-13T00:06:52Z",
+   "secs": 0.5,
+   "started_utc": "2026-11-13T02:07:01Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-11-13T00:06:52Z"
+ "written_utc": "2026-11-13T02:07:01Z"
 }
