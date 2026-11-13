@@ -11,7 +11,8 @@ Lo que el panel no muestra queda UNAVAILABLE:
     el mensual pinta 1M/3M; §01-b pinta el cambio a 22 sesiones de ΔRNY/ΔTP/RESID)
   - driver dominante: BE_LED si |ΔBE22 de §01-b| > |Δreal en la misma ventana|; si no REAL_LED
     (DATOS-ARGOS-01). PR #16 usaba 21 observaciones; §01-b usa H=22. Sin ΔBE22 → UNAVAILABLE
-  - cuadrante C3 de una tabla 2×2: el render de §01/§01-b no lo calcula (sigue UNAVAILABLE)
+  - c3 se deja UNAVAILABLE: Sander 13-nov-2026 20:45 WAT, es la ficha NTF × Reservas
+    (solo USD) y no aplica aquí. tests/test_argos_rates.py (main) exige el campo.
 """
 import json
 import math

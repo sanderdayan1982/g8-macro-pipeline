@@ -4,7 +4,25 @@ Comprobado 2026-11-13 (WAT). El generador no inventa cifras: lee el render de §
 
 ## C3
 
-El render de `docs/index.html` (§01, §01-b y §02, vía `scripts/argos_render.js`) no calcula un cuadrante de tabla 2×2 ni pinta la palabra «cuadrante». `c3` queda `UNAVAILABLE`. No se rellena con un número inventado.
+Corrección de Sander, 13-nov-2026 20:45 WAT: C3 no es un cuadrante de §01. Es la ficha **NTF × Reservas** de la Matriz, solo USD. No aplica a `argos_rates.json`.
+
+Quitar el campo rompería `tests/test_argos_rates.py` (línea 41, en main): exige `c3 = {quadrant, value, label}` todos `UNAVAILABLE`. Ese test no se modifica. El campo se queda con ese valor vacío. No es la ficha NTF.
+
+## argos_render.js
+
+El cambio no pinta nada. Añade al objeto `legs` del stdout (no al HTML):
+
+- `real_pts`: fechas y valores de la serie real que ya arma §01
+- `d_be_22`, `t`, `t0`: copiados de `data/S01B.json`, el mismo `d_be` que §01-b muestra
+
+Sirven para `dominant_driver`. Comparación del HTML (`attr`, `s01b`, `floors`) con el script de main, mismo reloj `2026-11-13T19:06:07Z`: los tres bloques son idénticos.
+
+## Fila CAD 12-nov
+
+Escrita a mano el 2026-11-13 (commit 18:58 UTC) porque la pasada diaria de las 02:06 UTC consultó el Valet y el último día era el 10-nov (run 43348912669). No es un fallo del script.
+
+- `CAD_NOM_2Y.csv` ya tiene columna `Source`. La fila `2026-11-12` dice `manual_oficial_BoC escrito=2026-11-13`. El valor sigue `3.33`.
+- `RY_G8_CAD.csv` no tiene columna source. Añadir una rompería el contrato de CSV (todas las filas con los mismos campos) o `series.parse`. La marca va en la línea `#` que ya existía, sin tocar `DATE,NOM10,REAL10,BE10` ni el `QUALITY=`. La pasada oficial siguiente reescribe el fichero y la marca desaparece: para entonces el dato ya no es manual.
 
 ## dominant_driver
 

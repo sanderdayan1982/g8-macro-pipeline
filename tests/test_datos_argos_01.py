@@ -1,6 +1,7 @@
 """DATOS-ARGOS-01 — paridad del driver con §01-b y campos obligatorios no vacíos.
 
-No modifica tests existentes. El cuadrante 2×2 no está en el render: c3 sigue UNAVAILABLE.
+No modifica tests de main. C3 (NTF × Reservas, solo USD) no se afirma aquí:
+tests/test_argos_rates.py, en main, sigue exigiendo el campo UNAVAILABLE.
 """
 import csv
 import json
@@ -47,9 +48,6 @@ class DatosArgos01(unittest.TestCase):
                 self.assertEqual(row["dominant_driver"], "UNAVAILABLE", ccy)
 
     def test_no_mandatory_field_is_blank(self):
-        self.assertEqual(self.doc["c3"], {
-            "quadrant": "UNAVAILABLE", "value": "UNAVAILABLE", "label": "UNAVAILABLE",
-        })
         blob = self.raw["attr"] + self.raw["s01b"] + self.raw["floors"]
         self.assertNotIn("cuadrante", blob.lower())
         self.assertNotIn("2×2", blob)
