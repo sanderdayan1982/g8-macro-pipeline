@@ -1,0 +1,62 @@
+# One-shot CME FX options backfill (Databento GLBX.MDP3).
+# workflow_dispatch only. This file does nothing until it is on main and
+# Sander starts it by hand. Do not add a cron: test_p12 would then require a
+# Mac dispatch slot, and a second run would call Databento again.
+#
+# Default input dry_run=true: metadata.get_cost / get_record_count /
+# get_billable_size for 2024-06-01 → 2026-05-31, no timeseries download.
+# Secret: DATABENTO_API_KEY only.
+name: CME options backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Cost only (get_cost, record count, billable size). No download.'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cme-options-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Quote and maybe download
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python scripts/cme_options_backfill.py --dry-run
+          else
+            python scripts/cme_options_backfill.py --download
+          fi
+
+      - name: Commit backfill data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/options/canonical data/options/backfill_report.json
+          if git diff --cached --quiet; then
+            echo "No backfill output to commit."
+          else
+            git commit -m "data: cme options backfill $(date -u +%F) [skip netlify]"
+            bash scripts/tools/git_push_retry.sh 5
+          fi
