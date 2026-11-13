@@ -1,0 +1,90 @@
+# FAMILIAS-00 — votes.csv from TradingView alert mail (read-only Gmail).
+# 03:00 UTC = 04:00 WAT (first attempt: no MISSING rows; the 05:00 WAT retry is still pending).
+# 04:00 UTC = 05:00 WAT (final attempt, before the 05:15 WAT / 04:15 UTC cutoff:
+# anything still absent, including a Gmail failure, is MISSING).
+# Tue–Sat covers the previous weekday close. Weekends produce no rows.
+# A refresh token alone cannot mint access tokens: the job also needs
+# GMAIL_OAUTH_CLIENT_ID and GMAIL_OAUTH_CLIENT_SECRET. Scope gmail.readonly.
+name: Votes ingest
+
+on:
+  schedule:
+    - cron: '0 3 * * 2-6'
+    - cron: '0 4 * * 2-6'
+  workflow_dispatch:
+    inputs:
+      session:
+        description: 'Session date YYYY-MM-DD (WAT). Empty = previous weekday.'
+        required: false
+        type: string
+      attempt:
+        description: 'first = 04:00 WAT (no MISSING). final = 05:00 WAT (write MISSING).'
+        required: false
+        default: final
+        type: choice
+        options:
+          - first
+          - final
+
+permissions:
+  contents: write
+
+concurrency:
+  group: votes-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ingest votes
+        id: ingest
+        continue-on-error: true
+        env:
+          GMAIL_READONLY_REFRESH_TOKEN: ${{ secrets.GMAIL_READONLY_REFRESH_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          ATTEMPT="${{ github.event.inputs.attempt }}"
+          if [ -z "$ATTEMPT" ]; then
+            case "${{ github.event.schedule }}" in
+              "0 3 * * 2-6") ATTEMPT=first ;;
+              "0 4 * * 2-6") ATTEMPT=final ;;
+              *) ATTEMPT=final ;;
+            esac
+          fi
+          SESSION="${{ github.event.inputs.session }}"
+          ARGS=(--attempt "$ATTEMPT")
+          if [ -n "$SESSION" ]; then
+            ARGS+=(--session "$SESSION")
+          fi
+          python scripts/votes_ingest.py "${ARGS[@]}"
+
+      - name: Commit votes
+        if: always() && steps.ingest.outcome != 'cancelled'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/votes.csv data/votes_weekly.json
+          if git diff --cached --quiet; then
+            echo "No new vote rows."
+          else
+            git commit -m "data: votes ingest $(date -u +%F) [skip netlify]"
+            bash scripts/tools/git_push_retry.sh 5
+          fi
+
+      - name: Gmail failure stays loud
+        if: steps.ingest.outcome == 'failure'
+        run: exit 1
