@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-13T17:31:38Z",
+ "generated_utc": "2026-11-13T20:29:28Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -22,7 +22,7 @@
  "bullets": [
   {
    "sec": "§02 Floor spreads",
-   "text": "EUR -5.7 bp AMPLE (z extremo) · JPY -1.8 bp AMPLE (z extremo) · CAD +3.0 bp TIGHT · NZD +6.0 bp TIGHT"
+   "text": "EUR -5.7 bp AMPLE (z extremo) · JPY -1.8 bp AMPLE (z extremo) · CAD +3.0 bp TIGHT · NZD +5.0 bp TIGHT"
   },
   {
    "sec": "§03 Term premium",
@@ -30,11 +30,11 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "CAD−USD -94 bp (z suelo) · AUD−USD +6 bp (z suelo)"
+   "text": "CAD−USD -89 bp (z suelo) · AUD−USD +6 bp (z suelo) · NZD−USD -25 bp (z suelo)"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
-   "text": "CAD−USD real -89 bp (z suelo) · NZD−USD real -28 bp (z suelo) · NZD real Δ1w extremo"
+   "text": "CAD−USD real -84 bp (z suelo) · NZD−USD real -28 bp (z suelo) · NZD real Δ1w extremo"
   },
   {
    "sec": "§04/§05 Metales MDP",
@@ -385,7 +385,8 @@
    "flags": [
     "REAL IIB (B2)",
     "TP ACM K=3 short sample",
-    "REAL vs USD z suelo"
+    "REAL vs USD z suelo",
+    "vs USD z suelo"
    ],
    "nom": 4.77,
    "real": 2.5005,
@@ -394,10 +395,10 @@
    "tp": 1.5044,
    "tp_z": -0.29557149278503025,
    "tp_asof": "2026-11-11",
-   "rfr": 2.81,
-   "floor_bp": 6.0,
+   "rfr": 2.8,
+   "floor_bp": 5.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -21.0,
+   "vs_usd_bp": -25.0,
    "real_vs_usd_bp": -27.9,
    "real_vs_usd_z": -2.49,
    "lf_z": -1.57,
@@ -411,19 +412,19 @@
     "COT DIV LF/AM",
     "walls PROXY"
    ],
-   "nom": 4.04,
-   "real": 1.89,
+   "nom": 4.09,
+   "real": 1.94,
    "be": 2.15,
-   "nom_asof": "2026-11-10",
+   "nom_asof": "2026-11-12",
    "tp": 1.1316,
    "tp_z": -0.0024040616844899724,
    "tp_asof": "2026-11-10",
    "rfr": 2.53,
    "floor_bp": 3.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -94.0,
-   "real_vs_usd_bp": -89.0,
-   "real_vs_usd_z": -2.0,
+   "vs_usd_bp": -89.0,
+   "real_vs_usd_bp": -84.0,
+   "real_vs_usd_z": -1.81,
    "lf_z": -1.33,
    "cot_state": "NEUTRAL"
   },
@@ -436,17 +437,17 @@
     "COT DIV LF/AM",
     "walls PROXY"
    ],
-   "nom": 0.524,
-   "real": -0.976,
+   "nom": 0.593,
+   "real": -0.907,
    "be": 1.5,
-   "nom_asof": "2026-11-12",
+   "nom_asof": "2026-11-13",
    "tp": -0.1023,
    "tp_z": -0.12201150500910367,
    "tp_asof": "2026-11-12",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -445.6,
+   "vs_usd_bp": -438.7,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
    "lf_z": -1.66,
@@ -455,12 +456,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 10,
+   "daily": 3,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 10,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 10 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_ocr:fail: Actions fetch_bis_ocr: fallo declarado por el descargador — BIS bulk fallback unavailable:\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] NZD_CASH_ON.csv: Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash disp\n• [1º/LATE] AU_POLICY.csv: Verificación oficial caducada (2026-11-11T14:05:00+00:00): requiere nueva consulta de deci\n• [1º/LATE] CAD_NOM_2Y.csv: CAUSA_EJECUTADA_SIN_DESCARGA_DEL_FICHERO, RULE_PROVISIONAL, OVERDUE"
+  "incidents_count": 3,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 3 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
  }
 }
