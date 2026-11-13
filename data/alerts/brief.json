@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-13T21:29:08Z",
+ "generated_utc": "2026-11-13T21:39:42Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
@@ -30,11 +30,11 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "CAD−USD -89 bp (z suelo) · AUD−USD +6 bp (z suelo) · NZD−USD -25 bp (z suelo)"
+   "text": "EUR−USD -172 bp (z suelo) · GBP−USD +16 bp (z suelo) · CAD−USD -101 bp (z suelo) · AUD−USD +6 bp (z suelo) · NZD−USD -37 bp (z suelo) · JPY Δ1w extremo · CAD Δ1w extremo · NZD Δ1w extremo"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
-   "text": "CAD−USD real -84 bp (z suelo) · NZD−USD real -28 bp (z suelo) · NZD real Δ1w extremo"
+   "text": "JPY−USD real -201 bp (z suelo) · CAD−USD real -92 bp (z suelo) · NZD−USD real -36 bp (z suelo) · NZD real Δ1w extremo"
   },
   {
    "sec": "§04/§05 Metales MDP",
@@ -46,7 +46,7 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -25 EUR -22 GBP -28 JPY -28 AUD -18 NZD -39 CAD -14 CHF -6"
+   "text": "CTF ON: ninguna · ΔTP22 USD -20 EUR -21 GBP -23 JPY -28 AUD -18 NZD -42 CAD -14 CHF -4"
   },
   {
    "sec": "§07 Factor USD",
@@ -278,13 +278,13 @@
    "flags": [
     "COT proxy (−mean LF z)"
    ],
-   "nom": 4.98,
-   "real": 2.78,
-   "be": 2.2,
-   "nom_asof": "2026-11-10",
-   "tp": 1.4072,
-   "tp_z": 0.6710873497554372,
-   "tp_asof": "2026-11-10",
+   "nom": 5.1,
+   "real": 2.86,
+   "be": 2.24,
+   "nom_asof": "2026-11-12",
+   "tp": 1.4554,
+   "tp_z": 1.03170665721105,
+   "tp_asof": "2026-11-12",
    "rfr": 3.9,
    "floor_bp": 0.0,
    "floor_badge": "AMPLE",
@@ -296,46 +296,51 @@
   },
   {
    "ccy": "EUR",
-   "flags": [],
+   "flags": [
+    "vs USD z suelo"
+   ],
    "nom": 3.3766,
    "real": 1.2736,
    "be": 2.103,
    "nom_asof": "2026-11-13",
-   "tp": 1.0144,
-   "tp_z": -1.1714958067492605,
-   "tp_asof": "2026-11-11",
+   "tp": 1.02,
+   "tp_z": -1.067398030273973,
+   "tp_asof": "2026-11-12",
    "rfr": 2.443,
    "floor_bp": -5.7,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -160.3,
-   "real_vs_usd_bp": -150.6,
-   "real_vs_usd_z": -1.31,
+   "vs_usd_bp": -172.3,
+   "real_vs_usd_bp": -158.6,
+   "real_vs_usd_z": -1.67,
    "lf_z": -2.68,
    "cot_state": "CROWD SHORT"
   },
   {
    "ccy": "GBP",
-   "flags": [],
+   "flags": [
+    "vs USD z suelo"
+   ],
    "nom": 5.2617,
    "real": 2.0365,
    "be": 3.2252,
    "nom_asof": "2026-11-12",
-   "tp": 1.7739,
-   "tp_z": -1.6315199171438792,
-   "tp_asof": "2026-11-11",
+   "tp": 1.8132,
+   "tp_z": -1.1189525654471832,
+   "tp_asof": "2026-11-12",
    "rfr": 3.9845,
    "floor_bp": -1.55,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": 28.2,
-   "real_vs_usd_bp": -74.3,
-   "real_vs_usd_z": -1.38,
+   "vs_usd_bp": 16.2,
+   "real_vs_usd_bp": -82.3,
+   "real_vs_usd_z": -1.85,
    "lf_z": -0.33,
    "cot_state": "NEUTRAL"
   },
   {
    "ccy": "JPY",
    "flags": [
-    "TP/NOM ▲60%"
+    "TP/NOM ▲60%",
+    "REAL vs USD z suelo"
    ],
    "nom": 2.8376,
    "real": 0.8523,
@@ -347,9 +352,9 @@
    "rfr": 1.232,
    "floor_bp": -1.8,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -214.2,
-   "real_vs_usd_bp": -192.8,
-   "real_vs_usd_z": -1.59,
+   "vs_usd_bp": -226.2,
+   "real_vs_usd_bp": -200.8,
+   "real_vs_usd_z": -2.03,
    "lf_z": 0.81,
    "cot_state": "NEUTRAL"
   },
@@ -388,19 +393,19 @@
     "REAL vs USD z suelo",
     "vs USD z suelo"
    ],
-   "nom": 4.77,
-   "real": 2.5005,
-   "be": 2.2695,
-   "nom_asof": "2026-11-11",
-   "tp": 1.5044,
-   "tp_z": -0.29557149278503025,
-   "tp_asof": "2026-11-11",
+   "nom": 4.73,
+   "real": 2.5008,
+   "be": 2.2292,
+   "nom_asof": "2026-11-12",
+   "tp": 1.4805,
+   "tp_z": -0.46789759340045184,
+   "tp_asof": "2026-11-12",
    "rfr": 2.8,
    "floor_bp": 5.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -25.0,
-   "real_vs_usd_bp": -27.9,
-   "real_vs_usd_z": -2.49,
+   "vs_usd_bp": -37.0,
+   "real_vs_usd_bp": -35.9,
+   "real_vs_usd_z": -2.77,
    "lf_z": -1.57,
    "cot_state": "STRETCH-"
   },
@@ -416,15 +421,15 @@
    "real": 1.94,
    "be": 2.15,
    "nom_asof": "2026-11-12",
-   "tp": 1.1316,
-   "tp_z": -0.0024040616844899724,
-   "tp_asof": "2026-11-10",
+   "tp": 1.1327,
+   "tp_z": -0.0016333252901069822,
+   "tp_asof": "2026-11-12",
    "rfr": 2.53,
    "floor_bp": 3.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -89.0,
-   "real_vs_usd_bp": -84.0,
-   "real_vs_usd_z": -1.81,
+   "vs_usd_bp": -101.0,
+   "real_vs_usd_bp": -92.0,
+   "real_vs_usd_z": -2.08,
    "lf_z": -1.33,
    "cot_state": "NEUTRAL"
   },
@@ -441,13 +446,13 @@
    "real": -0.907,
    "be": 1.5,
    "nom_asof": "2026-11-13",
-   "tp": -0.1023,
-   "tp_z": -0.12201150500910367,
-   "tp_asof": "2026-11-12",
+   "tp": -0.081,
+   "tp_z": 0.13683456149713952,
+   "tp_asof": "2026-11-13",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -438.7,
+   "vs_usd_bp": -450.7,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
    "lf_z": -1.66,
@@ -456,12 +461,12 @@
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 3,
+   "daily": 4,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 3,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 3 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "incidents_count": 4,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 4 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] pos_g8_cot.json: CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA, OVERDUE"
  }
 }

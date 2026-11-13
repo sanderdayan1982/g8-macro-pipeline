@@ -1,9 +1,9 @@
 {
  "version": "FXVOL-SHADOW v1.0",
  "status": "SHADOW",
- "session": "2026-11-11",
- "prev_session": "2026-11-10",
- "sessions_total": 115,
+ "session": "2026-11-12",
+ "prev_session": "2026-11-11",
+ "sessions_total": 116,
  "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
  "method": {
   "model": "Black-76 sobre settlement oficial, sin descuento",
@@ -38,52 +38,52 @@
   "EUR": {
    "status": "OK",
    "gate0": "CLEAN",
-   "iv30_atm": 5.78,
-   "rr25": -0.47,
+   "iv30_atm": 5.96,
+   "rr25": -0.55,
    "bf25": 0.15,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6EZ6",
-   "F1": 1.11065,
-   "n1": 21,
-   "n2": 19,
+   "F1": 1.1069,
+   "n1": 22,
+   "n2": 20,
    "d_iv": {
-    "1d": 0.32,
-    "1w": 0.16,
-    "1m": -0.59
+    "1d": 0.18,
+    "1w": 0.4,
+    "1m": -0.24
    },
    "d_rr": {
-    "1d": -0.21,
-    "1w": -0.19,
-    "1m": 0.22
+    "1d": -0.08,
+    "1w": -0.29,
+    "1m": 0.05
    },
-   "iv_pct": 70.4,
-   "rr_pct": 41.7,
-   "hist_n": 115,
+   "iv_pct": 76.7,
+   "rr_pct": 31.0,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.19,
-   "rv21": 5.92,
-   "vrp": -0.14,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.29,
+   "rv21": 5.86,
+   "vrp": 0.1,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 860776,
+    "oi_total": 872443,
     "px_contract": "6EZ6",
-    "px_settle": 1.11065,
+    "px_settle": 1.1069,
     "1d": {
-     "d_oi": 5872,
-     "d_oi_pct": 0.69,
-     "px_chg_pct": -0.671,
-     "quadrant": "OI_PLANO"
+     "d_oi": 11667,
+     "d_oi_pct": 1.36,
+     "px_chg_pct": -0.338,
+     "quadrant": "DINERO_NUEVO_VENDEDOR"
     },
     "1w": {
-     "d_oi": -9009,
-     "d_oi_pct": -1.04,
-     "px_chg_pct": -1.201,
+     "d_oi": 3239,
+     "d_oi_pct": 0.37,
+     "px_chg_pct": -1.534,
      "quadrant": "OI_PLANO"
     }
    }
@@ -91,158 +91,158 @@
   "JPY": {
    "status": "OK",
    "gate0": "CLEAN",
-   "iv30_atm": 7.04,
-   "rr25": 1.43,
-   "bf25": 0.52,
+   "iv30_atm": 7.16,
+   "rr25": 1.69,
+   "bf25": 0.5,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6JZ6",
-   "F1": 0.006272,
+   "F1": 0.0062715,
    "n1": 18,
    "n2": 15,
    "d_iv": {
-    "1d": 0.65,
-    "1w": 0.37,
-    "1m": -0.49
+    "1d": 0.13,
+    "1w": -0.01,
+    "1m": -0.42
    },
    "d_rr": {
-    "1d": -0.24,
-    "1w": -0.14,
-    "1m": -0.29
+    "1d": 0.26,
+    "1w": -0.69,
+    "1m": 0.13
    },
-   "iv_pct": 27.8,
-   "rr_pct": 31.3,
-   "hist_n": 115,
+   "iv_pct": 35.3,
+   "rr_pct": 43.1,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.14,
-   "rv21": 6.34,
-   "vrp": 0.7,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.69,
+   "rv21": 6.33,
+   "vrp": 0.83,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 386155,
+    "oi_total": 387542,
     "px_contract": "6JZ6",
-    "px_settle": 0.006272,
+    "px_settle": 0.0062715,
     "1d": {
-     "d_oi": -3031,
-     "d_oi_pct": -0.78,
-     "px_chg_pct": -0.681,
+     "d_oi": 1387,
+     "d_oi_pct": 0.36,
+     "px_chg_pct": -0.008,
      "quadrant": "OI_PLANO"
     },
     "1w": {
-     "d_oi": 9504,
-     "d_oi_pct": 2.52,
-     "px_chg_pct": -0.908,
-     "quadrant": "DINERO_NUEVO_VENDEDOR"
+     "d_oi": 4010,
+     "d_oi_pct": 1.05,
+     "px_chg_pct": -1.291,
+     "quadrant": "OI_PLANO"
     }
    }
   },
   "GBP": {
    "status": "OK",
    "gate0": "CLEAN",
-   "iv30_atm": 5.75,
-   "rr25": -0.58,
-   "bf25": 0.14,
+   "iv30_atm": 5.81,
+   "rr25": -0.62,
+   "bf25": 0.19,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6BZ6",
-   "F1": 1.3278,
-   "n1": 23,
+   "F1": 1.3236,
+   "n1": 24,
    "n2": 24,
    "d_iv": {
-    "1d": 0.33,
-    "1w": 0.48,
-    "1m": -0.25
+    "1d": 0.07,
+    "1w": 0.53,
+    "1m": -0.26
    },
    "d_rr": {
     "1d": -0.04,
-    "1w": -0.12,
-    "1m": 0.16
+    "1w": -0.19,
+    "1m": 0.18
    },
-   "iv_pct": 46.1,
-   "rr_pct": 60.9,
-   "hist_n": 115,
+   "iv_pct": 50.0,
+   "rr_pct": 52.6,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.12,
-   "rv21": 6.71,
-   "vrp": -0.96,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.19,
+   "rv21": 6.49,
+   "vrp": -0.68,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 224187,
+    "oi_total": 236451,
     "px_contract": "6BZ6",
-    "px_settle": 1.3278,
+    "px_settle": 1.3236,
     "1d": {
-     "d_oi": 4290,
-     "d_oi_pct": 1.95,
-     "px_chg_pct": -0.532,
+     "d_oi": 12264,
+     "d_oi_pct": 5.47,
+     "px_chg_pct": -0.316,
      "quadrant": "DINERO_NUEVO_VENDEDOR"
     },
     "1w": {
-     "d_oi": -16760,
-     "d_oi_pct": -6.96,
-     "px_chg_pct": -1.411,
-     "quadrant": "LIQUIDACION_LARGOS"
+     "d_oi": 2456,
+     "d_oi_pct": 1.05,
+     "px_chg_pct": -1.65,
+     "quadrant": "OI_PLANO"
     }
    }
   },
   "AUD": {
    "status": "OK",
    "gate0": "CLEAN",
-   "iv30_atm": 7.29,
-   "rr25": -1.28,
-   "bf25": 0.17,
+   "iv30_atm": 7.47,
+   "rr25": -1.38,
+   "bf25": 0.3,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6AZ6",
-   "F1": 0.68445,
-   "n1": 17,
-   "n2": 15,
+   "F1": 0.67995,
+   "n1": 16,
+   "n2": 16,
    "d_iv": {
-    "1d": 0.09,
-    "1w": 0.78,
-    "1m": -0.01
+    "1d": 0.17,
+    "1w": 0.48,
+    "1m": 0.25
    },
    "d_rr": {
-    "1d": -0.03,
-    "1w": -0.42,
-    "1m": -0.18
+    "1d": -0.1,
+    "1w": -0.14,
+    "1m": -0.39
    },
-   "iv_pct": 50.4,
-   "rr_pct": 4.3,
-   "hist_n": 115,
+   "iv_pct": 65.5,
+   "rr_pct": 1.7,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.42,
-   "rv21": 8.58,
-   "vrp": -1.29,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.14,
+   "rv21": 8.79,
+   "vrp": -1.32,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 354679,
+    "oi_total": 362964,
     "px_contract": "6AZ6",
-    "px_settle": 0.68445,
+    "px_settle": 0.67995,
     "1d": {
-     "d_oi": 1672,
-     "d_oi_pct": 0.47,
-     "px_chg_pct": -0.24,
-     "quadrant": "OI_PLANO"
+     "d_oi": 8285,
+     "d_oi_pct": 2.34,
+     "px_chg_pct": -0.657,
+     "quadrant": "DINERO_NUEVO_VENDEDOR"
     },
     "1w": {
-     "d_oi": 21875,
-     "d_oi_pct": 6.57,
-     "px_chg_pct": -2.256,
+     "d_oi": 26290,
+     "d_oi_pct": 7.81,
+     "px_chg_pct": -2.024,
      "quadrant": "DINERO_NUEVO_VENDEDOR"
     }
    }
@@ -251,51 +251,51 @@
    "status": "OK",
    "gate0": "PROXY",
    "iv30_atm": 4.36,
-   "rr25": -0.11,
+   "rr25": -0.22,
    "bf25": 0.11,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6CZ6",
-   "F1": 0.70285,
+   "F1": 0.70225,
    "n1": 24,
    "n2": 9,
    "d_iv": {
-    "1d": 0.12,
-    "1w": 0.08,
-    "1m": -0.36
+    "1d": 0.0,
+    "1w": -0.01,
+    "1m": -0.29
    },
    "d_rr": {
-    "1d": 0.02,
-    "1w": -0.04,
-    "1m": 0.07
+    "1d": -0.11,
+    "1w": -0.17,
+    "1m": 0.03
    },
-   "iv_pct": 44.3,
-   "rr_pct": 61.7,
-   "hist_n": 115,
+   "iv_pct": 44.8,
+   "rr_pct": 27.6,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.04,
-   "rv21": 5.38,
-   "vrp": -1.02,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.17,
+   "rv21": 5.34,
+   "vrp": -0.98,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 348208,
+    "oi_total": 351604,
     "px_contract": "6CZ6",
-    "px_settle": 0.70285,
+    "px_settle": 0.70225,
     "1d": {
-     "d_oi": 4861,
-     "d_oi_pct": 1.42,
-     "px_chg_pct": -0.467,
-     "quadrant": "DINERO_NUEVO_VENDEDOR"
+     "d_oi": 3396,
+     "d_oi_pct": 0.98,
+     "px_chg_pct": -0.085,
+     "quadrant": "OI_PLANO"
     },
     "1w": {
-     "d_oi": 1093,
-     "d_oi_pct": 0.31,
-     "px_chg_pct": -1.974,
+     "d_oi": 3997,
+     "d_oi_pct": 1.15,
+     "px_chg_pct": -1.872,
      "quadrant": "OI_PLANO"
     }
    }
@@ -303,52 +303,52 @@
   "CHF": {
    "status": "OK",
    "gate0": "PROXY",
-   "iv30_atm": 6.55,
-   "rr25": 0.52,
-   "bf25": 0.2,
+   "iv30_atm": 6.56,
+   "rr25": 0.5,
+   "bf25": 0.22,
    "mode": "INTERP",
    "exp1": "2026-12-04",
-   "dte1": 23,
+   "dte1": 22,
    "exp2": "2027-01-08",
-   "dte2": 58,
+   "dte2": 57,
    "und1": "6SZ6",
-   "F1": 1.20495,
-   "n1": 16,
-   "n2": 25,
+   "F1": 1.2012,
+   "n1": 15,
+   "n2": 24,
    "d_iv": {
-    "1d": 0.2,
-    "1w": -0.01,
-    "1m": -0.04
+    "1d": 0.01,
+    "1w": 0.03,
+    "1m": -0.19
    },
    "d_rr": {
-    "1d": -0.09,
-    "1w": -0.13,
-    "1m": -0.07
+    "1d": -0.02,
+    "1w": -0.3,
+    "1m": -0.1
    },
-   "iv_pct": 36.5,
-   "rr_pct": 68.7,
-   "hist_n": 115,
+   "iv_pct": 38.8,
+   "rr_pct": 67.2,
+   "hist_n": 116,
    "hist_from": "2026-06-01",
    "iv30_pct252": "NA",
-   "iv30_pct252_days": 115,
-   "rr25_d5": -0.13,
-   "rv21": 7.43,
-   "vrp": -0.88,
+   "iv30_pct252_days": 116,
+   "rr25_d5": -0.3,
+   "rv21": 7.47,
+   "vrp": -0.91,
    "vol_regime": "UNAVAILABLE",
    "fut": {
-    "oi_total": 126445,
+    "oi_total": 125560,
     "px_contract": "6SZ6",
-    "px_settle": 1.20495,
+    "px_settle": 1.2012,
     "1d": {
-     "d_oi": -18,
-     "d_oi_pct": -0.01,
-     "px_chg_pct": -0.978,
+     "d_oi": -885,
+     "d_oi_pct": -0.7,
+     "px_chg_pct": -0.311,
      "quadrant": "OI_PLANO"
     },
     "1w": {
-     "d_oi": -4807,
-     "d_oi_pct": -3.66,
-     "px_chg_pct": -1.981,
+     "d_oi": -4704,
+     "d_oi_pct": -3.61,
+     "px_chg_pct": -2.334,
      "quadrant": "LIQUIDACION_LARGOS"
     }
    }
@@ -364,5 +364,5 @@
    "vol_regime": "UNAVAILABLE"
   }
  },
- "generated_utc": "2026-11-13T02:07:18Z"
+ "generated_utc": "2026-11-13T21:39:56Z"
 }
