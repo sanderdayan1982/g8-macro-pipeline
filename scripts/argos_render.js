@@ -125,7 +125,16 @@ for (let i = 1; i < blocks.length; i++) {
       '            if (!s || !s.series) return null;',
       '            return s.series.map(function (x) { return x.v; }).filter(function (v) { return typeof v === "number" && isFinite(v); });',
       '        }',
-      '        window.__G8legs[c] = d ? { nom: vals(d.nom), real: vals(d.real), be: vals(d.be) } : null;',
+      '        function pts(s) {',
+      '            if (!s || !s.series) return [];',
+      '            return s.series.map(function (x) {',
+      '                var d = String(x.d);',
+      '                if (/^\\d{8}$/.test(d)) d = d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8);',
+      '                else d = d.slice(0, 10);',
+      '                return { d: d, v: x.v };',
+      '            }).filter(function (x) { return typeof x.v === "number" && isFinite(x.v); });',
+      '        }',
+      '        window.__G8legs[c] = d ? { nom: vals(d.nom), real: vals(d.real), be: vals(d.be), real_pts: pts(d.real) } : null;',
       '    });',
     ].join('\n'));
   }
@@ -141,12 +150,23 @@ function ready() {
 const t0 = Date.now();
 (function poll() {
   if (ready()) {
+    var s01bDoc = {};
+    try { s01bDoc = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'S01B.json'), 'utf8')); } catch (e) { s01bDoc = {}; }
+    var legs = global.__G8legs || {};
+    Object.keys(legs).forEach(function (c) {
+      if (!legs[c]) return;
+      var row = (s01bDoc.currencies || {})[c] || {};
+      // ΔBE22 que pinta §01-b: d_be de S01B.json (H=22). null si la pata no existe (CHF).
+      legs[c].d_be_22 = row.d_be == null ? null : row.d_be;
+      legs[c].t = row.t || null;
+      legs[c].t0 = row.t0 || null;
+    });
     process.stdout.write(JSON.stringify({
       now: NOW,
       attr: els['attr-matrix'].innerHTML,
       s01b: els['s01b-panel'].innerHTML,
       floors: els['fls-table'].innerHTML,
-      legs: global.__G8legs || null,
+      legs: legs,
     }));
     return;
   }
