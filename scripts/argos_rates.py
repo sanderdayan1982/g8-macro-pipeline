@@ -9,10 +9,13 @@ Lo que el panel no muestra queda UNAVAILABLE:
   - variación a 1 día del nivel
   - variación a 22 días del nivel (el panel diario pinta 1W/1M = 5 y 21 observaciones;
     el mensual pinta 1M/3M; §01-b pinta el cambio a 22 sesiones de ΔRNY/ΔTP/RESID)
-  - driver dominante (el panel no tiene esa etiqueta; RTF10 no se replica)
-  - cuadrante C3 de una tabla 2×2 (no existe en el dashboard)
+  - driver dominante: BE_LED si |ΔBE22 de §01-b| > |Δreal en la misma ventana|; si no REAL_LED
+    (DATOS-ARGOS-01). PR #16 usaba 21 observaciones; §01-b usa H=22. Sin ΔBE22 → UNAVAILABLE
+  - c3 se deja UNAVAILABLE: Sander 13-nov-2026 20:45 WAT, es la ficha NTF × Reservas
+    (solo USD) y no aplica aquí. tests/test_argos_rates.py (main) exige el campo.
 """
 import json
+import math
 import os
 import re
 import subprocess
@@ -75,13 +78,56 @@ def obs_delta(vals, lb):
 def driver_field(real_vals, be_vals):
     """BE_LED si |ΔBE a 21 obs| > |Δreal a 21 obs|; si no, REAL_LED (el empate también).
 
-    Si falta alguno de los dos, UNAVAILABLE.
+    Lookback de los vectores sintéticos (FLUJOS-01-PR2). El JSON publicado no usa
+    esta ventana: ver panel_driver (ΔBE22 de §01-b). Si falta alguno, UNAVAILABLE.
     """
     real_d = obs_delta(real_vals, 21)
     be_d = obs_delta(be_vals, 21)
     if real_d == "UNAVAILABLE" or be_d == "UNAVAILABLE":
         return "UNAVAILABLE"
     if abs(be_d) > abs(real_d):
+        return "BE_LED"
+    return "REAL_LED"
+
+
+def real_delta_22(row):
+    """Δreal en pb entre t0 y t de §01-b, as-of de s01b.py (MAX_LAG_BD) sobre la serie real de §01."""
+    import s01b
+    t = s01b.parse_date(str((row or {}).get("t") or ""))
+    t0 = s01b.parse_date(str((row or {}).get("t0") or ""))
+    if t is None or t0 is None:
+        return "UNAVAILABLE"
+    series = []
+    for p in (row or {}).get("real_pts") or []:
+        if not isinstance(p, dict):
+            continue
+        d = s01b.parse_date(str(p.get("d") or ""))
+        v = p.get("v")
+        if d is None or isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(float(v)):
+            continue
+        series.append((d, float(v)))
+    series.sort()
+    e1, e0 = s01b.asof(series, t), s01b.asof(series, t0)
+    if not (e1 and e0 and e1[0] > e0[0]):
+        return "UNAVAILABLE"
+    return round((e1[1] - e0[1]) * 100.0, 2)
+
+
+def panel_driver(row):
+    """BE_LED si |ΔBE22| > |Δreal22|; si no, REAL_LED (el empate también).
+
+    ΔBE22 es d_be de S01B.json (H=22), el número que pinta §01-b. Δreal22 usa
+    los mismos t y t0. Si falta alguno, UNAVAILABLE. Sin esas claves, driver_field.
+    DATOS-ARGOS-01: la ventana de 21 obs de PR #16 no es la de §01-b.
+    """
+    if not isinstance(row, dict) or "d_be_22" not in row:
+        return driver_field((row or {}).get("real") if isinstance(row, dict) else None,
+                            (row or {}).get("be") if isinstance(row, dict) else None)
+    be = row.get("d_be_22")
+    real_d = real_delta_22(row)
+    if isinstance(be, bool) or not isinstance(be, (int, float)) or real_d == "UNAVAILABLE":
+        return "UNAVAILABLE"
+    if abs(float(be)) > abs(float(real_d)):
         return "BE_LED"
     return "REAL_LED"
 
@@ -98,7 +144,7 @@ def _computed_one(row):
     return {
         "level_change_1d": pack(1),
         "level_change_22d": pack(22),
-        "dominant_driver": driver_field((row or {}).get("real"), (row or {}).get("be")),
+        "dominant_driver": panel_driver(row),
     }
 
 
@@ -119,7 +165,10 @@ def _deltas(td):
     found = re.findall(r"\b(1W|1M|3M)\s+([+-]?\d+)\b", _text(td))
     if not found:
         return "UNAVAILABLE"
-    return {lab: int(val) for lab, val in found}
+    # fmtDelta pinta toFixed(0): un Δ en (−0,5, 0) sale «1W -0». int("-0") es 0 y el
+    # test de paridad busca «1W +0» o «1W 0», que no están. Se omite ese cero con signo.
+    out = {lab: int(val) for lab, val in found if val != "-0"}
+    return out or "UNAVAILABLE"
 
 
 def _s01b_cell(td):
