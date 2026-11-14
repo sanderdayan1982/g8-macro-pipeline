@@ -483,6 +483,7 @@ class GmailClient(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(tmp, "votes.csv")))
 
     def test_cli_dry_run_prints_rows(self):
+        import hashlib
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp)
         src = os.path.join(tmp, "in.json")
@@ -492,6 +493,17 @@ class GmailClient(unittest.TestCase):
         with open(factor_path, "w", encoding="utf-8") as fh:
             json.dump(factor(), fh)
         votes = os.path.join(tmp, "votes.csv")
+        repo_votes = os.path.join(ROOT, "data", "votes.csv")
+
+        def sha256_or_none(path):
+            if not os.path.exists(path):
+                return None
+            digest = hashlib.sha256()
+            with open(path, "rb") as fh:
+                digest.update(fh.read())
+            return digest.hexdigest()
+
+        before = sha256_or_none(repo_votes)
         proc = subprocess.run(
             [sys.executable, os.path.join(ROOT, "scripts", "votes_ingest.py"),
              "--from-json", src, "--session", "2026-11-12", "--dry-run", "--attempt", "final",
@@ -503,7 +515,7 @@ class GmailClient(unittest.TestCase):
         self.assertIn("RISK-OFF", proc.stdout)
         self.assertIn("1.275978", proc.stdout)
         self.assertFalse(os.path.exists(votes))
-        self.assertFalse(os.path.exists(os.path.join(ROOT, "data", "votes.csv")))
+        self.assertEqual(before, sha256_or_none(repo_votes))
 
 
 class Weekly(unittest.TestCase):

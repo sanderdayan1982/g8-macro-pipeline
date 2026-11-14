@@ -32,3 +32,7 @@ El mismo orden pide el código OAuth en el fallo del token. Cuando `https://oaut
 `data/votes_weekly.json` se regenera desde el CSV resultante. El ingestor reescribe ese informe en cada pasada; no se borra. El informe anterior ya tenía 0 días completos, porque una sesión `MISSING` no cuenta. `generated_utc` pasa a `2026-11-14T09:45:34Z`.
 
 `test_cli_dry_run_prints_rows` ya fallaba en `main`: afirma que `data/votes.csv` no existe, y el commit `1d19f91` creó el fichero. La orden deja la cabecera, así que el fichero sigue existiendo. Ese test no se edita.
+
+## 14-nov-2026 — orden expresa de Sander (10:54 WAT)
+
+14-nov-2026: por orden expresa de Sander (10:54 WAT) se cambia solo el test test_cli_dry_run_prints_rows: en vez de exigir que data/votes.csv no exista, comprueba por hash que el archivo (si existe) queda idéntico antes y después del dry-run.
