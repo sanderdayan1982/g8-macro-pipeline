@@ -36,5 +36,9 @@ Rojos previstos, ajenos a este bloque: `tests/test_fxvol_shadow.py` (`test_addit
 
 Ese rojo de `test_D2_weekday` queda cubierto por la orden t166u de arriba. `test_D6_schedule_matches_workflow_crons` sigue en verde: el cron del workflow y el de `dispatch_schedule.json` coinciden.
 
+## 14-nov-2026 — RELOJES-01 Anexo 1 A1 (22:00 WAT; t175u 22:08 WAT)
+
+Un festivo CME/NY (`is_ny_full_close`, no la lista federal de `sources/calendars.csv`) guarda el correo que llega, con `session_type=HOLIDAY`. Si no llega correo, no escribe filas (ni `MISSING`) y el log dice `CLOSED`. La columna va al final: un lector por nombre no cambia, las filas ya escritas quedan con el campo vacío, y las filas nuevas de un día con vela llevan `REGULAR`. El único test ya existente que cambia es `tests/test_votes_block2.py` `FullClose.test_holiday_writes_no_rows_and_leaves_files_byte_for_byte`. El intento final sigue a las 04:20 UTC. `data/` no se reescribe. Ningún fichero con hash congelado cambia, así que SALUD-1 no actualiza ninguna huella.
+
 ## Siguiente
 Retargetear este PR a `main` cuando el PR #26 esté fusionado. No fusionar este bloque antes.

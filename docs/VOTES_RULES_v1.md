@@ -27,7 +27,7 @@ Columnas, en este orden: `fecha_cierre`, `script`, `version`, `ccy`, `estado`, `
 |---|---|---|
 | Primer intento | 03:00 UTC, mar–sáb | 04:00 WAT. Escribe los módulos completos y E21. No escribe `MISSING` ni `INGEST_INCOMPLETE`: el intento final sigue pendiente. |
 | Intento final | 04:20 UTC, mar–sáb | 05:20 WAT, después del corte de las 05:15 WAT (04:15 UTC). Antes de escribir `MISSING` lista todas las páginas de la ventana del buzón (`after` el cierre 1D, `before` las 05:15 WAT), así que un correo llegado antes del corte no se pierde. Lo que siga ausente queda `MISSING`. |
-| Festivo sin vela 1D | | Ninguna fila, igual que el fin de semana. Es un cierre completo CME / Nueva York, calculado por regla (no una lista escrita a mano). El informe semanal no lo cuenta como incompleto. |
+| Festivo sin vela 1D | | Cierre completo CME / Nueva York, calculado por regla (`is_ny_full_close`). No es la lista federal de `sources/calendars.csv` (esa incluye Columbus Day y Veterans Day, y el mercado abre). Si llega correo, se guarda como cualquier sesión, con `session_type=HOLIDAY`. Si no llega correo, no se escribe nada (ni `MISSING` en el primer intento ni en el final) y el log dice `CLOSED`. El informe semanal no cuenta ese día como incompleto. |
 | Fin de semana | | Ninguna fila. |
 
 El primer intento no cambia de hora. `attempt_for` sigue pasando a `final` a las 05:00 WAT: el test ya existente que fija esa hora no está autorizado en este bloque, y el workflow no lo usa: pasa `--attempt`.

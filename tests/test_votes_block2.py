@@ -102,37 +102,80 @@ class FullClose(unittest.TestCase):
             self.assertFalse(V.is_ny_full_close(day), day.isoformat())
 
     def test_holiday_writes_no_rows_and_leaves_files_byte_for_byte(self):
+        # orden expresa de Sander 14-nov-2026 (t175u): RELOJES-01 Anexo 1 A1.
+        for day in ("2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18"):
+            self.assertTrue(V.is_ny_full_close(day), day)
+        self.assertFalse(V.is_ny_full_close("2026-11-11"))  # Veterans Day, market open
+        self.assertFalse(V.is_ny_full_close("2026-10-12"))  # Columbus Day, market open
+
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp)
         votes = os.path.join(tmp, "votes.csv")
         weekly = os.path.join(tmp, "votes_weekly.json")
-        src = os.path.join(tmp, "in.json")
+        empty = os.path.join(tmp, "empty.json")
+        factor = os.path.join(tmp, "factor.json")
         sentinel_votes = b"fecha_cierre,script,ccy\nKEEP,ROW,USD\n"
         sentinel_weekly = '{"sentinel":true}\n'
         with open(votes, "wb") as fh:
             fh.write(sentinel_votes)
         with open(weekly, "w", encoding="utf-8") as fh:
             fh.write(sentinel_weekly)
-        with open(src, "w", encoding="utf-8") as fh:
-            json.dump([{"id": "x", "date": "2026-11-27T01:00:00Z", "subject": "Alert: RISK_G8", "body": "G8|MODULE=RISK_G8"}], fh)
+        with open(empty, "w", encoding="utf-8") as fh:
+            json.dump([], fh)
+        with open(factor, "w", encoding="utf-8") as fh:
+            json.dump({"version": "1", "as_of": "2026-11-26", "generated_utc": "2026-11-26T18:00:00Z", "currencies": []}, fh)
 
         def boom(*_a, **_k):
-            raise AssertionError("holiday must not touch Gmail or Telegram")
+            raise AssertionError("must not touch Gmail or Telegram")
 
         out = io.StringIO()
-        for session in ("2026-11-26", "2026-12-25", "2026-07-03", "2026-04-03"):
-            with contextlib.redirect_stdout(out):
-                rc = V.run(
-                    ["--session", session, "--attempt", "final", "--from-json", src,
-                     "--votes", votes, "--weekly", weekly],
-                    http=boom, sender=boom,
-                )
-            self.assertEqual(rc, 0, session)
-            self.assertIn("holiday session %s: no rows" % session, out.getvalue())
+        with contextlib.redirect_stdout(out):
+            rc = V.run(
+                ["--session", "2026-11-26", "--attempt", "final", "--from-json", empty,
+                 "--votes", votes, "--weekly", weekly, "--factor", factor],
+                http=boom, sender=boom,
+            )
+        self.assertEqual(rc, 0)
+        self.assertIn("holiday session 2026-11-26: CLOSED", out.getvalue())
         with open(votes, "rb") as fh:
             self.assertEqual(fh.read(), sentinel_votes)
         with open(weekly, encoding="utf-8") as fh:
             self.assertEqual(fh.read(), sentinel_weekly)
+
+        bar = V.expected_bar_close_ms("2026-11-26")
+        body = "G8|MODULE=RISK_G8|SCRIPT_VERSION=1.2.1|REGIME=RISK-OFF|SCORE=1.1|BAR_CLOSE_MS=%s|SENT_MS=1|SNAPSHOT_ID=synth:%s" % (bar, bar)
+        mailed = os.path.join(tmp, "mail.json")
+        with open(mailed, "w", encoding="utf-8") as fh:
+            json.dump([{"id": "synth-holiday-1", "date": "2026-11-27T02:00:00Z", "subject": "Alert: synth", "body": body}], fh)
+        saved = os.path.join(tmp, "saved.csv")
+        saved_weekly = os.path.join(tmp, "saved_weekly.json")
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = V.run(
+                ["--session", "2026-11-26", "--attempt", "final", "--from-json", mailed,
+                 "--votes", saved, "--weekly", saved_weekly, "--factor", factor],
+                http=boom, sender=boom,
+            )
+        self.assertEqual(rc, 0)
+        with open(saved, encoding="utf-8", newline="") as fh:
+            stored = list(csv.DictReader(fh))
+        self.assertTrue(stored)
+        self.assertTrue(all(row["session_type"] == "HOLIDAY" for row in stored))
+        self.assertTrue(any(row["script"] == "RISK_G8" and row["estado"] == "RISK-OFF" for row in stored))
+
+        vet_votes = os.path.join(tmp, "veterans.csv")
+        vet_weekly = os.path.join(tmp, "veterans_weekly.json")
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = V.run(
+                ["--session", "2026-11-11", "--attempt", "final", "--from-json", empty,
+                 "--votes", vet_votes, "--weekly", vet_weekly, "--factor", factor],
+                http=boom, sender=boom,
+            )
+        self.assertEqual(rc, 0)
+        with open(vet_votes, encoding="utf-8", newline="") as fh:
+            veterans = list(csv.DictReader(fh))
+        self.assertTrue(veterans)
+        self.assertTrue(any(row["estado"] == "MISSING" for row in veterans))
+        self.assertTrue(all(row["session_type"] == "REGULAR" for row in veterans))
 
     def test_weekly_does_not_count_a_full_close_as_incomplete(self):
         holiday = "2026-11-26"

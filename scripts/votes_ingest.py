@@ -36,7 +36,10 @@ Attempts (WAT = UTC+1, Africa/Malabo):
          secrets, auth error, API error after retries) marks every module that
          has no row yet as MISSING (one row per module and currency, voto=NA)
          and sends one Telegram alert.
-  A weekend, or a CME/New York full close (no 1D candle), writes no rows.
+  A weekend writes no rows. A CME/New York full close (no 1D candle) stores
+  mail that arrives, with session_type=HOLIDAY. If no mail arrives, it writes
+  nothing (no MISSING, first or final) and logs CLOSED. RELOJES-01 Anexo 1 A1,
+  orden expresa de Sander 14-nov-2026 22:00 WAT, t175u 22:08 WAT.
   `attempt_for` still flips at 05:00 WAT. The workflow passes --attempt and
   does not use that clock. That 05:00 flip stays: the existing test
   CloseClock.test_attempt_flips_at_0500_wat is not authorized for this block.
@@ -175,7 +178,7 @@ HAS_STATUS = {
 COLUMNS = [
     "fecha_cierre", "script", "version", "ccy", "estado", "valor", "voto",
     "stale", "snapshot_id", "hora_recepcion_utc", "id_correo", "bar_close_ms",
-    "family", "parts_expected", "parts_received", "rule_version",
+    "family", "parts_expected", "parts_received", "rule_version", "session_type",
 ]
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -583,6 +586,9 @@ def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at
         "parts_expected": str(parts_expected),
         "parts_received": str(parts_received),
         "rule_version": RULE_VERSION,
+        # Non-holiday rows the ingestor writes are REGULAR. A holiday with mail
+        # overwrites this to HOLIDAY. RELOJES-01 Anexo 1 A1.
+        "session_type": "REGULAR",
     }
 
 
@@ -1000,13 +1006,57 @@ def read_existing_keys(path):
     return keys
 
 
+def _ensure_session_type_column(raw):
+    """Add session_type at the end when the header lacks it.
+
+    Named-column readers keep every previous field. Existing data rows gain an
+    empty session_type so history is not relabelled REGULAR. A file that
+    already has the column is returned unchanged, byte for byte.
+    """
+    if not raw:
+        return raw
+    text = raw.decode("utf-8")
+    if not text:
+        return raw
+    newline = "\r\n" if "\r\n" in text[:4096] else "\n"
+    first, sep, rest = text.partition(newline if newline in text else "\n")
+    if not sep:
+        first = text
+        rest = ""
+        sep = ""
+    try:
+        fields = next(csv.reader([first]))
+    except StopIteration:
+        return raw
+    if "session_type" in fields:
+        return raw
+    out = [first + ",session_type"]
+    if rest:
+        for line in rest.splitlines():
+            out.append(line + "," if line else line)
+    rebuilt = newline.join(out)
+    if text.endswith(("\n", "\r\n")) and not rebuilt.endswith(("\n", "\r\n")):
+        rebuilt += newline
+    return rebuilt.encode("utf-8")
+
+
 def append_rows(path, rows):
-    """Append rows whose (fecha_cierre, script, ccy) is new. Existing bytes stay a prefix."""
+    """Append rows whose (fecha_cierre, script, ccy) is new.
+
+    When the header already lists session_type, the previous bytes stay a
+    prefix. When it does not, the column is added (empty on existing rows)
+    and then the new rows are appended. RELOJES-01 Anexo 1 A1.
+    """
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     raw = b""
     if os.path.exists(path):
         with open(path, "rb") as fh:
             raw = fh.read()
+    upgraded = _ensure_session_type_column(raw)
+    if upgraded != raw:
+        with open(path, "wb") as fh:
+            fh.write(upgraded)
+        raw = upgraded
     have = read_existing_keys(path) if raw else set()
     fresh = []
     for row in rows:
@@ -1460,9 +1510,7 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
     if session.weekday() >= 5:
         print("weekend session %s: no rows" % session.isoformat())
         return 0
-    if is_ny_full_close(session):
-        print("holiday session %s: no rows" % session.isoformat())
-        return 0
+    holiday = is_ny_full_close(session)
     attempt = args.attempt or attempt_for(session, now)
     write_missing = attempt == "final"
     factor_path = args.factor or os.path.join(ROOT, "data", "USD_FACTOR.json")
@@ -1493,6 +1541,21 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
             rows = gmail_failure_rows(session, write_missing, factor_doc)
         else:
             rows = build_rows(messages, session, write_missing, factor_doc)
+
+    # RELOJES-01 Anexo 1 A1. No mail on a full close: nothing, including no
+    # MISSING on the final attempt. Mail that did arrive is stored normally.
+    if holiday and not messages:
+        print("holiday session %s: CLOSED" % session.isoformat())
+        if failure is not None and not args.dry_run:
+            _send_alert(sender or default_sender, session, attempt, failure)
+            print(gmail_failure_log(session, attempt, failure), file=sys.stderr)
+            return 1
+        if failure is not None and args.dry_run:
+            print(alert_text(session, attempt, failure), file=sys.stderr)
+            return 1
+        return 0
+    for row in rows:
+        row["session_type"] = "HOLIDAY" if holiday else row.get("session_type") or "REGULAR"
 
     if args.dry_run:
         sys.stdout.write(rows_to_csv(rows))

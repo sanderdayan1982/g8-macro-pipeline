@@ -4,8 +4,9 @@
 # Before writing MISSING the final pass lists every page of the mailbox window,
 # so a mail that arrived before the cutoff is not missed. A Gmail failure on
 # that pass is still MISSING.
-# Tue–Sat covers the previous weekday close. Weekends and CME/New York full
-# closes (no 1D candle) produce no rows.
+# Tue–Sat covers the previous weekday close. Weekends produce no rows.
+# A CME/New York full close stores mail with session_type=HOLIDAY. No mail
+# writes nothing and logs CLOSED (RELOJES-01 Anexo 1 A1).
 # Orden ORDEN_ENZO_REVISION-TRIPLE-01 bloque 2 (14-nov-2026 19:16 WAT).
 # A refresh token alone cannot mint access tokens: the job also needs
 # GMAIL_OAUTH_CLIENT_ID and GMAIL_OAUTH_CLIENT_SECRET. Scope gmail.readonly.
