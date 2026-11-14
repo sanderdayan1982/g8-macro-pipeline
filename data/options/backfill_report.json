@@ -23,7 +23,7 @@
  "end_inclusive": "2026-05-31",
  "end_exclusive": "2026-06-01",
  "cap_usd": "35.00",
- "spent_usd": "8.328610483564",
+ "spent_usd": "9.524731397638",
  "chunk_budget_s": 19200,
  "job_timeout_min": 360,
  "planned_calls": {
@@ -41,7 +41,7 @@
  "dry_run": false,
  "blocked": false,
  "stop_loop": false,
- "reason": "Databento HTTP 402 on timeseries.get_range during download. Stopped. No partial session left.",
+ "reason": "",
  "sessions_added": [
   "2024-06-03",
   "2024-06-04",
@@ -250,9 +250,91 @@
   "2025-03-26",
   "2025-03-27",
   "2025-03-28",
-  "2025-03-31"
+  "2025-03-31",
+  "2025-04-01",
+  "2025-04-02",
+  "2025-04-03",
+  "2025-04-04",
+  "2025-04-07",
+  "2025-04-08",
+  "2025-04-09",
+  "2025-04-10",
+  "2025-04-11",
+  "2025-04-14",
+  "2025-04-15",
+  "2025-04-16",
+  "2025-04-17",
+  "2025-04-21",
+  "2025-04-22",
+  "2025-04-23",
+  "2025-04-24",
+  "2025-04-25",
+  "2025-04-28",
+  "2025-04-29",
+  "2025-04-30"
  ],
- "sessions_skipped": [],
+ "sessions_skipped": [
+  {
+   "session": "2025-04-18",
+   "root": "EUU",
+   "reason": "sanity: EUU settles=0 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "JPU",
+   "reason": "sanity: JPU settles=0 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "GBU",
+   "reason": "sanity: GBU settles=8 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "ADU",
+   "reason": "sanity: ADU settles=2 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "CAU",
+   "reason": "sanity: CAU settles=6 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "CHU",
+   "reason": "sanity: CHU settles=0 oi=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6E",
+   "reason": "sanity: 6E settles=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6J",
+   "reason": "sanity: 6J settles=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6B",
+   "reason": "sanity: 6B settles=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6A",
+   "reason": "sanity: 6A settles=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6C",
+   "reason": "sanity: 6C settles=0 below floor"
+  },
+  {
+   "session": "2025-04-18",
+   "root": "6S",
+   "reason": "sanity: 6S settles=0 below floor"
+  }
+ ],
  "holidays": [
   "2024-06-19",
   "2024-07-04",
@@ -624,7 +706,7 @@
    ],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "7ed6cd39db5ce937c19964448dcbaa5e12c8ba40",
+   "committed_sha": "d3e1de2752330a9679f14c90c18fa8ebb7ef2f7f",
    "complete": true
   },
   {
@@ -634,12 +716,94 @@
    "billable_size": "1119570280",
    "window_start": "2025-04-01",
    "window_end": "2025-05-01T06:00:00",
-   "sessions_added": [],
-   "skipped": [],
+   "sessions_added": [
+    "2025-04-01",
+    "2025-04-02",
+    "2025-04-03",
+    "2025-04-04",
+    "2025-04-07",
+    "2025-04-08",
+    "2025-04-09",
+    "2025-04-10",
+    "2025-04-11",
+    "2025-04-14",
+    "2025-04-15",
+    "2025-04-16",
+    "2025-04-17",
+    "2025-04-21",
+    "2025-04-22",
+    "2025-04-23",
+    "2025-04-24",
+    "2025-04-25",
+    "2025-04-28",
+    "2025-04-29",
+    "2025-04-30"
+   ],
+   "skipped": [
+    {
+     "session": "2025-04-18",
+     "root": "EUU",
+     "reason": "sanity: EUU settles=0 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "JPU",
+     "reason": "sanity: JPU settles=0 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "GBU",
+     "reason": "sanity: GBU settles=8 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "ADU",
+     "reason": "sanity: ADU settles=2 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "CAU",
+     "reason": "sanity: CAU settles=6 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "CHU",
+     "reason": "sanity: CHU settles=0 oi=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6E",
+     "reason": "sanity: 6E settles=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6J",
+     "reason": "sanity: 6J settles=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6B",
+     "reason": "sanity: 6B settles=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6A",
+     "reason": "sanity: 6A settles=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6C",
+     "reason": "sanity: 6C settles=0 below floor"
+    },
+    {
+     "session": "2025-04-18",
+     "root": "6S",
+     "reason": "sanity: 6S settles=0 below floor"
+    }
+   ],
    "holidays": [],
    "committed_sha": null,
-   "complete": false,
-   "aborted": "HTTP 402"
+   "complete": true
   },
   {
    "month": "2025-05",
