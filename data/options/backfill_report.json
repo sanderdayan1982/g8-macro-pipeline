@@ -40,8 +40,8 @@
  "origin_marker": "column origin=backfill appended to canonical CSVs (named-column readers unchanged)",
  "dry_run": false,
  "blocked": false,
- "stop_loop": false,
- "reason": "",
+ "stop_loop": true,
+ "reason": "Databento HTTP 402 on timeseries.get_range during download. Stopped. No partial session left.",
  "sessions_added": [
   "2024-06-03",
   "2024-06-04",
@@ -624,7 +624,7 @@
    ],
    "skipped": [],
    "holidays": [],
-   "committed_sha": null,
+   "committed_sha": "7ed6cd39db5ce937c19964448dcbaa5e12c8ba40",
    "complete": true
   },
   {
@@ -638,7 +638,8 @@
    "skipped": [],
    "holidays": [],
    "committed_sha": null,
-   "complete": false
+   "complete": false,
+   "aborted": "HTTP 402"
   },
   {
    "month": "2025-05",
@@ -827,5 +828,6 @@
   "reason": "cost-only default: no timeseries.get_range call",
   "dry_run": true,
   "note": "whole-range quote from before monthly chunks. Not spent: no get_range was made."
- }
+ },
+ "aborted": "HTTP 402"
 }
