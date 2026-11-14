@@ -12,17 +12,25 @@ The same 576 ranges are quoted first (metadata.get_cost, get_record_count, get_b
 1728 metadata calls. Rows are split back into sessions by ts_ref date, the same rule as
 assemble_product. The chunk window starts at the first weekday of the month (00:00 UTC,
 date-only, as the collector does) and ends at the last session's next-weekday 06:00 UTC.
+That end stays at 06:00. Databento filters the range on ts_recv, and the collector
+records the session's open interest at about 01:44 UTC on the next weekday, after 00:00.
 
 No raw Databento body is written to disk. One product is parsed at a time and the raw
 rows are discarded. Only canonical CSVs (origin=backfill) and backfill_report.json are
 meant to be committed.
 
-Resume: a month with chunks[].complete is not requested again. A session directory that
-already contains a CSV is never overwritten. Sessions on or after 2026-06-01 are never
-written. spent_usd in the report is the sum of get_cost for chunks whose download finished.
-Before a download, if spent_usd + this chunk's get_cost is above 35.00 USD, the chunk is
-not downloaded, the report says why, and the process exits 3 (same non-zero code as the
-original whole-range cap). HTTP 402 raises no partial session and returns 2.
+Resume: a month with chunks[].complete is not requested again. complete is true only
+when every skipped row is exists, protected, or a CME no-settlement date (1 January
+or 25 December). "no records" is not a closure. A session directory that already
+contains a CSV is never overwritten. Sessions on or after 2026-06-01 are never
+written. spent_usd in the report is the sum of get_cost for chunks whose download
+finished. Before get_range, the chunk's get_cost is written as a pending
+reserved_usd. The cap compares spent_usd + reserved_usd + this chunk's get_cost
+with 35.00 USD. A pending reservation blocks another get_range until it is
+reconciled (spent or release). Above the cap, the chunk is not downloaded, the
+report says why, and the process exits 3 (same non-zero code as the original
+whole-range cap). A pending reservation exits 4. HTTP 402 raises no partial
+session and returns 2.
 
 Default is cost-only (no --download): per-chunk metadata table, no get_range.
 Credential: environment variable DATABENTO_API_KEY only.
@@ -286,7 +294,14 @@ def month_sessions(month):
 
 
 def month_window(month):
-    """[first weekday 00:00 UTC, last session's next-weekday 06:00 UTC]."""
+    """[first weekday 00:00 UTC, last session's next-weekday 06:00 UTC].
+
+    Not 00:00 of that next weekday. get_range filters on ts_recv when the schema
+    has it (statistics does; definition does too). Open interest for the last
+    session is received around 01:44 UTC the next weekday, so a 00:00 end drops
+    it, and the next month only writes its own sessions. Orden REVISION-TRIPLE-01
+    punto 4 was not applied for that reason.
+    """
     sessions = month_sessions(month)
     if not sessions:
         raise RuntimeError("no sessions in %s" % month)
@@ -309,6 +324,56 @@ def pull_window(session):
     pub = C.next_weekday(session)
     end_dt = datetime(pub.year, pub.month, pub.day, tzinfo=timezone.utc) + timedelta(hours=6)
     return session.isoformat(), end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def market_closed(session):
+    """True when CME disseminates no settlement for this trade date.
+
+    A calendar rule, not an empty pull. Checked 14 Nov 2026:
+    1 January has no settle file (CME Clearing advisory, New Year's Day 2025,
+    https://www.cmegroup.com/tools-information/holiday-calendar/files/2025-new-years-advisory.pdf)
+    and 25 December has no settlement prices (CME Group settlement advisory,
+    https://www.cmegroup.com/tools-information/holiday-calendar/files/2025/christmas-holiday-settlement-times-2025.pdf).
+    The rule is those two trade dates in every year. Both fall on a weekday in
+    2024-06..2026-05, so no Saturday/Sunday observance is applied. Modified-hours
+    sessions (Juneteenth, Good Friday, Thanksgiving, Monday holidays) are not
+    closures: a settlement is still disseminated.
+    """
+    if isinstance(session, str):
+        session = date.fromisoformat(session[:10])
+    return (session.month, session.day) in ((1, 1), (12, 25))
+
+
+def closure_skip(session):
+    """A skipped row for a verified closure, or None when the calendar is open."""
+    if not market_closed(session):
+        return None
+    iso = session.isoformat() if isinstance(session, date) else str(session)[:10]
+    return {"session": iso, "reason": "closed", "calendar": "CME-no-settlement"}
+
+
+_NO_RECORD_REASONS = frozenset(("no records", "no-records", "norecords", "holiday"))
+
+
+def skipped_allows_complete(skipped):
+    """True only when every skipped row may stand on a complete chunk.
+
+    Allowed reasons are exists, protected, and closed when market_closed says
+    the trade date has no settlement. "no records" is not that closure. A
+    sanity failure or any other reason leaves the chunk incomplete.
+    """
+    for entry in skipped or []:
+        if not isinstance(entry, dict):
+            return False
+        reason = entry.get("reason")
+        if reason in _NO_RECORD_REASONS:
+            return False
+        if reason in ("exists", "protected"):
+            continue
+        if reason == "closed" and entry.get("session") and market_closed(entry["session"]):
+            continue
+        return False
+    return True
 
 
 def fetch_csv(http, key, schema, parent, start, end):
@@ -622,6 +687,9 @@ def download_month(http, key, month, out_dir):
                 unknowns[root] = unknown
             if sum(len(v) for v in products.values()) == 0:
                 holidays.append(iso)
+                closure = closure_skip(session)
+                if closure:
+                    skipped.append(closure)
                 continue
             failed = False
             for root, recs in products.items():
@@ -663,13 +731,15 @@ def blank_report():
         "end_exclusive": END_EXCLUSIVE.isoformat(),
         "cap_usd": str(CAP_USD),
         "spent_usd": "0",
+        "reserved_usd": "0",
         "chunk_budget_s": CHUNK_BUDGET_S,
         "job_timeout_min": JOB_TIMEOUT_MIN,
         "planned_calls": plan,
         "actual_cost_usd": None,
         "actual_cost_note": (
             "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount. "
-            "spent_usd sums get_cost of chunks whose download finished."
+            "spent_usd sums get_cost of chunks whose download finished. "
+            "reserved_usd sums get_cost written before get_range and not yet reconciled."
         ),
         "origin_marker": "column origin=backfill appended to canonical CSVs (named-column readers unchanged)",
         "dry_run": True,
@@ -701,9 +771,11 @@ def load_report(path):
         fresh["legacy_whole_range_quote"] = legacy
         return fresh
     body.setdefault("spent_usd", "0")
+    body.setdefault("reserved_usd", "0")
     body.setdefault("chunks", [])
     body.setdefault("stop_loop", False)
     body.setdefault("blocked", False)
+    _sync_reserved(body)
     return body
 
 
@@ -735,7 +807,78 @@ def _recompute(report):
     report["sessions_skipped"] = skipped
     report["holidays"] = holidays
     report["planned_calls"] = planned_calls()
+    _sync_reserved(report)
     return report
+
+
+def pending_reserved(report):
+    """Sum of get_cost still reserved, from the chunks, not the cached field."""
+    total = Decimal("0")
+    for chunk in report.get("chunks") or []:
+        if chunk.get("reservation") == "pending":
+            total += Decimal(str(chunk.get("reserved_usd") or "0"))
+    return total
+
+
+def _sync_reserved(report):
+    """reserved_usd is the sum of chunks whose reservation is still pending."""
+    report["reserved_usd"] = str(pending_reserved(report))
+    return report
+
+
+def _pending_chunk(report, month):
+    for chunk in report.get("chunks") or []:
+        if chunk.get("month") == month and chunk.get("reservation") == "pending":
+            return chunk
+    return None
+
+
+def _pending_reason(month, amount):
+    return ("pending reservation for %s of %s USD blocks re-download until reconciled. "
+            "Use --reconcile-reservation %s --reconcile-as spent to count the charge "
+            "(a later download is a new charge) or --reconcile-as release to drop it."
+            % (month, amount, month))
+
+
+def reconcile_reservation(report, month, action):
+    """Lift a pending reservation so a later run may download again.
+
+    spent: add reserved_usd to spent_usd once. The charge is counted. A later
+    download reserves a new get_cost and, if it finishes, counts that too.
+    release: drop the reservation. A later download may reserve again.
+    A second call is a no-op failure so spent is not applied twice.
+    """
+    if action not in ("spent", "release"):
+        raise ValueError("reconcile action must be spent or release, not %r" % (action,))
+    chunk = None
+    for item in report.get("chunks") or []:
+        if item.get("month") == month:
+            chunk = item
+            break
+    if chunk is None:
+        return {"ok": False, "reason": "no chunk %s in the report" % month}
+    if chunk.get("reservation") != "pending":
+        return {
+            "ok": False,
+            "reason": "chunk %s has no pending reservation (reservation=%s)"
+                      % (month, chunk.get("reservation")),
+        }
+    amount = Decimal(str(chunk.get("reserved_usd") or "0"))
+    if action == "spent":
+        spent = Decimal(str(report.get("spent_usd") or "0"))
+        report["spent_usd"] = str(spent + amount)
+        chunk["reservation"] = "spent"
+    else:
+        chunk["reservation"] = "released"
+        chunk["reserved_usd"] = "0"
+    _sync_reserved(report)
+    return {
+        "ok": True,
+        "month": month,
+        "action": action,
+        "amount": str(amount),
+        "reason": "reconciled %s reservation %s USD as %s" % (month, amount, action),
+    }
 
 
 def _git_work_tree(*starts):
@@ -873,10 +1016,17 @@ def apply_commit_shas(report, shas=None, repo=None, authoritative=False):
 
 
 def write_report(path, body):
+    """Persist the report by writing a sibling .tmp file and os.replace.
+
+    A crash before the replace leaves the previous report intact.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     _recompute(body)
-    path.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
+    payload = json.dumps(body, indent=1) + "\n"
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(payload, encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def _chunk_entry(month, quote, start, end):
@@ -890,15 +1040,46 @@ def _chunk_entry(month, quote, start, end):
         "sessions_added": [],
         "skipped": [],
         "holidays": [],
+        "reserved_usd": "0",
+        "reservation": None,
         "committed_sha": None,
         "complete": False,
     }
 
 
-def _cap_reason(spent, month, chunk_cost):
-    return ("HARD CAP: cumulative spent %s USD + chunk %s get_cost %s USD is above %s USD. "
-            "Stopped before downloading this chunk."
-            % (spent, month, chunk_cost, CAP_USD))
+def _cap_reason(spent, reserved, month, chunk_cost):
+    return ("HARD CAP: cumulative spent %s USD + reserved %s USD + chunk %s get_cost %s USD "
+            "is above %s USD. Stopped before downloading this chunk."
+            % (spent, reserved, month, chunk_cost, CAP_USD))
+
+
+def _offline_report_command(args, report_path):
+    """Inspect or reconcile the report. Does not call Databento."""
+    report = load_report(report_path)
+    if args.list_skipped and args.reconcile_reservation:
+        print("pass only one of --list-skipped and --reconcile-reservation", file=sys.stderr)
+        return 2
+    if args.list_skipped:
+        for chunk in report.get("chunks") or []:
+            skipped = chunk.get("skipped") or []
+            month = chunk.get("month")
+            if skipped and month:
+                print(month)
+        return 0
+    if not args.reconcile_as:
+        print("--reconcile-reservation needs --reconcile-as spent or release", file=sys.stderr)
+        return 2
+    month = args.reconcile_reservation
+    if month not in list(iter_chunks()):
+        print("unknown month %s" % month, file=sys.stderr)
+        return 2
+    result = reconcile_reservation(report, month, args.reconcile_as)
+    if not result["ok"]:
+        print(result["reason"], file=sys.stderr)
+        return 2
+    write_report(report_path, report)
+    print(result["reason"])
+    return 0
 
 
 def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
@@ -911,6 +1092,12 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
     parser.add_argument("--month", default=None, help="process one YYYY-MM chunk")
     parser.add_argument("--list-months", action="store_true", help="print the 24 chunk months and exit")
     parser.add_argument("--record-stop", default=None, help="record a stop reason and exit 0")
+    parser.add_argument("--list-skipped", action="store_true",
+                        help="print months whose chunk has a non-empty skipped list and exit (no Databento call)")
+    parser.add_argument("--reconcile-reservation", default=None, metavar="YYYY-MM",
+                        help="reconcile one pending reservation and exit (no Databento call)")
+    parser.add_argument("--reconcile-as", choices=("spent", "release"), default=None,
+                        help="with --reconcile-reservation: spent counts the charge; release drops it")
     args = parser.parse_args(argv)
     if args.list_months:
         for month in iter_chunks():
@@ -920,6 +1107,11 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
     env = os.environ if env is None else env
     out_dir = Path(out_dir or DEFAULT_OUT)
     report_path = Path(report_path or DEFAULT_REPORT)
+    if args.reconcile_as and not args.reconcile_reservation:
+        print("--reconcile-as requires --reconcile-reservation", file=sys.stderr)
+        return 2
+    if args.list_skipped or args.reconcile_reservation:
+        return _offline_report_command(args, report_path)
     report = load_report(report_path)
     clock = clock or time.time
     if budget_s is None:
@@ -973,6 +1165,16 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                 return 0
             if month_complete(report, month):
                 continue
+            pending = _pending_chunk(report, month)
+            if pending is not None:
+                report["reason"] = _pending_reason(month, pending.get("reserved_usd"))
+                report["stop_loop"] = True
+                report["blocked"] = True
+                report["dry_run"] = dry_run
+                write_report(report_path, report)
+                print(report["reason"], file=sys.stderr)
+                _summary(report["reason"])
+                return 4
             start, end, _sessions = month_window(month)
             try:
                 quote = quote_chunk(http, key, start, end)
@@ -993,6 +1195,8 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
             entry = _chunk_entry(month, quote, start, end)
             entry["committed_sha"] = shas.get(month)
             spent = Decimal(str(report.get("spent_usd") or "0"))
+            reserved = pending_reserved(report)
+            projected = spent + reserved + quote["get_cost"]
             _summary("\n".join([
                 "### Databento backfill chunk %s" % month,
                 "- window: %s → %s (last session's next weekday 06:00 UTC)" % (start, end),
@@ -1000,10 +1204,12 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                 "- record_count: %s" % entry["record_count"],
                 "- billable_size: %s" % entry["billable_size"],
                 "- cumulative spent USD: %s" % spent,
+                "- reserved USD: %s" % reserved,
+                "- spent + reserved + chunk USD: %s" % projected,
                 "- cap: %s USD" % CAP_USD,
             ]))
-            if over_cap(spent + quote["get_cost"]):
-                reason = _cap_reason(spent, month, quote["get_cost"])
+            if over_cap(projected):
+                reason = _cap_reason(spent, reserved, month, quote["get_cost"])
                 entry["complete"] = False
                 _upsert_chunk(report, entry)
                 report["blocked"] = True
@@ -1023,6 +1229,10 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                 report["reason"] = "cost-only default: no timeseries.get_range call"
                 write_report(report_path, report)
                 continue
+            entry["reserved_usd"] = str(quote["get_cost"])
+            entry["reservation"] = "pending"
+            _upsert_chunk(report, entry)
+            write_report(report_path, report)
             try:
                 result = download_month(http, key, month, out_dir)
             except PaymentRequired as exc:
@@ -1052,13 +1262,29 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
             entry["sessions_added"] = result["sessions_added"]
             entry["skipped"] = result["skipped"]
             entry["holidays"] = result["holidays"]
-            entry["complete"] = True
             entry["committed_sha"] = shas.get(month)
-            report["spent_usd"] = str(spent + quote["get_cost"])
+            # A finished download is counted in spent_usd only when the chunk
+            # may be marked complete. Otherwise the reservation stays pending
+            # so the next run does not call get_range again and pay twice.
+            if skipped_allows_complete(result["skipped"]):
+                reconciled = reconcile_reservation(report, month, "spent")
+                if not reconciled["ok"]:
+                    entry["complete"] = False
+                    report["reason"] = reconciled["reason"]
+                    report["stop_loop"] = True
+                    report["dry_run"] = False
+                    _upsert_chunk(report, entry)
+                    write_report(report_path, report)
+                    print(report["reason"], file=sys.stderr)
+                    return 1
+                entry["complete"] = True
+                report["reason"] = ""
+            else:
+                entry["complete"] = False
+                report["reason"] = _pending_reason(month, entry.get("reserved_usd"))
             report["blocked"] = False
             report["stop_loop"] = False
             report["dry_run"] = False
-            report["reason"] = ""
             _upsert_chunk(report, entry)
             write_report(report_path, report)
             print("chunk %s sessions added: %s skipped: %s holidays: %s"

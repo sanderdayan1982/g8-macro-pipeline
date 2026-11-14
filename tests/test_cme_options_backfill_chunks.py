@@ -473,7 +473,7 @@ class Sanity(_Run):
         self.assertIn("2024-06-06", report["chunks"][0]["holidays"])
         self.assertIn("2024-06-03", report["chunks"][0]["sessions_added"])
         self.assertNotIn("2024-06-04", report["chunks"][0]["sessions_added"])
-        self.assertTrue(report["chunks"][0]["complete"])
+        self.assertFalse(report["chunks"][0]["complete"])  # orden expresa de Sander 14-nov-2026 REVISION-TRIPLE-01 punto 1
         self.assert_no_raw()
 
 
