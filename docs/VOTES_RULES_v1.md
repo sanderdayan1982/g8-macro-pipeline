@@ -3,6 +3,10 @@
 Aprobado por Sander (FAMILIAS-00, 14-nov-2026 00:18 WAT; fallo de Gmail, 14-nov-2026 00:31 WAT).
 `rule_version=1`. No se cambia sin un acta.
 
+`rule_version=2` (orden expresa de Sander 14-nov-2026 18:23 WAT, t158u; voto, 18:44 WAT, t159u): `FRESH_PROXY` cuenta como fresco solo para la marca `stale` (`stale=false`). El `voto` de `IYDT_2Y`, `IYDT_10Y`, `FFVA_G8` y `POL_G8` sigue siendo `NA`, como antes. El `estado` conserva su etiqueta. `2` va solo en las filas nuevas.
+
+`id_correo` (orden de Sander 14-nov-2026 18:44 WAT, t160u) es `sha256` del id de Gmail en hexadecimal, los primeros 16 caracteres. Nunca el id en claro. Varios ids van unidos por `;`, cada uno hasheado y la lista ordenada. La deduplicación y la clave de solo añadir siguen siendo `(fecha_cierre, script, ccy)` y `MESSAGE_ID` del cuerpo; no usan el id de Gmail.
+
 ## Qué se escribe
 
 `data/votes.csv` solo crece. Una fila ya escrita no se reordena ni se reescribe. Una corrección, si llega a hacerla una persona, es una fila nueva; el ingestor no la genera solo: si `(fecha_cierre, script, ccy)` ya existe, no añade otra.
@@ -39,13 +43,15 @@ Cuerpo: `KEY=VALUE` separado por `|`, prefijo `G8|`. Un valor no debe contener `
 
 `RISK_G8` y `XCCY_OIS_SHADOW` son un solo mensaje, sin `TRANSPORT`. Su deduplicación es `MODULE:BAR_CLOSE_MS`. El resto viaja en `TRANSPORT=G8_PARTS_V1` con `TRANSPORT_REV` 1.2 o 1.3. Se juntan todas las partes de un `SNAPSHOT_ID`. Deduplicación de partes: `MESSAGE_ID` o, si falta, `(SNAPSHOT_ID, PART)`. Dos snapshots con el mismo `BAR_CLOSE_MS`: se queda el de mayor `SENT_MS`.
 
-Si falta cualquier parte, `PARTS` no coincide con el catálogo de abajo, `TRANSPORT_REV` no es 1.2 ni 1.3, dos partes discrepan en el mismo campo, o `BATCH_STATUS=ERROR`, el módulo entero es `INGEST_INCOMPLETE` y `voto=NA`. Eso se escribe solo en el intento final.
+`PARTS` es un entero ASCII `^[0-9]{1,2}$` en el rango 1..64. `PART` es un entero ASCII dentro de `1..PARTS`. Cualquier otra cosa (0, negativo, basura, mayor que 64, dígito no ASCII, `PART` fuera de rango) deja el snapshot incompleto. Dos copias del mismo `PART` con el mismo cuerpo se cuentan una vez; si el cuerpo difiere, o si las partes no declaran el mismo `PARTS`, el snapshot queda incompleto. Esa comparación es anterior a la deduplicación por `MESSAGE_ID`. Entre varios snapshots se prefiere uno completo: el rango es (completo, `SENT_MS`, `SNAPSHOT_ID`).
 
-`BAR_CLOSE_MS` distinto del cierre esperado, o `STATUS` distinto de `FRESH` cuando el módulo tiene campo de estado: `stale=true` y `voto=NA`. El `estado` se conserva. `RISK_G8` y `XCCY_OIS_SHADOW` no traen `STATUS`; no se marcan stale por un estado ausente.
+Si falta cualquier parte del `PARTS` declarado, las partes no declaran el mismo `PARTS`, ninguna declara un `PARTS` válido, `TRANSPORT_REV` no es 1.2 ni 1.3, dos partes discrepan en el mismo campo, hay copias distintas del mismo `PART`, o `BATCH_STATUS=ERROR`, el módulo entero es `INGEST_INCOMPLETE` y `voto=NA`. Eso se escribe solo en el intento final. En el primer intento el módulo se omite y stderr lleva una línea `skip <módulo> incomplete declared=<N> missing=[…] extra=[…] reason=<corto>`, sin el cuerpo.
+
+`BAR_CLOSE_MS` distinto del cierre esperado, o `STATUS` distinto de `FRESH` y de `FRESH_PROXY` cuando el módulo tiene campo de estado: `stale=true` y `voto=NA`. `FRESH_PROXY` deja `stale=false`. En `IYDT_2Y`, `IYDT_10Y`, `FFVA_G8` y `POL_G8` ese estado sigue dando `voto=NA` (orden t159u). El `estado` se conserva. `RISK_G8` y `XCCY_OIS_SHADOW` no traen `STATUS`; no se marcan stale por un estado ausente.
 
 ## Catálogo (cierre real del 12-nov-2026)
 
-Versión y partes esperadas. Las filas `MISSING` usan esta versión porque no hubo correo.
+Versión y recuento de referencia. Las filas `MISSING` usan esta versión y este recuento porque no hubo correo. El número de partes de un snapshot es el que declara el correo (`PARTS`); la columna `partes` no lo fija.
 
 | script | versión | partes | familia | divisas |
 |---|---|---|---|---|
@@ -64,15 +70,17 @@ Versión y partes esperadas. Las filas `MISSING` usan esta versión porque no hu
 | POS_G8 | 1.2.6 | 6 | POS | las 8 |
 | E21 | la de `USD_FACTOR.json` | 1 | R | las que traiga `currencies[]` |
 
+El número de partes es el que declara el correo (`PARTS`). Todas las partes del mismo snapshot tienen que declarar el mismo `PARTS` y llegar exactamente `1..N`. Si no declaran `PARTS`, o no coinciden, el módulo queda incompleto. El valor de la tabla es el recuento de referencia (las filas `MISSING` siguen usándolo). Orden de Sander 14-nov-2026 (FFVA/TOT 13-nov): ese día FFVA_G8 llegó completo con `PARTS=6` y TOT_G8 con `PARTS=4`; la tabla sigue en 5 y 5 como referencia.
+
 Divisas de los módulos de correo: USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF. Edición ARGOS v1.0.1 §2 no está en el repo (búsqueda el 13-nov-2026). El mapa de familias de arriba es el que usa el código hasta que esa edición entre con un acta. E21 es la familia R, como indicó Sander.
 
 ## Tabla de voto
 
 | script | voto | estado | valor |
 |---|---|---|---|
-| IYDT_2Y, IYDT_10Y | `POS_STRONG` +1; `NEG_STRONG` −1; `POS_BELOW_STRONG` y `NEG_BELOW_STRONG` 0; cualquier otra banda, incluida una `EXTREME`, NA. No hay banda EXTREME en el código ni en el cierre del 12-nov: no se trata como STRONG. `STATUS` ≠ `FRESH` → NA. | la banda | el score |
-| FFVA_G8 | `ACCUM` y `SC` +1; `DIST` y `LIQ` −1; `FLAT_OI` 0; `ROLL=YES` o estado/status `STALE` → NA. | el régimen crudo | `DIRECTIONAL_INTENSITY`, o un número tipo `Z_FLOW` si la intensidad no viene |
-| POL_G8 | `REPRICE_COUNTED` `FULL` o `PATH` con `NOW_DIRECTION` `HAWKISH` +1, `DOVISH` −1; `NONE` → 0. `CLASS_ELIGIBLE=NO`, o distinto de `YES`, → NA. | `STATE`, o `NOW_DIRECTION` si `STATE` viene vacío | `HAWK_SCORE` |
+| IYDT_2Y, IYDT_10Y | `POS_STRONG` +1; `NEG_STRONG` −1; `POS_BELOW_STRONG` y `NEG_BELOW_STRONG` 0; cualquier otra banda, incluida una `EXTREME`, NA. No hay banda EXTREME en el código ni en el cierre del 12-nov: no se trata como STRONG. `STATUS=FRESH` aplica la banda. `STATUS=FRESH_PROXY` → voto NA y `stale=false`. Cualquier otro `STATUS` → `stale=true` y voto NA. | la banda | el score |
+| FFVA_G8 | `ACCUM` y `SC` +1; `DIST` y `LIQ` −1; `FLAT_OI` 0; `ROLL=YES`, estado/status `STALE`, o `STATUS=FRESH_PROXY` → NA (`FRESH_PROXY` deja `stale=false`). | el régimen crudo | `DIRECTIONAL_INTENSITY`, o un número tipo `Z_FLOW` si la intensidad no viene |
+| POL_G8 | `REPRICE_COUNTED` `FULL` o `PATH` con `NOW_DIRECTION` `HAWKISH` +1, `DOVISH` −1; `NONE` → 0. `CLASS_ELIGIBLE` distinto de `YES`, o `STATUS=FRESH_PROXY`, → NA (`FRESH_PROXY` deja `stale=false`). | `STATE`, o `NOW_DIRECTION` si `STATE` viene vacío | `HAWK_SCORE` |
 | POS_G8 | NA | `LF_STATE` | `LF_Z` |
 | PSI_G8 | NA | `HEALTH` | `P_HEALTHY_BP` |
 | RISK_G8, XCCY_G8, XCCY_OIS_SHADOW, CURVA_G8, RTF10_G8, TOT_G8, EQF_G8 | siempre NA | régimen, driver o estado que traiga el correo | el número si existe (`SCORE`, `SPREAD_BP`, …) |
