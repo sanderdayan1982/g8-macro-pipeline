@@ -26,6 +26,15 @@ original whole-range cap). HTTP 402 raises no partial session and returns 2.
 
 Default is cost-only (no --download): per-chunk metadata table, no get_range.
 Credential: environment variable DATABENTO_API_KEY only.
+
+committed_sha comes from git log of the work tree that contains the data
+directory given to the script (out dir / report path). It does not read the
+process's ambient repository. Download commits are named
+``data: cme options backfill YYYY-MM [skip netlify]``. Cost-only commits are
+named ``data: cme options backfill cost-only YYYY-MM [skip netlify]`` and are
+never used. A plain-named commit counts only when that commit's
+backfill_report.json has the month with complete true. If the data directory
+is not inside a git work tree, no sha is resolved.
 """
 from __future__ import annotations
 
@@ -729,35 +738,136 @@ def _recompute(report):
     return report
 
 
-def lookup_commit_shas():
-    """Newest commit whose subject is 'data: cme options backfill YYYY-MM …'."""
+def _git_work_tree(*starts):
+    """Nearest work tree that contains one of ``starts``, or None.
+
+    Walks parents of the data directory the script was given. Does not fall
+    back to the process cwd or to the directory that holds this file.
+    """
+    for start in starts:
+        if start is None or start == "":
+            continue
+        path = Path(start)
+        try:
+            path = path.resolve()
+        except OSError:
+            continue
+        if path.is_file() or not path.is_dir():
+            path = path.parent
+        for candidate in [path, *path.parents]:
+            if (candidate / ".git").exists():
+                return candidate
+    return None
+
+
+def _git_env():
+    """Drop GIT_DIR and the rest so a leaked environment cannot retarget git."""
+    env = os.environ.copy()
+    for key in list(env):
+        if key.startswith("GIT_"):
+            env.pop(key, None)
+    return env
+
+
+def _git(repo, args):
+    return subprocess.run(
+        ["git", "-C", str(repo), *args],
+        cwd=str(repo), env=_git_env(), capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=60, check=False)
+
+
+def _download_month(subject):
+    """YYYY-MM from a download subject. Cost-only subjects are not downloads."""
+    parts = subject.split()
+    if "cost-only" in parts:
+        return None
+    if parts[:4] != ["data:", "cme", "options", "backfill"]:
+        return None
+    if len(parts) < 5:
+        return None
+    token = parts[4]
+    if len(token) == 7 and token[4] == "-" and token[:4].isdigit() and token[5:7].isdigit():
+        return token
+    return None
+
+
+def _commit_month_downloaded(repo, sha, month):
+    """True when this commit's report records ``month`` with complete true.
+
+    The 24 plain-named commits from run 43606084284 are cost-only reports
+    (complete false) and fail this check. A missing or unreadable report
+    fails it too.
+    """
     try:
-        out = subprocess.run(
-            ["git", "log", "--format=%H\t%s", "--grep", "data: cme options backfill "],
-            cwd=str(ROOT), capture_output=True, text=True, timeout=60, check=False)
+        out = _git(repo, ["show", "%s:data/options/backfill_report.json" % sha])
     except (OSError, subprocess.SubprocessError):
-        return {}
+        return False
+    if out.returncode != 0 or not out.stdout:
+        return False
+    try:
+        body = json.loads(out.stdout)
+    except json.JSONDecodeError:
+        return False
+    for chunk in body.get("chunks") or []:
+        if chunk.get("month") == month and chunk.get("complete") is True:
+            return True
+    return False
+
+
+def resolve_commit_shas(*starts):
+    """Return ``({month: sha}, authoritative)`` for download commits.
+
+    ``authoritative`` is false when ``starts`` is not inside a git work tree
+    or git itself failed. In that case the map is empty and existing shas
+    must be left alone. A successful scan is authoritative: an incomplete
+    chunk keeps a sha only when this map has a download commit for it.
+    """
+    root = _git_work_tree(*starts)
+    if root is None:
+        return {}, False
+    try:
+        out = _git(root, ["log", "--format=%H\t%s", "--grep", "data: cme options backfill "])
+    except (OSError, subprocess.SubprocessError):
+        return {}, False
+    if out.returncode != 0:
+        return {}, False
     found = {}
     for line in (out.stdout or "").splitlines():
         if "\t" not in line:
             continue
         sha, subject = line.split("\t", 1)
-        parts = subject.split()
-        if len(parts) < 5:
+        month = _download_month(subject)
+        if not month or month in found:
             continue
-        token = parts[4]
-        if len(token) == 7 and token[4] == "-" and token[:4].isdigit() and token[5:7].isdigit():
-            found.setdefault(token, sha)
+        if not _commit_month_downloaded(root, sha, month):
+            continue
+        found[month] = sha
+    return found, True
+
+
+def lookup_commit_shas(*starts):
+    """Newest download commit per month in the work tree of ``starts``.
+
+    Empty when that path is not a git repo. Never returns a cost-only commit,
+    and never returns a plain-named commit whose chunk is not complete.
+    """
+    found, _authoritative = resolve_commit_shas(*starts)
     return found
 
 
-def apply_commit_shas(report, shas=None):
-    shas = lookup_commit_shas() if shas is None else shas
+def apply_commit_shas(report, shas=None, repo=None, authoritative=False):
+    if shas is None:
+        shas, authoritative = resolve_commit_shas(repo)
     changed = False
     for chunk in report.get("chunks") or []:
         sha = shas.get(chunk.get("month"))
-        if sha and chunk.get("committed_sha") != sha:
-            chunk["committed_sha"] = sha
+        if sha:
+            if chunk.get("committed_sha") != sha:
+                chunk["committed_sha"] = sha
+                changed = True
+            continue
+        if authoritative and not chunk.get("complete") and chunk.get("committed_sha"):
+            chunk["committed_sha"] = None
             changed = True
     return changed
 
@@ -845,8 +955,8 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
     # sessions= is the old per-session hook. Chunks own the window; the argument is ignored.
     del sessions
 
-    shas = lookup_commit_shas()
-    apply_commit_shas(report, shas)
+    shas, authoritative = resolve_commit_shas(report_path, out_dir)
+    apply_commit_shas(report, shas, authoritative=authoritative)
     started = clock()
     report["dry_run"] = dry_run
     try:
