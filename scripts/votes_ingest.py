@@ -13,6 +13,15 @@ Gmail is read-only. Search query (spam and trash included, nothing modified):
 
     from:noreply@tradingview.com subject:"Alert:" -subject:"G8-COLLECT"
 
+When the session is known (`run` always has one), that query is limited to the
+session window, in Unix seconds (Gmail accepts epoch seconds):
+
+    after:<1D close> before:<05:15 WAT the next morning>
+
+The close is 17:00 America/New_York (`expected_bar_close_ms`): 23:00 WAT in
+winter, 22:00 WAT in summer. The cutoff is the 05:15 WAT already named below
+(04:15 UTC). Orden Sander 14-nov-2026 16:28 WAT.
+
 A refresh token cannot mint an access token by itself. The token request also
 sends GMAIL_OAUTH_CLIENT_ID and GMAIL_OAUTH_CLIENT_SECRET. Scope:
 https://www.googleapis.com/auth/gmail.readonly
@@ -29,13 +38,19 @@ Attempts (WAT = UTC+1, Africa/Malabo):
          `error`, and only when that value matches ^[a-z_]{1,40}$; otherwise
          the code is `unknown`. `error_description` and the response body are
          never logged. When a Gmail API read (not the token exchange) fails
-         with HTTP 401 or 403, the same stderr line and the Telegram text add
-         the HTTP status, `error.errors[0].reason`, and `error.status`. Each
-         value is kept only when it matches ^[A-Za-z_]{1,40}$; otherwise it is
-         `unknown`. A missing field or a non-JSON body is `none`. Any other
-         read failure, including 5xx, keeps the previous stderr line and
-         Telegram text. `error.message`, the response body, headers, and tokens
-         are never logged. E21 from data/USD_FACTOR.json is still written.
+         with HTTP 401, or with HTTP 403 for any reason other than
+         rateLimitExceeded or userRateLimitExceeded, the same stderr line and
+         the Telegram text add the HTTP status, `error.errors[0].reason`, and
+         `error.status`. Each value is kept only when it matches
+         ^[A-Za-z_]{1,40}$; otherwise it is `unknown`. A missing field or a
+         non-JSON body is `none`. A 403 with one of those two reasons, and any
+         HTTP 429, are not auth failures: they are retried with bounded
+         exponential backoff and jitter. If those retries are exhausted the
+         failure is `api`, not `auth`, and the gmail_reason suffix is not
+         added. Any other read failure, including 5xx, keeps the previous
+         stderr line and Telegram text. `error.message`, the response body,
+         headers, and tokens are never logged. E21 from data/USD_FACTOR.json
+         is still written.
 
 votes.csv is append-only. A key (fecha_cierre, script, ccy) already present is
 not written again. Re-running a session that is already complete appends nothing.
@@ -47,6 +62,7 @@ import csv
 import io
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -67,6 +83,21 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 LIST_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
 RULE_VERSION = "1"
 RETRIES = 3
+# Pause between consecutive messages.get calls. Orden Sander 14-nov-2026 16:28 WAT.
+MESSAGES_GET_PAUSE_S = 0.15
+# 403 reason rateLimitExceeded / userRateLimitExceeded, and HTTP 429, are not auth.
+# Bounded retries: attempt count, per-sleep cap, and total wait. Same orden.
+RATE_LIMIT_ATTEMPTS = 5
+RATE_LIMIT_BASE_S = 0.5
+RATE_LIMIT_SLEEP_CAP_S = 8.0
+RATE_LIMIT_TOTAL_WAIT_S = 20.0
+_RATE_LIMIT_REASONS = frozenset(("rateLimitExceeded", "userRateLimitExceeded"))
+# 05:15 WAT the morning after the session (04:15 UTC). This is the cutoff already
+# named in this module's docstring, docs/VOTES_RULES_v1.md, and
+# .github/workflows/votes_ingest.yml. attempt_for() is the 05:00 WAT retry,
+# fifteen minutes earlier — not this cutoff. No new clock time.
+INGEST_CUTOFF_HOUR_WAT = 5
+INGEST_CUTOFF_MINUTE_WAT = 15
 # Google's OAuth error code. Anything else, including error_description, is not logged.
 _OAUTH_ERROR_RE = re.compile(r"^[a-z_]{1,40}$")
 # Gmail API error.errors[0].reason and error.status. error.message is not logged.
@@ -235,6 +266,28 @@ def expected_bar_close_ms(session):
         session = date.fromisoformat(session)
     local = datetime(session.year, session.month, session.day, 17, 0, tzinfo=NY)
     return int(local.timestamp() * 1000)
+
+
+def session_cutoff(session):
+    """05:15 WAT the morning after `session` (04:15 UTC).
+
+    The cutoff already named in this file. Not the 05:00 WAT retry in
+    `attempt_for`.
+    """
+    if isinstance(session, str):
+        session = date.fromisoformat(session)
+    morning = session + timedelta(days=1)
+    return datetime(
+        morning.year, morning.month, morning.day,
+        INGEST_CUTOFF_HOUR_WAT, INGEST_CUTOFF_MINUTE_WAT, tzinfo=WAT,
+    )
+
+
+def gmail_query_for_session(session):
+    """Base Gmail query plus after:<1D close> before:<05:15 WAT>, epoch seconds."""
+    after_s = expected_bar_close_ms(session) // 1000
+    before_s = int(round(session_cutoff(session).timestamp()))
+    return "%s after:%d before:%d" % (GMAIL_QUERY, after_s, before_s)
 
 
 def bar_wat_date(ms):
@@ -870,14 +923,53 @@ def urllib_http(method, url, headers, body):
         return exc.code, dict(exc.headers or {}), raw
 
 
-def _request(http, method, url, headers, body, sleep):
+def _jitter_unit():
+    """Uniform [0, 1). Tests patch this, or pass `jitter_unit`, so backoff is deterministic."""
+    return random.random()
+
+
+def rate_limit_backoff_seconds(attempt_index, jitter_unit=None):
+    """Wait before the next rate-limit try. Exponential, half-to-full jitter, per-sleep cap.
+
+    `attempt_index` is 0 for the first wait. `jitter_unit` returns a float in
+    [0, 1). The default is `_jitter_unit` (random).
+    """
+    unit = _jitter_unit() if jitter_unit is None else jitter_unit()
+    if unit < 0.0:
+        unit = 0.0
+    elif unit > 1.0:
+        unit = 1.0
+    ceiling = RATE_LIMIT_BASE_S * (2 ** attempt_index)
+    if ceiling > RATE_LIMIT_SLEEP_CAP_S:
+        ceiling = RATE_LIMIT_SLEEP_CAP_S
+    return ceiling * (0.5 + 0.5 * unit)
+
+
+def _is_rate_limited(url, status, gmail_reason):
+    """429, or a Gmail-read 403 whose whitelisted reason is a rate limit.
+
+    Token-endpoint 401/403 stay auth, as before. The reason compared here is
+    the whitelist output (`^[A-Za-z_]{1,40}$`), never the raw body.
+    """
+    if status == 429:
+        return True
+    if url == TOKEN_URL:
+        return False
+    return status == 403 and gmail_reason in _RATE_LIMIT_REASONS
+
+
+def _request(http, method, url, headers, body, sleep, jitter_unit=None):
     last = GmailError("api")
-    for i in range(RETRIES):
+    generic_i = 0
+    rate_i = 0
+    rate_waited = 0.0
+    while generic_i < RETRIES:
         try:
             status, resp_headers, resp_body = http(method, url, headers, body)
         except Exception:
             last = GmailError("api")
-            sleep(min(2 ** i, 4))
+            sleep(min(2 ** generic_i, 4))
+            generic_i += 1
             continue
         oauth_error = None
         gmail_reason = None
@@ -889,11 +981,28 @@ def _request(http, method, url, headers, body, sleep):
                 oauth_error = oauth_error_code(resp_body)
             elif status in (401, 403):
                 gmail_reason, gmail_status = gmail_api_error_fields(resp_body)
+        if _is_rate_limited(url, status, gmail_reason):
+            # Not auth. Do not attach gmail_reason: that suffix stays on auth
+            # 401/403 only (orden 16:08 WAT). Orden 16:28 WAT.
+            last = GmailError("api", status)
+            if rate_i + 1 >= RATE_LIMIT_ATTEMPTS:
+                raise last
+            delay = rate_limit_backoff_seconds(rate_i, jitter_unit)
+            remaining = RATE_LIMIT_TOTAL_WAIT_S - rate_waited
+            if delay > remaining:
+                delay = remaining
+            if delay <= 0:
+                raise last
+            sleep(delay)
+            rate_waited += delay
+            rate_i += 1
+            continue
         if status in (401, 403):
             raise GmailError("auth", status, oauth_error, gmail_reason, gmail_status)
-        if status == 429 or status >= 500:
+        if status >= 500:
             last = GmailError("api", status, oauth_error, gmail_reason, gmail_status)
-            sleep(min(2 ** i, 4))
+            sleep(min(2 ** generic_i, 4))
+            generic_i += 1
             continue
         if status < 200 or status >= 300:
             raise GmailError("api", status, oauth_error, gmail_reason, gmail_status)
@@ -943,8 +1052,14 @@ def _header(payload, name):
     return ""
 
 
-def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
-    """Read-only Gmail list+get. Raises GmailError. Never modifies a message."""
+def fetch_messages(client_id, client_secret, refresh_token, http, sleep, session=None, jitter_unit=None):
+    """Read-only Gmail list+get. Raises GmailError. Never modifies a message.
+
+    `session` limits the search to that session's close→cutoff window. `run`
+    always passes it. Without a session the base query is unchanged.
+    `sleep` is the pause between messages.get and every retry wait — pass a
+    no-op in tests. `jitter_unit` is the rate-limit jitter source in [0, 1).
+    """
     if not client_id or not client_secret or not refresh_token:
         raise GmailError("missing_secrets")
     form = urllib.parse.urlencode({
@@ -954,7 +1069,9 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
         "client_secret": client_secret,
     }).encode("utf-8")
     try:
-        raw = _request(http, "POST", TOKEN_URL, {"Content-Type": "application/x-www-form-urlencoded"}, form, sleep)
+        raw = _request(
+            http, "POST", TOKEN_URL, {"Content-Type": "application/x-www-form-urlencoded"},
+            form, sleep, jitter_unit)
     except GmailError as exc:
         if exc.kind == "api" and exc.status in (400, 401):
             raise GmailError(
@@ -967,8 +1084,9 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
     if not token:
         raise GmailError("auth")
     auth = {"Authorization": "Bearer " + token}
+    q = gmail_query_for_session(session) if session is not None else GMAIL_QUERY
     query = urllib.parse.urlencode({
-        "q": GMAIL_QUERY,
+        "q": q,
         "includeSpamTrash": "true",
         "maxResults": "100",
     })
@@ -978,7 +1096,7 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
         url = LIST_URL + "?" + query
         if page:
             url += "&pageToken=" + urllib.parse.quote(page)
-        raw = _request(http, "GET", url, auth, None, sleep)
+        raw = _request(http, "GET", url, auth, None, sleep, jitter_unit)
         try:
             doc = json.loads(raw.decode("utf-8"))
         except ValueError:
@@ -990,8 +1108,12 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
         if not page:
             break
     out = []
-    for mid in ids:
-        raw = _request(http, "GET", LIST_URL + "/" + urllib.parse.quote(mid) + "?format=full", auth, None, sleep)
+    for index, mid in enumerate(ids):
+        if index:
+            sleep(MESSAGES_GET_PAUSE_S)
+        raw = _request(
+            http, "GET", LIST_URL + "/" + urllib.parse.quote(mid) + "?format=full",
+            auth, None, sleep, jitter_unit)
         try:
             doc = json.loads(raw.decode("utf-8"))
         except ValueError:
@@ -1078,7 +1200,7 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
                 (env.get("GMAIL_OAUTH_CLIENT_ID") or "").strip(),
                 (env.get("GMAIL_OAUTH_CLIENT_SECRET") or "").strip(),
                 (env.get("GMAIL_READONLY_REFRESH_TOKEN") or "").strip(),
-                http, sleep,
+                http, sleep, session=session,
             )
         except GmailError as exc:
             failure = exc

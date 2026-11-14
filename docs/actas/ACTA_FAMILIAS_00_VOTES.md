@@ -51,3 +51,15 @@ Ningún test ya existente se edita. Ningún fichero con SHA-256 congelado en `te
 
 ## Pruebas
 `python -m pytest -q tests`: 962 passed, 6 skipped, 0 failed. Ningún test ya existente se ha editado. Los tests nuevos de `tests/test_votes_gmail_api_error.py` cubren: 403 con reason y status, valor fuera de la lista blanca → `unknown`, campos ausentes → `none`, cuerpo no JSON → `none`, que el mensaje y el cuerpo no aparecen en el log ni en el Telegram, y que un 503 deja la línea de stderr en `Gmail failure (api) on attempt final. Session 2026-11-13.` sin `gmail_reason`.
+
+## 14-nov-2026 — orden de Sander (16:28 WAT)
+
+14-nov-2026: por orden de Sander (14-nov 16:28 WAT) la lectura de Gmail deja de pedir todo el historial de alertas. `GMAIL_QUERY` no cambia. Con la sesión, la consulta añade `after:` y `before:` en segundos Unix: desde el cierre 1D (`expected_bar_close_ms`, 17:00 America/New_York; 23:00 WAT en invierno, 22:00 WAT en verano) hasta el corte de las 05:15 WAT de la mañana siguiente. Ese corte ya está en la cabecera de `scripts/votes_ingest.py`, en `docs/VOTES_RULES_v1.md` y en el comentario de `votes_ingest.yml` (04:15 UTC). No había una función: `attempt_for` es el reintento de las 05:00 WAT, quince minutos antes. No es una hora nueva.
+
+Entre `messages.get` consecutivos hay una pausa `MESSAGES_GET_PAUSE_S` (0,15 s). El mismo `sleep` inyectable cubre esa pausa y la espera de los reintentos.
+
+Un HTTP 403 con `error.errors[0].reason` `rateLimitExceeded` o `userRateLimitExceeded`, y un HTTP 429, no son fallos de autenticación. Se reintentan con espera exponencial y jitter, como mucho 5 veces, con la espera de cada intento y la espera total acotadas. Si se agotan, el fallo es `api`, no `auth`, y no lleva el sufijo `gmail_reason` (ese sufijo sigue solo en el 401/403 de autenticación, orden 16:08 WAT). Un 403 distinto, por ejemplo `insufficientPermissions`, sigue siendo `auth` al primer intento, con el mismo sufijo y la lista blanca `^[A-Za-z_]{1,40}$`. No se escribe el cuerpo ni `error.message`.
+
+Ningún test ya existente se edita. Ningún fichero con SHA-256 congelado en `tests/` cambia, así que SALUD-1 no actualiza ningún hash. Pine, la Suite G8, `data/`, los umbrales y los workflows no se tocan.
+
+`python -m pytest -q tests` (2026-11-14): 970 passed, 6 skipped, 1 failed. El fallo es anterior y ajeno a este cambio: `tests/test_cme_options_backfill_chunks.py::ChunkCalls::test_one_month_is_one_range_per_parent_per_schema` espera `committed_sha` vacío para 2024-06, y `git log` en `main` ya tiene `bcf4d70` (`data: cme options backfill 2024-06`). Ese test no se edita.
