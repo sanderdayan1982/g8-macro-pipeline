@@ -36,3 +36,18 @@ El mismo orden pide el código OAuth en el fallo del token. Cuando `https://oaut
 ## 14-nov-2026 — orden expresa de Sander (10:54 WAT)
 
 14-nov-2026: por orden expresa de Sander (10:54 WAT) se cambia solo el test test_cli_dry_run_prints_rows: en vez de exigir que data/votes.csv no exista, comprueba por hash que el archivo (si existe) queda idéntico antes y después del dry-run.
+
+## 14-nov-2026 — orden de Sander (15:47 WAT)
+
+14-nov-2026: por orden de Sander (14-nov 15:47 WAT) se retiran, una sola vez, las 97 filas MISSING del 13-nov del commit 26749fe, escritas por una prueba manual lanzada por error con attempt=final. Desde ahora toda prueba manual se lanza con sesión explícita y attempt=first, verificado en pantalla antes de enviarla.
+
+La misma orden pide el `reason` y el `status` de un fallo de la API de Gmail (la lectura, no el canje del token). Cada valor se escribe solo si coincide con `^[A-Za-z_]{1,40}$`; si el valor está y no cumple, `unknown`; si falta, o el cuerpo no es JSON, `none`. No se escribe `error.message`, el cuerpo, las cabeceras ni ningún secreto. El código OAuth del token no cambia. La regla de solo añadir sigue en pie, salvo esta retirada.
+
+14-nov-2026 16:08 WAT: Sander elige la opción A. `HTTP <status> gmail_reason=<reason> gmail_status=<status>` se añade solo cuando la lectura de Gmail (no el canje del token) falla con HTTP 401 o 403. Un 5xx, y cualquier otro fallo de lectura, dejan el stderr y el Telegram como estaban antes de este cambio.
+
+La cabecera y las 7 filas E21 `FRESH` del 13-nov quedan byte a byte como en el commit 4a076b8. `data/votes_weekly.json` se regenera con `write_weekly` de `scripts/votes_ingest.py` a partir de ese CSV. Sigue en 0 días completos. `generated_utc` pasa a `2026-11-14T14:55:40Z`.
+
+Ningún test ya existente se edita. Ningún fichero con SHA-256 congelado en `tests/` cambia, así que SALUD-1 no actualiza ningún hash. Pine, la Suite G8, los umbrales y los workflows no se tocan.
+
+## Pruebas
+`python -m pytest -q tests`: 962 passed, 6 skipped, 0 failed. Ningún test ya existente se ha editado. Los tests nuevos de `tests/test_votes_gmail_api_error.py` cubren: 403 con reason y status, valor fuera de la lista blanca → `unknown`, campos ausentes → `none`, cuerpo no JSON → `none`, que el mensaje y el cuerpo no aparecen en el log ni en el Telegram, y que un 503 deja la línea de stderr en `Gmail failure (api) on attempt final. Session 2026-11-13.` sin `gmail_reason`.

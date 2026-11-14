@@ -28,7 +28,14 @@ Attempts (WAT = UTC+1, Africa/Malabo):
          line and the Telegram text add the HTTP status and the JSON field
          `error`, and only when that value matches ^[a-z_]{1,40}$; otherwise
          the code is `unknown`. `error_description` and the response body are
-         never logged. E21 from data/USD_FACTOR.json is still written.
+         never logged. When a Gmail API read (not the token exchange) fails
+         with HTTP 401 or 403, the same stderr line and the Telegram text add
+         the HTTP status, `error.errors[0].reason`, and `error.status`. Each
+         value is kept only when it matches ^[A-Za-z_]{1,40}$; otherwise it is
+         `unknown`. A missing field or a non-JSON body is `none`. Any other
+         read failure, including 5xx, keeps the previous stderr line and
+         Telegram text. `error.message`, the response body, headers, and tokens
+         are never logged. E21 from data/USD_FACTOR.json is still written.
 
 votes.csv is append-only. A key (fecha_cierre, script, ccy) already present is
 not written again. Re-running a session that is already complete appends nothing.
@@ -62,6 +69,8 @@ RULE_VERSION = "1"
 RETRIES = 3
 # Google's OAuth error code. Anything else, including error_description, is not logged.
 _OAUTH_ERROR_RE = re.compile(r"^[a-z_]{1,40}$")
+# Gmail API error.errors[0].reason and error.status. error.message is not logged.
+_GMAIL_FIELD_RE = re.compile(r"^[A-Za-z_]{1,40}$")
 
 CCYS = ("USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF")
 
@@ -135,14 +144,20 @@ class GmailError(Exception):
 
     `kind` is missing_secrets, auth, or api. `status` is an HTTP code or None.
     `oauth_error` is set only for a non-2xx token response: the whitelisted
-    `error` code, or `unknown`. The message never includes a token, client
-    secret, error_description, or response body.
+    `error` code, or `unknown`. `gmail_reason` and `gmail_status` are set only
+    for a Gmail API read that fails with HTTP 401 or 403: whitelisted
+    `error.errors[0].reason` and `error.status`, `unknown` when a present
+    value fails the whitelist, or `none` when the field is missing or the
+    body is not JSON. The message never includes a token, client secret,
+    error_description, error.message, response body, or header.
     """
 
-    def __init__(self, kind, status=None, oauth_error=None):
+    def __init__(self, kind, status=None, oauth_error=None, gmail_reason=None, gmail_status=None):
         self.kind = kind
         self.status = status
         self.oauth_error = oauth_error
+        self.gmail_reason = gmail_reason
+        self.gmail_status = gmail_status
         label = kind if status is None else "%s HTTP %s" % (kind, status)
         super().__init__(label)
 
@@ -168,6 +183,47 @@ def oauth_error_code(raw):
     if isinstance(code, str) and _OAUTH_ERROR_RE.fullmatch(code):
         return code
     return "unknown"
+
+
+def _gmail_field(value):
+    """One Gmail error field. Missing → none. Present but not whitelisted → unknown.
+
+    Does not return the raw value.
+    """
+    if value is None:
+        return "none"
+    if isinstance(value, str) and _GMAIL_FIELD_RE.fullmatch(value):
+        return value
+    return "unknown"
+
+
+def gmail_api_error_fields(raw):
+    """`(reason, status)` from `error.errors[0].reason` and `error.status` only.
+
+    Each value must match ^[A-Za-z_]{1,40}$. Otherwise `unknown`. A missing
+    field, or a body that is not a JSON object, is `none`. Does not return
+    `error.message` or any other part of the body.
+    """
+    try:
+        if isinstance(raw, bytes):
+            text = raw.decode("utf-8")
+        elif isinstance(raw, str):
+            text = raw
+        else:
+            return "none", "none"
+        doc = json.loads(text)
+    except (UnicodeError, ValueError, TypeError):
+        return "none", "none"
+    if not isinstance(doc, dict):
+        return "none", "none"
+    err = doc.get("error")
+    if not isinstance(err, dict):
+        return "none", "none"
+    reason = None
+    errors = err.get("errors")
+    if isinstance(errors, list) and errors and isinstance(errors[0], dict):
+        reason = errors[0].get("reason")
+    return _gmail_field(reason), _gmail_field(err.get("status"))
 
 
 def expected_bar_close_ms(session):
@@ -738,14 +794,45 @@ def read_votes(path):
         return list(csv.DictReader(fh))
 
 
+def _http_status_text(failure):
+    status = getattr(failure, "status", None)
+    return status if status is not None else "n/a"
+
+
+def _gmail_auth_suffix(failure):
+    """`HTTP <status> gmail_reason=<r> gmail_status=<s>` for a 401/403 read.
+
+    Absent for the token exchange and for every other Gmail read failure,
+    including 5xx. Does not include the body or error.message.
+    """
+    status = getattr(failure, "status", None)
+    if status not in (401, 403):
+        return None
+    reason = getattr(failure, "gmail_reason", None)
+    gstatus = getattr(failure, "gmail_status", None)
+    if reason is None and gstatus is None:
+        return None
+    return "HTTP %s gmail_reason=%s gmail_status=%s" % (
+        status,
+        reason if reason is not None else "none",
+        gstatus if gstatus is not None else "none",
+    )
+
+
 def gmail_failure_log(session, attempt, failure):
-    """Stderr line. The OAuth code is appended only for a token non-2xx."""
+    """Stderr line.
+
+    The OAuth code is appended only for a token non-2xx. The Gmail reason and
+    status are appended only for a Gmail API read that fails with 401 or 403.
+    """
     line = "Gmail failure (%s) on attempt %s. Session %s." % (
         failure.kind, attempt, session.isoformat())
     code = getattr(failure, "oauth_error", None)
     if code:
-        status = failure.status if getattr(failure, "status", None) is not None else "n/a"
-        line += " HTTP %s oauth_error=%s" % (status, code)
+        line += " HTTP %s oauth_error=%s" % (_http_status_text(failure), code)
+    suffix = _gmail_auth_suffix(failure)
+    if suffix:
+        line += " " + suffix
     return line
 
 
@@ -763,6 +850,9 @@ def alert_text(session, attempt, exc):
     if code:
         shown = status if status is not None else "n/a"
         lines.append("HTTP %s oauth_error=%s" % (shown, code))
+    suffix = _gmail_auth_suffix(exc)
+    if suffix:
+        lines.append(suffix)
     lines.extend([
         "MISSING rows are written only on the final attempt (05:00 WAT), before the 05:15 WAT cutoff.",
         "E21 from USD_FACTOR.json is written on both attempts.",
@@ -790,16 +880,23 @@ def _request(http, method, url, headers, body, sleep):
             sleep(min(2 ** i, 4))
             continue
         oauth_error = None
-        if url == TOKEN_URL and (status < 200 or status >= 300):
-            oauth_error = oauth_error_code(resp_body)
+        gmail_reason = None
+        gmail_status = None
+        if status < 200 or status >= 300:
+            # Token exchange keeps oauth_error. A Gmail read keeps reason and
+            # status only on 401 or 403 (orden Sander 14-nov-2026 16:08 WAT).
+            if url == TOKEN_URL:
+                oauth_error = oauth_error_code(resp_body)
+            elif status in (401, 403):
+                gmail_reason, gmail_status = gmail_api_error_fields(resp_body)
         if status in (401, 403):
-            raise GmailError("auth", status, oauth_error)
+            raise GmailError("auth", status, oauth_error, gmail_reason, gmail_status)
         if status == 429 or status >= 500:
-            last = GmailError("api", status, oauth_error)
+            last = GmailError("api", status, oauth_error, gmail_reason, gmail_status)
             sleep(min(2 ** i, 4))
             continue
         if status < 200 or status >= 300:
-            raise GmailError("api", status, oauth_error)
+            raise GmailError("api", status, oauth_error, gmail_reason, gmail_status)
         return resp_body
     raise last
 
@@ -860,7 +957,8 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
         raw = _request(http, "POST", TOKEN_URL, {"Content-Type": "application/x-www-form-urlencoded"}, form, sleep)
     except GmailError as exc:
         if exc.kind == "api" and exc.status in (400, 401):
-            raise GmailError("auth", exc.status, exc.oauth_error)
+            raise GmailError(
+                "auth", exc.status, exc.oauth_error, exc.gmail_reason, exc.gmail_status)
         raise
     try:
         token = json.loads(raw.decode("utf-8")).get("access_token") or ""
