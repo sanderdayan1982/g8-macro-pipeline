@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # =============================================================================
-# POS-G8 COT collector  [pos_g8_cot_collector v1.1.0]
+# POS-G8 COT collector  [pos_g8_cot_collector v1.1.1]
+# -----------------------------------------------------------------------------
+# v1.1.1 (14-nov-2026) — ORDEN_ENZO_REVISION-TRIPLE-01 Block 3. If either the
+#   long or the short side is missing, that week's net is null. A non-numeric
+#   STALE marker is missing and is not filled with 0. A present zero stays
+#   zero. Both sides present: long − short, unchanged. No change to windows,
+#   thresholds or z.
 # -----------------------------------------------------------------------------
 # v1.1.0 (17-sep-2026) — P3y / EXT (ACTA_UF1 §E). New per-row fields, NO change
 #   to any existing field, window, threshold or state:
@@ -346,11 +352,23 @@ def freshness(report_date):
 # ----------------------------------------------------------------------------
 # BUILD ONE ROW
 # ----------------------------------------------------------------------------
+def _side_net(row, long_key, short_key):
+    """Long minus short. Either side missing → None (null in JSON).
+
+    ORDEN_ENZO_REVISION-TRIPLE-01 Block 3: do not fill a missing side with 0.
+    _f already returns None for a non-numeric STALE marker, so STALE is not
+    filled either. A present zero is a number and stays in the subtraction.
+    """
+    lng = _f(row, long_key)
+    sht = _f(row, short_key)
+    if lng is None or sht is None:
+        return None
+    return lng - sht
+
+
 def build_ccy(name, rows):
-    lf = [(_f(r, COL["tff"]["lf_long"]) or 0) - (_f(r, COL["tff"]["lf_short"]) or 0)
-          if _f(r, COL["tff"]["lf_long"]) is not None else None for r in rows]
-    am = [(_f(r, COL["tff"]["am_long"]) or 0) - (_f(r, COL["tff"]["am_short"]) or 0)
-          if _f(r, COL["tff"]["am_long"]) is not None else None for r in rows]
+    lf = [_side_net(r, COL["tff"]["lf_long"], COL["tff"]["lf_short"]) for r in rows]
+    am = [_side_net(r, COL["tff"]["am_long"], COL["tff"]["am_short"]) for r in rows]
     oi = [_f(r, COL["oi"]) for r in rows]
     win = WIN["fx"]
     warn, ext = fx_thr(name)
