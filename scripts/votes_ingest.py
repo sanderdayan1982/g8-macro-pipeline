@@ -24,7 +24,11 @@ Attempts (WAT = UTC+1, Africa/Malabo):
          absent is MISSING. A Gmail failure (missing or invalid secrets, auth
          error, API error after retries) marks every module that has no row yet
          as MISSING (one row per module and currency, voto=NA) and sends one
-         Telegram alert. E21 from data/USD_FACTOR.json is still written.
+         Telegram alert. When the token endpoint returns a non-2xx, the stderr
+         line and the Telegram text add the HTTP status and the JSON field
+         `error`, and only when that value matches ^[a-z_]{1,40}$; otherwise
+         the code is `unknown`. `error_description` and the response body are
+         never logged. E21 from data/USD_FACTOR.json is still written.
 
 votes.csv is append-only. A key (fecha_cierre, script, ccy) already present is
 not written again. Re-running a session that is already complete appends nothing.
@@ -36,6 +40,7 @@ import csv
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -55,6 +60,8 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 LIST_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
 RULE_VERSION = "1"
 RETRIES = 3
+# Google's OAuth error code. Anything else, including error_description, is not logged.
+_OAUTH_ERROR_RE = re.compile(r"^[a-z_]{1,40}$")
 
 CCYS = ("USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF")
 
@@ -127,14 +134,40 @@ class GmailError(Exception):
     """Failure that marks the session MISSING on the final attempt.
 
     `kind` is missing_secrets, auth, or api. `status` is an HTTP code or None.
-    The message never includes a token, client secret, or response body.
+    `oauth_error` is set only for a non-2xx token response: the whitelisted
+    `error` code, or `unknown`. The message never includes a token, client
+    secret, error_description, or response body.
     """
 
-    def __init__(self, kind, status=None):
+    def __init__(self, kind, status=None, oauth_error=None):
         self.kind = kind
         self.status = status
+        self.oauth_error = oauth_error
         label = kind if status is None else "%s HTTP %s" % (kind, status)
         super().__init__(label)
+
+
+def oauth_error_code(raw):
+    """JSON field `error` if it matches ^[a-z_]{1,40}$, otherwise 'unknown'.
+
+    Does not return `error_description` or any other part of the body.
+    """
+    try:
+        if isinstance(raw, bytes):
+            text = raw.decode("utf-8")
+        elif isinstance(raw, str):
+            text = raw
+        else:
+            return "unknown"
+        doc = json.loads(text)
+    except (UnicodeError, ValueError, TypeError):
+        return "unknown"
+    if not isinstance(doc, dict):
+        return "unknown"
+    code = doc.get("error")
+    if isinstance(code, str) and _OAUTH_ERROR_RE.fullmatch(code):
+        return code
+    return "unknown"
 
 
 def expected_bar_close_ms(session):
@@ -705,18 +738,36 @@ def read_votes(path):
         return list(csv.DictReader(fh))
 
 
+def gmail_failure_log(session, attempt, failure):
+    """Stderr line. The OAuth code is appended only for a token non-2xx."""
+    line = "Gmail failure (%s) on attempt %s. Session %s." % (
+        failure.kind, attempt, session.isoformat())
+    code = getattr(failure, "oauth_error", None)
+    if code:
+        status = failure.status if getattr(failure, "status", None) is not None else "n/a"
+        line += " HTTP %s oauth_error=%s" % (status, code)
+    return line
+
+
 def alert_text(session, attempt, exc):
     status = getattr(exc, "status", None)
-    return "\n".join([
+    lines = [
         "votes ingest: Gmail failure",
         "session=%s" % session.isoformat(),
         "attempt=%s" % attempt,
         "error=%s" % type(exc).__name__,
         "kind=%s" % getattr(exc, "kind", "api"),
         "http_status=%s" % (status if status is not None else "n/a"),
+    ]
+    code = getattr(exc, "oauth_error", None)
+    if code:
+        shown = status if status is not None else "n/a"
+        lines.append("HTTP %s oauth_error=%s" % (shown, code))
+    lines.extend([
         "MISSING rows are written only on the final attempt (05:00 WAT), before the 05:15 WAT cutoff.",
         "E21 from USD_FACTOR.json is written on both attempts.",
     ])
+    return "\n".join(lines)
 
 
 def urllib_http(method, url, headers, body):
@@ -738,14 +789,17 @@ def _request(http, method, url, headers, body, sleep):
             last = GmailError("api")
             sleep(min(2 ** i, 4))
             continue
+        oauth_error = None
+        if url == TOKEN_URL and (status < 200 or status >= 300):
+            oauth_error = oauth_error_code(resp_body)
         if status in (401, 403):
-            raise GmailError("auth", status)
+            raise GmailError("auth", status, oauth_error)
         if status == 429 or status >= 500:
-            last = GmailError("api", status)
+            last = GmailError("api", status, oauth_error)
             sleep(min(2 ** i, 4))
             continue
         if status < 200 or status >= 300:
-            raise GmailError("api", status)
+            raise GmailError("api", status, oauth_error)
         return resp_body
     raise last
 
@@ -806,7 +860,7 @@ def fetch_messages(client_id, client_secret, refresh_token, http, sleep):
         raw = _request(http, "POST", TOKEN_URL, {"Content-Type": "application/x-www-form-urlencoded"}, form, sleep)
     except GmailError as exc:
         if exc.kind == "api" and exc.status in (400, 401):
-            raise GmailError("auth", exc.status)
+            raise GmailError("auth", exc.status, exc.oauth_error)
         raise
     try:
         token = json.loads(raw.decode("utf-8")).get("access_token") or ""
@@ -945,8 +999,7 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
     write_weekly(weekly_path, read_votes(votes_path), now)
     if failure is not None:
         _send_alert(sender or default_sender, session, attempt, failure)
-        print("Gmail failure (%s) on attempt %s. Session %s."
-              % (failure.kind, attempt, session.isoformat()), file=sys.stderr)
+        print(gmail_failure_log(session, attempt, failure), file=sys.stderr)
         return 1
     print("session %s attempt %s rows_considered %s" % (session.isoformat(), attempt, len(rows)))
     return 0
