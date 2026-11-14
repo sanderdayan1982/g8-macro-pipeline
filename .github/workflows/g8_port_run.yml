@@ -1,7 +1,11 @@
 # .github/workflows/g8_port_run.yml
 # G8 PORT — pipeline run (D6): Telegram only on change.
-# Phase 2: POS only. COT is a WEEKLY release (CFTC, Fri 19:30 UTC, report as of Tue) — the
-# 4-hourly cadence belonged to the (paused) FFVA generators. Cadence now: Fri 21:05 UTC + Sat 09:05 UTC retry.
+# Phase 2: POS only. COT is a WEEKLY release (CFTC 15:30 ET, which is 20:30 UTC in winter
+# and 19:30 UTC in summer, report as of Tue) — the 4-hourly cadence belonged to the
+# (paused) FFVA generators. Cadence: Fri 21:05 UTC + Sat 09:05 UTC retry, plus
+# Mon 21:05 UTC + Tue 09:05 UTC retry for a Monday CFTC release.
+# The collector writes nothing unless the report date is new. The weekly metals MDP
+# is recomputed only after that new report was written on the Monday or Tuesday pass.
 #
 # 2026-09-12 — FFVA paused (no Databento spend). 2026-10-16 (A4, plan de armonía): FFVA RETIRADO del
 #   dashboard — su dueño único es 9-FFVA en TradingView. Se borran su generador, su twin, su colector de
@@ -12,6 +16,8 @@ on:
   schedule:
     - cron: '5 21 * * 5'
     - cron: '5 9 * * 6'
+    - cron: '5 21 * * 1'
+    - cron: '5 9 * * 2'
   workflow_dispatch:
 
 concurrency:
@@ -24,7 +30,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -44,7 +50,40 @@ jobs:
       # ── ingest ──────────────────────────────────────────────────────────────
       - name: COT collector (CFTC SODA) v1.0.1
         id: cot
-        run: python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json
+        run: |
+          set -o pipefail
+          python scripts/pos_g8_cot_collector.py --out data/pos_g8_cot.json | tee "$RUNNER_TEMP/cot.log"
+          if grep -q '^COT_RESULT wrote=1 ' "$RUNNER_TEMP/cot.log"; then
+            echo "wrote=true" >> "$GITHUB_OUTPUT"
+          elif grep -q '^COT_RESULT wrote=0 ' "$RUNNER_TEMP/cot.log"; then
+            echo "wrote=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "collector finished without a COT_RESULT line" >&2
+            exit 1
+          fi
+
+      # Weekly MDP only. Friday/Saturday and an unchanged report date do not run it,
+      # so MFV outputs and generated timestamps stay byte-for-byte as they were.
+      - name: Weekly metals MDP only after a new COT on the Monday or Tuesday pass
+        id: metals
+        timeout-minutes: 22
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          G8_NO_SEND: '1'
+          G8_JOB: metals
+        run: |
+          set -o pipefail
+          python scripts/pos_g8_cot_collector.py --metals-after-cot \
+            --schedule "${{ github.event.schedule }}" \
+            --cot-wrote "${{ steps.cot.outputs.wrote }}" | tee "$RUNNER_TEMP/metals_gate.log"
+          if grep -q '^METALS_RESULT recomputed=1$' "$RUNNER_TEMP/metals_gate.log"; then
+            echo "recomputed=true" >> "$GITHUB_OUTPUT"
+          elif grep -q '^METALS_RESULT recomputed=0$' "$RUNNER_TEMP/metals_gate.log"; then
+            echo "recomputed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "metals gate finished without a METALS_RESULT line" >&2
+            exit 1
+          fi
 
       # ── generators (one per ported Pine script) ─────────────────────────────
       - name: Generator POS
@@ -80,6 +119,15 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/pos_g8_cot.json data/state/pos_g8.json data/twin/pos_g8_py_history.csv data/twin/pos_g8_twin.json data/alerts/brief.json data/alerts/state.json
+          if [ "${{ steps.metals.outputs.recomputed }}" = "true" ]; then
+            git add data/MFV_G8_XAU.csv data/MFV_G8_XAG.csv data/MFV_G8_state.json
+            git add data/MFV_G8_walkforward_XAU.csv data/MFV_G8_walkforward_XAG.csv
+            git add -- data/MFV_G8_XAU_daily_shadow.csv data/MFV_G8_XAG_daily_shadow.csv data/MFV_G8_shadow_state.json || true
+            git add data/_ingest/metals_provenance.json 2>/dev/null || true
+            git add data/_ingest/latest/actions__job_metals.json 2>/dev/null || true
+            git add data/_ingest/health.json 2>/dev/null || true
+            git add data/_ingest/not_before/metals.json 2>/dev/null || true
+          fi
           if git diff --cached --quiet -I '"generated_at"' -I '"generated_utc"' -I '"run_id"' -I '"commit"' -I '"age_days"' -I '"age_bd"'; then
             echo "no material change — no commit"
             git reset -q
@@ -91,4 +139,4 @@ jobs:
       # ── principle 9: any failure above → Telegram ───────────────────────────
       - name: Alert on failure
         if: failure()
-        run: python scripts/notify_telegram.py --fail "cot=${{ steps.cot.outcome }} pos=${{ steps.pos.outcome }}"
+        run: python scripts/notify_telegram.py --fail "cot=${{ steps.cot.outcome }} metals=${{ steps.metals.outcome }} pos=${{ steps.pos.outcome }}"
