@@ -21,16 +21,20 @@ No hay en el repo un calendario por regla que sirva de reloj de la vela. `source
 - `data/votes.csv` tiene un driver local (no va en `.gitattributes`) que llama a `scripts/tools/votes_csv_merge.py`. Los bytes de main quedan de prefijo. Se añaden solo las claves `(fecha_cierre, script, ccy)` que falten. El resto de ficheros sigue con `-X theirs`.
 
 ## Sin cambios
-Ningún test ya existente. Ningún fichero con SHA-256 congelado en `tests/` cambia: `git_push_retry.sh` no está fijado por huella, así que SALUD-1 no reescribe ningún hash. `data/` no entra en este commit. Fórmulas, umbrales, Pine y la Suite G8 no se tocan.
+Ningún fichero con SHA-256 congelado en `tests/` cambia: `git_push_retry.sh` no está fijado por huella, así que SALUD-1 no reescribe ningún hash. `data/` no entra en este commit. Fórmulas, umbrales, Pine y la Suite G8 no se tocan.
+
+## 14-nov-2026 — orden expresa de Sander (19:56 WAT, t166u)
+
+`tests/test_p12_mac_dispatch.py` `Schedule.test_D2_weekday` es el único test ya existente que cambia. A las 07:05 UTC del sábado 2026-10-10 la ventana de recuperación de 3 h incluye el turno de las 04:20 UTC, así que el Mac lanza `metals_update.yml` y `votes_ingest.yml`. La aserción acepta los dos, en ese orden. Ningún otro test se toca.
 
 ## Pruebas
 Nuevas: `tests/test_votes_block2.py`, `tests/test_votes_csv_push.py` (dos repos git locales).
 
-`python3 -m unittest discover -s tests -p 'test_*.py'` (2026-11-14, Python 3.12 con `requirements.txt` y `pyyaml`; en esta máquina no hay 3.11): 1021 ran, 1011 passed, 6 skipped, 4 failed.
+`python3 -m unittest discover -s tests -p 'test_*.py'` (2026-11-14, tras t166u, Python 3.12 con `requirements.txt` y `pyyaml`; en esta máquina no hay 3.11): 1021 ran, 1012 passed, 6 skipped, 3 failed.
 
 Rojos previstos, ajenos a este bloque: `tests/test_fxvol_shadow.py` (`test_additive_fields_do_not_recompute_existing_ones`, `test_five_sessions_within_tolerance`) y `tests/test_flujos01_pr2.py` `Rv21Vectors.test_live_eur_matches_the_oracle_and_the_roll_session_is_na`.
 
-Rojo que este bloque provoca y que no se toca: `tests/test_p12_mac_dispatch.py::Schedule.test_D2_weekday`. El sábado 2026-10-10 a las 07:05 UTC la ventana de `catchup_hours` (3 h) ahora incluye el turno de las 04:20 UTC (`20 4 * * 2-6`); con el cron antiguo de las 04:00 UTC ese instante quedaba fuera (3 h 5 min). El test espera solo `metals_update.yml`. No está autorizado editarlo. `test_D6_schedule_matches_workflow_crons` sigue en verde: el cron del workflow y el de `dispatch_schedule.json` coinciden.
+Ese rojo de `test_D2_weekday` queda cubierto por la orden t166u de arriba. `test_D6_schedule_matches_workflow_crons` sigue en verde: el cron del workflow y el de `dispatch_schedule.json` coinciden.
 
 ## Siguiente
 Retargetear este PR a `main` cuando el PR #26 esté fusionado. No fusionar este bloque antes.
