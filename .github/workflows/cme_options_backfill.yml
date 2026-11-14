@@ -1,6 +1,10 @@
 # Resumable CME FX options backfill (Databento GLBX.MDP3), one calendar month per commit.
 # workflow_dispatch only. Nothing runs until this file is on main and Sander starts it.
 # Do not add a schedule. test_p12 would then require a Mac dispatch slot.
+# Optional input month (YYYY-MM, default empty): process one chunk. Empty keeps the
+# 24-chunk loop byte for byte. The value is the env var BACKFILL_MONTH, never
+# interpolated in the shell. A value that fails ^[0-9]{4}-[0-9]{2}$ or is absent
+# from --list-months stops the job before any Databento call.
 #
 # Default input dry_run=true: per-chunk metadata.get_cost / get_record_count /
 # get_billable_size for 2024-06 … 2026-05. No timeseries.get_range.
@@ -23,6 +27,11 @@ on:
         description: 'Cost only (per-chunk get_cost, record count, billable size). No download.'
         type: boolean
         default: true
+      month:
+        description: 'YYYY-MM: process only this chunk. Empty = all 24 chunks as before.'
+        type: string
+        default: ""
+        required: false
 
 permissions:
   contents: write
@@ -50,6 +59,7 @@ jobs:
       - name: Backfill one calendar month at a time
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+          BACKFILL_MONTH: ${{ inputs.month }}
         run: |
           set -u
           git config user.name "github-actions[bot]"
@@ -71,6 +81,7 @@ jobs:
             git commit -m "data: cme options backfill ${month} [skip netlify]"
             bash scripts/tools/git_push_retry.sh 5
           }
+          if [ -z "${BACKFILL_MONTH}" ]; then
           for month in $(python scripts/cme_options_backfill.py --list-months); do
             elapsed=$(( $(date +%s) - start_s ))
             if [ "$elapsed" -ge "$budget_s" ]; then
@@ -92,3 +103,26 @@ jobs:
               exit "$rc"
             fi
           done
+          else
+            month="${BACKFILL_MONTH}"
+            if [[ ! "$month" =~ ^[0-9]{4}-[0-9]{2}$ ]]; then
+              echo "month must match YYYY-MM; refusing before any Databento call" >&2
+              exit 1
+            fi
+            if ! python scripts/cme_options_backfill.py --list-months | grep -Fxq -- "$month"; then
+              echo "month is not a listed chunk; refusing before any Databento call" >&2
+              exit 1
+            fi
+            set +e
+            python scripts/cme_options_backfill.py --month "$month" $mode
+            rc=$?
+            set -e
+            # Push this chunk (or the cap report, which has no new session) before
+            # looking at rc. Months that already finished were pushed on earlier
+            # iterations and are not rewritten.
+            commit_month "$month"
+            if [ "$rc" -ne 0 ]; then
+              echo "chunk ${month} stopped with rc=${rc}; earlier chunks stay pushed; job fails so the stop is visible"
+              exit "$rc"
+            fi
+          fi

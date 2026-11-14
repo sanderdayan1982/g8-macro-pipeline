@@ -31,3 +31,16 @@ Suite `python3 -m unittest discover -s tests -p 'test_*.py'` sobre `main` ya con
 
 ## Siguiente
 Sander fusiona y lanza el workflow a mano, primero en dry-run. La descarga solo con `dry_run=false`. Si el acumulado más el chunk siguiente pasa de 35 USD, ese chunk no se baja, el job queda rojo (rc 3) y lo ya subido permanece.
+
+## Nota 14-nov-2026 16:36 WAT
+
+**Orden:** Sander, 14-nov-2026 16:36 WAT. Un solo PR contra `main`. No se fusiona. No se añade schedule.
+
+Entrada opcional `month` en `workflow_dispatch` de `.github/workflows/cme_options_backfill.yml`: tipo string, por defecto vacía, no obligatoria. Descripción: `YYYY-MM: process only this chunk. Empty = all 24 chunks as before.`
+
+- Vacío: el job sigue con el mismo bucle `for month in $(python scripts/cme_options_backfill.py --list-months)`, el mismo `--month "$month" $mode`, el mismo `commit_month` y el mismo trato del rc.
+- Con valor: llega por la variable de entorno `BACKFILL_MONTH`. `${{ inputs.month }}` está solo en `env:`, no en el shell. Si no cumple `^[0-9]{4}-[0-9]{2}$` o no aparece en `--list-months`, el job sale antes de cualquier llamada a Databento. Si vale, corre solo ese mes, con el mismo `--month`, `commit_month` y salida por rc.
+
+No se modifica `scripts/cme_options_backfill.py`, `scripts/cme_options_collector.py` ni ningún test ya existente. Ninguna huella congelada en `tests/` cubre este workflow, así que SALUD-1 no reescribe ningún hash. Pruebas nuevas: `tests/test_cme_options_backfill_month_input.py`.
+
+`python -m pytest -q tests` en este árbol: 969 passed, 1 failed, 6 skipped. El fallo es el ya existente en `origin/main` (`d8ebd825`): `tests/test_cme_options_backfill_chunks.py::ChunkCalls::test_one_month_is_one_range_per_parent_per_schema` espera `committed_sha` None y `lookup_commit_shas` ahora ve `bcf4d70edf4a8de1b3282a6de18ddee899099dde` (`data: cme options backfill 2024-06`). No se edita ese test.
