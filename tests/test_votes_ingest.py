@@ -2,7 +2,9 @@
 
 El parser es puro (cuerpos → filas). El cliente Gmail se sustituye por una función HTTP.
 """
+import contextlib
 import csv
+import io
 import json
 import os
 import shutil
@@ -513,6 +515,165 @@ class Weekly(unittest.TestCase):
         self.assertEqual(report["weeks"][0]["sessions"], ["2026-11-12"])
         broken = V.rows_from_messages([], SESSION, True) + V.rows_from_factor(factor(), SESSION)
         self.assertEqual(V.weekly_report(broken, "2026-11-13T04:00:00Z")["complete_days_total"], 0)
+
+
+class TokenOauthError(unittest.TestCase):
+    """Token-endpoint non-2xx: whitelisted `error` code, HTTP status, no body."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.votes = os.path.join(self.tmp, "votes.csv")
+        self.weekly = os.path.join(self.tmp, "votes_weekly.json")
+        self.factor = os.path.join(self.tmp, "USD_FACTOR.json")
+        with open(self.factor, "w", encoding="utf-8") as fh:
+            json.dump(factor(as_of="2026-11-13", generated="2026-11-13T18:00:00Z",
+                             values={"EUR": "-0.38", "GBP": "1"}), fh)
+        self.sent = []
+
+    def _run(self, http, env=None):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = V.run(
+                ["--attempt", "final", "--session", "2026-11-13",
+                 "--votes", self.votes, "--weekly", self.weekly, "--factor", self.factor],
+                http=http, sender=self.sent.append,
+                env=env_secrets() if env is None else env,
+                sleep=lambda _s: None,
+                now=datetime(2026, 11, 14, 4, 0, tzinfo=timezone.utc),
+            )
+        return rc, err.getvalue()
+
+    def _assert_rows_unchanged(self, rc):
+        self.assertEqual(rc, 1)
+        self.assertEqual(len(self.sent), 1)
+        with open(self.votes, encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        missing = [r for r in rows if r["estado"] == "MISSING"]
+        e21 = [r for r in rows if r["script"] == "E21"]
+        self.assertEqual(len(missing), 1 + 12 * 8)
+        self.assertTrue(all(r["voto"] == "NA" for r in missing))
+        self.assertEqual(sorted(r["ccy"] for r in e21), ["EUR", "GBP"])
+        self.assertNotIn("MISSING", {r["estado"] for r in e21})
+
+    def _assert_no_leak(self, text, *needles):
+        for needle in needles:
+            self.assertNotIn(needle, text)
+        self.assertNotIn("error_description", text)
+        self.assertNotIn(CANARY, text)
+        self.assertNotIn(CANARY_SECRET, text)
+
+    def test_invalid_grant_logs_status_and_code_only(self):
+        leak = "LEAK_DESC_invalid_grant_body"
+        calls = []
+
+        def http(method, url, headers, body):
+            calls.append(url)
+            return 400, {}, json.dumps({
+                "error": "invalid_grant",
+                "error_description": "Token has been expired or revoked. " + leak,
+            }).encode()
+
+        rc, err = self._run(http)
+        self._assert_rows_unchanged(rc)
+        self.assertEqual(calls, [V.TOKEN_URL])
+        expected = ("Gmail failure (auth) on attempt final. Session 2026-11-13. "
+                    "HTTP 400 oauth_error=invalid_grant")
+        self.assertIn(expected, err)
+        self.assertIn("HTTP 400 oauth_error=invalid_grant", self.sent[0])
+        self._assert_no_leak(err, leak, "expired or revoked")
+        self._assert_no_leak(self.sent[0], leak, "expired or revoked")
+
+    def test_invalid_client_logs_status_and_code_only(self):
+        leak = "LEAK_DESC_invalid_client_body"
+        calls = []
+
+        def http(method, url, headers, body):
+            calls.append(url)
+            return 401, {}, json.dumps({
+                "error": "invalid_client",
+                "error_description": "The OAuth client was not found. " + leak,
+            }).encode()
+
+        rc, err = self._run(http)
+        self._assert_rows_unchanged(rc)
+        self.assertEqual(len(calls), 1)
+        expected = ("Gmail failure (auth) on attempt final. Session 2026-11-13. "
+                    "HTTP 401 oauth_error=invalid_client")
+        self.assertIn(expected, err)
+        self.assertIn("HTTP 401 oauth_error=invalid_client", self.sent[0])
+        self._assert_no_leak(err, leak, "OAuth client was not found")
+        self._assert_no_leak(self.sent[0], leak, "OAuth client was not found")
+
+    def test_unparseable_body_is_unknown_and_does_not_leak(self):
+        raw = b"<html>LEAK_RAW_TOKEN_BODY error_description=super-secret-phrase not-json"
+        calls = []
+
+        def http(method, url, headers, body):
+            calls.append(url)
+            return 400, {}, raw
+
+        rc, err = self._run(http)
+        self._assert_rows_unchanged(rc)
+        self.assertEqual(len(calls), 1)
+        expected = ("Gmail failure (auth) on attempt final. Session 2026-11-13. "
+                    "HTTP 400 oauth_error=unknown")
+        self.assertIn(expected, err)
+        self.assertIn("HTTP 400 oauth_error=unknown", self.sent[0])
+        self._assert_no_leak(err, "LEAK_RAW_TOKEN_BODY", "super-secret-phrase",
+                             "not-json", "<html>")
+        self._assert_no_leak(self.sent[0], "LEAK_RAW_TOKEN_BODY", "super-secret-phrase",
+                             "not-json", "<html>")
+        with self.assertRaises(V.GmailError) as caught:
+            V.fetch_messages("cid", "sec", "ref", http, sleep=lambda _s: None)
+        self.assertEqual(caught.exception.kind, "auth")
+        self.assertEqual(caught.exception.status, 400)
+        self.assertEqual(caught.exception.oauth_error, "unknown")
+        self._assert_no_leak(str(caught.exception), "LEAK_RAW_TOKEN_BODY",
+                             "super-secret-phrase", "<html>")
+
+    def test_non_whitelisted_error_field_is_unknown_and_does_not_leak(self):
+        raw_code = "invalid_grant LEAK_BAD_CODE"
+        calls = []
+
+        def http(method, url, headers, body):
+            calls.append(url)
+            return 400, {}, json.dumps({
+                "error": raw_code,
+                "error_description": "full body should stay off the log LEAK_BAD_DESC",
+            }).encode()
+
+        rc, err = self._run(http)
+        self._assert_rows_unchanged(rc)
+        self.assertEqual(len(calls), 1)
+        self.assertIn("oauth_error=unknown", err)
+        self.assertNotIn("oauth_error=invalid_grant", err)
+        self._assert_no_leak(err, raw_code, "LEAK_BAD_CODE", "LEAK_BAD_DESC",
+                             "full body should stay off the log")
+        self._assert_no_leak(self.sent[0], raw_code, "LEAK_BAD_CODE", "LEAK_BAD_DESC",
+                             "full body should stay off the log")
+
+    def test_list_api_error_does_not_emit_an_oauth_code(self):
+        leak = "LEAK_LIST_BODY_not_for_the_log"
+
+        def http(method, url, headers, body):
+            if "oauth2.googleapis.com" in url:
+                return 200, {}, b'{"access_token":"access"}'
+            return 503, {}, json.dumps({
+                "error": "invalid_grant",
+                "error_description": leak,
+            }).encode()
+
+        rc, err = self._run(http)
+        self.assertEqual(rc, 1)
+        self.assertEqual(
+            err.strip(),
+            "Gmail failure (api) on attempt final. Session 2026-11-13.",
+        )
+        self.assertNotIn("oauth_error", err)
+        self.assertNotIn("oauth_error", self.sent[0])
+        self._assert_no_leak(err, leak, "invalid_grant")
+        self._assert_no_leak(self.sent[0], leak, "invalid_grant")
 
 
 class Weekend(unittest.TestCase):

@@ -22,3 +22,13 @@ Tests ya existentes, `docs/index.html`, Pine, `scripts/cme_fxvol_shadow.py`, umb
 
 ## Siguiente
 Sander crea los tres secretos (pasos en la descripción del PR, sin valores) y fusiona. El §08 no se construye hasta 250 sesiones.
+
+## 14-nov-2026 — orden de Sander (10:34 WAT)
+
+14-nov-2026: por orden de Sander (10:34 WAT) se retiran una sola vez las 104 filas de la prueba manual del 13-nov (commit 1d19f91, run 43577055363, fallo de autenticación OAuth de Gmail). La regla de solo añadir rige desde la primera pasada buena.
+
+El mismo orden pide el código OAuth en el fallo del token. Cuando `https://oauth2.googleapis.com/token` no es 2xx, stderr y Telegram llevan el estado HTTP y el campo JSON `error`, solo si coincide con `^[a-z_]{1,40}$`; si no, `unknown`. No se escribe `error_description` ni el cuerpo. Filas `MISSING`, E21, códigos de salida y reintentos quedan igual. El código de solo añadir no se debilita. Ningún test ya existente se edita. Ningún fichero con SHA-256 congelado en `tests/` cambia, así que SALUD-1 no actualiza ningún hash.
+
+`data/votes_weekly.json` se regenera desde el CSV resultante. El ingestor reescribe ese informe en cada pasada; no se borra. El informe anterior ya tenía 0 días completos, porque una sesión `MISSING` no cuenta. `generated_utc` pasa a `2026-11-14T09:45:34Z`.
+
+`test_cli_dry_run_prints_rows` ya fallaba en `main`: afirma que `data/votes.csv` no existe, y el commit `1d19f91` creó el fichero. La orden deja la cabecera, así que el fichero sigue existiendo. Ese test no se edita.

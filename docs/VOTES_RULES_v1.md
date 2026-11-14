@@ -7,6 +7,8 @@ Aprobado por Sander (FAMILIAS-00, 14-nov-2026 00:18 WAT; fallo de Gmail, 14-nov-
 
 `data/votes.csv` solo crece. Una fila ya escrita no se reordena ni se reescribe. Una corrección, si llega a hacerla una persona, es una fila nueva; el ingestor no la genera solo: si `(fecha_cierre, script, ccy)` ya existe, no añade otra.
 
+14-nov-2026: por orden de Sander (10:34 WAT) se retiran una sola vez las 104 filas de la prueba manual del 13-nov (commit 1d19f91, run 43577055363, fallo de autenticación OAuth de Gmail). La regla de solo añadir rige desde la primera pasada buena.
+
 Columnas, en este orden: `fecha_cierre`, `script`, `version`, `ccy`, `estado`, `valor`, `voto`, `stale`, `snapshot_id`, `hora_recepcion_utc`, `id_correo`, `bar_close_ms`, `family`, `parts_expected`, `parts_received`, `rule_version`.
 
 `voto` es `+1`, `0`, `-1` o `NA`. `0` es un script direccional FRESH en estado neutro. `NA` es ausencia de voto. `NA` no se rellena con `0` ni con el valor del día anterior.
@@ -78,6 +80,8 @@ Divisas de los módulos de correo: USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF. Edici
 ## Fallo de Gmail
 
 Secreto ausente, secreto inválido, error de autenticación, o error de API después de 3 intentos: el intento final marca el módulo que todavía no tiene fila como `MISSING`, `voto=NA`, una fila por módulo y divisa. E21 se escribe igual, con la regla de abajo. Se envía un solo aviso de Telegram con `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. El texto no lleva ningún secreto ni el cuerpo de la respuesta HTTP. El job sale distinto de cero. En el intento de las 04:00 WAT no se escriben esas filas `MISSING`.
+
+Si `https://oauth2.googleapis.com/token` responde con un código que no es 2xx, el stderr y el Telegram añaden el estado HTTP y el campo JSON `error` (el código OAuth de Google, por ejemplo `invalid_grant`, `invalid_client`, `unauthorized_client`, `invalid_request`). Ese valor se escribe solo si coincide con `^[a-z_]{1,40}$`. Si el cuerpo no se puede leer, o el campo no cumple el patrón, se escribe `unknown`. No se escribe `error_description` ni ninguna otra parte del cuerpo. Los reintentos no cambian: 400 y 401 salen en el primer intento; 429 y 5xx siguen hasta tres intentos.
 
 ## E21
 
