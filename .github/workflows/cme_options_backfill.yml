@@ -7,7 +7,8 @@
 # Download (dry_run=false): 24 chunks × 12 parents × 2 schemas = 576 get_range calls,
 # plus the same ranges quoted first (3 metadata calls each).
 # Each chunk is committed on its own:
-#   data: cme options backfill <YYYY-MM> [skip netlify]
+#   download:  data: cme options backfill <YYYY-MM> [skip netlify]
+#   cost-only: data: cme options backfill cost-only <YYYY-MM> [skip netlify]
 # A month recorded complete in data/options/backfill_report.json is skipped.
 # Stop starting new chunks after 320 min so the job stays inside timeout-minutes: 360.
 # Relaunch resumes. Cumulative get_cost above 35 USD downloads nothing for that chunk,
@@ -68,7 +69,11 @@ jobs:
               echo "No backfill output to commit for ${month}."
               return 0
             fi
-            git commit -m "data: cme options backfill ${month} [skip netlify]"
+            if [ "$mode" = "--dry-run" ]; then
+              git commit -m "data: cme options backfill cost-only ${month} [skip netlify]"
+            else
+              git commit -m "data: cme options backfill ${month} [skip netlify]"
+            fi
             bash scripts/tools/git_push_retry.sh 5
           }
           for month in $(python scripts/cme_options_backfill.py --list-months); do

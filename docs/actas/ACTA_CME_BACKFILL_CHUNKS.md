@@ -31,3 +31,29 @@ Suite `python3 -m unittest discover -s tests -p 'test_*.py'` sobre `main` ya con
 
 ## Siguiente
 Sander fusiona y lanza el workflow a mano, primero en dry-run. La descarga solo con `dry_run=false`. Si el acumulado más el chunk siguiente pasa de 35 USD, ese chunk no se baja, el job queda rojo (rc 3) y lo ya subido permanece.
+
+## Nota 14-nov-2026 16:55 WAT
+
+**Orden:** Sander, 14-nov-2026 16:55 WAT. Un solo PR contra `main`. No se fusiona. No se modifica ningún test ya existente. No se toca el colector, el tope ni el troceo.
+
+### Hallazgo
+`lookup_commit_shas()` hacía `git log` con el directorio del fichero (`ROOT`, el checkout del proceso), no con el directorio de datos que recibe el script. En un temporal de prueba, que no es un repo, igual encontraba el historial real.
+
+El 14-nov-2026 el run [43606084284](https://github.com/sanderdayan1982/g8-macro-pipeline/actions/runs/43606084284) (`workflow_dispatch`, `createdAt` 2026-11-14T14:40:27Z, `conclusion` success, `headSha` `26749feaf0e943cceac04e719c190eded67a520e`; comprobado en GitHub el 14-nov-2026) fue cost-only. Dejó 24 commits, de `bcf4d70edf4a8de1b3282a6de18ddee899099dde` (`data: cme options backfill 2024-06 [skip netlify]`, 2026-11-14 14:41:48 +0000) a `f10a81fb4092cdfdf896dc53a0c6c4162e36eb9b` (`2026-05`, 2026-11-14 15:10:09 +0000). El mensaje es el de descarga. En cada uno de esos 24 commits el informe tiene `dry_run` true y ningún chunk con `complete` true (comprobado con `git show <sha>:data/options/backfill_report.json` el 14-nov-2026). `tests/test_cme_options_backfill_chunks.py::ChunkCalls::test_one_month_is_one_range_per_parent_per_schema` exige `committed_sha is None` y fallaba porque el lookup devolvía `bcf4d70`.
+
+El informe que está en `main` (`data/options/backfill_report.json`) ya cita 23 de esos shas en chunks con `complete` false. `2026-05` sigue en `null` porque ese commit no podía citarse a sí mismo. Este PR no reescribe ese fichero.
+
+### Decisión
+- `lookup_commit_shas()` y `apply_commit_shas()` leen git solo en el work tree del directorio de datos (`report_path` / `out_dir`). Si ese camino no tiene `.git`, devuelven cero shas y no fallan. No se usa el repo ambiente ni `GIT_DIR`.
+- Con `dry_run=true` el workflow commitea `data: cme options backfill cost-only <YYYY-MM> [skip netlify]`. La descarga sigue en `data: cme options backfill <YYYY-MM> [skip netlify]`. Un parón por tiempo en dry-run usa el mismo prefijo (`cost-only time-budget`); en descarga el mensaje sigue siendo `data: cme options backfill time-budget [skip netlify]`.
+- El lookup solo acepta el mensaje de descarga, y solo si en ese commit el chunk del mes tiene `complete` true. Un mensaje `cost-only` no entra aunque el chunk estuviera completo. Los 24 commits del run 43606084284 se ignoran por `complete` false: se puede hacer con esa comprobación, y se hace. No hace falta otro criterio.
+- Si el scan del repo sale bien, un chunk incompleto solo conserva `committed_sha` cuando el lookup tiene un commit de descarga de ese mes. Así la siguiente pasada sobre este repo suelta los 23 shas de cost-only, y una descarga posterior no se los queda por el upsert. Si el directorio no es un repo, los shas que ya estaban escritos no se tocan.
+- Ningún fichero con SHA-256 congelado cambia. SALUD-1 no reescribe ninguna huella.
+
+### Sin cambios
+`scripts/cme_options_collector.py`, el tope de 35 USD, las ventanas, el número de llamadas y los tests que ya existían. No se llama a Databento. No se dispara el workflow. No se fusiona el PR.
+
+### Pruebas
+`tests/test_cme_options_backfill_commit_scope.py` (nuevo): el mensaje cost-only del workflow, el lookup ignora cost-only y los commits llanos con `complete` false, el lookup queda en el repo de trabajo (y no sigue `GIT_DIR`), y una descarga no hereda el sha de un commit llano incompleto.
+
+Suite `python -m pytest -q tests` (14-nov-2026): 971 passed, 6 skipped, 0 failed. Verde. `bash scripts/tools/validate_smoke.sh`: 977 tests, skipped=6, OK (YAML, registry, JS y brief en seco incluidos). No se llamó a Databento.
