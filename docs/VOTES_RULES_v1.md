@@ -11,6 +11,8 @@ Aprobado por Sander (FAMILIAS-00, 14-nov-2026 00:18 WAT; fallo de Gmail, 14-nov-
 
 `data/votes.csv` solo crece. Una fila ya escrita no se reordena ni se reescribe. Una corrección, si llega a hacerla una persona, es una fila nueva; el ingestor no la genera solo: si `(fecha_cierre, script, ccy)` ya existe, no añade otra.
 
+Si dos pasadas suben `votes.csv` a la vez, `scripts/tools/git_push_retry.sh` no aplica `-X theirs` a ese fichero (orden ORDEN_ENZO_REVISION-TRIPLE-01 bloque 2, 14-nov-2026 19:16 WAT). El resto de ficheros sigue igual. En el conflicto se aborta esa resolución automática, se vuelve a leer el `votes.csv` de main y se añaden solo las filas cuya clave `(fecha_cierre, script, ccy)` no esté ya. Los bytes anteriores quedan como prefijo.
+
 14-nov-2026: por orden de Sander (10:34 WAT) se retiran una sola vez las 104 filas de la prueba manual del 13-nov (commit 1d19f91, run 43577055363, fallo de autenticación OAuth de Gmail). La regla de solo añadir rige desde la primera pasada buena.
 
 Columnas, en este orden: `fecha_cierre`, `script`, `version`, `ccy`, `estado`, `valor`, `voto`, `stale`, `snapshot_id`, `hora_recepcion_utc`, `id_correo`, `bar_close_ms`, `family`, `parts_expected`, `parts_received`, `rule_version`.
@@ -23,11 +25,14 @@ Columnas, en este orden: `fecha_cierre`, `script`, `version`, `ccy`, `estado`, `
 
 | Instante | UTC | Qué hace |
 |---|---|---|
-| Primer intento | 03:00 UTC, mar–sáb | 04:00 WAT. Escribe los módulos completos y E21. No escribe `MISSING` ni `INGEST_INCOMPLETE`: el reintento de las 05:00 WAT sigue pendiente. |
-| Intento final | 04:00 UTC, mar–sáb | 05:00 WAT, antes del corte de las 05:15 WAT (04:15 UTC). Lo que siga ausente queda `MISSING`. |
+| Primer intento | 03:00 UTC, mar–sáb | 04:00 WAT. Escribe los módulos completos y E21. No escribe `MISSING` ni `INGEST_INCOMPLETE`: el intento final sigue pendiente. |
+| Intento final | 04:20 UTC, mar–sáb | 05:20 WAT, después del corte de las 05:15 WAT (04:15 UTC). Antes de escribir `MISSING` lista todas las páginas de la ventana del buzón (`after` el cierre 1D, `before` las 05:15 WAT), así que un correo llegado antes del corte no se pierde. Lo que siga ausente queda `MISSING`. |
+| Festivo sin vela 1D | | Ninguna fila, igual que el fin de semana. Es un cierre completo CME / Nueva York, calculado por regla (no una lista escrita a mano). El informe semanal no lo cuenta como incompleto. |
 | Fin de semana | | Ninguna fila. |
 
-`workflow_dispatch` acepta `session` y `attempt` (`first` o `final`, por defecto `final`).
+El primer intento no cambia de hora. `attempt_for` sigue pasando a `final` a las 05:00 WAT: el test ya existente que fija esa hora no está autorizado en este bloque, y el workflow no lo usa: pasa `--attempt`.
+
+`workflow_dispatch` acepta `session` y `attempt` (`first` o `final`, por defecto `first`).
 
 ## Correo
 
@@ -101,7 +106,9 @@ Si el fichero no se puede leer, no se inventan filas E21. Se dice en stderr.
 
 ## Informe semanal
 
-`data/votes_weekly.json` es un informe, no la tabla. Se reescribe. Un día está completo cuando los 13 módulos tienen todas sus divisas, hay al menos una fila E21, y ninguna fila de esa sesión tiene `estado` `MISSING` o `INGEST_INCOMPLETE`. No se construye el §08. Eso espera a 250 sesiones.
+`data/votes_weekly.json` es un informe, no la tabla. Se reescribe. Un día está completo cuando los 13 módulos tienen todas sus divisas, hay al menos una fila E21, y ninguna fila de esa sesión tiene `estado` `MISSING` o `INGEST_INCOMPLETE`. Un festivo sin vela 1D (cierre completo CME / Nueva York) no es una sesión: no suma un día completo y no entra en `incomplete_sessions`, aunque el CSV tuviera filas de esa fecha. No se construye el §08. Eso espera a 250 sesiones.
+
+La regla del festivo se comprobó el 14-nov-2026 en el calendario de NYSE Group para 2026–2028 (https://ir.theice.com/press/news-details/2025/NYSE-Group-Announces-2026-2027-and-2028-Holiday-and-Early-Closings-Calendar/default.aspx) y en el horario de festivos de CME Group (https://www.cmegroup.com/trading-hours.html). Entran Acción de Gracias, Navidad, el 4 de julio observado y el Viernes Santo. No entran el día después de Acción de Gracias ni Nochebuena (hay vela, cierran antes), ni Columbus Day ni Veterans Day (el mercado abre). El 1 de enero en sábado no se observa (NYSE, 1-ene-2028).
 
 ## Frescura del fichero
 
