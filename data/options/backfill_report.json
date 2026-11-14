@@ -1,0 +1,48 @@
+{
+ "dataset": "GLBX.MDP3",
+ "stype_in": "parent",
+ "symbols": [
+  "EUU.OPT",
+  "JPU.OPT",
+  "GBU.OPT",
+  "ADU.OPT",
+  "CAU.OPT",
+  "CHU.OPT",
+  "6E.FUT",
+  "6J.FUT",
+  "6B.FUT",
+  "6A.FUT",
+  "6C.FUT",
+  "6S.FUT"
+ ],
+ "schemas": [
+  "statistics",
+  "definition"
+ ],
+ "start": "2024-06-01",
+ "end_inclusive": "2026-05-31",
+ "end_exclusive": "2026-06-01",
+ "cap_usd": "35.00",
+ "get_cost_usd": {
+  "statistics": "12.519850283861",
+  "definition": "7.961810432374",
+  "total": "20.481660716235"
+ },
+ "record_count": {
+  "statistics": "168038586",
+  "definition": "9670734"
+ },
+ "billable_size": {
+  "statistics": "13443086880",
+  "definition": "5028781680"
+ },
+ "actual_cost_usd": null,
+ "actual_cost_note": "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount.",
+ "origin_marker": "column origin=backfill appended to canonical CSVs (named-column readers unchanged)",
+ "sessions_added": [],
+ "sessions_skipped": [],
+ "holidays": [],
+ "blocked": false,
+ "dry_run": true,
+ "reason": "cost-only default: no timeseries.get_range call"
+}
