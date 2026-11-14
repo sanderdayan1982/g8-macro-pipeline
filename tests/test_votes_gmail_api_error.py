@@ -1,6 +1,8 @@
-"""Gmail API read non-2xx: whitelisted reason and status, no body.
+"""Gmail API read 401/403: whitelisted reason and status, no body.
 
-Orden de Sander 14-nov-2026 15:47 WAT. The token exchange is unchanged.
+Orden de Sander 14-nov-2026 15:47 WAT, narrowed 16:08 WAT (option A):
+the suffix is appended only for HTTP 401 or 403 on the read. The token
+exchange is unchanged, and a 503 keeps the previous log line.
 """
 import contextlib
 import csv
@@ -53,7 +55,7 @@ def _gmail_body(reason=None, status=None, include_reason=True, include_status=Tr
 
 
 class GmailApiErrorFields(unittest.TestCase):
-    """Gmail read non-2xx. Token exchange stays on oauth_error only."""
+    """Gmail read 401/403. Token exchange and 5xx stay on the previous text."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -203,6 +205,53 @@ class GmailApiErrorFields(unittest.TestCase):
         self.assertEqual(caught.exception.gmail_status, "none")
         self.assertNotIn("LEAK_RAW_GMAIL_BODY", str(caught.exception))
         self.assertNotIn("<html>", str(caught.exception))
+
+    def test_503_log_line_and_telegram_stay_unchanged(self):
+        leak = "LEAK_503_BODY_not_for_the_log"
+        body = json.dumps({
+            "error": {
+                "errors": [{
+                    "domain": "global",
+                    "reason": "backendError",
+                    "message": leak,
+                }],
+                "code": 503,
+                "message": leak,
+                "status": "UNAVAILABLE",
+            },
+        }).encode("utf-8")
+        http = self._http(503, body, headers={"X-Debug": LEAK_HEADER})
+        rc, err = self._run(http)
+        self._assert_rows(rc)
+        self.assertEqual(
+            err.strip(),
+            "Gmail failure (api) on attempt final. Session 2026-11-13.",
+        )
+        self.assertNotIn("gmail_reason", err)
+        self.assertNotIn("gmail_status", err)
+        self.assertNotIn("oauth_error", err)
+        self.assertIn("http_status=503", self.sent[0])
+        self.assertNotIn("gmail_reason", self.sent[0])
+        self.assertNotIn("gmail_status", self.sent[0])
+        self.assertNotIn("oauth_error", self.sent[0])
+        self.assertNotIn("HTTP 503", err)
+        self.assertNotIn("HTTP 503", self.sent[0])
+        self._assert_no_leak(err)
+        self._assert_no_leak(self.sent[0])
+        self.assertNotIn(leak, err)
+        self.assertNotIn(leak, self.sent[0])
+        self.assertNotIn("backendError", err)
+        self.assertNotIn("UNAVAILABLE", err)
+        self.assertNotIn("backendError", self.sent[0])
+        self.assertNotIn("UNAVAILABLE", self.sent[0])
+        with self.assertRaises(V.GmailError) as caught:
+            V.fetch_messages("cid", "sec", "ref", http, sleep=lambda _s: None)
+        self.assertEqual(caught.exception.kind, "api")
+        self.assertEqual(caught.exception.status, 503)
+        self.assertIsNone(caught.exception.gmail_reason)
+        self.assertIsNone(caught.exception.gmail_status)
+        self.assertNotIn(leak, str(caught.exception))
+        self.assertNotIn("backendError", str(caught.exception))
 
 
 if __name__ == "__main__":
