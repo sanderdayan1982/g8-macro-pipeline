@@ -25,4 +25,22 @@ El único test ya existente que cambia es la aserción de `tests/test_cme_option
 `tests/test_cme_options_backfill_revision_triple.py` (nuevo): la regla de `complete`, el cierre de calendario frente a `no records`, la reserva ya escrita cuando llega `get_range`, el bloqueo hasta reconciliar (`release` y `spent`, este último una sola vez), el tope `spent + reserved + chunk` (35.00 descarga, 35.01 no, y por encima no se reserva), `write_report` atómico, y `--list-skipped` sin llamada a Databento.
 
 ## Siguiente
-Sander fusiona si acepta los puntos 3 y 4 como no aplicados. Para listar meses con `skipped` cuando el backfill en curso termine, sin Databento: `python scripts/cme_options_backfill.py --list-skipped`.
+Con los puntos 1, 2 y 5 el PR #30 queda completo. No se fusiona en esta nota. Para listar meses con `skipped` cuando el backfill en curso termine, sin Databento: `python scripts/cme_options_backfill.py --list-skipped`.
+
+El punto 3 queda como mejora futura (ver la nota de las 19:53). Hace falta una orden nueva antes de tocar los cinco tests que hoy exigen `complete` true con `committed_sha` None, o un sha que no está en `main`.
+
+## Nota 14-nov-2026 19:53 WAT
+
+**Decisión de Sander.** Los puntos 1, 2 y 5 bastan: el PR #30 está completo. No se toca `data/` ni ningún test en esta nota.
+
+**Punto 4, no aplicado.** La ventana del mes sigue cerrando a las 06:00 UTC del siguiente día hábil. Sander acepta el argumento del open interest: Databento filtra `end` por `ts_recv`, el OI de la última sesión llega ~01:44 UTC de ese hábil siguiente (el colector no la da por disponible hasta las 03:30 UTC), y el mes siguiente no escribe la sesión anterior. Un corte a las 00:00 perdería esas estadísticas. El solape de las primeras 6 h del mes siguiente es ese tramo.
+
+**Punto 3, aplazado.** Un chunk pasará a `complete` solo cuando su `committed_sha` exista en `main`, para que un push fallido no cobre el rango dos veces. No se implementa ahora. Los cinco tests no se tocan:
+
+1. `tests/test_cme_options_backfill_chunks.py` `test_one_month_is_one_range_per_parent_per_schema`, línea 223 (`complete` true).
+2. El mismo test, línea 227 (`committed_sha` es None).
+3. `test_existing_session_inside_an_incomplete_month_is_not_overwritten`, línea 274 (`complete` true sin sha en `main`).
+4. `tests/test_cme_options_backfill_commit_scope.py` `test_download_does_not_inherit_a_plain_cost_only_sha`, líneas 262-263 (`complete` true y `committed_sha` None).
+5. `test_complete_month_skips_http`: el sha guardado es `abc123` y no es un commit de `main`; exigir el sha ahí volvería a pedir el mes.
+
+Mejora futura: cuando haya orden de editar esos cinco tests, `complete` (y el salto de un mes ya hecho) solo si el sha empujado está en `main`.
