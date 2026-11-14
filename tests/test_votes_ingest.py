@@ -179,7 +179,7 @@ class HappyPath(unittest.TestCase):
         self.assertEqual(rows[("EQF_G8", "EUR")]["valor"], "0.3")
         pos = rows[("POS_G8", "EUR")]
         self.assertEqual((pos["estado"], pos["valor"], pos["voto"]), ("CROWD SHORT", "-2.665", "NA"))
-        self.assertTrue(all(r["rule_version"] == "1" for r in rows.values()))
+        self.assertTrue(all(r["rule_version"] == "2" for r in rows.values()))  # orden expresa de Sander 14-nov-2026 (t158u): rule_version 2
         self.assertTrue(all(r["family"] == V.FAMILIES[r["script"]] for r in rows.values()))
         self.assertNotIn(("RISK_G8", "EUR"), rows)
 

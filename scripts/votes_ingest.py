@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import os
@@ -81,7 +82,7 @@ GMAIL_QUERY = 'from:noreply@tradingview.com subject:"Alert:" -subject:"G8-COLLEC
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 LIST_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
-RULE_VERSION = "1"
+RULE_VERSION = "2"  # orden expresa de Sander 14-nov-2026 (t158u): FRESH_PROXY counts as fresh
 RETRIES = 3
 # Pause between consecutive messages.get calls. Orden Sander 14-nov-2026 16:28 WAT.
 MESSAGES_GET_PAUSE_S = 0.15
@@ -421,17 +422,23 @@ def _ffva_valor(kv, ccy):
 
 
 def _vote(name, ccy, kv, estado, status, bar_stale):
-    """→ (voto, stale). NA is never rewritten to 0."""
-    stale = bool(bar_stale) or (status is not None and status != "FRESH")
+    """→ (voto, stale). NA is never rewritten to 0.
+
+    FRESH_PROXY is fresh for the stale flag only. IYDT_2Y, IYDT_10Y, FFVA_G8
+    and POL_G8 keep voto NA, the same as a non-FRESH status did before.
+    Orden de Sander 14-nov-2026 (t159u).
+    """
+    proxy = status == "FRESH_PROXY"
+    stale = bool(bar_stale) or (status is not None and status not in ("FRESH", "FRESH_PROXY"))
     if name in ALWAYS_NA:
         return "NA", stale
     if name in ("IYDT_2Y", "IYDT_10Y"):
-        if stale:
-            return "NA", True
+        if stale or proxy:
+            return "NA", stale
         return IYDT_BANDS.get(estado, "NA"), False
     if name == "FFVA_G8":
         roll = kv.get("%s_ROLL" % ccy, "")
-        if stale or roll == "YES" or estado == "STALE":
+        if stale or proxy or roll == "YES" or estado == "STALE":
             return "NA", stale or estado == "STALE"
         if estado in ("ACCUM", "SC"):
             return "+1", False
@@ -444,7 +451,7 @@ def _vote(name, ccy, kv, estado, status, bar_stale):
         eligible = kv.get("%s_CLASS_ELIGIBLE" % ccy, "")
         counted = kv.get("%s_REPRICE_COUNTED" % ccy, "")
         direction = kv.get("%s_NOW_DIRECTION" % ccy, "")
-        if stale or eligible != "YES":
+        if stale or proxy or eligible != "YES":
             return "NA", stale
         if counted == "NONE":
             return "0", False
@@ -498,9 +505,50 @@ def _sent_ms(kv):
     return int(raw) if str(raw).isdigit() else -1
 
 
-def _part_no(kv):
-    raw = kv.get("PART", "")
-    return int(raw) if str(raw).isdigit() else None
+# ASCII integer of 1 or 2 digits, then a range check. Orden t159u.
+_ASCII_PART_RE = re.compile(r"^[0-9]{1,2}$")
+_PARTS_MAX = 64
+
+
+def _ascii_part_int(raw):
+    """1–2 ASCII digits, or None. Rejects signs, garbage, and non-ASCII digits."""
+    if isinstance(raw, bool) or not isinstance(raw, str):
+        return None
+    if _ASCII_PART_RE.fullmatch(raw) is None:
+        return None
+    return int(raw)
+
+
+def _declared_parts_n(raw):
+    """PARTS as an ASCII integer in 1..64, or None."""
+    n = _ascii_part_int(raw)
+    if n is None or n < 1 or n > _PARTS_MAX:
+        return None
+    return n
+
+
+def mail_id_digest(gmail_id):
+    """sha256 hex of a Gmail message id, first 16 characters. Never the raw id."""
+    return hashlib.sha256(gmail_id.encode("utf-8")).hexdigest()[:16]
+
+
+def format_mail_ids(raw_ids):
+    """Each id hashed, then sorted and joined with ';'. Empty stays empty."""
+    digests = [mail_id_digest(item) for item in raw_ids if item]
+    return ";".join(sorted(set(digests)))
+
+
+def _payload_line(body):
+    """The G8 payload line, without a trailing CR. Empty when the body is not a vote mail."""
+    if not body:
+        return ""
+    start = body.find("G8|")
+    if start < 0:
+        return ""
+    line = body[start:].splitlines()[0]
+    if line.endswith("\r"):
+        line = line[:-1]
+    return line
 
 
 def _merge_parts(parts):
@@ -518,45 +566,134 @@ def _merge_parts(parts):
     return merged, conflict
 
 
-def _incomplete(spec, parts_by_no, merged_parts_declared, batch_error, conflict, transport_bad):
-    if transport_bad or batch_error or conflict:
-        return True
-    declared = spec["parts"]
-    if merged_parts_declared is not None and merged_parts_declared != declared:
-        return True
-    wanted = set(range(1, declared + 1))
-    return set(parts_by_no) != wanted
+def _span_exact(numbers, n):
+    """True when `numbers` is exactly the integers 1..n, once each.
+
+    Count, min, max, and uniqueness. Does not allocate a list of size n.
+    """
+    seen = set()
+    lo = None
+    hi = None
+    for number in numbers:
+        if number in seen:
+            return False
+        seen.add(number)
+        if lo is None or number < lo:
+            lo = number
+        if hi is None or number > hi:
+            hi = number
+    return len(seen) == n and lo == 1 and hi == n
+
+
+def _missing_parts(seen, n):
+    """Part numbers in 1..n that were not received. n is at most 64."""
+    missing = []
+    i = 1
+    while i <= n:
+        if i not in seen:
+            missing.append(i)
+        i += 1
+    return missing
 
 
 def _snapshot_incomplete_reason(name, part_items):
+    """→ (incomplete, merged, received, declared_n, detail).
+
+    `part_items` is a list of (mail, kv, payload_line). Duplicate PART copies
+    are compared on that line before any MESSAGE_ID dedup. declared_n is the
+    PARTS integer when every copy declares the same value in 1..64.
+    Monolithic modules do not declare PARTS; declared_n is the reference count.
+    """
     spec = MODULE[name]
+    empty = {"missing": [], "extra": [], "reason": ""}
     if spec["monolithic"]:
-        return False, part_items[-1][1], 1
+        return False, part_items[-1][1], 1, spec["parts"], empty
     transport_bad = False
     batch_error = False
-    declared = None
-    by_no = {}
-    ordered = []
-    for _mail, kv in part_items:
+    dup_conflict = False
+    by_part = {}
+    for mail, kv, line in part_items:
         if kv.get("TRANSPORT") != "G8_PARTS_V1" or kv.get("TRANSPORT_REV") not in ("1.2", "1.3"):
             transport_bad = True
         if kv.get("BATCH_STATUS") == "ERROR":
             batch_error = True
-        if str(kv.get("PARTS", "")).isdigit():
-            n = int(kv["PARTS"])
-            if declared is None:
-                declared = n
-            elif declared != n:
-                transport_bad = True
-        number = _part_no(kv)
+        key = kv.get("PART", "")
+        if not isinstance(key, str):
+            key = str(key)
+        bucket = by_part.setdefault(key, [])
+        if bucket and any(prev != line for _m, _kv, prev in bucket):
+            dup_conflict = True
+        elif not bucket:
+            pass
+        bucket.append((mail, kv, line))
+    # Identical copies collapse to one. A differing copy was flagged above and
+    # is not allowed to replace the earlier one.
+    unique = []
+    for copies in by_part.values():
+        unique.append(copies[0])
+    declared = None
+    parts_bad = False
+    parts_disagree = False
+    for _mail, kv, _line in unique:
+        n = _declared_parts_n(kv.get("PARTS", ""))
+        if n is None:
+            parts_bad = True
+        elif declared is None:
+            declared = n
+        elif declared != n:
+            parts_disagree = True
+    if parts_bad or parts_disagree:
+        declared_n = None
+    else:
+        declared_n = declared
+    extra = []
+    bad_part = False
+    in_range = []
+    for _mail, kv, _line in unique:
+        number = _ascii_part_int(kv.get("PART", ""))
         if number is None:
-            transport_bad = True
+            bad_part = True
+            continue
+        if declared_n is None:
+            continue
+        if number < 1 or number > declared_n:
+            extra.append(number)
         else:
-            by_no[number] = kv
-        ordered.append(kv)
-    merged, conflict = _merge_parts(ordered)
-    bad = _incomplete(spec, by_no, declared, batch_error, conflict, transport_bad)
-    return bad, merged, len(by_no)
+            in_range.append(number)
+    extra = sorted(set(extra))
+    seen = set(in_range)
+    missing = _missing_parts(seen, declared_n) if declared_n is not None else []
+    span_ok = (
+        declared_n is not None and not extra and not bad_part
+        and _span_exact(in_range, declared_n)
+    )
+    merged, conflict = _merge_parts([kv for _mail, kv, _line in unique])
+    if dup_conflict:
+        reason = "dup_conflict"
+    elif parts_bad:
+        reason = "bad_parts"
+    elif parts_disagree:
+        reason = "parts_disagree"
+    elif bad_part:
+        reason = "bad_part"
+    elif transport_bad:
+        reason = "transport"
+    elif batch_error:
+        reason = "batch_error"
+    elif conflict:
+        reason = "conflict"
+    elif missing and extra:
+        reason = "gap"
+    elif extra:
+        reason = "extra"
+    elif missing or not span_ok:
+        reason = "missing"
+    else:
+        reason = ""
+    bad = reason != ""
+    received = len(seen)
+    detail = {"missing": missing, "extra": extra, "reason": reason}
+    return bad, merged, received, declared_n, detail
 
 
 def rows_from_messages(messages, session, write_missing):
@@ -587,19 +724,16 @@ def rows_from_messages(messages, session, write_missing):
             continue
         mail_id = str(mail.get("id") or "")
         when = parse_when(mail.get("date"))
-        item = ({"id": mail_id, "date": when}, kv)
+        item = ({"id": mail_id, "date": when}, kv, _payload_line(mail.get("body") or ""))
         if name in MONOLITHIC:
             key = (name, bar_ms)
             prev = mono.get(key)
             if prev is None or _sent_ms(kv) >= _sent_ms(prev[1]):
                 mono[key] = item
             continue
-        dedup = kv.get("MESSAGE_ID") or "%s#%s" % (kv.get("SNAPSHOT_ID", ""), kv.get("PART", ""))
+        # Keep every copy. Duplicate PART content is judged before MESSAGE_ID dedup.
         snap = kv.get("SNAPSHOT_ID") or "%s:%s:%s" % (name, bar_ms, _sent_ms(kv))
-        bucket = grouped.setdefault(name, {}).setdefault(bar_ms, {}).setdefault(snap, {})
-        prev = bucket.get(dedup)
-        if prev is None or _sent_ms(kv) >= _sent_ms(prev[1]):
-            bucket[dedup] = item
+        grouped.setdefault(name, {}).setdefault(bar_ms, {}).setdefault(snap, []).append(item)
 
     chosen = {}
     for (name, bar_ms), item in mono.items():
@@ -607,10 +741,11 @@ def rows_from_messages(messages, session, write_missing):
     for name, bars in grouped.items():
         best = None
         for bar_ms, snaps in bars.items():
-            for snap_id, deduped in snaps.items():
-                items = list(deduped.values())
-                sent = max(_sent_ms(kv) for _m, kv in items)
-                rank = (sent, snap_id)
+            for snap_id, items in snaps.items():
+                bad, _merged, _received, _declared, _detail = _snapshot_incomplete_reason(name, items)
+                sent = max(_sent_ms(kv) for _m, kv, _line in items)
+                # Prefer a complete snapshot, then the later SENT_MS, then snap_id.
+                rank = (0 if bad else 1, sent, snap_id)
                 if best is None or rank > best[0]:
                     best = (rank, bar_ms, items, snap_id)
         if best:
@@ -618,24 +753,36 @@ def rows_from_messages(messages, session, write_missing):
 
     rows = []
     present = set()
-    for name, _version, parts, _mono in MODULES:
+    for name, _version, _parts, _mono in MODULES:
         if name not in chosen:
             continue
         present.add(name)
         bar_ms, items, snap_id = chosen[name]
-        bad, merged, received = _snapshot_incomplete_reason(name, items)
-        mail_ids = ";".join(sorted({m["id"] for m, _kv in items if m["id"]}))
-        received_at = max((m["date"] for m, _kv in items if m["date"]), default="")
+        bad, merged, received, declared_n, detail = _snapshot_incomplete_reason(name, items)
+        mail_ids = format_mail_ids(m["id"] for m, _kv, _line in items)
+        received_at = max((m["date"] for m, _kv, _line in items if m["date"]), default="")
         version = merged.get("SCRIPT_VERSION") or MODULE[name]["version"]
         bar_stale = bar_ms != expected
+        # Catalog count stays a reference. Rows use the PARTS the mails declared.
+        parts_n = "" if declared_n is None else declared_n
         if bad:
             if not write_missing:
                 present.discard(name)
+                print(
+                    "skip %s incomplete declared=%s missing=%s extra=%s reason=%s" % (
+                        name,
+                        "none" if declared_n is None else declared_n,
+                        detail["missing"],
+                        detail["extra"],
+                        detail["reason"],
+                    ),
+                    file=sys.stderr,
+                )
                 continue
             for ccy in _ccys_for(name):
                 rows.append(_blank_row(
                     session, name, ccy, "INGEST_INCOMPLETE", "NA", bar_stale, snap_id,
-                    received_at, mail_ids, bar_ms, parts, received, version,
+                    received_at, mail_ids, bar_ms, parts_n, received, version,
                 ))
             continue
         for ccy in _ccys_for(name):
@@ -650,7 +797,7 @@ def rows_from_messages(messages, session, write_missing):
             voto, stale = _vote(name, ccy, merged, estado, status, bar_stale)
             rows.append(_blank_row(
                 session, name, ccy, estado, voto, stale, snap_id, received_at, mail_ids,
-                bar_ms, parts, received if name not in MONOLITHIC else 1, version, valor,
+                bar_ms, parts_n, received if name not in MONOLITHIC else 1, version, valor,
             ))
     if write_missing:
         rows.extend(missing_rows(session, names=[n for n, *_ in MODULES if n not in present]))
