@@ -4,6 +4,8 @@ USDF1,USDF,usd_factor.yml,30 15 * * 1-5,,,ACTIVE,"tipos de referencia del BCE + 
 USDF2,USDF,usd_factor.yml,30 17 * * 1-5,,,ACTIVE,"segunda oportunidad del BCE","Existente."
 COT1,COT,g8_port_run.yml,5 21 * * 5,,,ACTIVE,"COT de la CFTC","Existente. CFTC viernes 15:30 ET (19:30Z verano / 20:30Z invierno)."
 COT2,COT,g8_port_run.yml,5 9 * * 6,,,ACTIVE,"segunda oportunidad COT","Existente."
+COT_MON,COT,g8_port_run.yml,5 21 * * 1,,,ACTIVE,"COT del lunes cuando el viernes es festivo en EE.UU.","ORDEN RELOJES-01 A2 (Sander 14-nov-2026 21:47 WAT). CFTC lunes 15:30 ET = 20:30 UTC en invierno. No escribe si la fecha del informe no es nueva."
+COT_TUE,COT,g8_port_run.yml,5 9 * * 2,,,ACTIVE,"reintento del COT del lunes","ORDEN RELOJES-01 A2. No escribe si la fecha del informe no es nueva."
 METALS,METALS,metals_update.yml,0 7 * * 6,,,ACTIVE,"MDP semanal","Existente; tras el COT del viernes."
 METALS_SHADOW,METALS,metals_update.yml,45 22 * * 1-5,,,ACTIVE,"proyección diaria SHADOW del MDP","B2. No sustituye el MDP semanal. 22:45 UTC para no coincidir con el daily de las 21:30."
 ASIA1,ASIA,intraday_fetch.yml,23 0 * * 1-5,,,ACTIVE,"TONA, AONIA, bills AUD y JPY, RY JPY — solo descargas + vigilancia + commit","BoJ publica la base a las 08:50 JST = 23:50Z (manual oficial de la API): primera consulta 33 min después. AONIA/F1 observado disponible entre 21:00Z y 23:50Z."

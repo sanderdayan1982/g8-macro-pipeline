@@ -43,9 +43,17 @@
 #   python3 pos_g8_cot_collector.py            # writes ./data/pos_g8_cot.json
 #   python3 pos_g8_cot_collector.py --probe    # print available columns & exit
 #   python3 pos_g8_cot_collector.py --out path/to/file.json
+# -----------------------------------------------------------------------------
+# v1.1.1 (14-nov-2026) — ORDEN RELOJES-01 A2 (Sander 14-nov-2026 21:47 WAT).
+#   The file is written only when the CFTC report date is strictly newer than
+#   the date already on disk. The same date writes nothing, including
+#   generated_utc. Windows, thresholds and the schema are unchanged.
+#   --metals-after-cot recomputes the weekly metals MDP only after that write
+#   happened on the Monday 21:05 UTC pass or the Tuesday 09:05 UTC retry.
 # =============================================================================
 
 import json
+import subprocess
 import sys
 import urllib.request
 import urllib.error
@@ -441,14 +449,156 @@ def usd_proxy(ccy_rows):
 
 
 # ----------------------------------------------------------------------------
+# WRITE ONLY A NEWER REPORT  (ORDEN RELOJES-01 A2)
+# ----------------------------------------------------------------------------
+# Monday 21:05 UTC and Tuesday 09:05 UTC. Friday and Saturday stay on
+# metals_update.yml; a new Friday report must not recompute the MDP here.
+METALS_COT_PASSES = ("5 21 * * 1", "5 9 * * 2")
+
+
+def parse_report_date(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if len(text) < 10:
+        return None
+    try:
+        return dt.date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def one_report_date(rows):
+    """Every currency and metal row must carry the same report date.
+    A missing date or two dates in one pull is not written."""
+    found = []
+    for row in rows:
+        day = parse_report_date(row.get("report_date") if isinstance(row, dict) else None)
+        if day is None:
+            who = row.get("ccy") if isinstance(row, dict) else None
+            raise ValueError("COT row %s has no report_date; nothing written" % who)
+        found.append(day)
+    if not found:
+        raise ValueError("COT returned no rows; nothing written")
+    distinct = sorted(set(found))
+    if len(distinct) != 1:
+        raise ValueError("mixed COT report dates %s; nothing written" %
+                         [d.isoformat() for d in distinct])
+    return distinct[0]
+
+
+def stored_report_date(path):
+    """Date already on disk, or None when the file is absent.
+    A file that is present but unreadable is an error: it is not replaced."""
+    if not path.exists():
+        return None
+    try:
+        doc = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("COT output %s is unreadable; nothing written (%s)" % (path, exc))
+    if not isinstance(doc, dict):
+        raise ValueError("COT output %s is not a document; nothing written" % path)
+    stored = parse_report_date(doc.get("report_date"))
+    if stored is None:
+        raise ValueError("COT output %s has no report_date; nothing written" % path)
+    return stored
+
+
+def report_is_new(stored, incoming):
+    if incoming is None:
+        return False
+    if stored is None:
+        return True
+    return incoming > stored
+
+
+def commit_cot(path, doc):
+    """Write doc only when its report date is strictly newer than the file.
+    Returns True when the file was written. Any other case leaves the bytes,
+    including generated_utc, untouched."""
+    if not isinstance(doc, dict):
+        raise ValueError("COT document is not an object; nothing written")
+    currencies = doc.get("currencies")
+    metals = doc.get("metals")
+    if not isinstance(currencies, list) or not isinstance(metals, list):
+        raise ValueError("COT document is missing currencies or metals; nothing written")
+    incoming = one_report_date(currencies + metals)
+    header = parse_report_date(doc.get("report_date"))
+    if header != incoming:
+        raise ValueError("document report_date %s does not match rows %s; nothing written" %
+                         (header, incoming.isoformat()))
+    stored = stored_report_date(path)
+    if not report_is_new(stored, incoming):
+        print("COT_RESULT wrote=0 report_date=%s stored=%s" % (
+            incoming.isoformat(), stored.isoformat() if stored is not None else ""))
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, indent=2))
+    print("COT_RESULT wrote=1 report_date=%s" % incoming.isoformat())
+    return True
+
+
+def metals_mdp_command():
+    root = Path(__file__).resolve().parents[1]
+    return [
+        sys.executable,
+        str(root / "scripts" / "tools" / "g8step.py"),
+        "--name", "metals_fairvalue",
+        "--cap", "1080",
+        "--",
+        sys.executable,
+        str(root / "scripts" / "metals_fairvalue_g8.py"),
+    ]
+
+
+def cot_was_written(flag):
+    if flag is True or flag == 1:
+        return True
+    return str(flag).strip().lower() in ("1", "true", "yes")
+
+
+def metals_mdp_due(schedule, cot_wrote):
+    """Weekly metals MDP follows a COT write only on the Monday/Tuesday pass."""
+    return cot_was_written(cot_wrote) and str(schedule or "").strip() in METALS_COT_PASSES
+
+
+def recompute_metals_if_due(schedule, cot_wrote, runner=None):
+    """Run the weekly metals model only when metals_mdp_due is true.
+    Otherwise no output is opened and generated_at stays as it was."""
+    if not metals_mdp_due(schedule, cot_wrote):
+        print("METALS_RESULT recomputed=0")
+        return False
+    if runner is None:
+        rc = subprocess.call(metals_mdp_command())
+        if rc != 0:
+            raise SystemExit(rc)
+    else:
+        runner()
+    print("METALS_RESULT recomputed=1")
+    return True
+
+
+def _opt(args, name):
+    if name not in args:
+        return ""
+    i = args.index(name)
+    if i + 1 >= len(args):
+        return ""
+    return args[i + 1]
+
+
+# ----------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------
-def main():
-    args = sys.argv[1:]
+def main(argv=None):
+    args = list(sys.argv[1:] if argv is None else argv)
     if "--probe" in args:
         probe(DS_TFF)
         probe(DS_DISAGG)
-        return
+        return 0
+    if "--metals-after-cot" in args:
+        recompute_metals_if_due(_opt(args, "--schedule"), _opt(args, "--cot-wrote"))
+        return 0
 
     out_path = Path("data/pos_g8_cot.json")
     if "--out" in args:
@@ -465,8 +615,13 @@ def main():
     for r in ccy_rows:
         r.pop("_z_lf", None); r.pop("_z_am", None)
 
-    report_date = ccy_rows[0]["report_date"] if ccy_rows else None
-    status, age = freshness(report_date) if report_date else ("NA", None)
+    try:
+        report_day = one_report_date(ccy_rows + metal_rows)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    report_date = report_day.isoformat()
+    status, age = freshness(report_date)
 
     doc = {
         "schema": "pos_g8_cot/1.2.0",
@@ -483,11 +638,16 @@ def main():
         "metals": metal_rows,
     }
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(doc, indent=2))
-    print("wrote %s  (report_date=%s, %s, age=%s d)" %
-          (out_path, report_date, status, age))
+    try:
+        wrote = commit_cot(out_path, doc)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    if wrote:
+        print("wrote %s  (report_date=%s, %s, age=%s d)" %
+              (out_path, report_date, status, age))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
