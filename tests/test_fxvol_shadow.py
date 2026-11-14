@@ -17,6 +17,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import cme_fxvol_shadow as FX  # noqa: E402
 
 VECTORS = os.path.join(ROOT, "tests", "fixtures", "fxvol", "FXVOL_test_vectors.json")
+# Canonical de 59be57c7, anterior a aaf244bd. Solo las sesiones que lee el test de abajo.
+PRE_BACKFILL = os.path.join(ROOT, "tests", "fixtures", "fxvol", "pre_backfill")
 SESSIONS = ["2026-08-17", "2026-09-15", "2026-10-30", "2026-11-02", "2026-11-06"]
 CCYS = ["EUR", "JPY", "GBP", "AUD", "CAD", "CHF"]
 JSON_PATH = os.path.join(ROOT, "data", "CME_FXVOL_shadow.json")
@@ -136,8 +138,9 @@ class FxvolShadow(unittest.TestCase):
             })
 
     def test_additive_fields_do_not_recompute_existing_ones(self):
+        # orden expresa de Sander 14-nov-2026 (t161u): fixture congelada pre-backfill
         for session in SESSIONS:
-            out = self.results[session][0]
+            out, _, _ = FX.build(PRE_BACKFILL, session)
             for ccy in CCYS:
                 cur = out["currencies"][ccy]
                 self.assertEqual(cur["rr25_d5"], cur["d_rr"]["1w"], "%s %s" % (session, ccy))
