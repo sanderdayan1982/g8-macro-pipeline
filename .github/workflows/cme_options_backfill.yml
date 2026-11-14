@@ -1,18 +1,26 @@
-# One-shot CME FX options backfill (Databento GLBX.MDP3).
-# workflow_dispatch only. This file does nothing until it is on main and
-# Sander starts it by hand. Do not add a cron: test_p12 would then require a
-# Mac dispatch slot, and a second run would call Databento again.
+# Resumable CME FX options backfill (Databento GLBX.MDP3), one calendar month per commit.
+# workflow_dispatch only. Nothing runs until this file is on main and Sander starts it.
+# Do not add a schedule. test_p12 would then require a Mac dispatch slot.
 #
-# Default input dry_run=true: metadata.get_cost / get_record_count /
-# get_billable_size for 2024-06-01 → 2026-05-31, no timeseries download.
-# Secret: DATABENTO_API_KEY only.
+# Default input dry_run=true: per-chunk metadata.get_cost / get_record_count /
+# get_billable_size for 2024-06 … 2026-05. No timeseries.get_range.
+# Download (dry_run=false): 24 chunks × 12 parents × 2 schemas = 576 get_range calls,
+# plus the same ranges quoted first (3 metadata calls each).
+# Each chunk is committed on its own:
+#   data: cme options backfill <YYYY-MM> [skip netlify]
+# A month recorded complete in data/options/backfill_report.json is skipped.
+# Stop starting new chunks after 320 min so the job stays inside timeout-minutes: 360.
+# Relaunch resumes. Cumulative get_cost above 35 USD downloads nothing for that chunk,
+# writes the report, and exits 3. The loop commits and pushes every chunk that already
+# finished, then exits 3 so the job is red. Earlier commits stay on main.
+# Secret: DATABENTO_API_KEY only. Do not dispatch this workflow from a pull request.
 name: CME options backfill
 
 on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Cost only (get_cost, record count, billable size). No download.'
+        description: 'Cost only (per-chunk get_cost, record count, billable size). No download.'
         type: boolean
         default: true
 
@@ -39,24 +47,48 @@ jobs:
       - name: Install deps
         run: pip install requests
 
-      - name: Quote and maybe download
+      - name: Backfill one calendar month at a time
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            python scripts/cme_options_backfill.py --dry-run
-          else
-            python scripts/cme_options_backfill.py --download
-          fi
-
-      - name: Commit backfill data
-        run: |
+          set -u
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/options/canonical data/options/backfill_report.json
-          if git diff --cached --quiet; then
-            echo "No backfill output to commit."
+          start_s=$(date +%s)
+          budget_s=$((320 * 60))
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            mode="--dry-run"
           else
-            git commit -m "data: cme options backfill $(date -u +%F) [skip netlify]"
-            bash scripts/tools/git_push_retry.sh 5
+            mode="--download"
           fi
+          commit_month() {
+            local month="$1"
+            git add data/options/canonical data/options/backfill_report.json
+            if git diff --cached --quiet; then
+              echo "No backfill output to commit for ${month}."
+              return 0
+            fi
+            git commit -m "data: cme options backfill ${month} [skip netlify]"
+            bash scripts/tools/git_push_retry.sh 5
+          }
+          for month in $(python scripts/cme_options_backfill.py --list-months); do
+            elapsed=$(( $(date +%s) - start_s ))
+            if [ "$elapsed" -ge "$budget_s" ]; then
+              python scripts/cme_options_backfill.py --record-stop "time budget: not starting new chunks after 320 min (job timeout is 360). Relaunch resumes."
+              commit_month "time-budget"
+              echo "time budget reached after ${elapsed}s; relaunch resumes"
+              break
+            fi
+            set +e
+            python scripts/cme_options_backfill.py --month "$month" $mode
+            rc=$?
+            set -e
+            # Push this chunk (or the cap report, which has no new session) before
+            # looking at rc. Months that already finished were pushed on earlier
+            # iterations and are not rewritten.
+            commit_month "$month"
+            if [ "$rc" -ne 0 ]; then
+              echo "chunk ${month} stopped with rc=${rc}; earlier chunks stay pushed; job fails so the stop is visible"
+              exit "$rc"
+            fi
+          done
