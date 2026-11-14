@@ -23,26 +23,59 @@
  "end_inclusive": "2026-05-31",
  "end_exclusive": "2026-06-01",
  "cap_usd": "35.00",
- "get_cost_usd": {
-  "statistics": "12.519850283861",
-  "definition": "7.961810432374",
-  "total": "20.481660716235"
- },
- "record_count": {
-  "statistics": "168038586",
-  "definition": "9670734"
- },
- "billable_size": {
-  "statistics": "13443086880",
-  "definition": "5028781680"
+ "spent_usd": "0",
+ "chunk_budget_s": 19200,
+ "job_timeout_min": 360,
+ "planned_calls": {
+  "chunks": 24,
+  "parents": 12,
+  "schemas": 2,
+  "get_range_per_chunk": 24,
+  "get_range": 576,
+  "metadata_per_chunk": 72,
+  "metadata": 1728
  },
  "actual_cost_usd": null,
- "actual_cost_note": "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount.",
+ "actual_cost_note": "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount. spent_usd sums get_cost of chunks whose download finished.",
  "origin_marker": "column origin=backfill appended to canonical CSVs (named-column readers unchanged)",
+ "dry_run": true,
+ "blocked": false,
+ "stop_loop": false,
+ "reason": "cost-only default: no timeseries.get_range call",
  "sessions_added": [],
  "sessions_skipped": [],
  "holidays": [],
- "blocked": false,
- "dry_run": true,
- "reason": "cost-only default: no timeseries.get_range call"
+ "chunks": [
+  {
+   "month": "2024-06",
+   "get_cost": "0.667543608694",
+   "record_count": "5443395",
+   "billable_size": "589415720",
+   "window_start": "2024-06-03",
+   "window_end": "2024-07-01T06:00:00",
+   "sessions_added": [],
+   "skipped": [],
+   "holidays": [],
+   "committed_sha": null,
+   "complete": false
+  }
+ ],
+ "legacy_whole_range_quote": {
+  "get_cost_usd": {
+   "statistics": "12.519850283861",
+   "definition": "7.961810432374",
+   "total": "20.481660716235"
+  },
+  "record_count": {
+   "statistics": "168038586",
+   "definition": "9670734"
+  },
+  "billable_size": {
+   "statistics": "13443086880",
+   "definition": "5028781680"
+  },
+  "reason": "cost-only default: no timeseries.get_range call",
+  "dry_run": true,
+  "note": "whole-range quote from before monthly chunks. Not spent: no get_range was made."
+ }
 }
