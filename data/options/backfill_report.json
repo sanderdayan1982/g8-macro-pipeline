@@ -23,7 +23,7 @@
  "end_inclusive": "2026-05-31",
  "end_exclusive": "2026-06-01",
  "cap_usd": "35.00",
- "spent_usd": "0",
+ "spent_usd": "0.667543608694",
  "chunk_budget_s": 19200,
  "job_timeout_min": 360,
  "planned_calls": {
@@ -38,13 +38,35 @@
  "actual_cost_usd": null,
  "actual_cost_note": "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount. spent_usd sums get_cost of chunks whose download finished.",
  "origin_marker": "column origin=backfill appended to canonical CSVs (named-column readers unchanged)",
- "dry_run": true,
+ "dry_run": false,
  "blocked": false,
  "stop_loop": false,
- "reason": "cost-only default: no timeseries.get_range call",
- "sessions_added": [],
+ "reason": "",
+ "sessions_added": [
+  "2024-06-03",
+  "2024-06-04",
+  "2024-06-05",
+  "2024-06-06",
+  "2024-06-07",
+  "2024-06-10",
+  "2024-06-11",
+  "2024-06-12",
+  "2024-06-13",
+  "2024-06-14",
+  "2024-06-17",
+  "2024-06-18",
+  "2024-06-20",
+  "2024-06-21",
+  "2024-06-24",
+  "2024-06-25",
+  "2024-06-26",
+  "2024-06-27",
+  "2024-06-28"
+ ],
  "sessions_skipped": [],
- "holidays": [],
+ "holidays": [
+  "2024-06-19"
+ ],
  "chunks": [
   {
    "month": "2024-06",
@@ -53,11 +75,33 @@
    "billable_size": "589415720",
    "window_start": "2024-06-03",
    "window_end": "2024-07-01T06:00:00",
-   "sessions_added": [],
+   "sessions_added": [
+    "2024-06-03",
+    "2024-06-04",
+    "2024-06-05",
+    "2024-06-06",
+    "2024-06-07",
+    "2024-06-10",
+    "2024-06-11",
+    "2024-06-12",
+    "2024-06-13",
+    "2024-06-14",
+    "2024-06-17",
+    "2024-06-18",
+    "2024-06-20",
+    "2024-06-21",
+    "2024-06-24",
+    "2024-06-25",
+    "2024-06-26",
+    "2024-06-27",
+    "2024-06-28"
+   ],
    "skipped": [],
-   "holidays": [],
-   "committed_sha": "bcf4d70edf4a8de1b3282a6de18ddee899099dde",
-   "complete": false
+   "holidays": [
+    "2024-06-19"
+   ],
+   "committed_sha": null,
+   "complete": true
   },
   {
    "month": "2024-07",
@@ -69,7 +113,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "784cd8ed5deb93d78e5cd73c06e937391990fc7a",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -82,7 +126,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "77a218bf652231a7edb24dbd87568ea4ed178ee0",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -95,7 +139,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "745fe9d0c0e704a14a129ba8fb413df4a2acf8aa",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -108,7 +152,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "fb80703ee85ed203cd873c30a11d62fc2af2396a",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -121,7 +165,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "dce91b5db613dc07b9994da189d917828b2559dd",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -134,7 +178,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "f41b1d7f5f0952282cd24c43071e05ca6e5271b4",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -147,7 +191,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "e22b1b2f4a40737a9d555ef6177a039e1d213a38",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -160,7 +204,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "36cc8c96aca2c6c624f8f26508a9a64ac30d617c",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -173,7 +217,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "5640e135f06e2957680bb1e9df359a460275e9cb",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -186,7 +230,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "53e4d0a153632ae0cf40a318a03b55c36aa3a2e1",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -199,7 +243,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "d9c305688883241ebf0db842eeb89d4a9c0ac8bd",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -212,7 +256,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "53e816a6e4f40a1421c3e722b3850bfdec624087",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -225,7 +269,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "eae29c931dbb77009c5fb2ad8b536f47d8f25936",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -238,7 +282,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "5a242421c53170b96a24491a41268f7368c53458",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -251,7 +295,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "b0b5409051d878a205e801af6412a46953675497",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -264,7 +308,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "0bbc950ccdf13e1082e832b7df05ac6383441890",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -277,7 +321,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "363fdecb0f87593acf181575f923a8f16440a0c7",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -290,7 +334,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "f20296904102702dd2d61eef4afecb8bbd58dae7",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -303,7 +347,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "1e8391ceea301bc75ad5426b0efa165ef2410692",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -316,7 +360,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "3299cebd18426e4ee1b14d90ce6c947839bffa0b",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -329,7 +373,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "332ea4de303d1acab4351a74bdc95b28e593cdaa",
+   "committed_sha": null,
    "complete": false
   },
   {
@@ -342,7 +386,7 @@
    "sessions_added": [],
    "skipped": [],
    "holidays": [],
-   "committed_sha": "70e12f3e25a17dd896bdb7a46be84d2ff9dc2b31",
+   "committed_sha": null,
    "complete": false
   },
   {
