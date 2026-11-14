@@ -21,8 +21,8 @@ Resume: a month with chunks[].complete is not requested again. A session directo
 already contains a CSV is never overwritten. Sessions on or after 2026-06-01 are never
 written. spent_usd in the report is the sum of get_cost for chunks whose download finished.
 Before a download, if spent_usd + this chunk's get_cost is above 35.00 USD, the chunk is
-not downloaded (clean exit 0, stop_loop, the report says why). HTTP 402 raises no partial
-session and returns 2.
+not downloaded, the report says why, and the process exits 3 (same non-zero code as the
+original whole-range cap). HTTP 402 raises no partial session and returns 2.
 
 Default is cost-only (no --download): per-chunk metadata table, no get_range.
 Credential: environment variable DATABENTO_API_KEY only.
@@ -903,7 +903,7 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                 write_report(report_path, report)
                 print(reason, file=sys.stderr)
                 _summary(reason)
-                return 0
+                return 3
             if dry_run:
                 entry["complete"] = False
                 _upsert_chunk(report, entry)

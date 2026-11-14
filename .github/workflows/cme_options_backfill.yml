@@ -10,7 +10,9 @@
 #   data: cme options backfill <YYYY-MM> [skip netlify]
 # A month recorded complete in data/options/backfill_report.json is skipped.
 # Stop starting new chunks after 320 min so the job stays inside timeout-minutes: 360.
-# Relaunch resumes. Cumulative get_cost above 35 USD stops before that chunk's download.
+# Relaunch resumes. Cumulative get_cost above 35 USD downloads nothing for that chunk,
+# writes the report, and exits 3. The loop commits and pushes every chunk that already
+# finished, then exits 3 so the job is red. Earlier commits stay on main.
 # Secret: DATABENTO_API_KEY only. Do not dispatch this workflow from a pull request.
 name: CME options backfill
 
@@ -81,14 +83,12 @@ jobs:
             python scripts/cme_options_backfill.py --month "$month" $mode
             rc=$?
             set -e
+            # Push this chunk (or the cap report, which has no new session) before
+            # looking at rc. Months that already finished were pushed on earlier
+            # iterations and are not rewritten.
             commit_month "$month"
             if [ "$rc" -ne 0 ]; then
-              echo "chunk ${month} stopped with rc=${rc}"
+              echo "chunk ${month} stopped with rc=${rc}; earlier chunks stay pushed; job fails so the stop is visible"
               exit "$rc"
-            fi
-            stop_loop=$(python -c 'import json; d=json.load(open("data/options/backfill_report.json")); print("1" if d.get("stop_loop") else "0")')
-            if [ "$stop_loop" = "1" ]; then
-              echo "stop_loop set after ${month}; relaunch resumes. See data/options/backfill_report.json"
-              exit 0
             fi
           done

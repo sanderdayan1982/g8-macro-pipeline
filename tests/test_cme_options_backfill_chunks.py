@@ -291,10 +291,10 @@ class Resume(_Run):
 
 
 class Cap(_Run):
-    def test_cumulative_cap_is_a_clean_exit_before_any_range(self):
+    def test_cumulative_cap_exits_nonzero_before_any_range(self):
         calls = []
         rc = self.main(["--download", "--month", "2024-06"], _header_http(calls, cost=b"2"))
-        self.assertEqual(rc, 0)
+        self.assertEqual(rc, 3)
         self.assertFalse(any("timeseries.get_range" in url for url in calls))
         report = self.load()
         self.assertTrue(report["blocked"])
@@ -339,9 +339,9 @@ class Cap(_Run):
                 raise AssertionError("downloaded past the cap")
             return 200, {}, b"1"
 
-        # 35.00 already spent; next chunk quotes 0.01 → 35.01
+        # 35.00 already spent; next chunk quotes 0.01 → 35.01. Same rc as the original cap.
         rc = self.main(["--download", "--month", "2024-07"], http2)
-        self.assertEqual(rc, 0)
+        self.assertEqual(rc, 3)
         self.assertFalse(any("timeseries" in url for url in calls2))
         report = self.load()
         self.assertTrue(report["blocked"])
@@ -356,7 +356,7 @@ class Cap(_Run):
         self.assertEqual(Decimal(self.load()["spent_usd"]), Decimal("24"))
         calls2 = []
         rc = self.main(["--download", "--month", "2024-07"], _header_http(calls2, cost=b"1"))
-        self.assertEqual(rc, 0)
+        self.assertEqual(rc, 3)
         self.assertFalse(any("timeseries.get_range" in u for u in calls2))
         self.assertTrue(any("metadata.get_cost" in u for u in calls2))
         report = self.load()
@@ -570,6 +570,10 @@ class Workflow(unittest.TestCase):
         self.assertNotIn("\n          git push\n", text)
         self.assertIn("data/options/canonical", text)
         self.assertIn("data/options/backfill_report.json", text)
+        commit_at = text.index("commit_month \"$month\"")
+        fail_at = text.index('exit "$rc"')
+        self.assertLess(commit_at, fail_at)
+        self.assertNotIn("exit 0", text)
 
 
 if __name__ == "__main__":
