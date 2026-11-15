@@ -319,6 +319,18 @@ jobs:
             echo "volume_end must match YYYY-MM-DD; refusing before any Databento call" >&2
             exit 1
           fi
+          # Do not read python from a process substitution: a non-zero exit
+          # (run 43729709853: FATAL requests not installed) becomes empty
+          # stdout and was reported as "no month".
+          months_file=$(mktemp)
+          set +e
+          python scripts/cme_options_backfill.py --list-volume-months --volume-start "$vol_start" --volume-end "$vol_end" > "$months_file"
+          py_rc=$?
+          set -e
+          if [ "$py_rc" -ne 0 ]; then
+            echo "list-volume-months failed with rc=${py_rc}; refusing before any Databento call" >&2
+            exit "$py_rc"
+          fi
           json='['
           first=1
           while read -r ym a b; do
@@ -328,7 +340,7 @@ jobs:
             fi
             first=0
             json="${json}{\"id\":\"${ym}\",\"start\":\"${a}\",\"end\":\"${b}\"}"
-          done < <(python scripts/cme_options_backfill.py --list-volume-months --volume-start "$vol_start" --volume-end "$vol_end")
+          done < "$months_file"
           json="${json}]"
           if [ "$json" = "[]" ]; then
             echo "volume window has no month; refusing before any Databento call" >&2
