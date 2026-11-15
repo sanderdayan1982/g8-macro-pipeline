@@ -9,7 +9,9 @@
   # Skip the deploy (and its 15 credits) unless the published site changed.
   # Exit 0 = skip build, exit 1 = build. Data/bot commits don't touch docs/;
   # docs/actas/ and docs/*.md are records/docs, not part of the live dashboard.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs ':!docs/actas' ':!docs/*.md' netlify.toml"
+  # Without build cache Netlify sets CACHED_COMMIT_REF = COMMIT_REF (or leaves it
+  # empty/unknown): then nothing can be compared, so build (t201u, 15-nov).
+  ignore = "if [ -z \"$CACHED_COMMIT_REF\" ] || [ \"$CACHED_COMMIT_REF\" = \"$COMMIT_REF\" ] || ! git cat-file -e \"$CACHED_COMMIT_REF^{commit}\" 2>/dev/null; then exit 1; fi; git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- docs ':!docs/actas' ':!docs/*.md' netlify.toml"
 
 # ----------------------------------------------------------------------------
 # Headers — security + caching (optimized to save Netlify bandwidth & requests)
