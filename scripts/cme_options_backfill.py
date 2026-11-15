@@ -76,6 +76,71 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+
+def _next_month_date(day):
+    if day.month == 12:
+        return date(day.year + 1, 1, 1)
+    return date(day.year, day.month + 1, 1)
+
+
+def iter_volume_months(start, end_exclusive):
+    """Calendar months covering [start, end_exclusive), clipped to that window.
+
+    The last month is partial when end_exclusive is before the next month.
+    Yields (YYYY-MM, segment_start, segment_end).
+    """
+    if start >= end_exclusive:
+        return
+    cursor = date(start.year, start.month, 1)
+    while cursor < end_exclusive:
+        nxt = _next_month_date(cursor)
+        seg_start = start if start > cursor else cursor
+        seg_end = end_exclusive if end_exclusive < nxt else nxt
+        if seg_start < seg_end:
+            yield ("%04d-%02d" % (cursor.year, cursor.month), seg_start, seg_end)
+        cursor = nxt
+
+
+def _flag_value(argv, flag):
+    if flag not in argv:
+        return None
+    index = argv.index(flag)
+    if index + 1 >= len(argv):
+        raise ValueError("%s needs a YYYY-MM-DD value" % flag)
+    return argv[index + 1]
+
+
+def list_volume_months_without_collector(argv, today=None):
+    """Print 'YYYY-MM start end' lines. No collector, no requests, no Databento.
+
+    Run 43729709853 died in volume-plan because importing the collector calls
+    sys.exit when requests is missing. This path runs before that import.
+    """
+    try:
+        start_text = _flag_value(argv, "--volume-start") or "2026-07-01"
+        end_text = _flag_value(argv, "--volume-end")
+        start = date.fromisoformat(start_text)
+        if end_text:
+            end = date.fromisoformat(end_text)
+        else:
+            end = today or datetime.now(timezone.utc).date()
+    except ValueError as exc:
+        print("%s Refusing before any Databento call." % exc, file=sys.stderr)
+        return 2
+    if start >= end:
+        print("volume start must be before the exclusive end. Refusing before any Databento call.",
+              file=sys.stderr)
+        return 2
+    for label, seg_start, seg_end in iter_volume_months(start, end):
+        print("%s %s %s" % (label, seg_start.isoformat(), seg_end.isoformat()))
+    return 0
+
+
+# volume-plan calls this before pip install. Importing the collector here would
+# sys.exit("FATAL: requests not installed") and the job would see no months.
+if __name__ == "__main__" and "--list-volume-months" in sys.argv:
+    sys.exit(list_volume_months_without_collector(sys.argv))
+
 import cme_options_collector as C
 
 START = date(2024, 6, 1)
@@ -1249,30 +1314,6 @@ def download_volume_window(http, key, start, end, sessions, volume_dir, raw_dir)
     finally:
         del held
     return {"sessions_written": written, "sessions_skipped": skipped, "holidays": holidays}
-
-
-def _next_month_date(day):
-    if day.month == 12:
-        return date(day.year + 1, 1, 1)
-    return date(day.year, day.month + 1, 1)
-
-
-def iter_volume_months(start, end_exclusive):
-    """Calendar months covering [start, end_exclusive), clipped to that window.
-
-    The last month is partial when end_exclusive is before the next month.
-    Yields (YYYY-MM, segment_start, segment_end).
-    """
-    if start >= end_exclusive:
-        return
-    cursor = date(start.year, start.month, 1)
-    while cursor < end_exclusive:
-        nxt = _next_month_date(cursor)
-        seg_start = start if start > cursor else cursor
-        seg_end = end_exclusive if end_exclusive < nxt else nxt
-        if seg_start < seg_end:
-            yield ("%04d-%02d" % (cursor.year, cursor.month), seg_start, seg_end)
-        cursor = nxt
 
 
 def _parse_volume_window(args):

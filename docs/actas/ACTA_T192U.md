@@ -26,6 +26,14 @@ Los tests de t189u no se editan y siguen en verde.
 
 `python3 -m unittest discover -s tests -p 'test_*.py'` (15-nov-2026, Python 3.12 con las dependencias de `requirements.txt` y `pyyaml`): 1062 pruebas, 6 skipped, 3 fallos. Los tres fallos ya estaban admitidos en `main`: `test_flujos01_pr2.Rv21Vectors.test_live_eur_matches_the_oracle_and_the_roll_session_is_na` (`NEUTRAL` != `UNAVAILABLE`), `test_fxvol_shadow.FxvolShadow.test_additive_fields_do_not_recompute_existing_ones` y `test_fxvol_shadow.FxvolShadow.test_five_sessions_within_tolerance`. `test_idempotent_and_under_60s` pasó en esta corrida. No se llamó a Databento.
 
+## Nota 15-nov-2026, run 43729709853
+
+El job `volume-plan`, paso `List volume months`, imprimió `FATAL: requests not installed` y a continuación `volume window has no month; refusing before any Databento call` (log del job `132859246507`, leído el 15-nov-2026). No hubo llamada a Databento ni coste. El job no instala `requests`, y `cme_options_backfill.py` importa el colector al cargarse; el colector hace `sys.exit` si falta `requests`. El `done < <(python ...)` no mira el código de salida, así que la salida vacía se leyó como una ventana sin meses.
+
+`--list-volume-months` ahora termina antes de importar el colector (solo biblioteca estándar). El paso guarda la salida en un fichero y, si Python sale distinto de cero, repite ese código y dice `list-volume-months failed with rc=...`. No lo convierte en «sin meses».
+
+`python3 -m unittest discover -s tests -p 'test_*.py'` tras el arreglo: 1065 pruebas, 6 skipped, 3 fallos. Los tres son los ya admitidos en `main` (`live_eur` NEUTRAL, `additive_fields`, `five_sessions_within_tolerance`). `test_idempotent_and_under_60s` pasó. Ningún fichero con huella congelada cambia.
+
 ## Siguiente
 Sander fusiona y lanza el workflow a mano. Inputs del run real, los mismos del 43724209169:
 
