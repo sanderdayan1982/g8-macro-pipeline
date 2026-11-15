@@ -39,7 +39,20 @@ jobs:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
           G8_OPT_OUT_DIR: data/options/canonical
           G8_OPT_STATE_FILE: data/options/state.json
+          G8_OPT_VOL_DIR: data/options/volume_shadow
+          # t186u (Sander, 15-nov-2026): compressed original outside the checkout.
+          G8_OPT_RAW_DIR: ${{ runner.temp }}/cme-options-raw
         run: python scripts/cme_options_collector.py
+
+      # t186u: paid Databento body, gzipped, never git-added. 90 days.
+      - name: Upload compressed Databento original (t186u)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cme-options-raw-${{ github.run_id }}
+          path: ${{ runner.temp }}/cme-options-raw
+          retention-days: 90
+          if-no-files-found: ignore
 
       - name: Build dashboard summary JSON
         env:
