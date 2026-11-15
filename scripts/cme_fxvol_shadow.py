@@ -128,13 +128,18 @@ def third_wed(y, m):
 
 
 def roll_window(sd):
+    """Ventana del IMM vigente y la fecha IMM (tercer miércoles del mes de contrato).
+
+    t191u (Sander, 15-nov-2026): `w` ya se calculaba y no se publicaba. El cuarto
+    valor es esa fecha, sin mover inicio, fin ni `active`.
+    """
     for y in (sd.year - 1, sd.year, sd.year + 1):
         for m in (3, 6, 9, 12):
             w = third_wed(y, m)
             a = w - timedelta(days=ROLL_PRE)
             b = w + timedelta(days=ROLL_POST)
             if sd <= b:
-                return a, b, (a <= sd <= b)
+                return a, b, (a <= sd <= b), w
 
 
 def read(path):
@@ -323,7 +328,7 @@ def build(repo, session=None):
     else:
         surf = {}
     g0 = surf.get("gate0", {})
-    ra, rb, ract = roll_window(sd)
+    ra, rb, ract, rimm = roll_window(sd)
     out = {
         "version": "FXVOL-SHADOW v1.0",
         "status": "SHADOW",
@@ -345,7 +350,12 @@ def build(repo, session=None):
             "oi_flat_pct": {"1d": OI_FLAT_1D, "1w": OI_FLAT_1W},
             "roll_window_days": [-ROLL_PRE, ROLL_POST],
         },
-        "fut_roll_window": {"start": ra.isoformat(), "end": rb.isoformat(), "active": ract},
+        "fut_roll_window": {
+            "start": ra.isoformat(),
+            "end": rb.isoformat(),
+            "active": ract,
+            "imm": rimm.isoformat(),
+        },
         "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
         "currencies": {},
     }
