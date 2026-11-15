@@ -17,18 +17,26 @@ No raw Databento body is written to disk on the full path. One product is parsed
 time and the raw rows are discarded. Only canonical CSVs (origin=backfill) and
 backfill_report.json are meant to be committed.
 
-volume_only (order t189u, Sander, 15-nov-2026) does not use that path. It quotes
-metadata.get_cost, get_record_count and get_billable_size for one window (default
-2026-07-01 inclusive, end exclusive = today UTC) and downloads nothing when that
-cost is above 6.00 USD. It requests statistics, plus definition because statistics
-has no strike, expiry or right and those fields are the contract key. It writes
-only the sibling cleared-volume CSV (same columns as the daily collector) and
-volume_backfill_report.json. It never writes canonical CSVs or backfill_report.json.
-An existing sibling file is skipped. A missing stat_type 6 is an empty field; a
-real 0 stays 0. Dry-run prints the quote and writes nothing, including no commit
-from the workflow. Each paid body is gzipped under G8_VOL_RAW_DIR and is not
-committed. The sibling directory name is the collector's, so this file does not
-spell it (the cleared-volume shadow test rejects that token here).
+volume_only (order t189u, Sander, 15-nov-2026; month split t192u, 15-nov-2026)
+does not use that path. It walks the window (default 2026-07-01 inclusive, end
+exclusive = today UTC) one calendar month at a time, in order. Each month is
+quoted on its own (metadata.get_cost, get_record_count, get_billable_size, all
+parents, statistics plus definition — statistics has no strike, expiry or right).
+A month whose volume_backfill_report.json row is complete and whose recorded
+[start, end_exclusive) already covers the segment is not requested again. A
+partial month (end before the next month's first day) is complete only up to
+that end: the same end is not requested; a later end requests only the uncovered
+tail. Download nothing further when spent_usd plus the next month's quote is
+above 6.00 USD (6.00 is allowed). HTTP 504 retries that same month once; a
+second 504 in the month stops the run, records the month, and keeps earlier
+months. It writes only the sibling cleared-volume CSV (same columns as the
+daily collector) and volume_backfill_report.json. It never writes canonical
+CSVs or backfill_report.json. An existing sibling file is skipped. A missing
+stat_type 6 is an empty field; a real 0 stays 0. Dry-run quotes each month and
+prints the total, and writes nothing, including no commit from the workflow.
+Each paid body is gzipped under G8_VOL_RAW_DIR and is not committed. The
+sibling directory name is the collector's, so this file does not spell it
+(the cleared-volume shadow test rejects that token here).
 
 Resume: a month with chunks[].complete is not requested again. A session directory that
 already contains a CSV is never overwritten. Sessions on or after 2026-06-01 are never
@@ -82,6 +90,20 @@ SCHEMAS = ("statistics", "definition")
 VOLUME_SCHEMAS = ("statistics", "definition")
 VOLUME_CAP_USD = Decimal("6.00")
 VOLUME_START_DEFAULT = date(2026, 7, 1)
+# A complete partial month covers only [start, end_exclusive). The same end is not
+# requested again. A later end requests the tail. See VOLUME_RESUME.
+VOLUME_EXISTS_REASON = (
+    "every sibling file in the window already exists; no timeseries.get_range")
+VOLUME_EMPTY_REASON = "no weekday sessions in the window; no timeseries.get_range"
+VOLUME_RESUME = (
+    "A month with complete true is not requested again when its start and "
+    "end_exclusive cover the segment. A partial month (end_exclusive before the "
+    "first day of the next month, or start after the month's first day) is "
+    "complete only up to that interval. A rerun with the same end does not "
+    "request it. A rerun with a later end requests only the uncovered tail and "
+    "quotes that tail alone. The tail is not downloaded when spent_usd plus "
+    "that quote is above 6.00 USD. A second HTTP 504 in one month stops the run."
+)
 PARENTS = tuple(C.OPT_PARENTS) + tuple(C.FUT_PARENTS)
 HEADER = ["session", "root", "type", "symbol", "expiry", "right", "strike",
           "settle", "settle_flag", "oi", "origin"]
@@ -1229,6 +1251,227 @@ def download_volume_window(http, key, start, end, sessions, volume_dir, raw_dir)
     return {"sessions_written": written, "sessions_skipped": skipped, "holidays": holidays}
 
 
+def _next_month_date(day):
+    if day.month == 12:
+        return date(day.year + 1, 1, 1)
+    return date(day.year, day.month + 1, 1)
+
+
+def iter_volume_months(start, end_exclusive):
+    """Calendar months covering [start, end_exclusive), clipped to that window.
+
+    The last month is partial when end_exclusive is before the next month.
+    Yields (YYYY-MM, segment_start, segment_end).
+    """
+    if start >= end_exclusive:
+        return
+    cursor = date(start.year, start.month, 1)
+    while cursor < end_exclusive:
+        nxt = _next_month_date(cursor)
+        seg_start = start if start > cursor else cursor
+        seg_end = end_exclusive if end_exclusive < nxt else nxt
+        if seg_start < seg_end:
+            yield ("%04d-%02d" % (cursor.year, cursor.month), seg_start, seg_end)
+        cursor = nxt
+
+
+def _parse_volume_window(args):
+    start = _parse_volume_day(args.volume_start or VOLUME_START_DEFAULT.isoformat(),
+                              "volume_start")
+    if args.volume_end:
+        end = _parse_volume_day(args.volume_end, "volume_end")
+    else:
+        end = datetime.now(timezone.utc).date()
+    return start, end
+
+
+def _print_volume_months(args):
+    """List volume months and exit. No Databento call and no API key."""
+    try:
+        start, end = _parse_volume_window(args)
+    except ValueError as exc:
+        print("%s Refusing before any Databento call." % exc, file=sys.stderr)
+        return 2
+    if start >= end:
+        print("volume start must be before the exclusive end. Refusing before any Databento call.",
+              file=sys.stderr)
+        return 2
+    for label, seg_start, seg_end in iter_volume_months(start, end):
+        print("%s %s %s" % (label, seg_start.isoformat(), seg_end.isoformat()))
+    return 0
+
+
+def _month_is_partial(label, seg_start, seg_end):
+    year, month = (int(part) for part in label.split("-"))
+    first = date(year, month, 1)
+    return seg_start > first or seg_end < _next_month_date(first)
+
+
+def _money(value):
+    if value in (None, ""):
+        return Decimal("0")
+    try:
+        return Decimal(str(value))
+    except InvalidOperation:
+        raise ValueError("spent_usd is not a number")
+
+
+def _load_volume_state(path):
+    path = Path(path)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("volume report is not readable JSON: %s" % exc)
+    if not isinstance(data, dict):
+        raise ValueError("volume report is not a JSON object")
+    return data
+
+
+def _find_volume_month(months, label):
+    for row in months:
+        if isinstance(row, dict) and row.get("month") == label:
+            return row
+    return None
+
+
+def _uncovered_parts(record, req_start, req_end):
+    """Sub-ranges of [req_start, req_end) not covered by a complete month row."""
+    if req_start >= req_end:
+        return []
+    if not record or not record.get("complete"):
+        return [(req_start, req_end)]
+    try:
+        covered_start = date.fromisoformat(record["start"])
+        covered_end = date.fromisoformat(record["end_exclusive"])
+    except (KeyError, TypeError, ValueError):
+        return [(req_start, req_end)]
+    parts = []
+    if req_start < covered_start:
+        parts.append((req_start, min(req_end, covered_start)))
+    if req_end > covered_end:
+        tail = max(req_start, covered_end)
+        if tail < req_end:
+            parts.append((tail, req_end))
+    return [(a, b) for a, b in parts if a < b]
+
+
+def _upsert_volume_month(months, entry):
+    for index, row in enumerate(months):
+        if isinstance(row, dict) and row.get("month") == entry["month"]:
+            months[index] = entry
+            return
+    months.append(entry)
+
+
+def _is_http_504(exc):
+    return isinstance(exc, RuntimeError) and str(exc).startswith("HTTP 504")
+
+
+def _call_with_504_retry(label, fn):
+    """Run fn once. On HTTP 504, run it once more. A second 504 returns ('504', exc)."""
+    seen = None
+    for attempt in (1, 2):
+        try:
+            return ("ok", fn())
+        except RuntimeError as exc:
+            if not _is_http_504(exc):
+                raise
+            seen = exc
+            if attempt == 1:
+                print("HTTP 504 on %s (%s); retrying this month once" % (label, exc), flush=True)
+                continue
+            return ("504", seen)
+    return ("504", seen)
+
+
+def _sum_volume_quotes(quotes):
+    cost = Decimal("0")
+    count = Decimal("0")
+    size = Decimal("0")
+    by = {schema: {"get_cost": Decimal("0"), "record_count": Decimal("0"),
+                   "billable_size": Decimal("0")} for schema in VOLUME_SCHEMAS}
+    for quote in quotes:
+        cost += quote["get_cost"]
+        count += quote["record_count"]
+        size += quote["billable_size"]
+        for schema in VOLUME_SCHEMAS:
+            part = quote["by_schema"][schema]
+            by[schema]["get_cost"] += Decimal(part["get_cost"])
+            by[schema]["record_count"] += Decimal(part["record_count"])
+            by[schema]["billable_size"] += Decimal(part["billable_size"])
+    return {
+        "get_cost": cost,
+        "record_count": count,
+        "billable_size": size,
+        "by_schema": {schema: {key: str(val) for key, val in by[schema].items()}
+                      for schema in VOLUME_SCHEMAS},
+    }
+
+
+def _emit_volume_summary(start, end, quote, notes):
+    if notes:
+        _summary("\n".join(notes))
+    _volume_summary(start, end, quote)
+
+
+def _volume_cap_reason(spent, month, chunk_cost):
+    return ("HARD CAP: cumulative spent %s USD + month %s get_cost %s USD is above %s USD. "
+            "Stopped before downloading this month."
+            % (spent, month, chunk_cost, VOLUME_CAP_USD))
+
+
+def _coverage_entry(old, label, part_start, part_end, quote, downloaded, complete, error):
+    """Merge a finished segment into the month row. A 504 does not extend coverage."""
+    if old and old.get("complete") and not complete:
+        entry = dict(old)
+        entry["error"] = error
+        return entry
+    if old and old.get("complete"):
+        covered_start = min(date.fromisoformat(old["start"]), part_start)
+        covered_end = max(date.fromisoformat(old["end_exclusive"]), part_end)
+        paid = _money(old.get("get_cost")) if old.get("downloaded") else Decimal("0")
+    else:
+        covered_start, covered_end = part_start, part_end
+        paid = Decimal("0")
+    if downloaded:
+        paid += quote["get_cost"]
+    elif not (old and old.get("downloaded")):
+        paid = quote["get_cost"]
+    return {
+        "month": label,
+        "start": covered_start.isoformat(),
+        "end_exclusive": covered_end.isoformat(),
+        "complete": bool(complete),
+        "partial": _month_is_partial(label, covered_start, covered_end),
+        "get_cost": str(paid),
+        "downloaded": bool(downloaded or (old and old.get("downloaded"))),
+        "error": error,
+    }
+
+
+def _attempt_volume_segment(http, key, spent, part_start, part_end, volume_dir, raw_dir, download):
+    """Quote one segment. Download it only when download is true and the cap allows it.
+
+    Raises PaymentRequired, CostUnknown, and RuntimeError (including HTTP 504).
+    """
+    quote = quote_volume_window(http, key, part_start, part_end)
+    if over_volume_cap(spent + quote["get_cost"]):
+        return {"status": "cap", "quote": quote}
+    if not download:
+        return {"status": "dry", "quote": quote}
+    sessions = list(iter_volume_sessions(part_start, part_end))
+    if not sessions:
+        return {"status": "empty", "quote": quote, "present": []}
+    missing, present = _missing_volume_files(volume_dir, sessions)
+    if not missing:
+        return {"status": "exists", "quote": quote, "present": present}
+    result = download_volume_window(
+        http, key, part_start, part_end, sessions, volume_dir, raw_dir)
+    return {"status": "downloaded", "quote": quote, "result": result}
+
+
 def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_report=None,
                         volume_dir=None, volume_report=None, raw_dir=None):
     """Cleared-volume window. Does not read or write the full-mode report."""
@@ -1259,66 +1502,179 @@ def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_repo
         print("DATABENTO_API_KEY is not set. No metadata call and no download.", file=sys.stderr)
         return 2
     http = http or urllib_http
-    dry_run = not args.download
-    sessions = list(iter_volume_sessions(start, end))
+    download = bool(args.download)
     try:
-        quote = quote_volume_window(http, key, start, end)
+        state = _load_volume_state(vol_report)
+        spent = _money(state.get("spent_usd")) if state else Decimal("0")
+    except ValueError as exc:
+        print("%s Refusing before any Databento call." % exc, file=sys.stderr)
+        return 2
+    month_rows = list(state.get("months") or []) if state else []
+    if state and not isinstance(month_rows, list):
+        print("volume report months is not a list. Refusing before any Databento call.",
+              file=sys.stderr)
+        return 2
+
+    notes = []
+    quotes = []
+    written, skipped, holidays = [], [], []
+    downloaded_any = False
+    exists_hits = False
+    empty_hits = False
+    persisted = state is not None
+
+    def _note(text):
+        notes.append(text)
+        print(text, flush=True)
+
+    def _persist(reason, quote):
+        nonlocal persisted
+        body = _volume_report_body(
+            start, end, quote,
+            downloaded=downloaded_any,
+            spent_usd=str(spent),
+            sessions_written=written,
+            sessions_skipped=skipped,
+            holidays=holidays,
+            reason=reason,
+        )
+        body["months"] = month_rows
+        body["resume"] = VOLUME_RESUME
+        _write_volume_report(vol_report, body)
+        persisted = True
+
+    def _stop_504(label):
+        message = ("volume_only stopped: HTTP 504 twice on %s. "
+                   "Earlier months are kept. Later months were not started." % label)
+        print(message, file=sys.stderr)
+        _summary(message)
+        if quotes:
+            _emit_volume_summary(start, end, _sum_volume_quotes(quotes), notes)
+        _persist(message, quotes[-1] if quotes else {
+            "get_cost": Decimal("0"), "record_count": Decimal("0"),
+            "billable_size": Decimal("0"),
+            "by_schema": {schema: {"get_cost": "0", "record_count": "0", "billable_size": "0"}
+                          for schema in VOLUME_SCHEMAS},
+        })
+        return 1
+
+    try:
+        for label, seg_start, seg_end in iter_volume_months(start, end):
+            record = _find_volume_month(month_rows, label)
+            parts = _uncovered_parts(record, seg_start, seg_end)
+            if not parts:
+                _note("month %s not requested (complete through %s)"
+                      % (label, record.get("end_exclusive")))
+                continue
+            for part_start, part_end in parts:
+                def _once(ps=part_start, pe=part_end):
+                    return _attempt_volume_segment(
+                        http, key, spent, ps, pe, vol_dir, raw, download)
+
+                status, payload = _call_with_504_retry(label, _once)
+                if status == "504":
+                    if record and record.get("complete"):
+                        record["error"] = "HTTP 504 twice"
+                    else:
+                        _upsert_volume_month(month_rows, {
+                            "month": label,
+                            "start": part_start.isoformat(),
+                            "end_exclusive": part_start.isoformat(),
+                            "complete": False,
+                            "partial": True,
+                            "get_cost": "0",
+                            "downloaded": False,
+                            "error": "HTTP 504 twice",
+                        })
+                    return _stop_504(label)
+
+                outcome = payload
+                quote = outcome["quote"]
+                quotes.append(quote)
+                _note("month %s %s → %s get_cost USD: %s"
+                      % (label, part_start.isoformat(), part_end.isoformat(), quote["get_cost"]))
+                if outcome["status"] == "cap":
+                    _emit_volume_summary(start, end, _sum_volume_quotes(quotes), notes)
+                    reason = _volume_cap_reason(spent, label, quote["get_cost"])
+                    print(reason, file=sys.stderr)
+                    _summary(reason)
+                    if persisted:
+                        _upsert_volume_month(month_rows, _coverage_entry(
+                            record, label, part_start, part_end, quote,
+                            downloaded=False, complete=False, error=reason))
+                        _persist(reason, _sum_volume_quotes(quotes))
+                    return 3
+                if not download:
+                    continue
+
+                old = _find_volume_month(month_rows, label)
+                if outcome["status"] == "downloaded":
+                    spent += quote["get_cost"]
+                    downloaded_any = True
+                    result = outcome["result"]
+                    written.extend(result["sessions_written"])
+                    skipped.extend(result["sessions_skipped"])
+                    holidays.extend(result["holidays"])
+                    _upsert_volume_month(month_rows, _coverage_entry(
+                        old, label, part_start, part_end, quote,
+                        downloaded=True, complete=True, error=""))
+                    _persist("", _sum_volume_quotes(quotes))
+                elif outcome["status"] == "exists":
+                    exists_hits = True
+                    skipped.extend(outcome["present"])
+                    _upsert_volume_month(month_rows, _coverage_entry(
+                        old, label, part_start, part_end, quote,
+                        downloaded=False, complete=True, error=""))
+                    _persist(VOLUME_EXISTS_REASON, _sum_volume_quotes(quotes))
+                elif outcome["status"] == "empty":
+                    empty_hits = True
+                    _upsert_volume_month(month_rows, _coverage_entry(
+                        old, label, part_start, part_end, quote,
+                        downloaded=False, complete=True, error=""))
+                    _persist(VOLUME_EMPTY_REASON, _sum_volume_quotes(quotes))
+                else:
+                    print("volume download stopped: unknown segment status %s."
+                          % outcome["status"], file=sys.stderr)
+                    return 1
     except PaymentRequired as exc:
-        print("Databento HTTP 402 on %s. Stopped before download." % exc.endpoint, file=sys.stderr)
+        print("Databento HTTP 402 on %s. Stopped. Earlier months are kept." % exc.endpoint,
+              file=sys.stderr)
         return 2
     except CostUnknown as exc:
-        print("Could not read a number from %s. Nothing downloaded." % exc.endpoint, file=sys.stderr)
-        return 2
-
-    _volume_summary(start, end, quote)
-    if over_volume_cap(quote["get_cost"]):
-        reason = ("HARD CAP: volume window get_cost %s USD is above %s USD. "
-                  "Stopped before any download." % (quote["get_cost"], VOLUME_CAP_USD))
-        print(reason, file=sys.stderr)
-        _summary(reason)
-        return 3
-
-    if dry_run:
-        print("volume_only dry-run: cost recorded in the step summary. No download and no files.")
-        return 0
-
-    if not sessions:
-        body = _volume_report_body(
-            start, end, quote, downloaded=False, spent_usd="0",
-            reason="no weekday sessions in the window; no timeseries.get_range")
-        _write_volume_report(vol_report, body)
-        print(body["reason"])
-        return 0
-
-    missing, present = _missing_volume_files(vol_dir, sessions)
-    if not missing:
-        body = _volume_report_body(
-            start, end, quote, downloaded=False, spent_usd="0",
-            sessions_skipped=present,
-            reason="every sibling file in the window already exists; no timeseries.get_range")
-        _write_volume_report(vol_report, body)
-        print(body["reason"])
-        return 0
-
-    try:
-        result = download_volume_window(http, key, start, end, sessions, vol_dir, raw)
-    except PaymentRequired as exc:
-        print("Databento HTTP 402 on %s during download. No sibling CSV written." % exc.endpoint,
+        print("Could not read a number from %s. Nothing further downloaded." % exc.endpoint,
               file=sys.stderr)
         return 2
     except Exception as exc:
-        print("volume download stopped: %s. No further sibling CSV written." % exc, file=sys.stderr)
+        print("volume download stopped: %s. No further sibling CSV written." % exc,
+              file=sys.stderr)
         return 1
 
-    body = _volume_report_body(
-        start, end, quote, downloaded=True, spent_usd=str(quote["get_cost"]),
-        sessions_written=result["sessions_written"],
-        sessions_skipped=result["sessions_skipped"],
-        holidays=result["holidays"], reason="")
-    _write_volume_report(vol_report, body)
+    if not quotes:
+        if notes:
+            _summary("\n".join(notes))
+        print("volume_only: nothing left to request.")
+        return 0
+
+    _emit_volume_summary(start, end, _sum_volume_quotes(quotes), notes)
+    if not download:
+        total = _sum_volume_quotes(quotes)["get_cost"]
+        if over_volume_cap(spent + total):
+            reason = _volume_cap_reason(spent, "window", total)
+            print(reason, file=sys.stderr)
+            _summary(reason)
+            return 3
+        print("volume_only dry-run: cost recorded in the step summary. No download and no files.")
+        return 0
+
+    reason = ""
+    if not downloaded_any and exists_hits and not empty_hits:
+        reason = VOLUME_EXISTS_REASON
+    elif not downloaded_any and empty_hits and not exists_hits:
+        reason = VOLUME_EMPTY_REASON
+    if persisted:
+        _persist(reason, _sum_volume_quotes(quotes))
     print("volume_only wrote %s sibling files, skipped %s, holidays %s"
-          % (len(result["sessions_written"]), len(result["sessions_skipped"]),
-             len(result["holidays"])))
+          % (len(written), len(skipped), len(holidays)))
     return 0
 
 
@@ -1332,6 +1688,8 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                         help="per-chunk get_cost / record_count / billable_size only (this is the default)")
     parser.add_argument("--month", default=None, help="process one YYYY-MM chunk")
     parser.add_argument("--list-months", action="store_true", help="print the 24 chunk months and exit")
+    parser.add_argument("--list-volume-months", action="store_true",
+                        help="print volume_only months as 'YYYY-MM start end' and exit; no Databento call")
     parser.add_argument("--record-stop", default=None, help="record a stop reason and exit 0")
     parser.add_argument("--mode", choices=("full", "volume_only"), default="full",
                         help="full keeps the monthly settlement/OI backfill; volume_only is the cleared-volume window")
@@ -1344,6 +1702,8 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
         for month in iter_chunks():
             print(month)
         return 0
+    if args.list_volume_months:
+        return _print_volume_months(args)
 
     if args.mode == "volume_only":
         return execute_volume_only(
