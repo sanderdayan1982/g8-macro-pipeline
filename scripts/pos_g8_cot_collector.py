@@ -50,9 +50,23 @@
 #   generated_utc. Windows, thresholds and the schema are unchanged.
 #   --metals-after-cot recomputes the weekly metals MDP only after that write
 #   happened on the Monday 21:05 UTC pass or the Tuesday 09:05 UTC retry.
+# -----------------------------------------------------------------------------
+# v1.1.2 (15-nov-2026) — FAMILIAS-01 B (REVISION_TRIPLE 14-nov §3.B).
+#   The same TFF request (gpe5-46if) also selects dealer positions, dealer
+#   trader counts, total traders and the change in open interest. Those
+#   values are published only as dealer_shadow on each currency row. They do
+#   not enter z, state, thresholds, the USD proxy or any score. A missing
+#   side stays null (UNAVAILABLE); it is not replaced with 0. Schema stays
+#   pos_g8_cot/1.2.0.
+#   Probe 2026-11-15: $select of traders_dealer_spread_all on gpe5-46if
+#   returned HTTP 200 (EUR 099741, report_date 2026-11-03). The column is
+#   included. Dealer columns keep `_all`; lev_money_* and asset_mgr_* do not.
+#   A 400 names one column: only that column is renamed (suffix toggled once)
+#   or dropped. The other columns are not rewritten.
 # =============================================================================
 
 import json
+import re
 import subprocess
 import sys
 import urllib.request
@@ -129,6 +143,25 @@ COL = {
     },
 }
 
+# FAMILIAS-01 B. Same TFF $select as COL["tff"], extended. Not a second call.
+# traders_dealer_spread_all stayed after the 2026-11-15 probe (HTTP 200).
+DEALER_COLS = {
+    "long": "dealer_positions_long_all",
+    "short": "dealer_positions_short_all",
+    "spread": "dealer_positions_spread_all",
+    "traders_long": "traders_dealer_long_all",
+    "traders_short": "traders_dealer_short_all",
+    "traders_spread": "traders_dealer_spread_all",
+    "traders_total": "traders_tot_all",
+    "oi_change": "change_in_open_interest_all",
+}
+_REJECTED_COL = re.compile(r"No such column:\s*([A-Za-z0-9_]+)")
+
+
+def tff_columns():
+    """LF/AM columns first, then the dealer columns, for one $select."""
+    return list(COL["tff"].values()) + list(DEALER_COLS.values())
+
 # ----------------------------------------------------------------------------
 # FETCH
 # ----------------------------------------------------------------------------
@@ -139,8 +172,9 @@ def _get(dataset, params):
         with urllib.request.urlopen(req, timeout=45) as r:
             return json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace")[:400]
-        print("CFTC HTTP %s on %s\n  BODY: %s" % (e.code, dataset, body), file=sys.stderr)
+        body = e.read().decode("utf-8", "replace")
+        e.pos_body = body
+        print("CFTC HTTP %s on %s\n  BODY: %s" % (e.code, dataset, body[:400]), file=sys.stderr)
         raise
 
 
@@ -149,11 +183,47 @@ def _alt(col):
     return col[:-4] if col.endswith("_all") else col + "_all"
 
 
+def _rejected_column(body):
+    """Column named by a Socrata 400, or None when the body does not name one."""
+    if not body:
+        return None
+    match = _REJECTED_COL.search(body)
+    return match.group(1) if match else None
+
+
+def _repair_rejected_column(cols, rejected, tried):
+    """Rename or drop only `rejected`. Every other column is copied as it is.
+
+    The `_all` suffix toggles once. A second rejection of that column drops it.
+    Returns None when `rejected` is not in this select, so the caller does not
+    rewrite the columns it did not name.
+    """
+    if rejected not in cols:
+        return None
+    alt = _alt(rejected)
+    drop = rejected in tried or alt in tried
+    tried.add(rejected)
+    tried.add(alt)
+    out = []
+    for col in cols:
+        if col != rejected:
+            out.append(col)
+        elif not drop:
+            out.append(alt)
+    return out
+
+
 def fetch(dataset, codes, extra_cols):
-    """Return {code: [rows oldest->newest]} for the given contract codes."""
+    """Return {code: [rows oldest->newest]} for the given contract codes.
+
+    On HTTP 400, only the column Socrata names is renamed or dropped. The
+    other columns keep the spelling that was requested.
+    """
     quoted = ",".join("'%s'" % c for c in codes)
+    cols = list(extra_cols)
+    tried = set()
     rows = None
-    for attempt, cols in enumerate((extra_cols, [_alt(c) for c in extra_cols])):
+    while True:
         select = ",".join([COL["date"], COL["code"], COL["oi"]] + cols)
         try:
             rows = _get(dataset, {
@@ -164,9 +234,16 @@ def fetch(dataset, codes, extra_cols):
             })
             break
         except urllib.error.HTTPError as e:
-            if e.code != 400 or attempt == 1:
+            if e.code != 400:
                 raise
-            print("  retrying %s with alternate column names" % dataset, file=sys.stderr)
+            rejected = _rejected_column(getattr(e, "pos_body", "") or "")
+            repaired = None if not rejected else _repair_rejected_column(cols, rejected, tried)
+            if repaired is None or repaired == cols:
+                raise
+            kept = rejected in repaired or _alt(rejected) in repaired
+            print("  retrying %s: %s only %s" % (
+                dataset, "rename" if kept else "drop", rejected), file=sys.stderr)
+            cols = repaired
     out = {c: [] for c in codes}
     for row in rows:
         c = row.get(COL["code"])
@@ -196,6 +273,54 @@ def _f(row, key):
         return float(v)
     except (TypeError, ValueError):
         return None
+
+
+def dealer_net(long_side, short_side):
+    """Long minus short only when both sides are present. A missing side is not zero."""
+    if long_side is None or short_side is None:
+        return None, "UNAVAILABLE"
+    return long_side - short_side, None
+
+
+def oi_change_state(delta):
+    """UP, DOWN or FLAT for a present change. A missing change is UNAVAILABLE."""
+    if delta is None:
+        return "UNAVAILABLE"
+    if delta > 0:
+        return "UP"
+    if delta < 0:
+        return "DOWN"
+    return "FLAT"
+
+
+def dealer_shadow(row):
+    """Descriptive dealer block for the latest TFF row.
+
+    Not an input to z, state, the USD proxy, a vote or a score. Trader counts
+    stay on each side: CFTC counts a dealer in every side it holds, and this
+    block does not add those sides together.
+    """
+    if row is None:
+        row = {}
+    long_side = _f(row, DEALER_COLS["long"])
+    short_side = _f(row, DEALER_COLS["short"])
+    net, net_state = dealer_net(long_side, short_side)
+    oi_change = _f(row, DEALER_COLS["oi_change"])
+    return {
+        "long": long_side,
+        "short": short_side,
+        "spread": _f(row, DEALER_COLS["spread"]),
+        "net": net,
+        "net_state": net_state,
+        "traders": {
+            "long": _f(row, DEALER_COLS["traders_long"]),
+            "short": _f(row, DEALER_COLS["traders_short"]),
+            "spread": _f(row, DEALER_COLS["traders_spread"]),
+        },
+        "traders_total": _f(row, DEALER_COLS["traders_total"]),
+        "oi_change": oi_change,
+        "oi_change_state": oi_change_state(oi_change),
+    }
 
 
 def mean(xs):
@@ -391,6 +516,7 @@ def build_ccy(name, rows):
         "time_in_state": time_in_state(z_lf_hist, warn, ext),
         "divergence": divergence(z_lf, z_am),
         "report_date": rows[-1].get(COL["date"], "")[:10] if rows else None,
+        "dealer_shadow": dealer_shadow(rows[-1] if rows else {}),
     }
 
 
@@ -604,8 +730,7 @@ def main(argv=None):
     if "--out" in args:
         out_path = Path(args[args.index("--out") + 1])
 
-    tff = fetch(DS_TFF, list(CCY_CODES.values()),
-                list(COL["tff"].values()))
+    tff = fetch(DS_TFF, list(CCY_CODES.values()), tff_columns())
     disagg = fetch(DS_DISAGG, list(METAL_CODES.values()),
                    list(COL["disagg"].values()))
 
