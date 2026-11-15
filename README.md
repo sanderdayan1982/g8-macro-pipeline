@@ -82,7 +82,7 @@ Horarios **UTC** del código de workflows revisado el 23-oct-2026. En **Africa/M
 | `intraday_fetch.yml` | 00:23, 03:17, 13:17, 15:47 y 23:17, lunes a viernes | Recogidas adicionales de fuentes oficiales. |
 | `usd_factor.yml` | 15:30 y 17:30, lunes a viernes | Factor USD, riesgo del libro, alertas y publicación. Un festivo TARGET puede producir NO_NEW_DATA. |
 | `cme_options.yml` | 13:30 y 17:00, todos los días en el cron | Colector y resumen de opciones con guardas de calendario, disponibilidad y coste. |
-| `g8_port_run.yml` | Viernes 21:05 y sábado 09:05 | COT, generación POS y controles asociados. No ejecuta un FFVA web. |
+| `g8_port_run.yml` | Viernes 21:05, sábado 09:05, lunes 21:05 y martes 09:05 | COT, generación POS y controles asociados. El lunes/martes cubre la publicación del lunes (festivo en EE.UU.). No escribe si la fecha del informe no es nueva. No ejecuta un FFVA web. |
 | `metals_update.yml` | Sábado 07:00; lunes a viernes 22:45 | Actualización de metales y procesos asociados; distinguir la salida principal semanal de la salida diaria SHADOW. |
 | `ingest_watch.yml` | 17:13, lunes/miércoles/viernes | Vigilancia de publicaciones y evidencias de salud. |
 | `maintenance_agent.yml` | 17:17, lunes/miércoles/viernes | Evaluación y mantenimiento sujeto a compuerta. |
