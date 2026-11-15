@@ -1,8 +1,13 @@
 # FAMILIAS-00 — votes.csv from TradingView alert mail (read-only Gmail).
-# 03:00 UTC = 04:00 WAT (first attempt: no MISSING rows; the 05:00 WAT retry is still pending).
-# 04:00 UTC = 05:00 WAT (final attempt, before the 05:15 WAT / 04:15 UTC cutoff:
-# anything still absent, including a Gmail failure, is MISSING).
+# 03:00 UTC = 04:00 WAT (first attempt: no MISSING rows; the final pass is still pending).
+# 04:20 UTC = 05:20 WAT (final attempt, after the 05:15 WAT / 04:15 UTC cutoff).
+# Before writing MISSING the final pass lists every page of the mailbox window,
+# so a mail that arrived before the cutoff is not missed. A Gmail failure on
+# that pass is still MISSING.
 # Tue–Sat covers the previous weekday close. Weekends produce no rows.
+# A CME/New York full close stores mail with session_type=HOLIDAY. No mail
+# writes nothing and logs CLOSED (RELOJES-01 Anexo 1 A1).
+# Orden ORDEN_ENZO_REVISION-TRIPLE-01 bloque 2 (14-nov-2026 19:16 WAT).
 # A refresh token alone cannot mint access tokens: the job also needs
 # GMAIL_OAUTH_CLIENT_ID and GMAIL_OAUTH_CLIENT_SECRET. Scope gmail.readonly.
 name: Votes ingest
@@ -10,7 +15,7 @@ name: Votes ingest
 on:
   schedule:
     - cron: '0 3 * * 2-6'
-    - cron: '0 4 * * 2-6'
+    - cron: '20 4 * * 2-6'
   workflow_dispatch:
     inputs:
       session:
@@ -18,9 +23,9 @@ on:
         required: false
         type: string
       attempt:
-        description: 'first = 04:00 WAT (no MISSING). final = 05:00 WAT (write MISSING).'
+        description: 'first = 04:00 WAT (no MISSING). final = 05:20 WAT, after the 05:15 WAT cutoff (write MISSING).'
         required: false
-        default: final
+        default: first
         type: choice
         options:
           - first
@@ -61,7 +66,7 @@ jobs:
           if [ -z "$ATTEMPT" ]; then
             case "${{ github.event.schedule }}" in
               "0 3 * * 2-6") ATTEMPT=first ;;
-              "0 4 * * 2-6") ATTEMPT=final ;;
+              "20 4 * * 2-6") ATTEMPT=final ;;
               *) ATTEMPT=final ;;
             esac
           fi

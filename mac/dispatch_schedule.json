@@ -19,6 +19,6 @@
   {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"},
   {"id": "metals_shadow",   "workflow": "metals_update.yml",  "cron": "45 22 * * 1-5"},
   {"id": "votes_first",     "workflow": "votes_ingest.yml",   "cron": "0 3 * * 2-6", "inputs": {"attempt": "first"}},
-  {"id": "votes_final",     "workflow": "votes_ingest.yml",   "cron": "0 4 * * 2-6", "inputs": {"attempt": "final"}}
+  {"id": "votes_final",     "workflow": "votes_ingest.yml",   "cron": "20 4 * * 2-6", "inputs": {"attempt": "final"}}
  ]
 }
