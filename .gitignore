@@ -16,8 +16,9 @@ data/s01b/**/*.tmp
 # acta P-6: área de trabajo del agente de mantenimiento (informe, bundle) — nunca se comitea
 .agent/
 
-# t186u (Sander, 15-nov-2026): compressed Databento originals stay local or as
-# Actions artifacts. Never commit them to this public repo.
+# t186u (Sander, 15-nov-2026) and t189u (Sander, 15-nov-2026): compressed
+# Databento originals stay local or as Actions artifacts. Never commit them.
+# volume_only archives under data/options/raw/ when it is not pointed at runner temp.
 data/options/raw/
 *.dbn
 *.dbn.zst
