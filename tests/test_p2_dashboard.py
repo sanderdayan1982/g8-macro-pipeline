@@ -141,7 +141,8 @@ class G8NetP2(unittest.TestCase):
 class StaticP2(unittest.TestCase):
     def test_redirect_route(self):
         lines = [l.split() for l in read(REDIRECTS).splitlines() if l.strip() and not l.startswith("#")]
-        self.assertIn(["/proxy/raw/*", "https://raw.githubusercontent.com/:splat", "200"], lines)
+        # cierre de fuga, licencia CME, orden Sander 15-nov
+        self.assertNotIn(["/proxy/raw/*", "https://raw.githubusercontent.com/:splat", "200"], lines)
 
     def test_brief_uses_fetchChain_not_single_fetch(self):
         html = read(HTML)
