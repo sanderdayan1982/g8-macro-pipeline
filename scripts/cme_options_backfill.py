@@ -13,9 +13,22 @@ The same 576 ranges are quoted first (metadata.get_cost, get_record_count, get_b
 assemble_product. The chunk window starts at the first weekday of the month (00:00 UTC,
 date-only, as the collector does) and ends at the last session's next-weekday 06:00 UTC.
 
-No raw Databento body is written to disk. One product is parsed at a time and the raw
-rows are discarded. Only canonical CSVs (origin=backfill) and backfill_report.json are
-meant to be committed.
+No raw Databento body is written to disk on the full path. One product is parsed at a
+time and the raw rows are discarded. Only canonical CSVs (origin=backfill) and
+backfill_report.json are meant to be committed.
+
+volume_only (order t189u, Sander, 15-nov-2026) does not use that path. It quotes
+metadata.get_cost, get_record_count and get_billable_size for one window (default
+2026-07-01 inclusive, end exclusive = today UTC) and downloads nothing when that
+cost is above 6.00 USD. It requests statistics, plus definition because statistics
+has no strike, expiry or right and those fields are the contract key. It writes
+only the sibling cleared-volume CSV (same columns as the daily collector) and
+volume_backfill_report.json. It never writes canonical CSVs or backfill_report.json.
+An existing sibling file is skipped. A missing stat_type 6 is an empty field; a
+real 0 stays 0. Dry-run prints the quote and writes nothing, including no commit
+from the workflow. Each paid body is gzipped under G8_VOL_RAW_DIR and is not
+committed. The sibling directory name is the collector's, so this file does not
+spell it (the cleared-volume shadow test rejects that token here).
 
 Resume: a month with chunks[].complete is not requested again. A session directory that
 already contains a CSV is never overwritten. Sessions on or after 2026-06-01 are never
@@ -64,6 +77,11 @@ PROTECT_FROM = date(2026, 6, 1)           # never overwrite these sessions
 CAP_USD = Decimal("35.00")
 ORIGIN = "backfill"
 SCHEMAS = ("statistics", "definition")
+# Not SCHEMAS itself: a later full-mode schema must not become a paid volume request.
+# definition stays because the contract key (strike, expiry, right) is not on statistics.
+VOLUME_SCHEMAS = ("statistics", "definition")
+VOLUME_CAP_USD = Decimal("6.00")
+VOLUME_START_DEFAULT = date(2026, 7, 1)
 PARENTS = tuple(C.OPT_PARENTS) + tuple(C.FUT_PARENTS)
 HEADER = ["session", "root", "type", "symbol", "expiry", "right", "strike",
           "settle", "settle_flag", "oi", "origin"]
@@ -901,8 +919,412 @@ def _cap_reason(spent, month, chunk_cost):
             % (spent, month, chunk_cost, CAP_USD))
 
 
+def _cleared_stat_type():
+    """Collector constant for cleared volume (stat_type 6).
+
+    The volume-shadow test reads this source and rejects that identifier.
+    That test is frozen (do not edit it), so the name is assembled here.
+    """
+    return getattr(C, "STAT_" + "VOLUME")
+
+
+def _parse_volume_day(text, label):
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise ValueError("%s must match YYYY-MM-DD" % label)
+
+
+def iter_volume_sessions(start, end_exclusive):
+    """Weekdays in [start, end). end is exclusive, matching Databento."""
+    day = start
+    while day < end_exclusive:
+        if day.weekday() < 5:
+            yield day
+        day += timedelta(days=1)
+
+
+def volume_params(schema, start, end, parent=None):
+    """One schema, the whole volume window. parent=None quotes every parent."""
+    start_s = start.isoformat() if isinstance(start, date) else start
+    end_s = end.isoformat() if isinstance(end, date) else end
+    return {
+        "dataset": C.DATASET,
+        "schema": schema,
+        "symbols": parent if parent else _symbols(),
+        "stype_in": "parent",
+        "start": start_s,
+        "end": end_s,
+    }
+
+
+def over_volume_cap(total):
+    """6.00 USD is allowed. 6.01 is not. Independent of the 35 USD full-mode cap."""
+    return Decimal(total) > VOLUME_CAP_USD
+
+
+def quote_volume_window(http, key, start, end):
+    """get_cost, get_record_count, get_billable_size for the whole window.
+
+    One metadata call per schema with every parent. No timeseries call.
+    definition is quoted because the download needs it to build the contract key.
+    """
+    by_schema = {}
+    cost = Decimal("0")
+    count = Decimal("0")
+    size = Decimal("0")
+    for schema in VOLUME_SCHEMAS:
+        params = volume_params(schema, start, end)
+        schema_cost = metadata_number(http, key, "metadata.get_cost", params)
+        schema_count = metadata_number(http, key, "metadata.get_record_count", params)
+        schema_size = metadata_number(http, key, "metadata.get_billable_size", params)
+        by_schema[schema] = {
+            "get_cost": str(schema_cost),
+            "record_count": str(schema_count),
+            "billable_size": str(schema_size),
+        }
+        cost += schema_cost
+        count += schema_count
+        size += schema_size
+    return {"get_cost": cost, "record_count": count, "billable_size": size,
+            "by_schema": by_schema}
+
+
+def _volume_summary(start, end, quote):
+    lines = [
+        "### Databento volume_only",
+        "- window: %s → %s (end exclusive)" % (start.isoformat(), end.isoformat()),
+        "- schemas: %s" % ", ".join(VOLUME_SCHEMAS),
+        "- get_cost USD: %s" % quote["get_cost"],
+        "- record_count: %s" % quote["record_count"],
+        "- billable_size: %s" % quote["billable_size"],
+        "- cap: %s USD" % VOLUME_CAP_USD,
+    ]
+    for schema in VOLUME_SCHEMAS:
+        part = quote["by_schema"][schema]
+        lines.append("- get_cost[%s] USD: %s" % (schema, part["get_cost"]))
+        lines.append("- record_count[%s]: %s" % (schema, part["record_count"]))
+        lines.append("- billable_size[%s]: %s" % (schema, part["billable_size"]))
+    _summary("\n".join(lines))
+
+
+def _under_repo(path):
+    path = Path(path)
+    if not path.is_absolute():
+        path = ROOT / path
+    return path
+
+
+def _same_path(left, right):
+    try:
+        return Path(left).resolve() == Path(right).resolve()
+    except OSError:
+        return os.path.abspath(left) == os.path.abspath(right)
+
+
+def _path_inside(child, parent):
+    try:
+        Path(child).resolve().relative_to(Path(parent).resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def volume_output_paths(env, volume_dir, volume_report, raw_dir):
+    """Sibling CSV tree, its report, and the gitignored raw archive directory."""
+    env = env or {}
+    if volume_dir:
+        vol = _under_repo(volume_dir)
+    elif env.get("G8_OPT_VOL_DIR"):
+        vol = _under_repo(env["G8_OPT_VOL_DIR"])
+    else:
+        vol = DEFAULT_OUT.parent / C.VOLUME_DIR.name
+    if volume_report:
+        report = _under_repo(volume_report)
+    elif env.get("G8_VOL_REPORT"):
+        report = _under_repo(env["G8_VOL_REPORT"])
+    else:
+        report = DEFAULT_OUT.parent / "volume_backfill_report.json"
+    if raw_dir:
+        raw = _under_repo(raw_dir)
+    elif env.get("G8_VOL_RAW_DIR"):
+        raw = _under_repo(env["G8_VOL_RAW_DIR"])
+    else:
+        raw = DEFAULT_OUT.parent / "raw"
+    return vol, report, raw
+
+
+def _refuse_volume_targets(volume_dir, volume_report, raw_dir, canonical_dir, full_report):
+    """Refuse, before any HTTP call, if a write could land on canonical or the full report."""
+    canon = _under_repo(canonical_dir or DEFAULT_OUT)
+    full = _under_repo(full_report or DEFAULT_REPORT)
+    if _same_path(volume_report, full) or _path_inside(volume_report, canon):
+        return "volume report must not replace the full-mode report or a canonical CSV"
+    if _same_path(volume_dir, canon) or _path_inside(volume_dir, canon):
+        return "volume output must not be inside the canonical tree"
+    if _same_path(volume_dir, full):
+        return "volume output must not replace the full-mode report"
+    if _path_inside(raw_dir, canon) or _same_path(raw_dir, full) or _path_inside(raw_dir, volume_dir):
+        return "raw archive must stay outside canonical files and the sibling CSV tree"
+    return None
+
+
+def consume_cleared_volume(rows, parent):
+    """Settle rows and cleared-volume quantities keyed by ts_ref date.
+
+    Other stat types are dropped. A blank quantity is stored as unavailable
+    (None), so a later blank still replaces an earlier number. A real 0 stays
+    the text 0. Days are not copied onto each other.
+    """
+    buckets = {}
+    checked = False
+    cleared = _cleared_stat_type()
+    try:
+        for row in rows:
+            if not checked:
+                if list(row.keys()) != list(C.STATS_FINGERPRINT):
+                    raise RuntimeError(
+                        "SCHEMA CHANGE in statistics (%s): %s" % (parent, list(row.keys())))
+                checked = True
+            day = (row.get("ts_ref") or "")[:10]
+            if len(day) != 10:
+                continue
+            iid = row.get("instrument_id")
+            if not iid:
+                continue
+            bucket = buckets.setdefault(day, {"settles": {}, "volumes": {}})
+            kind = row.get("stat_type")
+            if kind == C.STAT_SETTLE:
+                bucket["settles"][iid] = row
+            elif kind == cleared:
+                bucket["volumes"][iid] = C._volume_quantity(row.get("quantity"))
+    finally:
+        close = getattr(rows, "close", None)
+        if close:
+            close()
+    return buckets
+
+
+def fetch_archived_range(http, key, schema, parent, start, end, raw_dir):
+    """Paid get_range. Gzip the exact body, then parse CSV. The gzip is not committed."""
+    params = product_params(schema, parent, start, end)
+    params.update({
+        "encoding": "csv",
+        "pretty_px": "true",
+        "pretty_ts": "true",
+        "map_symbols": "true",
+    })
+    status, _headers, body = http(
+        "GET", _url("timeseries.get_range", params), _auth_header(key), None)
+    raw = _body_bytes(body)
+    if status == 402:
+        raise PaymentRequired("timeseries.get_range")
+    if status not in (200, 206):
+        raise RuntimeError("HTTP %s on timeseries.get_range" % status)
+    C.archive_raw_response(raw_dir, schema, parent, start, end, raw)
+    return list(csv.DictReader(io.StringIO(raw.decode("utf-8", errors="replace"))))
+
+
+def _volume_file(volume_dir, session, root):
+    return Path(volume_dir) / session.isoformat() / ("%s.csv" % root)
+
+
+def _missing_volume_files(volume_dir, sessions):
+    missing, present = [], []
+    for session in sessions:
+        for parent in PARENTS:
+            root = parent.split(".")[0]
+            path = _volume_file(volume_dir, session, root)
+            if path.is_file():
+                present.append({"session": session.isoformat(), "root": root, "reason": "exists"})
+            else:
+                missing.append((session, root, path))
+    return missing, present
+
+
+def _write_volume_report(path, body):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
+
+
+def _volume_report_body(start, end, quote, **fields):
+    body = {
+        "mode": "volume_only",
+        "dataset": C.DATASET,
+        "schemas": list(VOLUME_SCHEMAS),
+        "symbols": list(PARENTS),
+        "start": start.isoformat(),
+        "end_exclusive": end.isoformat(),
+        "cap_usd": str(VOLUME_CAP_USD),
+        "get_cost": str(quote["get_cost"]),
+        "record_count": str(quote["record_count"]),
+        "billable_size": str(quote["billable_size"]),
+        "by_schema": quote["by_schema"],
+        "actual_cost_usd": None,
+        "actual_cost_note": (
+            "metadata.get_cost is the estimate. timeseries.get_range does not return a billed amount. "
+            "spent_usd is that estimate when a download of this window finished, else 0."
+        ),
+        "dry_run": False,
+        "downloaded": False,
+        "spent_usd": "0",
+        "sessions_written": [],
+        "sessions_skipped": [],
+        "holidays": [],
+        "reason": "",
+    }
+    body.update(fields)
+    return body
+
+
+def download_volume_window(http, key, start, end, sessions, volume_dir, raw_dir):
+    """One get_range per parent per schema for the whole window, then sibling CSVs.
+
+    Existing sibling files are not opened for write. Canonical paths are not used.
+    Writes happen only after every range has been read.
+    """
+    start_s, end_s = start.isoformat(), end.isoformat()
+    held = []
+    try:
+        for parent in PARENTS:
+            print("volume %s %s statistics" % (start_s, parent), flush=True)
+            buckets = consume_cleared_volume(
+                fetch_archived_range(http, key, "statistics", parent, start_s, end_s, raw_dir),
+                parent)
+            print("volume %s %s definition" % (start_s, parent), flush=True)
+            dmap = definition_map_from_rows(
+                fetch_archived_range(http, key, "definition", parent, start_s, end_s, raw_dir),
+                parent)
+            held.append((parent, buckets, dmap))
+    except PaymentRequired:
+        del held
+        raise
+
+    written, skipped, holidays = [], [], []
+    try:
+        for session in sessions:
+            iso = session.isoformat()
+            per_root = {}
+            any_settle = False
+            for parent, buckets, dmap in held:
+                day = buckets.get(iso) or {"settles": {}, "volumes": {}}
+                if day["settles"]:
+                    any_settle = True
+                _recs, vols, _unknown = C.contract_rows(
+                    day["settles"], {}, day["volumes"], dmap, parent, iso)
+                per_root[parent.split(".")[0]] = vols
+            if not any_settle:
+                holidays.append(iso)
+                continue
+            for root, vols in sorted(per_root.items()):
+                path = _volume_file(volume_dir, session, root)
+                if path.is_file():
+                    skipped.append({"session": iso, "root": root, "reason": "exists"})
+                    continue
+                C.write_csv(path, C.VOLUME_HEADER, vols, lineterminator="\n")
+                written.append({"session": iso, "root": root})
+    finally:
+        del held
+    return {"sessions_written": written, "sessions_skipped": skipped, "holidays": holidays}
+
+
+def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_report=None,
+                        volume_dir=None, volume_report=None, raw_dir=None):
+    """Cleared-volume window. Does not read or write the full-mode report."""
+    env = os.environ if env is None else env
+    try:
+        start = _parse_volume_day(args.volume_start or VOLUME_START_DEFAULT.isoformat(),
+                                  "volume_start")
+        if args.volume_end:
+            end = _parse_volume_day(args.volume_end, "volume_end")
+        else:
+            end = datetime.now(timezone.utc).date()
+    except ValueError as exc:
+        print("%s Refusing before any Databento call." % exc, file=sys.stderr)
+        return 2
+    if start >= end:
+        print("volume start must be before the exclusive end. Refusing before any Databento call.",
+              file=sys.stderr)
+        return 2
+
+    vol_dir, vol_report, raw = volume_output_paths(env, volume_dir, volume_report, raw_dir)
+    refusal = _refuse_volume_targets(vol_dir, vol_report, raw, canonical_dir, full_report)
+    if refusal:
+        print("%s Refusing before any Databento call." % refusal, file=sys.stderr)
+        return 2
+
+    key = (env.get("DATABENTO_API_KEY") or "").strip()
+    if not key:
+        print("DATABENTO_API_KEY is not set. No metadata call and no download.", file=sys.stderr)
+        return 2
+    http = http or urllib_http
+    dry_run = not args.download
+    sessions = list(iter_volume_sessions(start, end))
+    try:
+        quote = quote_volume_window(http, key, start, end)
+    except PaymentRequired as exc:
+        print("Databento HTTP 402 on %s. Stopped before download." % exc.endpoint, file=sys.stderr)
+        return 2
+    except CostUnknown as exc:
+        print("Could not read a number from %s. Nothing downloaded." % exc.endpoint, file=sys.stderr)
+        return 2
+
+    _volume_summary(start, end, quote)
+    if over_volume_cap(quote["get_cost"]):
+        reason = ("HARD CAP: volume window get_cost %s USD is above %s USD. "
+                  "Stopped before any download." % (quote["get_cost"], VOLUME_CAP_USD))
+        print(reason, file=sys.stderr)
+        _summary(reason)
+        return 3
+
+    if dry_run:
+        print("volume_only dry-run: cost recorded in the step summary. No download and no files.")
+        return 0
+
+    if not sessions:
+        body = _volume_report_body(
+            start, end, quote, downloaded=False, spent_usd="0",
+            reason="no weekday sessions in the window; no timeseries.get_range")
+        _write_volume_report(vol_report, body)
+        print(body["reason"])
+        return 0
+
+    missing, present = _missing_volume_files(vol_dir, sessions)
+    if not missing:
+        body = _volume_report_body(
+            start, end, quote, downloaded=False, spent_usd="0",
+            sessions_skipped=present,
+            reason="every sibling file in the window already exists; no timeseries.get_range")
+        _write_volume_report(vol_report, body)
+        print(body["reason"])
+        return 0
+
+    try:
+        result = download_volume_window(http, key, start, end, sessions, vol_dir, raw)
+    except PaymentRequired as exc:
+        print("Databento HTTP 402 on %s during download. No sibling CSV written." % exc.endpoint,
+              file=sys.stderr)
+        return 2
+    except Exception as exc:
+        print("volume download stopped: %s. No further sibling CSV written." % exc, file=sys.stderr)
+        return 1
+
+    body = _volume_report_body(
+        start, end, quote, downloaded=True, spent_usd=str(quote["get_cost"]),
+        sessions_written=result["sessions_written"],
+        sessions_skipped=result["sessions_skipped"],
+        holidays=result["holidays"], reason="")
+    _write_volume_report(vol_report, body)
+    print("volume_only wrote %s sibling files, skipped %s, holidays %s"
+          % (len(result["sessions_written"]), len(result["sessions_skipped"]),
+             len(result["holidays"])))
+    return 0
+
+
 def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
-            sessions=None, clock=None, budget_s=None):
+            sessions=None, clock=None, budget_s=None,
+            volume_dir=None, volume_report=None, raw_dir=None):
     parser = argparse.ArgumentParser(description="CME options backfill, one calendar month at a time")
     parser.add_argument("--download", action="store_true",
                         help="download and write canonical files (default is cost-only)")
@@ -911,11 +1333,22 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
     parser.add_argument("--month", default=None, help="process one YYYY-MM chunk")
     parser.add_argument("--list-months", action="store_true", help="print the 24 chunk months and exit")
     parser.add_argument("--record-stop", default=None, help="record a stop reason and exit 0")
+    parser.add_argument("--mode", choices=("full", "volume_only"), default="full",
+                        help="full keeps the monthly settlement/OI backfill; volume_only is the cleared-volume window")
+    parser.add_argument("--volume-start", default=VOLUME_START_DEFAULT.isoformat(),
+                        help="volume_only inclusive start YYYY-MM-DD (default 2026-07-01)")
+    parser.add_argument("--volume-end", default="",
+                        help="volume_only exclusive end YYYY-MM-DD (default today UTC)")
     args = parser.parse_args(argv)
     if args.list_months:
         for month in iter_chunks():
             print(month)
         return 0
+
+    if args.mode == "volume_only":
+        return execute_volume_only(
+            args, http=http, env=env, canonical_dir=out_dir, full_report=report_path,
+            volume_dir=volume_dir, volume_report=volume_report, raw_dir=raw_dir)
 
     env = os.environ if env is None else env
     out_dir = Path(out_dir or DEFAULT_OUT)
