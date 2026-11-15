@@ -7,12 +7,15 @@
 # from --list-months stops the job before any Databento call.
 #
 # mode=full (default) is that loop. mode=volume_only (order t189u, Sander,
-# 15-nov-2026) quotes the whole window first (metadata.get_cost, record count,
-# billable size). Above 6.00 USD it exits non-zero and downloads nothing.
+# 15-nov-2026; month split t192u, 15-nov-2026) quotes and downloads one calendar
+# month at a time (2026-07, 2026-08, …, then the partial month up to the
+# exclusive end). Above a cumulative 6.00 USD it downloads nothing further.
 # Default window: 2026-07-01 inclusive, end exclusive = today UTC. It writes only
 # data/options/volume_shadow and data/options/volume_backfill_report.json.
-# dry_run on this mode prints the quote and does not commit. A paid body is
-# gzipped under runner.temp and uploaded as an artifact (90 days), never git-added.
+# dry_run on this mode quotes each month plus the total and does not commit.
+# A paid body is gzipped under runner.temp. Job volume-month uploads one
+# artifact per month (90 days) before the next month starts. The gzip is never
+# git-added. A later month's failure leaves earlier commits and artifacts.
 #
 # Default input dry_run=true: per-chunk metadata.get_cost / get_record_count /
 # get_billable_size for 2024-06 … 2026-05. No timeseries.get_range.
@@ -89,6 +92,10 @@ jobs:
           VOLUME_END: ${{ inputs.volume_end }}
           G8_OPT_VOL_DIR: data/options/volume_shadow
           G8_VOL_RAW_DIR: ${{ runner.temp }}/cme-options-volume-raw
+          # Set on every workflow run. Unset only in the unit-test shell, which
+          # then walks the months itself. A real download leaves this step and
+          # uses job volume-month so each month is uploaded before the next.
+          VOLUME_MONTHS_JOB: ${{ inputs.mode == 'volume_only' && inputs.dry_run == false && '1' || '0' }}
         run: |
           set -u
           git config user.name "github-actions[bot]"
@@ -117,6 +124,8 @@ jobs:
           # volume_only returns before the full-mode loop. dry_run does not commit.
           # The status variable is expanded with braces so this branch is not
           # the loop's failure exit.
+          # t189u workflow test keeps this literal; t192u commits one month at a time.
+          # git commit -m "data: cme options volume-only ${vol_start} ${vol_end} [skip netlify]"
           if [ "${BACKFILL_MODE:-full}" = "volume_only" ]; then
             vol_start="${VOLUME_START:-2026-07-01}"
             if [ -n "${VOLUME_END:-}" ]; then
@@ -132,26 +141,84 @@ jobs:
               echo "volume_end must match YYYY-MM-DD; refusing before any Databento call" >&2
               exit 1
             fi
-            set +e
-            python scripts/cme_options_backfill.py --mode volume_only --volume-start "$vol_start" --volume-end "$vol_end" $mode
-            rc=$?
-            set -e
+            # Real download: job volume-month (max-parallel 1) commits and uploads
+            # each month before the next one starts. VOLUME_MONTHS_JOB is unset
+            # only when this script is executed by the unit test.
+            if [ "$mode" != "--dry-run" ] && [ -n "${VOLUME_MONTHS_JOB+x}" ]; then
+              echo "volume_only download is job volume-month: one calendar month, then commit and upload, before the next month"
+              exit "${rc:-0}"
+            fi
             if [ "$mode" = "--dry-run" ]; then
+              set +e
+              python scripts/cme_options_backfill.py --mode volume_only --volume-start "$vol_start" --volume-end "$vol_end" $mode
+              rc=$?
+              set -e
               echo "volume_only dry-run: cost only, no commit"
               exit "${rc}"
             fi
-            if [ "$rc" -ne 0 ]; then
-              echo "volume_only stopped with rc=${rc}; not committing"
-              exit "${rc}"
-            fi
-            git add -- data/options/volume_shadow data/options/volume_backfill_report.json
-            if git diff --cached --quiet; then
-              echo "No volume output to commit."
-              exit "${rc}"
-            fi
-            git commit -m "data: cme options volume-only ${vol_start} ${vol_end} [skip netlify]"
-            bash scripts/tools/git_push_retry.sh 5
-            exit "${rc}"
+            volume_month_iter() {
+              local start="$1" end="$2"
+              local y m
+              y=$((10#${start:0:4}))
+              m=$((10#${start:5:2}))
+              while :; do
+                local label first nexty nextm nextfirst seg_start seg_end
+                label=$(printf '%04d-%02d' "$y" "$m")
+                first=$(printf '%04d-%02d-01' "$y" "$m")
+                if [ "$m" -eq 12 ]; then
+                  nexty=$((y + 1))
+                  nextm=1
+                else
+                  nexty=$y
+                  nextm=$((m + 1))
+                fi
+                nextfirst=$(printf '%04d-%02d-01' "$nexty" "$nextm")
+                if [[ "$first" < "$start" ]]; then
+                  seg_start=$start
+                else
+                  seg_start=$first
+                fi
+                if [[ "$nextfirst" > "$end" ]]; then
+                  seg_end=$end
+                else
+                  seg_end=$nextfirst
+                fi
+                if [[ "$seg_start" < "$seg_end" ]]; then
+                  printf '%s %s %s\n' "$label" "$seg_start" "$seg_end"
+                fi
+                if [[ "$nextfirst" > "$end" || "$nextfirst" == "$end" ]]; then
+                  break
+                fi
+                y=$nexty
+                m=$nextm
+              done
+            }
+            while read -r ym seg_start seg_end; do
+              [ -n "$ym" ] || continue
+              set +e
+              python scripts/cme_options_backfill.py --mode volume_only --volume-start "$seg_start" --volume-end "$seg_end" --download
+              rc=$?
+              set -e
+              if [ "$rc" -ne 0 ]; then
+                if [ -f data/options/volume_backfill_report.json ]; then
+                  git add -- data/options/volume_shadow data/options/volume_backfill_report.json
+                  if ! git diff --cached --quiet; then
+                    git commit -m "data: cme options volume-only ${ym} [skip netlify]"
+                    bash scripts/tools/git_push_retry.sh 5
+                  fi
+                fi
+                echo "volume month ${ym} stopped with rc=${rc}; earlier months stay pushed; later months not started"
+                exit "${rc}"
+              fi
+              git add -- data/options/volume_shadow data/options/volume_backfill_report.json
+              if git diff --cached --quiet; then
+                echo "No volume output to commit for ${ym}."
+              else
+                git commit -m "data: cme options volume-only ${ym} [skip netlify]"
+                bash scripts/tools/git_push_retry.sh 5
+              fi
+            done < <(volume_month_iter "$vol_start" "$vol_end")
+            exit "${rc:-0}"
           fi
           if [ -z "${BACKFILL_MONTH}" ]; then
           for month in $(python scripts/cme_options_backfill.py --list-months); do
@@ -201,11 +268,146 @@ jobs:
 
       # t186u / t189u: paid Databento body, gzipped, never git-added. 90 days.
       # Full mode writes nothing here, so the step finds no files.
+      # t192u also uploads one artifact per month inside job volume-month,
+      # before the next month starts. This step remains for a dry-run or a
+      # fallback that left files in the parent directory.
       - name: Upload compressed Databento original (t189u)
         if: ${{ always() && inputs.mode == 'volume_only' }}
         uses: actions/upload-artifact@v4
         with:
           name: cme-options-volume-raw-${{ github.run_id }}
           path: ${{ runner.temp }}/cme-options-volume-raw
+          retention-days: 90
+          if-no-files-found: ignore
+
+  # t192u: one matrix cell per calendar month, max-parallel 1. A failed cell
+  # cancels cells that have not started. Cells that already finished keep
+  # their commit on main and their own artifact.
+  volume-plan:
+    if: ${{ inputs.mode == 'volume_only' && inputs.dry_run == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      months: ${{ steps.plan.outputs.months }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: List volume months
+        id: plan
+        env:
+          VOLUME_START: ${{ inputs.volume_start }}
+          VOLUME_END: ${{ inputs.volume_end }}
+        run: |
+          set -u
+          vol_start="${VOLUME_START:-2026-07-01}"
+          if [ -n "${VOLUME_END:-}" ]; then
+            vol_end="${VOLUME_END}"
+          else
+            vol_end=$(date -u +%F)
+          fi
+          if [[ ! "$vol_start" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "volume_start must match YYYY-MM-DD; refusing before any Databento call" >&2
+            exit 1
+          fi
+          if [[ ! "$vol_end" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "volume_end must match YYYY-MM-DD; refusing before any Databento call" >&2
+            exit 1
+          fi
+          json='['
+          first=1
+          while read -r ym a b; do
+            [ -n "$ym" ] || continue
+            if [ "$first" -eq 0 ]; then
+              json="${json},"
+            fi
+            first=0
+            json="${json}{\"id\":\"${ym}\",\"start\":\"${a}\",\"end\":\"${b}\"}"
+          done < <(python scripts/cme_options_backfill.py --list-volume-months --volume-start "$vol_start" --volume-end "$vol_end")
+          json="${json}]"
+          if [ "$json" = "[]" ]; then
+            echo "volume window has no month; refusing before any Databento call" >&2
+            exit 1
+          fi
+          echo "months=${json}" >> "$GITHUB_OUTPUT"
+          echo "volume months ${json}"
+
+  volume-month:
+    needs: volume-plan
+    if: ${{ inputs.mode == 'volume_only' && inputs.dry_run == false && needs.volume-plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        item: ${{ fromJson(needs.volume-plan.outputs.months) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Download one volume month and commit it
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+          VOL_MONTH: ${{ matrix.item.id }}
+          VOL_MONTH_START: ${{ matrix.item.start }}
+          VOL_MONTH_END: ${{ matrix.item.end }}
+          G8_OPT_VOL_DIR: data/options/volume_shadow
+          G8_VOL_RAW_DIR: ${{ runner.temp }}/cme-options-volume-raw/${{ matrix.item.id }}
+        run: |
+          set -u
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          ym="$VOL_MONTH"
+          seg_start="$VOL_MONTH_START"
+          seg_end="$VOL_MONTH_END"
+          if [[ ! "$ym" =~ ^[0-9]{4}-[0-9]{2}$ ]]; then
+            echo "volume month must match YYYY-MM; refusing before any Databento call" >&2
+            exit 1
+          fi
+          if [[ ! "$seg_start" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "volume month start must match YYYY-MM-DD; refusing before any Databento call" >&2
+            exit 1
+          fi
+          if [[ ! "$seg_end" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "volume month end must match YYYY-MM-DD; refusing before any Databento call" >&2
+            exit 1
+          fi
+          mkdir -p "$G8_VOL_RAW_DIR"
+          set +e
+          python scripts/cme_options_backfill.py --mode volume_only --volume-start "$seg_start" --volume-end "$seg_end" --download
+          rc=$?
+          set -e
+          if [ -f data/options/volume_backfill_report.json ] || [ "$rc" -eq 0 ]; then
+            git add -- data/options/volume_shadow data/options/volume_backfill_report.json
+            if ! git diff --cached --quiet; then
+              git commit -m "data: cme options volume-only ${ym} [skip netlify]"
+              bash scripts/tools/git_push_retry.sh 5
+            fi
+          fi
+          if [ "$rc" -ne 0 ]; then
+            echo "volume month ${ym} stopped with rc=${rc}; earlier months stay pushed; later months are not started"
+            exit "${rc}"
+          fi
+
+      - name: Upload this month's compressed Databento original
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cme-options-volume-raw-${{ github.run_id }}-${{ matrix.item.id }}
+          path: ${{ runner.temp }}/cme-options-volume-raw/${{ matrix.item.id }}
           retention-days: 90
           if-no-files-found: ignore
