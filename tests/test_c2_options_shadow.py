@@ -10,10 +10,11 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import cme_options_shadow as OPT  # noqa: E402
 
+# re-congelado SALUD-1: orden t186u (Sander, 15-nov-2026) — cme_options_collector.py y cme_options.yml
 FROZEN = {
-    "scripts/cme_options_collector.py": "61276d17636d921913e383127b47176e946adc5eab59420416f4f3a244a477f9",
+    "scripts/cme_options_collector.py": "5e0ba91aa147175cfc32c463aed4b79d15be10547819e2d062ebc167e475328e",
     "scripts/build_options_summary.py": "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019",
-    ".github/workflows/cme_options.yml": "281dfed01663e6147cd32fdde02c1bc88688ccdee0f6a54789128205e0fab6ab",
+    ".github/workflows/cme_options.yml": "2a8f475c538f1e807bb6bd4e929475e49b303396ec21d97b9a8aba879ed8a165",
     "scripts/dashboard_alerts.py": "cdddb1bc1186e22468ec0f35540fa97ccbd8226e3db31ce174a190c7109fddb2",  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
     "scripts/s01b.py": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
     "scripts/usd_factor.py": "d96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3",

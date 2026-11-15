@@ -27,11 +27,21 @@ Products (frozen scope, NZD excluded per Gate 0):
 Data model (verified empirically 2026-07-03):
   - schema `statistics`: stat_type 3 = official settlement (price col),
     stat_type 9 = open interest (quantity col).
+  - stat_type 6 = cleared volume (quantity col): contracts cleared for the
+    instrument on the previous trading date. t186u (Sander, 15-nov-2026):
+    stored per contract in a shadow sibling, never in the canonical CSV.
+    A missing stat_type 6 is empty (UNAVAILABLE), never 0, never carried
+    forward from another session.
   - Settlement of session T publishes ~19:13 UTC of T (stat_flags=2 final).
   - OI of session T publishes ~01:44 UTC of T+1.
   - Grouping key is ts_ref. Pull window: [T 00:00 UTC, T+1 06:00 UTC].
   - schema `definition`: instrument_id -> strike_price, expiration,
     instrument_class (C/P/F).
+
+t186u: every timeseries.get_range body is gzipped under G8_OPT_RAW_DIR
+(default ~/Documents/G8_options_pipeline/raw, outside this repo). The
+workflow uploads that directory as an Actions artifact. It is never
+committed. The shadow volume CSV is derived data, not the raw download.
 
 Guards (noisy failure doctrine):
   availability / cost / schema fingerprint / sanity floors.
@@ -39,6 +49,9 @@ Guards (noisy failure doctrine):
 
 Output: OUT_DIR/YYYY-MM-DD/{ROOT}.csv
   session,root,type,symbol,expiry,right,strike,settle,settle_flag,oi
+Shadow (not read by the summary, the dashboard, or FXVOL):
+  VOLUME_DIR/YYYY-MM-DD/{ROOT}.csv
+  session,root,type,symbol,expiry,right,strike,volume
 
 Usage:
   /usr/bin/python3 cme_options_collector.py                     # daily run
@@ -48,6 +61,7 @@ Usage:
 import os
 import sys
 import csv
+import gzip
 import io
 import json
 import time
@@ -76,6 +90,13 @@ OUT_DIR = Path(os.environ.get("G8_OPT_OUT_DIR",
     HOME / "Documents" / "G8_options_pipeline" / "canonical"))
 STATE_FILE = Path(os.environ.get("G8_OPT_STATE_FILE",
     HOME / "Documents" / "G8_options_pipeline" / "state.json"))
+# Sibling of the canonical tree. A volume column on {ROOT}.csv would change
+# those bytes even when stat_type 6 is absent, and that CSV is what the
+# summary, the dashboard chain, and FXVOL open.
+VOLUME_DIR = Path(os.environ.get("G8_OPT_VOL_DIR", OUT_DIR.parent / "volume_shadow"))
+# Compressed Databento bodies. Default is outside the repo. Never commit.
+RAW_DIR = Path(os.environ.get("G8_OPT_RAW_DIR",
+    HOME / "Documents" / "G8_options_pipeline" / "raw"))
 LOG_TAG = "CME-COLLECTOR"
 
 COST_LIMIT_DAY_USD = 0.25
@@ -92,6 +113,12 @@ STATS_FINGERPRINT = [
 
 STAT_SETTLE = "3"
 STAT_OI = "9"
+STAT_VOLUME = "6"  # cleared volume, quantity column; shadow only (t186u)
+
+CANON_HEADER = ["session", "root", "type", "symbol", "expiry",
+                "right", "strike", "settle", "settle_flag", "oi"]
+VOLUME_HEADER = ["session", "root", "type", "symbol", "expiry",
+                 "right", "strike", "volume"]
 
 MIN_OPT_SETTLES = 200
 MIN_OPT_OI_ROWS = 50
@@ -224,6 +251,29 @@ def guard_cost(auth, session, symbols, schema, end):
 # Data pulls (per product — v1.0.1)
 # ----------------------------------------------------------------------
 
+def raw_archive_name(schema, parent, start, end):
+    """File name for one compressed response. No credentials."""
+    def clean(value):
+        return str(value).replace(":", "-").replace("/", "_")
+    return "%s_%s_%s_%s.csv.gz" % (clean(schema), clean(parent), clean(start), clean(end))
+
+
+def archive_raw_response(directory, schema, parent, start, end, content):
+    """Gzip the exact timeseries body (t186u). content is bytes, never a secret."""
+    if not isinstance(content, (bytes, bytearray)):
+        raise TypeError("raw body must be bytes")
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    name = raw_archive_name(schema, parent, start, end)
+    path = directory / name
+    tmp = directory / (name + ".tmp")
+    with gzip.open(tmp, "wb") as fh:
+        fh.write(content)
+    tmp.rename(path)
+    print("[%s] raw archive %s (%d bytes)" % (LOG_TAG, name, len(content)))
+    return path
+
+
 def pull_csv_one(auth, schema, parent, start, end):
     r = api_get(auth, "timeseries.get_range", {
         "dataset": DATASET, "schema": schema,
@@ -232,6 +282,7 @@ def pull_csv_one(auth, schema, parent, start, end):
         "encoding": "csv", "pretty_px": "true", "pretty_ts": "true",
         "map_symbols": "true",
     })
+    archive_raw_response(RAW_DIR, schema, parent, start, end, r.content)
     return list(csv.DictReader(io.StringIO(r.text)))
 
 
@@ -276,6 +327,102 @@ def build_definition_map(def_rows, parent):
         }
     return m
 
+def _volume_quantity(quantity):
+    """Cleared-volume quantity. Blank is unavailable (None), never 0."""
+    if quantity is None:
+        return None
+    text = str(quantity).strip()
+    if text == "":
+        return None
+    return text
+
+
+def shadow_volume(volumes, instrument_id):
+    """Empty string when this session has no stat_type 6. Does not invent 0."""
+    if instrument_id not in volumes:
+        return ""
+    val = volumes[instrument_id]
+    if val is None:
+        return ""
+    return val
+
+
+def split_session_stats(stats, session_iso):
+    """Settle, OI, and cleared volume for one ts_ref date. Other dates are dropped."""
+    settles, ois, volumes = {}, {}, {}
+    for row in stats:
+        if row["ts_ref"][:10] != session_iso:
+            continue
+        iid = row["instrument_id"]
+        if row["stat_type"] == STAT_SETTLE:
+            settles[iid] = row
+        elif row["stat_type"] == STAT_OI:
+            ois[iid] = row
+        elif row["stat_type"] == STAT_VOLUME:
+            volumes[iid] = _volume_quantity(row.get("quantity"))
+    return settles, ois, volumes
+
+
+def contract_rows(settles, ois, volumes, dmap, parent, session_iso):
+    """Canonical settle/OI rows plus a shadow volume row for the same contracts.
+
+    The canonical dict has the pre-t186u keys only. Volume is a separate list.
+    """
+    root = parent.split(".")[0]
+    is_opt = parent.endswith(".OPT")
+    recs, vols, unknown = [], [], 0
+    for iid, srow in settles.items():
+        d = dmap.get(iid)
+        if d is None:
+            unknown += 1
+            continue
+        if is_opt and d["iclass"] not in ("C", "P"):
+            continue
+        if not is_opt and d["iclass"] != "F":
+            continue
+        symbol = d["symbol"] or srow["symbol"]
+        right = d["iclass"] if is_opt else ""
+        recs.append({
+            "session": session_iso,
+            "root": root,
+            "type": "OPT" if is_opt else "FUT",
+            "symbol": symbol,
+            "expiry": d["expiry"],
+            "right": right,
+            "strike": d["strike"],
+            "settle": srow["price"],
+            "settle_flag": srow["stat_flags"],
+            "oi": ois.get(iid, {}).get("quantity", ""),
+        })
+        vols.append({
+            "session": session_iso,
+            "root": root,
+            "type": "OPT" if is_opt else "FUT",
+            "symbol": symbol,
+            "expiry": d["expiry"],
+            "right": right,
+            "strike": d["strike"],
+            "volume": shadow_volume(volumes, iid),
+        })
+    return recs, vols, unknown
+
+
+def write_csv(path, header, recs, lineterminator=None):
+    """Atomic CSV write. Canonical files keep csv's default line ending."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ordered = sorted(recs, key=lambda r: (r["expiry"], r["right"], _fnum(r["strike"])))
+    tmp = path.with_name(path.name + ".tmp")
+    kwargs = {}
+    if lineterminator is not None:
+        kwargs["lineterminator"] = lineterminator
+    with tmp.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=header, **kwargs)
+        writer.writeheader()
+        writer.writerows(ordered)
+    tmp.rename(path)
+
+
 # ----------------------------------------------------------------------
 # Session processing
 # ----------------------------------------------------------------------
@@ -305,54 +452,25 @@ def process_session(auth, session):
     if total_cost > COST_LIMIT_DAY_USD:
         fail(f"cost guard: ${total_cost:.4f} > ${COST_LIMIT_DAY_USD}")
 
-    products, oi_counts, is_opt_map = {}, {}, {}
+    products, oi_counts, is_opt_map, volume_rows = {}, {}, {}, {}
     for parent in all_parents:
         root = parent.split(".")[0]
-        is_opt = parent.endswith(".OPT")
 
         stats = pull_csv_one(auth, "statistics", parent, start, end)
         check_stats_fingerprint(stats, parent)
         defs = pull_csv_one(auth, "definition", parent, start, end)
         dmap = build_definition_map(defs, parent)
 
-        settles, ois = {}, {}
-        for row in stats:
-            if row["ts_ref"][:10] != session_iso:
-                continue
-            iid = row["instrument_id"]
-            if row["stat_type"] == STAT_SETTLE:
-                settles[iid] = row
-            elif row["stat_type"] == STAT_OI:
-                ois[iid] = row
-
-        recs, unknown = [], 0
-        for iid, srow in settles.items():
-            d = dmap.get(iid)
-            if d is None:
-                unknown += 1
-                continue
-            if is_opt and d["iclass"] not in ("C", "P"):
-                continue
-            if not is_opt and d["iclass"] != "F":
-                continue
-            recs.append({
-                "session": session_iso,
-                "root": root,
-                "type": "OPT" if is_opt else "FUT",
-                "symbol": d["symbol"] or srow["symbol"],
-                "expiry": d["expiry"],
-                "right": d["iclass"] if is_opt else "",
-                "strike": d["strike"],
-                "settle": srow["price"],
-                "settle_flag": srow["stat_flags"],
-                "oi": ois.get(iid, {}).get("quantity", ""),
-            })
+        settles, ois, volumes = split_session_stats(stats, session_iso)
+        recs, vol_recs, unknown = contract_rows(
+            settles, ois, volumes, dmap, parent, session_iso)
         n_oi = sum(1 for r in recs if r["oi"] not in ("", None))
         print(f"{root}: settles={len(recs)} oi={n_oi} "
               f"(unknown_defs={unknown})")
         if unknown > 100:
             fail(f"{root}: {unknown} instruments missing definitions — join broken")
         products[root] = recs
+        volume_rows[root] = vol_recs
         oi_counts[root] = n_oi
         is_opt_map[root] = is_opt
 
@@ -373,16 +491,11 @@ def process_session(auth, session):
 
     day_dir = OUT_DIR / session_iso
     day_dir.mkdir(parents=True, exist_ok=True)
-    header = ["session", "root", "type", "symbol", "expiry",
-              "right", "strike", "settle", "settle_flag", "oi"]
+    vol_dir = VOLUME_DIR / session_iso
     for root, recs in sorted(products.items()):
-        recs.sort(key=lambda r: (r["expiry"], r["right"], _fnum(r["strike"])))
-        tmp = day_dir / f"{root}.csv.tmp"
-        with tmp.open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=header)
-            w.writeheader()
-            w.writerows(recs)
-        tmp.rename(day_dir / f"{root}.csv")
+        write_csv(day_dir / f"{root}.csv", CANON_HEADER, recs)
+        write_csv(vol_dir / f"{root}.csv", VOLUME_HEADER, volume_rows[root],
+                  lineterminator="\n")
     print(f"OK: wrote {len(products)} product files to {day_dir}")
     return True
 
