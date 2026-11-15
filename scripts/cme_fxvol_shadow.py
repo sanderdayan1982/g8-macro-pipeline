@@ -17,6 +17,8 @@ import sys
 import tempfile
 from datetime import date, datetime, timedelta, timezone
 
+import fxvol_states
+
 N = lambda x: 0.5 * (1 + math.erf(x / math.sqrt(2)))
 OPT = {
     "EUR": ("EUU", "6E"),
@@ -41,6 +43,9 @@ ROLL_POST = 3
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSON_NAME = "CME_FXVOL_shadow.json"
+# FAMILIAS-01 C. Los estados se calculan siempre. Con False no se escriben en el
+# JSON público, ni bajo docs/, ni en ninguna salida que se guarde en el repositorio.
+FXVOL_STATES_PUBLISH = False
 CSV_NAME = os.path.join("options", "fxvol_history.csv")
 CSV_COLUMNS = [
     "session", "ccy", "status", "reason", "iv30_atm", "rr25", "bf25", "mode",
@@ -360,12 +365,14 @@ def build(repo, session=None):
         "currencies": {},
     }
     hist = {c: [raw_session(root, d, c) for d in days] for c in OPT}
+    gates = {}
     for c in OPT:
         H = hist[c]
         cur = H[-1]
         g = g0.get(c) if isinstance(g0, dict) else None
         if isinstance(g, dict):
             g = g.get("verdict") or g.get("status")
+        gates[c] = g
         if cur["status"] != "OK":
             # FLUJOS-01 Sander 12-nov-2026: sin IV30 de la sesión no hay percentil ni ΔRR.
             rv, why = rv21_field(H)
@@ -455,6 +462,15 @@ def build(repo, session=None):
         "vrp": "UNAVAILABLE",
         "vol_regime": "UNAVAILABLE",
     }
+    gates["NZD"] = "NA"
+    # FAMILIAS-01 C. Pura sobre la historia; con la bandera apagada el JSON no cambia.
+    states = fxvol_states.compute_fxvol_states(
+        fxvol_states.rows_from_builder(hist, days),
+        asof=datetime.now(timezone.utc).date(),
+        gate0=gates,
+    )
+    if FXVOL_STATES_PUBLISH:
+        fxvol_states.publish_states(out, states)
     return out, hist, days
 
 
