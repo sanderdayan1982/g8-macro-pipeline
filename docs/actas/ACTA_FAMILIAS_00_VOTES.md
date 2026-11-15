@@ -63,3 +63,17 @@ Un HTTP 403 con `error.errors[0].reason` `rateLimitExceeded` o `userRateLimitExc
 Ningún test ya existente se edita. Ningún fichero con SHA-256 congelado en `tests/` cambia, así que SALUD-1 no actualiza ningún hash. Pine, la Suite G8, `data/`, los umbrales y los workflows no se tocan.
 
 `python -m pytest -q tests` (2026-11-14): 970 passed, 6 skipped, 1 failed. El fallo es anterior y ajeno a este cambio: `tests/test_cme_options_backfill_chunks.py::ChunkCalls::test_one_month_is_one_range_per_parent_per_schema` espera `committed_sha` vacío para 2024-06, y `git log` en `main` ya tiene `bcf4d70` (`data: cme options backfill 2024-06`). Ese test no se edita.
+
+## 14-nov-2026 — orden expresa de Sander (18:23 WAT, t158u)
+
+orden de Sander 14-nov-2026: FRESH_PROXY cuenta como fresco; el estado conserva la etiqueta FRESH_PROXY; solo afecta a la marca stale; ningún voto cambia; rule_version 2.
+
+`_vote` marca `stale` solo si el cierre no es el esperado o si el `STATUS`, cuando el módulo lo trae, no es `FRESH` ni `FRESH_PROXY`. El `estado` no se reetiqueta. `POS_G8` sigue en `ALWAYS_NA`. `RULE_VERSION` pasa a `2` en las filas nuevas. La única línea tocada en un test ya existente es la aserción de `rule_version` en `HappyPath.test_thirteen_modules`, por esta orden.
+
+## 14-nov-2026 — orden de Sander (18:44 WAT, t159u y t160u)
+
+t159u: `FRESH_PROXY` solo cambia la marca `stale`. El voto de `IYDT_2Y`, `IYDT_10Y`, `FFVA_G8` y `POL_G8` sigue en `NA`. El recuento de partes es el `PARTS` declarado (ASCII, 1..64). Copias idénticas de un `PART` cuentan una; copias distintas, o `PARTS` que no coinciden, dejan el snapshot incompleto, antes de deduplicar por `MESSAGE_ID`. Se prefiere un snapshot completo.
+
+orden de Sander 14-nov-2026 (t160u): id_correo pasa a sha256(Message-ID)[:16]; las filas existentes se transforman sin cambiar estado/voto/valor; no se reescribe el historial.
+
+El workflow `votes_ingest.yml` ya tenía `concurrency: votes-ingest` con `cancel-in-progress: false` en `main`. Ningún test fija su hash. No se toca.
