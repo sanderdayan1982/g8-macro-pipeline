@@ -21,15 +21,17 @@ permissions:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 31
     # Revisión 24-sep (hallazgo #3): plazo global del job y reserva para publicar. Duraciones medidas en los
     # Daily del 13 al 24-sep: job 2,5–10,7 min; ACM G8 ≤ 326 s; EUR AAA ≤ 225 s; S01B, avisos y commit < 5 s
     # cada uno. Reserva 700 s = S01B 120 + avisos 60 + vigilancia 90 + sombras U1 3×40 + A3 40 + registro 15 +
     # commit 180 + rojo 15 + aviso de fallo 60. La fase de descarga dispone de ~14,8 min (≈1,4× el máximo observado). PROVISIONAL:
     # recalibrar con data/_ingest/latest/actions__job_daily.json tras 2 semanas.
+    # FAMILIAS-01 M1: sombra CRD +40 s. Reserva 740 → 780 y timeout 30 → 31 min para que la fase de
+    # descarga no quede más corta que antes (el tope del job es en minutos enteros).
     env:
       G8_JOB: daily
-      G8_JOB_RESERVE_S: '740'
+      G8_JOB_RESERVE_S: '780'
       # R2-1: cada paso g8step copia data/ antes de ejecutarse y, al terminar, restaura al último válido lo que
       # quede vacío, ilegible, retrocedido o escrito por un paso cortado → «git add data/» solo ve salidas válidas.
       G8_STEP_GUARD: data
@@ -39,7 +41,7 @@ jobs:
       # ── 0. Plazo global: todo paso de descarga termina antes de DEADLINE − RESERVE ──
       - name: Plazo global del job (G8_JOB_DEADLINE_EPOCH)
         run: |
-          echo "G8_JOB_DEADLINE_EPOCH=$(( $(date +%s) + 30*60 - 90 ))" >> "$GITHUB_ENV"
+          echo "G8_JOB_DEADLINE_EPOCH=$(( $(date +%s) + 31*60 - 90 ))" >> "$GITHUB_ENV"
           echo "G8_STEP_LOG=$RUNNER_TEMP/g8_steps.jsonl" >> "$GITHUB_ENV"
 
       # ── 1. Checkout repository ─────────────────────────────────────────────
@@ -346,6 +348,13 @@ jobs:
         continue-on-error: true
         timeout-minutes: 2
         run: python scripts/tools/g8step.py --name s01b_shadow_a3 --phase post --cap 40 --min 5 -- python scripts/s01b_shadow_a3.py
+
+      # FAMILIAS-01 M1. Sombra: continue-on-error. Con CRD_PUBLISH=False no escribe data/credit/.
+      - name: Shadow CRD FRED (FAMILIAS-01 M1)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        run: python scripts/tools/g8step.py --name credit_fred_shadow --phase post --cap 40 --min 5 -- python scripts/credit_fred_shadow.py
 
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
