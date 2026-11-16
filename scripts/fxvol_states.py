@@ -477,6 +477,8 @@ def series_for_currency(ccy, rows, asof=None, gate0=None):
         vrp = None if rv is None else round(round(iv, 2) - rv, 2)
         if vrp is not None:
             vrp_hist.append(vrp)
+        # VRP_pct window (HIST_FULL): the rule is 252 VRP observations
+        # (≈ 273 sessions with the current RV21 rule of 22 settles).
         vrp_window = vrp_hist[-HIST_FULL:]
         n_vrp = len(vrp_window) if vrp is not None else 0
         vrp_pct = pct_rank(vrp_window, vrp) if vrp is not None else None
