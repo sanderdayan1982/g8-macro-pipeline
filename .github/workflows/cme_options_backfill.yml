@@ -83,6 +83,13 @@ jobs:
       - name: Install deps
         run: pip install requests
 
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,2,3
+
       - name: Backfill one calendar month at a time
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
@@ -92,6 +99,8 @@ jobs:
           VOLUME_END: ${{ inputs.volume_end }}
           G8_OPT_VOL_DIR: data/options/volume_shadow
           G8_VOL_RAW_DIR: ${{ runner.temp }}/cme-options-volume-raw
+          # PR-A: el bucle de meses llama a private_data en el mismo paso (un commit por mes).
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
           # Set on every workflow run. Unset only in the unit-test shell, which
           # then walks the months itself. A real download leaves this step and
           # uses job volume-month so each month is uploaded before the next.
@@ -120,6 +129,9 @@ jobs:
               git commit -m "data: cme options backfill ${month} [skip netlify]"
             fi
             bash scripts/tools/git_push_retry.sh 5
+            if [ -n "${G8_DATA_TOKEN:-}" ]; then
+              python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$month"
+            fi
           }
           # volume_only returns before the full-mode loop. dry_run does not commit.
           # The status variable is expanded with braces so this branch is not
@@ -205,6 +217,9 @@ jobs:
                   if ! git diff --cached --quiet; then
                     git commit -m "data: cme options volume-only ${ym} [skip netlify]"
                     bash scripts/tools/git_push_retry.sh 5
+                    if [ -n "${G8_DATA_TOKEN:-}" ]; then
+                      python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$ym"
+                    fi
                   fi
                 fi
                 echo "volume month ${ym} stopped with rc=${rc}; earlier months stay pushed; later months not started"
@@ -216,6 +231,9 @@ jobs:
               else
                 git commit -m "data: cme options volume-only ${ym} [skip netlify]"
                 bash scripts/tools/git_push_retry.sh 5
+                if [ -n "${G8_DATA_TOKEN:-}" ]; then
+                  python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$ym"
+                fi
               fi
             done < <(volume_month_iter "$vol_start" "$vol_end")
             exit "${rc:-0}"
@@ -265,6 +283,16 @@ jobs:
               exit "$rc"
             fi
           fi
+
+      - name: Private data verify
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 1,2,3
+          rc=$?
+          echo "private_data verify rc=${rc}"
+          exit "$rc"
 
       # t186u / t189u: paid Databento body, gzipped, never git-added. 90 days.
       # Full mode writes nothing here, so the step finds no files.
@@ -371,6 +399,13 @@ jobs:
       - name: Install deps
         run: pip install requests
 
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,2,3
+
       - name: Download one volume month and commit it
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
@@ -414,6 +449,23 @@ jobs:
             echo "volume month ${ym} stopped with rc=${rc}; earlier months stay pushed; later months are not started"
             exit "${rc}"
           fi
+
+      - name: Private data push
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "${{ matrix.item.id }}"
+
+      - name: Private data verify
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 1,2,3
+          rc=$?
+          echo "private_data verify rc=${rc}"
+          exit "$rc"
 
       - name: Upload this month's compressed Databento original
         if: always()

@@ -41,6 +41,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pyyaml
 
+      # PR-A: lectura del repo privado antes de la suite. Sin push. Token solo en este paso.
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,4,5,6,7,8,9,10,13
+
       # Acta P-6: las comprobaciones viven en scripts/tools/validate_smoke.sh (las comparte la compuerta del agente).
       # E1 (2026-09-21) / E2 (2026-09-22): la equivalencia s01b sobre las sesiones congeladas sigue incluida.
       - name: Smoke checks (syntax · tests · s01b equivalence · YAML · registry · JS · brief dry-run · imports)

@@ -34,6 +34,14 @@ jobs:
       - name: Install deps
         run: pip install requests
 
+      # PR-A: filas 1-3, 6, 11 y 12 desde g8-macro-data. El token solo vive en este paso.
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,2,3,6,11,12
+
       - name: Run collector (availability-guarded, catch-up)
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
@@ -42,7 +50,16 @@ jobs:
           G8_OPT_VOL_DIR: data/options/volume_shadow
           # t186u (Sander, 15-nov-2026): compressed original outside the checkout.
           G8_OPT_RAW_DIR: ${{ runner.temp }}/cme-options-raw
-        run: python scripts/cme_options_collector.py
+        run: |
+          set +e
+          start=$(date +%s)
+          python scripts/cme_options_collector.py > "$RUNNER_TEMP/cme.log" 2>&1
+          rc=$?
+          set -e
+          dur=$(( $(date +%s) - start ))
+          rows=$(wc -l < "$RUNNER_TEMP/cme.log" | tr -d ' ')
+          echo "cme_options_collector rc=${rc} duration=${dur}s rows=${rows}"
+          exit "$rc"
 
       # t186u: paid Databento body, gzipped, never git-added. 90 days.
       - name: Upload compressed Databento original (t186u)
@@ -58,7 +75,16 @@ jobs:
         env:
           G8_OPT_OUT_DIR: data/options/canonical
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
-        run: python scripts/build_options_summary.py
+        run: |
+          set +e
+          start=$(date +%s)
+          python scripts/build_options_summary.py > "$RUNNER_TEMP/cme.log" 2>&1
+          rc=$?
+          set -e
+          dur=$(( $(date +%s) - start ))
+          rows=$(wc -l < "$RUNNER_TEMP/cme.log" | tr -d ' ')
+          echo "build_options_summary rc=${rc} duration=${dur}s rows=${rows}"
+          exit "$rc"
 
       # Dashboard alerts (strike walls card on every new session; $0, repo data only)
       - name: Dashboard alerts (Telegram on change)
@@ -81,6 +107,26 @@ jobs:
             # Acta P-7: integra main y reintenta (el run tarda ~15 min y otros procesos suben entretanto).
             bash scripts/tools/git_push_retry.sh 5
           fi
+
+      # PR-A: el commit público de arriba no cambia. El push privado va después.
+      - name: Private data push
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
+            --rows 1,2,3,6,11,12 \
+            --workflow "cme_options" --session "$(date -u +%F)"
+
+      - name: Private data verify
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 1,2,3,6,11,12
+          rc=$?
+          echo "private_data verify rc=${rc}"
+          exit "$rc"
 
       # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
       - name: Alert on failure

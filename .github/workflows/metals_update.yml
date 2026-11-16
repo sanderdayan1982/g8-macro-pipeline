@@ -53,6 +53,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 6,11,12
+
       - name: Compute metals fair value (XAU + XAG)
         id: compute
         continue-on-error: true
@@ -95,6 +102,25 @@ jobs:
           fi
           git commit -m "chore: weekly metals fair value update $(date -u '+%Y-%m-%d')"
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
+
+      - name: Private data push
+        if: always()
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
+            --rows 11,12 --workflow "metals_update" --session "$(date -u +%F)"
+
+      - name: Private data verify
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 11,12
+          rc=$?
+          echo "private_data verify rc=${rc}"
+          exit "$rc"
 
       - name: Fail visibly when computation failed
         if: always() && steps.compute.outcome != 'success'
