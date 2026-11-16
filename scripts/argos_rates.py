@@ -4,6 +4,11 @@
 El HTML lo produce scripts/argos_render.js ejecutando los IIFE del dashboard
 (Papa Parse 5.4.1, reloj UTC). Este módulo solo lee ese HTML.
 
+as_of es la última sesión 1D ya cerrada (17:00 America/New_York, invierno y
+verano). El render recibe --cut con esa fecha y, antes de calcular niveles y
+floors, deja fuera las filas posteriores de TONA, AONIA, RY_G8_*, AUD_NOWCAST
+y un S01B.json con as_of posterior. docs/index.html y s01b.py no cambian.
+
 FLUJOS-01 Sander 12-nov-2026. No recalcula fórmulas.
 Lo que el panel no muestra queda UNAVAILABLE:
   - variación a 1 día del nivel
@@ -21,8 +26,12 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+from g8common.schedule import add_bd, is_bd, load_calendars
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+NY = ZoneInfo("America/New_York")
 OUT = os.path.join(ROOT, "data", "argos_rates.json")
 RENDER = os.path.join(ROOT, "scripts", "argos_render.js")
 CCYS = ["USD", "EUR", "JPY", "GBP", "CAD", "AUD", "NZD", "CHF"]
@@ -36,11 +45,48 @@ LEVELS = [
 MISSING = {"·", "—", "-", "sin feed", "sin historia", "sin ACM"}
 
 
-def render(now):
+def parse_clock(now):
+    if isinstance(now, datetime):
+        if now.tzinfo is None:
+            return now.replace(tzinfo=timezone.utc)
+        return now.astimezone(timezone.utc)
+    return datetime.strptime(str(now), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
+
+def closed_session(now, cals=None):
+    """Última sesión 1D cerrada a las 17:00 America/New_York.
+
+    Si hoy es hábil y el reloj ya pasó ese cierre, la sesión es hoy. Si no,
+    el hábil anterior. Hábil = lunes–viernes ausente de sources/calendars.csv
+    (calendario US). Sin festivos US del año en curso, sale con error.
+    """
+    cals = load_calendars(ROOT) if cals is None else cals
+    us = cals.get("US") or set()
+    if not us:
+        raise SystemExit("sources/calendars.csv no tiene calendario US")
+    local = parse_clock(now).astimezone(NY)
+    years = {item[:4] for item in us}
+    if "%04d" % local.year not in years:
+        raise SystemExit("sources/calendars.csv no cubre festivos US de %s" % local.year)
+    today = local.date()
+    close = local.replace(hour=17, minute=0, second=0, microsecond=0)
+    if is_bd(cals, "US", today) and local >= close:
+        return today
+    return add_bd(cals, "US", today, -1)
+
+
+def render(now, data_dir=None, apply_cut=True):
+    if not isinstance(now, str):
+        now = parse_clock(now).strftime("%Y-%m-%dT%H:%M:%SZ")
     env = os.environ.copy()
     env["TZ"] = "UTC"
+    cmd = ["node", RENDER, "--now", now]
+    if apply_cut:
+        cmd.extend(["--cut", closed_session(now).isoformat()])
+    if data_dir:
+        cmd.extend(["--data", data_dir])
     proc = subprocess.run(
-        ["node", RENDER, "--now", now],
+        cmd,
         cwd=ROOT, env=env, capture_output=True, text=True, check=False,
     )
     if proc.returncode != 0:
@@ -310,7 +356,7 @@ def parse(doc):
     now = doc["now"]
     return {
         "schema": "argos_rates/1",
-        "as_of": now[:10],
+        "as_of": closed_session(now).isoformat(),
         "generated_at": now,
         "clock": "UTC",
         "s01b_as_of": as_of_m.group(1) if as_of_m else "UNAVAILABLE",
