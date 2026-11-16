@@ -17,10 +17,15 @@ if (new Date().getTimezoneOffset() !== 0) {
 const ROOT = path.resolve(__dirname, '..');
 const RAW = 'https://raw.githubusercontent.com/sanderdayan1982/g8-macro-pipeline/main/data/';
 
+function argVal(flag) {
+  const i = process.argv.indexOf(flag);
+  if (i < 0) return null;
+  return process.argv[i + 1] || null;
+}
+
 function argNow() {
-  const i = process.argv.indexOf('--now');
-  if (i < 0) return new Date().toISOString().replace(/\.\d+Z$/, 'Z');
-  const v = process.argv[i + 1];
+  const v = argVal('--now');
+  if (!v) return new Date().toISOString().replace(/\.\d+Z$/, 'Z');
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(v)) {
     console.error('--now debe ser YYYY-MM-DDTHH:MM:SSZ');
     process.exit(2);
@@ -29,6 +34,70 @@ function argNow() {
 }
 
 const NOW = argNow();
+const CUT = argVal('--cut');
+if (CUT && !/^\d{4}-\d{2}-\d{2}$/.test(CUT)) {
+  console.error('--cut debe ser YYYY-MM-DD');
+  process.exit(2);
+}
+const DATA = argVal('--data') ? path.resolve(argVal('--data')) : path.join(ROOT, 'data');
+
+/* --cut: argos_rates.py ignora filas posteriores a la sesión 1D cerrada.
+   El HTML compartido no cambia; solo el texto que este render le entrega. */
+function isoField(field) {
+  const f = String(field || '').replace(/"/g, '').trim();
+  if (/^\d{8}$/.test(f)) return f.slice(0, 4) + '-' + f.slice(4, 6) + '-' + f.slice(6, 8);
+  if (/^\d{4}-\d{2}-\d{2}/.test(f)) return f.slice(0, 10);
+  return null;
+}
+
+function cutKind(rel) {
+  if (rel === 'TONA.csv' || rel === 'AONIA.csv' || rel === 'AUD_NOWCAST.csv') return 'csv';
+  if (/^RY_G8_[A-Z0-9]+\.csv$/.test(rel)) return 'csv';
+  if (rel === 'S01B.json') return 's01b';
+  return null;
+}
+
+function cutCsv(text) {
+  const lines = text.split('\n');
+  let dropped = false;
+  const kept = lines.filter(function (line) {
+    const d = isoField(line.split(',')[0]);
+    if (d && d > CUT) { dropped = true; return false; }
+    return true;
+  });
+  return dropped ? kept.join('\n') : text;
+}
+
+function cutS01B(text) {
+  let doc;
+  try { doc = JSON.parse(text); } catch (e) { return text; }
+  const asOf = String((doc && doc.as_of) || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf) || asOf <= CUT) return text;
+  return JSON.stringify({
+    schema: doc.schema || 's01b-1',
+    as_of: '',
+    status: doc.status || 'CONTEXT',
+    currencies: {},
+    events: [],
+  });
+}
+
+function applyCut(rel, text) {
+  if (!CUT) return text;
+  const kind = cutKind(rel);
+  if (kind === 'csv') return cutCsv(text);
+  if (kind === 's01b') return cutS01B(text);
+  return text;
+}
+
+function readRel(rel) {
+  if (!rel || rel.indexOf('\0') >= 0 || rel.indexOf('..') >= 0 || path.isAbsolute(rel)) return null;
+  const file = path.resolve(DATA, rel);
+  const root = path.resolve(DATA);
+  if (file !== root && file.indexOf(root + path.sep) !== 0) return null;
+  if (!fs.existsSync(file)) return null;
+  return applyCut(rel, fs.readFileSync(file, 'utf8'));
+}
 const FIXED = Date.parse(NOW);
 const OrigDate = Date;
 
@@ -108,9 +177,9 @@ global.G8NET.fetchChain = async function (urls) {
   const u = (urls[0] && urls[0].url) || urls[0];
   if (typeof u !== 'string' || u.indexOf(RAW) !== 0) return { ok: false, error: 'fuera del repo ' + u };
   const rel = u.slice(RAW.length);
-  const file = path.join(ROOT, 'data', rel);
-  if (!file.startsWith(path.join(ROOT, 'data')) || !fs.existsSync(file)) return { ok: false, error: 'ausente ' + rel };
-  return { ok: true, text: fs.readFileSync(file, 'utf8') };
+  const text = readRel(rel);
+  if (text == null) return { ok: false, error: 'ausente ' + rel };
+  return { ok: true, text: text };
 };
 
 for (let i = 1; i < blocks.length; i++) {
@@ -151,7 +220,7 @@ const t0 = Date.now();
 (function poll() {
   if (ready()) {
     var s01bDoc = {};
-    try { s01bDoc = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'S01B.json'), 'utf8')); } catch (e) { s01bDoc = {}; }
+    try { s01bDoc = JSON.parse(readRel('S01B.json') || ''); } catch (e) { s01bDoc = {}; }
     var legs = global.__G8legs || {};
     Object.keys(legs).forEach(function (c) {
       if (!legs[c]) return;
