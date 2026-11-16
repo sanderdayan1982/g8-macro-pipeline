@@ -749,10 +749,9 @@ def download_month(http, key, month, out_dir):
 
 
 def _budget_line(text, err=False, flush=False):
-    """get_cost / record_count / billable_size / cap lines go to the private log.
+    """Quote lines go only to $RUNNER_TEMP/cme.log.
 
-    RUNNER_TEMP is set on Actions. Without it, the line stays on the console
-    so a local run still shows the quote. The step summary is unchanged.
+    Without RUNNER_TEMP (a local run), the line stays on the console.
     """
     root = os.environ.get("RUNNER_TEMP")
     if root:
@@ -764,12 +763,24 @@ def _budget_line(text, err=False, flush=False):
     print(text, file=sys.stderr if err else sys.stdout, flush=flush)
 
 
+def _databento_budget_line(line):
+    """Public step summary must not carry Databento quote figures."""
+    markers = ("get_cost", "record_count", "billable_size", "HARD CAP", "cumulative spent", "cap:")
+    return any(marker in line for marker in markers)
+
+
 def _summary(text):
     _budget_line(text)
     path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if path:
-        with open(path, "a", encoding="utf-8") as fh:
-            fh.write(text + "\n")
+    if not path:
+        return
+    kept = [line for line in text.split("\n") if not _databento_budget_line(line)]
+    if not any(line.strip() for line in kept):
+        return
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write("\n".join(kept))
+        if not kept[-1].endswith("\n"):
+            fh.write("\n")
 
 
 def blank_report():
