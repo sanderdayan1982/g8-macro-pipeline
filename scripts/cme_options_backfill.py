@@ -748,8 +748,24 @@ def download_month(http, key, month, out_dir):
     return {"sessions_added": added, "skipped": skipped, "holidays": holidays}
 
 
+def _budget_line(text, err=False, flush=False):
+    """get_cost / record_count / billable_size / cap lines go to the private log.
+
+    RUNNER_TEMP is set on Actions. Without it, the line stays on the console
+    so a local run still shows the quote. The step summary is unchanged.
+    """
+    root = os.environ.get("RUNNER_TEMP")
+    if root:
+        with open(os.path.join(root, "cme.log"), "a", encoding="utf-8") as fh:
+            fh.write(text)
+            if not text.endswith("\n"):
+                fh.write("\n")
+        return
+    print(text, file=sys.stderr if err else sys.stdout, flush=flush)
+
+
 def _summary(text):
-    print(text)
+    _budget_line(text)
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if path:
         with open(path, "a", encoding="utf-8") as fh:
@@ -1566,7 +1582,7 @@ def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_repo
 
     def _note(text):
         notes.append(text)
-        print(text, flush=True)
+        _budget_line(text, flush=True)
 
     def _persist(reason, quote):
         nonlocal persisted
@@ -1637,7 +1653,7 @@ def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_repo
                 if outcome["status"] == "cap":
                     _emit_volume_summary(start, end, _sum_volume_quotes(quotes), notes)
                     reason = _volume_cap_reason(spent, label, quote["get_cost"])
-                    print(reason, file=sys.stderr)
+                    _budget_line(reason, err=True)
                     _summary(reason)
                     if persisted:
                         _upsert_volume_month(month_rows, _coverage_entry(
@@ -1701,7 +1717,7 @@ def execute_volume_only(args, http=None, env=None, canonical_dir=None, full_repo
         total = _sum_volume_quotes(quotes)["get_cost"]
         if over_volume_cap(spent + total):
             reason = _volume_cap_reason(spent, "window", total)
-            print(reason, file=sys.stderr)
+            _budget_line(reason, err=True)
             _summary(reason)
             return 3
         print("volume_only dry-run: cost recorded in the step summary. No download and no files.")
@@ -1845,7 +1861,7 @@ def execute(argv=None, http=None, env=None, out_dir=None, report_path=None,
                 report["dry_run"] = dry_run
                 report["reason"] = reason
                 write_report(report_path, report)
-                print(reason, file=sys.stderr)
+                _budget_line(reason, err=True)
                 _summary(reason)
                 return 3
             if dry_run:
