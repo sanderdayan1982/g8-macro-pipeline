@@ -66,6 +66,15 @@ jobs:
         timeout-minutes: 4
         run: pip install -r requirements.txt
 
+      # PR-A: filas 1, 4-8, 11 y 12 antes de los scripts. El token solo vive en este paso.
+      - name: Private data pull
+        timeout-minutes: 5
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,4,5,6,7,8,11,12
+
       # ── 4. Run scrapers — TOLERANT mode (each independent) ────────────────
       - name: Fetch SOFR (USD anchor)
         timeout-minutes: 6
@@ -328,13 +337,31 @@ jobs:
         if: always()
         continue-on-error: true
         timeout-minutes: 2
-        run: python scripts/tools/g8step.py --name cme_options_shadow --phase post --cap 40 --min 5 -- python scripts/cme_options_shadow.py
+        run: |
+          set +e
+          start=$(date +%s)
+          python scripts/tools/g8step.py --name cme_options_shadow --phase post --cap 40 --min 5 -- python scripts/cme_options_shadow.py > "$RUNNER_TEMP/cme.log" 2>&1
+          rc=$?
+          set -e
+          dur=$(( $(date +%s) - start ))
+          rows=$(wc -l < "$RUNNER_TEMP/cme.log" | tr -d ' ')
+          echo "cme_options_shadow rc=${rc} duration=${dur}s rows=${rows}"
+          exit "$rc"
 
       - name: Shadow CME FXVOL (IV30 / RR25 / BF25 / OI futuros)
         if: always()
         continue-on-error: true
         timeout-minutes: 2
-        run: python scripts/tools/g8step.py --name cme_fxvol_shadow --phase post --cap 40 --min 5 -- python scripts/cme_fxvol_shadow.py
+        run: |
+          set +e
+          start=$(date +%s)
+          python scripts/tools/g8step.py --name cme_fxvol_shadow --phase post --cap 40 --min 5 -- python scripts/cme_fxvol_shadow.py > "$RUNNER_TEMP/cme.log" 2>&1
+          rc=$?
+          set -e
+          dur=$(( $(date +%s) - start ))
+          rows=$(wc -l < "$RUNNER_TEMP/cme.log" | tr -d ' ')
+          echo "cme_fxvol_shadow rc=${rc} duration=${dur}s rows=${rows}"
+          exit "$rc"
 
       - name: Shadow CHF nowcast
         if: always()
@@ -385,6 +412,36 @@ jobs:
           CHANGED=$(git diff --staged --name-only | wc -l)
           git commit -m "chore: daily data update $(date -u '+%Y-%m-%d') [${CHANGED} files]"
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7): on 6-oct the old loop hit a rebase conflict and lost the run
+
+      # PR-A: filas 4, 5, 7 y 8 más brief/state completos. El crédito solo si el fichero existe.
+      - name: Private data push
+        if: always()
+        timeout-minutes: 5
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
+            --paths data/options/shadow_history.json data/options/fxvol_history.csv \
+              data/CME_OPTIONS_C1_shadow.json data/CME_FXVOL_shadow.json \
+              data/alerts/brief.json data/alerts/state.json \
+            --credit-if-present \
+            --workflow "daily_update" --session "$(date -u +%F)"
+
+      - name: Private data verify
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          set +e
+          python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" \
+            --paths data/options/shadow_history.json data/options/fxvol_history.csv \
+              data/CME_OPTIONS_C1_shadow.json data/CME_FXVOL_shadow.json \
+              data/alerts/brief.json data/alerts/state.json \
+            --credit-if-present
+          rc=$?
+          echo "private_data verify rc=${rc}"
+          exit "$rc"
 
       - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
         if: always()

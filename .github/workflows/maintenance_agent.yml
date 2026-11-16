@@ -38,6 +38,13 @@ jobs:
           else
             python scripts/tools/watch_cadence.py --event "$EVENT_NAME" >> "$GITHUB_OUTPUT"
           fi
+      - name: Private data pull
+        if: steps.cadence.outputs.run == 'true'
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,4,5,6,7,8,9,10,13
       - if: steps.cadence.outputs.run == 'true'
         run: python scripts/health_monitor.py --out .agent/health.json
       - id: due
@@ -72,6 +79,12 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.txt pyyaml
+      - name: Private data pull
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_READ_CI }}
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,4,5,6,7,8,9,10,13
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
