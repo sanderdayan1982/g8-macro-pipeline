@@ -1,91 +1,91 @@
 {
- "deadline_utc": "2026-11-16T23:13:00Z",
+ "deadline_utc": "2026-11-16T23:40:26Z",
  "executor": "actions",
  "failed": [],
  "job": "intraday",
  "reserve_s": "300",
  "restored": [],
- "run_id": "43974123942",
+ "run_id": "43978330270",
  "steps": [
   {
    "allowed_s": 180.0,
    "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_estr.py",
-   "name": "estr",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.5,
-   "started_utc": "2026-11-16T22:53:00Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_sonia.py",
-   "name": "sonia",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-11-16T22:53:03Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_bills.py",
-   "name": "eur_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 14.8,
-   "started_utc": "2026-11-16T22:53:04Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_gbp_bills.py",
-   "name": "gbp_bills",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.9,
-   "started_utc": "2026-11-16T22:53:18Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_eur_real.py",
-   "name": "eur_real",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 2.7,
-   "started_utc": "2026-11-16T22:53:21Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py GBP",
-   "name": "real_yields",
-   "phase": "fetch",
-   "rc": 0,
-   "secs": 1.0,
-   "started_utc": "2026-11-16T22:53:24Z",
-   "status": "OK"
-  },
-  {
-   "allowed_s": 180.0,
-   "cap_s": 180.0,
-   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_chf_cpi.py",
-   "name": "chf_cpi",
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_us_bills.py",
+   "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
    "secs": 3.0,
-   "started_utc": "2026-11-16T22:53:25Z",
+   "started_utc": "2026-11-16T23:20:26Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/fetch_floor_spreads.py",
+   "name": "floors",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 5.0,
+   "started_utc": "2026-11-16T23:20:30Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/real_yields_g8.py USD AUD",
+   "name": "real_yields",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 19.5,
+   "started_utc": "2026-11-16T23:20:35Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
+   "name": "acm_g8",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 94.4,
+   "started_utc": "2026-11-16T23:20:54Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py NZD",
+   "name": "acm_nzd",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.9,
+   "started_utc": "2026-11-16T23:22:29Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/acm_g8.py CHF",
+   "name": "acm_chf",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 1.1,
+   "started_utc": "2026-11-16T23:22:30Z",
+   "status": "OK"
+  },
+  {
+   "allowed_s": 180.0,
+   "cap_s": 180.0,
+   "cmd": "/opt/hostedtoolcache/Python/3.11.18/x64/bin/python /home/runner/work/g8-macro-pipeline/g8-macro-pipeline/scripts/aud_nowcast.py",
+   "name": "aud_nowcast",
+   "phase": "fetch",
+   "rc": 0,
+   "secs": 0.8,
+   "started_utc": "2026-11-16T23:22:31Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-11-16T22:53:28Z"
+ "written_utc": "2026-11-16T23:22:32Z"
 }
