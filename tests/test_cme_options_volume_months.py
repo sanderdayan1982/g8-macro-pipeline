@@ -51,6 +51,12 @@ class _Case(unittest.TestCase):
         self._prev = os.environ.get("GITHUB_STEP_SUMMARY")
         os.environ["GITHUB_STEP_SUMMARY"] = self.summary
         self.addCleanup(self._restore)
+        # orden Sander 16-nov, licencia
+        self.runner = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.runner, True)
+        self._prev_runner = os.environ.get("RUNNER_TEMP")
+        os.environ["RUNNER_TEMP"] = self.runner
+        self.addCleanup(self._restore_runner)
 
     def _restore(self):
         if self._prev is None:
@@ -58,8 +64,22 @@ class _Case(unittest.TestCase):
         else:
             os.environ["GITHUB_STEP_SUMMARY"] = self._prev
 
+    def _restore_runner(self):
+        # orden Sander 16-nov, licencia
+        if self._prev_runner is None:
+            os.environ.pop("RUNNER_TEMP", None)
+        else:
+            os.environ["RUNNER_TEMP"] = self._prev_runner
+
     def _summary(self):
-        with open(self.summary, encoding="utf-8") as fh:
+        # orden Sander 16-nov, licencia — mismas comprobaciones, sobre el log privado
+        public = ""
+        if os.path.exists(self.summary):
+            with open(self.summary, encoding="utf-8") as fh:
+                public = fh.read()
+        for marker in ("get_cost", "record_count", "billable_size", "HARD CAP", "cumulative spent", "cap:"):
+            self.assertNotIn(marker, public)
+        with open(os.path.join(self.runner, "cme.log"), encoding="utf-8") as fh:
             return fh.read()
 
     def _sentinels(self):
