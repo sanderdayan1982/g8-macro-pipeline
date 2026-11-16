@@ -1,9 +1,9 @@
 {
  "schema": "argos_rates/1",
- "as_of": "2026-11-13",
- "generated_at": "2026-11-16T21:39:59Z",
+ "as_of": "2026-11-16",
+ "generated_at": "2026-11-16T22:53:30Z",
  "clock": "UTC",
- "s01b_as_of": "UNAVAILABLE",
+ "s01b_as_of": "2026-11-16",
  "currencies": {
   "USD": {
    "date": "2026-11-13",
@@ -42,8 +42,21 @@
     "breakeven_10y": -9.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 9,
+    "d_tp": -6,
+    "d_fit": 3,
+    "resid": 2,
+    "d_2y": 11,
+    "d_be": -8,
+    "d_fx": "+1.22 %",
+    "theta": 20,
+    "ctf": "OFF",
+    "persist": 35,
+    "quality": "OK",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "REAL_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -54,12 +67,12 @@
    "breakeven_10y": 2.24
   },
   "EUR": {
-   "date": "2026-11-13",
+   "date": "2026-11-16",
    "estimate": false,
    "panel_deltas_bp": {
     "nominal_10y": {
-     "1W": 14,
-     "1M": -2
+     "1W": 12,
+     "1M": -3
     },
     "term_premium": {
      "1W": 4,
@@ -70,44 +83,57 @@
      "1M": 7
     },
     "real_10y": {
-     "1W": 15,
-     "1M": 15
+     "1W": 13,
+     "1M": 14
     },
     "breakeven_10y": {
      "1W": -1,
-     "1M": -16
+     "1M": -17
     }
    },
    "level_change_1d": {
-    "nominal_10y": 7.88,
-    "real_10y": 3.83,
-    "breakeven_10y": 4.04,
+    "nominal_10y": 1.54,
+    "real_10y": 2.19,
+    "breakeven_10y": -0.66,
     "source": "computed"
    },
    "level_change_22d": {
-    "nominal_10y": -7.57,
-    "real_10y": 9.05,
-    "breakeven_10y": -16.62,
+    "nominal_10y": -0.02,
+    "real_10y": 17.06,
+    "breakeven_10y": -17.09,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 7,
+    "d_tp": -5,
+    "d_fit": 1,
+    "resid": -1,
+    "d_2y": 8,
+    "d_be": -17,
+    "d_fx": "-1.75 %",
+    "theta": 21,
+    "ctf": "OFF",
+    "persist": 35,
+    "quality": "OK",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
-   "nominal_10y": 3.38,
+   "nominal_10y": 3.39,
    "term_premium": 1.12,
    "rny": 2.23,
-   "real_10y": 1.27,
+   "real_10y": 1.3,
    "breakeven_10y": 2.1
   },
   "JPY": {
-   "date": "2026-11-13",
+   "date": "2026-11-16",
    "estimate": false,
    "panel_deltas_bp": {
     "nominal_10y": {
-     "1W": 3,
-     "1M": -18
+     "1W": 20,
+     "1M": -12
     },
     "term_premium": {
      "1W": 19,
@@ -118,36 +144,49 @@
      "1M": 8
     },
     "real_10y": {
-     "1W": 10,
-     "1M": 6
+     "1W": 20,
+     "1M": 3
     },
     "breakeven_10y": {
-     "1W": -6,
-     "1M": -24
+     "1W": 1,
+     "1M": -15
     }
    },
    "level_change_1d": {
-    "nominal_10y": 0.03,
-    "real_10y": -1.11,
-    "breakeven_10y": 1.14,
+    "nominal_10y": 6.16,
+    "real_10y": -1.62,
+    "breakeven_10y": 7.79,
     "source": "computed"
    },
    "level_change_22d": {
-    "nominal_10y": -19.11,
-    "real_10y": 4.71,
-    "breakeven_10y": -23.82,
+    "nominal_10y": -12.21,
+    "real_10y": 4.18,
+    "breakeven_10y": -16.38,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 6,
+    "d_tp": -11,
+    "d_fit": -5,
+    "resid": -7,
+    "d_2y": -3,
+    "d_be": -15,
+    "d_fx": "-1.02 %",
+    "theta": 14,
+    "ctf": "OFF",
+    "persist": 25,
+    "quality": "OK",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
-   "nominal_10y": 2.84,
+   "nominal_10y": 2.9,
    "term_premium": 1.91,
    "rny": 0.98,
-   "real_10y": 0.85,
-   "breakeven_10y": 1.99
+   "real_10y": 0.84,
+   "breakeven_10y": 2.06
   },
   "GBP": {
    "date": "2026-11-13",
@@ -186,8 +225,21 @@
     "breakeven_10y": -18.88,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 7,
+    "d_tp": -9,
+    "d_fit": -2,
+    "resid": 0,
+    "d_2y": 7,
+    "d_be": -18,
+    "d_fx": "-0.37 %",
+    "theta": 24,
+    "ctf": "OFF",
+    "persist": 35,
+    "quality": "OK",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -234,8 +286,21 @@
     "breakeven_10y": -15.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 10,
+    "d_tp": -8,
+    "d_fit": 2,
+    "resid": -3,
+    "d_2y": 17,
+    "d_be": -13,
+    "d_fx": "-0.55 %",
+    "theta": 19,
+    "ctf": "OFF",
+    "persist": 35,
+    "quality": "OK",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -282,8 +347,26 @@
     "breakeven_10y": -6.77,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": -6,
+    "d_tp": -12,
+    "d_fit": -17,
+    "resid": 5,
+    "d_2y": 0,
+    "d_be": -7,
+    "d_fx": "-2.26 %",
+    "theta": 19,
+    "ctf": "OFF",
+    "persist": 25,
+    "quality": "CTX_EST ACM_FFILL",
+    "acm_asof": "2026-11-13 · curva 2026-11-11",
+    "estimate_fields": [
+     "resid",
+     "d_2y",
+     "d_be"
+    ]
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -330,8 +413,21 @@
     "breakeven_10y": 12.24,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 8,
+    "d_tp": -30,
+    "d_fit": -22,
+    "resid": 10,
+    "d_2y": 10,
+    "d_be": 15,
+    "d_fx": "-1.54 %",
+    "theta": 24,
+    "ctf": "OFF",
+    "persist": 25,
+    "quality": "SHORT",
+    "acm_asof": "2026-11-13"
+   },
+   "dominant_driver": "REAL_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -378,7 +474,20 @@
     "breakeven_10y": 90.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 5,
+    "d_tp": 2,
+    "d_fit": 7,
+    "resid": -1,
+    "d_2y": "mensual SNB 10-30 nowcast 2Y: 0.27% · +3e pb al 11-16",
+    "d_be": "UNAVAILABLE",
+    "d_fx": "UNAVAILABLE",
+    "theta": 17,
+    "ctf": "lectura NO_QUAL",
+    "persist": "UNAVAILABLE",
+    "quality": "NOWCAST",
+    "acm_asof": "2026-11-16"
+   },
    "dominant_driver": "UNAVAILABLE",
    "staleness": "LIVE",
    "stale": false,
