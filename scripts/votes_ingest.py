@@ -158,6 +158,19 @@ MODULES = (
 MODULE = {row[0]: {"version": row[1], "parts": row[2], "monolithic": row[3]} for row in MODULES}
 MONOLITHIC = {name for name, spec in MODULE.items() if spec["monolithic"]}
 
+# Public votes.csv: valor stays empty unless the module is listed here.
+# Orden Sander 17-nov-2026 t234u. A module enters only when its number comes
+# entirely from a public primary source. Out until Sander says otherwise,
+# even if a feed looks public: RISK_G8, POL_G8, FFVA_G8, every XCCY id,
+# and 13-CRD / CRD_G8. Mail modules whose primary source is not in this repo
+# stay out as well.
+# E21 is the residual written by scripts/usd_factor.py from ECB EXR reference
+# rates (data-api.ecb.europa.eu, series EXR D.*.EUR.SP00.A). The CME and FRED
+# twins in that script are not inputs to E21.
+ALLOWED_VALOR_MODULES = frozenset({
+    "E21",
+})
+
 # Bands seen in the 12-nov field list. No EXTREME band exists in this repo or in
 # that field list, so an EXTREME (or any other) band is NA, not STRONG.
 IYDT_BANDS = {
@@ -481,7 +494,19 @@ def _status_key(name, ccy):
     return "%s_STATUS" % ccy
 
 
+def _public_valor(name, valor):
+    """Drop valor unless the module is on the public whitelist."""
+    if name in ALLOWED_VALOR_MODULES:
+        return valor
+    return ""
+
+
 def _estado_valor(name, ccy, kv):
+    estado, valor = _estado_valor_from_mail(name, ccy, kv)
+    return estado, _public_valor(name, valor)
+
+
+def _estado_valor_from_mail(name, ccy, kv):
     if name == "RISK_G8":
         return kv.get("REGIME", ""), kv.get("SCORE", "")
     if name == "XCCY_G8":
@@ -970,19 +995,21 @@ def rows_from_factor(doc, session):
         if raw is None or not fresh:
             rows.append(_blank_row(
                 session, "E21", ccy, "STALE" if raw is not None else "MISSING", "NA", True,
-                snap, generated, "", bar, 1, 1, version, "" if raw is None else _num_text(raw),
+                snap, generated, "", bar, 1, 1, version,
+                _public_valor("E21", "" if raw is None else _num_text(raw)),
             ))
             continue
         try:
             number = Decimal(str(raw))
         except InvalidOperation:
             rows.append(_blank_row(
-                session, "E21", ccy, "STALE", "NA", True, snap, generated, "", bar, 1, 1, version, "",
+                session, "E21", ccy, "STALE", "NA", True, snap, generated, "", bar, 1, 1, version,
+                _public_valor("E21", ""),
             ))
             continue
         rows.append(_blank_row(
             session, "E21", ccy, "FRESH", _sign(number), False, snap, generated, "",
-            bar, 1, 1, version, _num_text(raw),
+            bar, 1, 1, version, _public_valor("E21", _num_text(raw)),
         ))
     return rows
 
