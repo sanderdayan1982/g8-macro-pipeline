@@ -158,7 +158,7 @@ class Parse(unittest.TestCase):
 class HappyPath(unittest.TestCase):
     def test_thirteen_modules(self):
         rows = index(V.rows_from_messages(happy_messages(), SESSION, True))
-        self.assertEqual(len(rows), 1 + 12 * 8)
+        self.assertEqual(len(rows), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
         risk = rows[("RISK_G8", "G8")]
         self.assertEqual((risk["estado"], risk["valor"], risk["voto"], risk["stale"], risk["version"]),
                          ("RISK-OFF", "1.275978", "NA", "false", "1.2.1"))
@@ -267,7 +267,7 @@ class HardCases(unittest.TestCase):
         self.assertEqual(first, [])
         self.assertTrue(final)
         self.assertTrue(all(r["estado"] == "MISSING" and r["voto"] == "NA" and r["valor"] == "" for r in final))
-        self.assertEqual(len(final), 1 + 12 * 8)
+        self.assertEqual(len(final), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
 
     def test_missing_part_and_error_batch_are_incomplete(self):
         only = [m for m in parts("XCCY_G8", {"EUR_REGIME": "GAP", "EUR_STATUS": "FRESH"}) if "P1" in m["body"] or m["body"].count("PART=1|")]
@@ -368,7 +368,7 @@ class GmailFailure(unittest.TestCase):
         rows = list(csv.DictReader(open(self.votes, encoding="utf-8")))
         missing = [r for r in rows if r["estado"] == "MISSING"]
         e21 = [r for r in rows if r["script"] == "E21"]
-        self.assertEqual(len(missing), 1 + 12 * 8)
+        self.assertEqual(len(missing), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
         self.assertTrue(all(r["voto"] == "NA" for r in missing))
         self.assertEqual(sorted(r["ccy"] for r in e21), ["EUR", "GBP"])
         self.assertEqual({r["voto"] for r in e21}, {"-1", "+1"})
@@ -394,7 +394,7 @@ class GmailFailure(unittest.TestCase):
         rows = list(csv.DictReader(open(self.votes, encoding="utf-8")))
         e21 = [r for r in rows if r["script"] == "E21"]
         self.assertEqual(len(e21), 2)
-        self.assertEqual(len([r for r in rows if r["estado"] == "MISSING"]), 1 + 12 * 8)
+        self.assertEqual(len([r for r in rows if r["estado"] == "MISSING"]), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
         rc3 = self.run_attempt("final", http=boom, env=env_secrets())
         self.assertEqual(rc3, 1)
         self.assertEqual(open(self.votes, "rb").read(), after)
@@ -413,7 +413,7 @@ class GmailFailure(unittest.TestCase):
         rc = self.run_attempt("final", http=empty, env=env_secrets())
         self.assertEqual(rc, 0)
         rows = list(csv.DictReader(open(self.votes, encoding="utf-8")))
-        self.assertEqual(len([r for r in rows if r["estado"] == "MISSING"]), 1 + 12 * 8)
+        self.assertEqual(len([r for r in rows if r["estado"] == "MISSING"]), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
 
 
 class GmailClient(unittest.TestCase):
@@ -563,7 +563,7 @@ class TokenOauthError(unittest.TestCase):
             rows = list(csv.DictReader(fh))
         missing = [r for r in rows if r["estado"] == "MISSING"]
         e21 = [r for r in rows if r["script"] == "E21"]
-        self.assertEqual(len(missing), 1 + 12 * 8)
+        self.assertEqual(len(missing), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
         self.assertTrue(all(r["voto"] == "NA" for r in missing))
         self.assertEqual(sorted(r["ccy"] for r in e21), ["EUR", "GBP"])
         self.assertNotIn("MISSING", {r["estado"] for r in e21})

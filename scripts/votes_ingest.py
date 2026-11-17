@@ -137,6 +137,8 @@ FAMILIES = {
     "EQF_G8": "EQF",
     "POS_G8": "POS",
     "E21": "R",
+    # Shadow de crédito. Una fila por divisa, no una fila G8. Orden t235u.
+    "CRD_G8": "CRD",
 }
 
 # name, version, parts, monolithic. Versions and part counts are the 12-nov-2026 close.
@@ -154,6 +156,9 @@ MODULES = (
     ("TOT_G8", "1.1.3", 5, False),
     ("EQF_G8", "1.1.3", 5, False),
     ("POS_G8", "1.2.6", 6, False),
+    # 13-CRD-G8 v1.0.0 SHADOW. Un solo parte (PARTS=1). El flag monolítico
+    # es el de RISK: un mensaje, sin ensamblar partes. Orden t235u.
+    ("CRD_G8", "1.0.0", 1, True),
 )
 MODULE = {row[0]: {"version": row[1], "parts": row[2], "monolithic": row[3]} for row in MODULES}
 MONOLITHIC = {name for name, spec in MODULE.items() if spec["monolithic"]}
@@ -509,6 +514,9 @@ def _estado_valor(name, ccy, kv):
         return kv.get("EQF_%s_REGIME" % ccy, ""), kv.get("EQF_%s_SCORE" % ccy, "")
     if name == "POS_G8":
         return kv.get("%s_LF_STATE" % ccy, ""), kv.get("%s_LF_Z" % ccy, "")
+    if name == "CRD_G8":
+        # Solo el estado por divisa. El resto del correo no entra en valor.
+        return kv.get("CRD_%s_STATE" % ccy, ""), ""
     return "", ""
 
 
@@ -534,6 +542,9 @@ def _vote(name, ccy, kv, estado, status, bar_stale):
     """
     proxy = status == "FRESH_PROXY"
     stale = bool(bar_stale) or (status is not None and status not in ("FRESH", "FRESH_PROXY"))
+    if name == "CRD_G8":
+        # Shadow: el voto es 0 y no se cancela. Orden t235u.
+        return "0", stale
     if name in ALWAYS_NA:
         return "NA", stale
     if name in ("IYDT_2Y", "IYDT_10Y"):
@@ -714,7 +725,14 @@ def _snapshot_incomplete_reason(name, part_items):
     spec = MODULE[name]
     empty = {"missing": [], "extra": [], "reason": ""}
     if spec["monolithic"]:
-        return False, part_items[-1][1], 1, spec["parts"], empty
+        kv = part_items[-1][1]
+        # El parte único de CRD_G8 puede llegar con BATCH_STATUS=ERROR
+        # (límite de tamaño). Mismo desenlace que el resto de módulos. Orden t235u.
+        if name == "CRD_G8" and kv.get("BATCH_STATUS") == "ERROR":
+            return True, kv, 0, spec["parts"], {
+                "missing": [], "extra": [], "reason": "batch_error",
+            }
+        return False, kv, 1, spec["parts"], empty
     transport_bad = False
     batch_error = False
     dup_conflict = False
@@ -1110,10 +1128,14 @@ def weekly_report(rows, generated_utc):
         got = {}
         bad = False
         for row in by_day[day]:
+            # CRD_G8 es sombra: no entra en el cierre de los 13 módulos. Orden t235u.
+            if row["script"] == "CRD_G8":
+                continue
             got.setdefault(row["script"], set()).add(row["ccy"])
             if row["estado"] in ("MISSING", "INGEST_INCOMPLETE"):
                 bad = True
-        scripts_ok = all(name in got and set(_ccys_for(name)) <= got[name] for name, *_ in MODULES)
+        gate = [row for row in MODULES if row[0] != "CRD_G8"]
+        scripts_ok = all(name in got and set(_ccys_for(name)) <= got[name] for name, *_ in gate)
         e21_ok = bool(got.get("E21"))
         # E21 has no fixed USD row. Complete means every currency that the file
         # emitted is present and at least one E21 row exists, with no MISSING.
