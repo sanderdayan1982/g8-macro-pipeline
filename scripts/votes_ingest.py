@@ -128,6 +128,8 @@ FAMILIES = {
     "XCCY_OIS_SHADOW": "XCCY_OIS",
     "PSI_G8": "PSI",
     "CURVA_G8": "CURVA",
+    # Mismo correo que CURVA_G8. Orden Sander 17-nov t239u.
+    "CURVA_MOTION": "CURVA",
     "RTF10_G8": "RTF10",
     "POL_G8": "POL",
     "IYDT_2Y": "IYDT",
@@ -148,6 +150,8 @@ MODULES = (
     ("XCCY_OIS_SHADOW", "1.0.0", 1, True),
     ("PSI_G8", "2.4.3", 3, False),
     ("CURVA_G8", "1.4.8", 5, False),
+    # Filas de {CCY}_MOTION. No es un correo aparte. Orden Sander 17-nov t239u.
+    ("CURVA_MOTION", "1.4.8", 5, False),
     ("RTF10_G8", "3.10.0", 5, False),
     ("POL_G8", "1.3.8", 4, False),
     ("IYDT_2Y", "1.7.2", 8, False),
@@ -522,6 +526,9 @@ def _estado_valor_from_mail(name, ccy, kv):
         return kv.get("%s_HEALTH" % ccy, ""), kv.get("%s_P_HEALTHY_BP" % ccy, "")
     if name == "CURVA_G8":
         return kv.get("%s_REGIME" % ccy, ""), kv.get("%s_SPREAD_BP" % ccy, "")
+    if name == "CURVA_MOTION":
+        # Estado de movimiento. Valor siempre vacío. Orden Sander 17-nov t239u.
+        return kv.get("%s_MOTION" % ccy, ""), ""
     if name == "RTF10_G8":
         return kv.get("%s_DRIVER" % ccy, ""), ""
     if name == "POL_G8":
@@ -570,6 +577,9 @@ def _vote(name, ccy, kv, estado, status, bar_stale):
     if name == "CRD_G8":
         # Shadow: el voto es 0 y no se cancela. Orden t235u.
         return "0", stale
+    if name == "CURVA_MOTION":
+        # Voto NA siempre. Orden Sander 17-nov t239u.
+        return "NA", stale
     if name in ALWAYS_NA:
         return "NA", stale
     if name in ("IYDT_2Y", "IYDT_10Y"):
@@ -950,6 +960,19 @@ def rows_from_messages(messages, session, write_missing):
                 session, name, ccy, estado, voto, stale, snap_id, received_at, mail_ids,
                 bar_ms, parts_n, received if name not in MONOLITHIC else 1, version, valor,
             ))
+        if name == "CURVA_G8":
+            # {CCY}_MOTION viaja en el mismo correo. No es otro módulo de partes.
+            # Orden Sander 17-nov t239u.
+            present.add("CURVA_MOTION")
+            got_n = received if name not in MONOLITHIC else 1
+            for ccy in _ccys_for("CURVA_MOTION"):
+                motion = _blank_row(
+                    session, "CURVA_MOTION", ccy, merged.get("%s_MOTION" % ccy, ""),
+                    "NA", bar_stale, snap_id, received_at, mail_ids, bar_ms,
+                    parts_n, got_n, version, "",
+                )
+                motion["report_date"] = ""
+                rows.append(motion)
     if write_missing:
         rows.extend(missing_rows(session, names=[n for n, *_ in MODULES if n not in present]))
     return rows
