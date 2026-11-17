@@ -100,15 +100,167 @@ class FxvolShadow(unittest.TestCase):
             print("FXVOL %s max_dev=%.6g diffs=%d" % (session, cls.max_dev[session], len(diffs)))
 
     def test_five_sessions_within_tolerance(self):
-        failed = []
-        for session in SESSIONS:
-            _, diffs = self.results[session]
-            if diffs:
-                failed.append(session)
-                print("DIFF %s" % session)
-                for line in diffs[:40]:
-                    print("  " + line)
-        self.assertEqual(failed, [], "sesiones fuera de vector: %s" % failed)
+        # Orden Sander 17-nov t232u. El canónico real ya no cabe en el vector
+        # de tests/fixtures/fxvol (backfill). Este test no lo lee y no toca ese
+        # JSON (lo usa test_additive). Serie sintética determinista: sonrisa
+        # plana Black-76, IV 10–14 % de un día al siguiente, futuros y strikes
+        # redondos. Los vectores esperados salen de esa serie, no del CME.
+        import shutil
+        import tempfile
+        from datetime import date as date_cls
+
+        sessions = ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09"]
+        exp1, exp2, fut_exp = "2026-01-20", "2026-02-20", "2026-03-18"
+        # Niveles redondos, no de mercado. Misma sonrisa en las seis divisas.
+        f0 = {"EUR": 1.10, "JPY": 0.010, "GBP": 1.25, "AUD": 0.70, "CAD": 0.75, "CHF": 1.05}
+        sig = [0.10, 0.11, 0.12, 0.13, 0.14]
+        mults = [0.80, 0.85, 0.90, 0.93, 0.96, 0.98, 0.99, 1.00, 1.01, 1.02, 1.04, 1.07, 1.10, 1.15, 1.20]
+        # Puntos que pasan el filtro de delta 0.05–0.95 en esta rejilla plana.
+        n1 = {0: 5, 1: 5, 2: 5, 3: 5, 4: 6}
+        n2 = {0: 7, 1: 7, 2: 8, 3: 8, 4: 9}
+        oi0 = 100000
+
+        def settled(x):
+            return float(format(x, ".8f"))
+
+        def write_canonical(repo):
+            can = os.path.join(repo, "data", "options", "canonical")
+            for i, sess in enumerate(sessions):
+                sd = date_cls.fromisoformat(sess)
+                folder = os.path.join(can, sess)
+                os.makedirs(folder)
+                for ccy, (opt, fut) in FX.OPT.items():
+                    level = settled(f0[ccy] * (1 + 0.001 * i))
+                    symbol = fut + "H6"
+                    with open(os.path.join(folder, fut + ".csv"), "w", newline="") as fh:
+                        w = csv.writer(fh)
+                        w.writerow(["session", "root", "type", "symbol", "expiry", "right", "strike", "settle", "settle_flag", "oi"])
+                        w.writerow([sess, fut, "FUT", symbol, fut_exp, "", "", format(level, ".8f"), "1", str(oi0 + 1000 * i)])
+                    with open(os.path.join(folder, opt + ".csv"), "w", newline="") as fh:
+                        w = csv.writer(fh)
+                        w.writerow(["session", "root", "type", "symbol", "expiry", "right", "strike", "settle", "settle_flag", "oi"])
+                        for exp in (exp1, exp2):
+                            tenor = (date_cls.fromisoformat(exp) - sd).days / 365.0
+                            for m in mults:
+                                strike = level * m
+                                for right in ("C", "P"):
+                                    price = FX.b76(level, strike, tenor, sig[i], right)
+                                    w.writerow([sess, opt, "OPT", "SYN", exp, right, format(strike, ".8f"), format(price, ".8f"), "1", "10"])
+
+        def oi_pct(i):
+            return round(1000 * 100.0 / (oi0 + 1000 * (i - 1)), 2)
+
+        def px_pct(i, ccy):
+            now = settled(f0[ccy] * (1 + 0.001 * i))
+            prev = settled(f0[ccy] * (1 + 0.001 * (i - 1)))
+            return round((now / prev - 1.0) * 100.0, 3)
+
+        def expected(i):
+            sess = sessions[i]
+            currencies = {}
+            for ccy, (opt, fut) in FX.OPT.items():
+                level = settled(f0[ccy] * (1 + 0.001 * i))
+                symbol = fut + "H6"
+                one_d = None
+                if i:
+                    dop = oi_pct(i)
+                    px = px_pct(i, ccy)
+                    # Banda 1d del productor: |ΔOI| < 1 % → OI_PLANO. En el día 1 el cambio es 1 %.
+                    if abs(dop) < 1.0:
+                        quadrant = "OI_PLANO"
+                    elif px > 0 and dop > 0:
+                        quadrant = "DINERO_NUEVO_COMPRADOR"
+                    else:
+                        quadrant = "PRECIO_PLANO"
+                    one_d = {"d_oi": 1000, "d_oi_pct": dop, "px_chg_pct": px, "quadrant": quadrant}
+                currencies[ccy] = {
+                    "status": "OK",
+                    "gate0": None,
+                    "iv30_atm": round(sig[i] * 100.0, 2),
+                    "rr25": 0.0,
+                    "bf25": 0.0,
+                    "mode": "INTERP",
+                    "exp1": exp1,
+                    "dte1": (date_cls.fromisoformat(exp1) - date_cls.fromisoformat(sess)).days,
+                    "exp2": exp2,
+                    "dte2": (date_cls.fromisoformat(exp2) - date_cls.fromisoformat(sess)).days,
+                    "und1": symbol,
+                    "F1": level,
+                    "n1": n1[i],
+                    "n2": n2[i],
+                    "d_iv": {"1d": None if i == 0 else 1.0, "1w": None, "1m": None},
+                    "d_rr": {"1d": None if i == 0 else 0.0, "1w": None, "1m": None},
+                    "iv_pct": None,
+                    "rr_pct": None,
+                    "hist_n": i + 1,
+                    "hist_from": sessions[0],
+                    "note": "HIST_SHORT",
+                    "iv30_pct252": "NA",
+                    "iv30_pct252_days": i + 1,
+                    "rr25_d5": None,
+                    "rv21": "NA",
+                    "rv21_reason": "%d rendimientos válidos del contrato %s (<21)" % (i, symbol),
+                    "vrp": "NA",
+                    "vol_regime": "UNAVAILABLE",
+                    "fut": {
+                        "oi_total": oi0 + 1000 * i,
+                        "px_contract": symbol,
+                        "px_settle": level,
+                        "1d": one_d,
+                        "1w": None,
+                    },
+                }
+            currencies["NZD"] = {
+                "status": "NA", "reason": "NO_CME_OPTIONS", "gate0": "NA",
+                "iv30_pct252": "UNAVAILABLE", "rr25_d5": "UNAVAILABLE",
+                "rv21": "UNAVAILABLE", "vrp": "UNAVAILABLE", "vol_regime": "UNAVAILABLE",
+            }
+            return {
+                "version": "FXVOL-SHADOW v1.0",
+                "status": "SHADOW",
+                "session": sess,
+                "prev_session": sessions[i - 1] if i else None,
+                "sessions_total": i + 1,
+                "convention": "native CME (XXX/USD). rr25>0 = calls XXX más caras que puts XXX. Dashboard y ORION invierten SOLO el signo de rr25 para JPY/CAD/CHF (USDJPY, USDCAD, USDCHF). iv30_atm y bf25 no cambian.",
+                "method": {
+                    "model": "Black-76 sobre settlement oficial, sin descuento",
+                    "underlying": "futuro trimestral siguiente al vencimiento de la opción",
+                    "min_dte": 7,
+                    "target_dte": 30,
+                    "delta_min": 0.05,
+                    "min_points": 5,
+                    "interp": "varianza total lineal en días naturales entre los dos primeros vencimientos con DTE>=7; si el primero ya supera 30 días → FLAT",
+                    "pct_window": [60, 252],
+                    "lookback_1w": 5,
+                    "lookback_1m": 21,
+                    "oi_flat_pct": {"1d": 1.0, "1w": 2.0},
+                    "roll_window_days": [-9, 3],
+                },
+                "fut_roll_window": {
+                    "start": "2026-03-09", "end": "2026-03-21", "active": False, "imm": "2026-03-18",
+                },
+                "cvol_reference": "No es el CVOL oficial (índice de varianza con alas). Contraste 17-ago-2026: iv30_atm entre 3,5 % y 8,1 % por debajo del CVOL en las seis divisas.",
+                "currencies": currencies,
+            }
+
+        repo = tempfile.mkdtemp(prefix="fxvol_synthetic_")
+        try:
+            write_canonical(repo)
+            failed = []
+            for i, session in enumerate(sessions):
+                out, _, _ = FX.build(repo, session)
+                diffs = []
+                devs = []
+                _walk(expected(i), out, (), diffs, devs)
+                print("FXVOL synthetic %s max_dev=%.6g diffs=%d" % (session, max(devs) if devs else 0.0, len(diffs)))
+                if diffs:
+                    failed.append(session)
+                    print("DIFF %s" % session)
+                    for line in diffs[:40]:
+                        print("  " + line)
+            self.assertEqual(failed, [], "sesiones fuera de vector: %s" % failed)
+        finally:
+            shutil.rmtree(repo)
 
     def test_roll_flat_interp_and_nzd(self):
         roll = self.results["2026-09-15"][0]
