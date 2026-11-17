@@ -1,31 +1,27 @@
 {
- "errors": [
-  {
-   "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
-   "kind": "DEGRADED"
-  }
- ],
+ "errors": [],
  "executor": "actions",
  "failing_since_utc": null,
  "files": {
   "JP_POLICY.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261116T235201Z_actions_fetch-bis-policy-jp_42ab:20893c0fa2c5",
-   "dropped_by_source": 0,
+   "download_id": "20261117T040451Z_actions_fetch-bis-policy-jp_f9c6:20c84e59a53f",
+   "dropped_by_source": 2,
    "file": "JP_POLICY.csv",
    "held": [],
    "new": 0,
    "repo_max": "20261110",
    "revised": [],
    "src_max": "20261110",
-   "status": "NOOP"
+   "status": "PUBLISH",
+   "written": true
   }
  },
- "finished_utc": "2026-11-16T23:52:24Z",
- "gh_run_id": "43982814905",
+ "finished_utc": "2026-11-17T04:05:28Z",
+ "gh_run_id": "44014465984",
  "job": "fetch_bis_policy_JP",
- "last_ok_utc": "2026-11-16T23:52:24Z",
+ "last_ok_utc": "2026-11-17T04:05:28Z",
  "not_before": {},
  "rc": 0,
  "requests": [
@@ -35,40 +31,21 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 13.97,
+     "secs": 37.04,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Mon, 16 Nov 2026 23:52:00 GMT",
+   "date_header": "Tue, 17 Nov 2026 04:04:51 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.JP/all?format=csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "OK",
-     "detail": "",
-     "n": 1,
-     "secs": 3.95,
-     "status": 200
-    }
-   ],
-   "cls": "OK",
-   "date_header": "Mon, 16 Nov 2026 23:52:16 GMT",
-   "detail": "",
-   "last_modified": "Wed, 11 Nov 2026 12:31:49 GMT",
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 200,
-   "url": "https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip"
   }
  ],
- "run_id": "20261116T235201Z_actions_fetch-bis-policy-jp_42ab",
- "started_utc": "2026-11-16T23:52:01Z",
+ "run_id": "20261117T040451Z_actions_fetch-bis-policy-jp_f9c6",
+ "started_utc": "2026-11-17T04:04:51Z",
  "step": "bis_jp"
 }
