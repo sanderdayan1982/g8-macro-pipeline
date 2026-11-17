@@ -36,7 +36,7 @@ class ArgosRatesParity(unittest.TestCase):
 
     def test_clock_and_unavailable_points(self):
         self.assertRegex(self.doc["generated_at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-        self.assertEqual(self.doc["as_of"], self.doc["generated_at"][:10])
+        self.assertEqual(self.doc["as_of"], AR.closed_session(AR.parse_clock(self.doc["generated_at"])).isoformat())
         self.assertEqual(self.doc["clock"], "UTC")
         self.assertEqual(self.doc["c3"], {"quadrant": "UNAVAILABLE", "value": "UNAVAILABLE", "label": "UNAVAILABLE"})
         blob = self.raw["attr"] + self.raw["s01b"] + self.raw["floors"]
