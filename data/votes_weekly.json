@@ -1,7 +1,11 @@
 {
- "rule_version": 1,
- "generated_utc": "2026-11-14T16:29:38Z",
- "definition": "A weekday session is complete when every one of the 13 mail modules has a row for each of its currencies, E21 has at least one row, and no row of that session has estado MISSING or INGEST_INCOMPLETE. Report only. \u00a708 is not built.",
+ "rule_version": 2,
+ "generated_utc": "2026-11-17T11:23:16Z",
+ "definition": "A weekday session is complete when every one of the 13 mail modules has a row for each of its currencies, E21 has at least one row, and no row of that session has estado MISSING or INGEST_INCOMPLETE. A CME/New York full close (no 1D candle) is not a session: it is not complete and it is not incomplete. Report only. \u00a708 is not built.",
  "complete_days_total": 0,
+ "incomplete_sessions": [
+  "2026-11-13",
+  "2026-11-16"
+ ],
  "weeks": []
 }
