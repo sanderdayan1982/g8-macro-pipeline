@@ -94,25 +94,66 @@ class ArgosRatesParity(unittest.TestCase):
             self.assertIn(row["regime"], html)
 
     def test_s01b_integers_are_the_painted_cells(self):
-        for ccy, row in self.doc["currencies"].items():
-            block = row["s01b"]
-            html = ""
-            for tr in AR._rows(self.raw["s01b"]):
-                if "<b>%s</b>" % ccy in tr and "a3-row" not in tr[:40]:
-                    html = tr
-                    break
-            self.assertTrue(html, ccy)
-            for key in ("d_rny", "d_tp", "d_fit", "resid"):
-                val = block[key]
-                if isinstance(val, int):
-                    token = ("%+d" % val) if val > 0 else str(val)
-                    # bp() pinta +n, -n o 0
-                    if val > 0:
-                        self.assertIn("+%d" % val, html, ccy + " " + key)
-                    else:
-                        self.assertIn(str(val), html, ccy + " " + key)
-                elif val == "UNAVAILABLE":
-                    self.assertTrue(any(w in AR._text(html) for w in ("sin ", "·", "—")), ccy)
+        # Reloj y as_of fijos (orden Sander 17-nov-2026). setUpClass re-renderiza
+        # con generated_at del JSON, que sale del reloj del sistema: si esa hora
+        # es anterior a las 17:00 America/New_York, closed_session es la sesión
+        # previa y cutS01B vacía el tbody cuando S01B.as_of va por delante.
+        # Aquí no se lee ese reloj. Los dos instantes son el mismo día de
+        # noviembre (EST, UTC−5): 21:00Z = 16:00 NY, 22:30Z = 17:30 NY.
+        # as_of queda en 2026-11-16, ya cerrada en los dos cortes.
+        import shutil
+        import tempfile
+
+        pinned_as_of = "2026-11-16"
+        clocks = (
+            ("2026-11-17T21:00:00Z", "2026-11-16"),
+            ("2026-11-17T22:30:00Z", "2026-11-17"),
+        )
+
+        def render_pinned(now):
+            data = os.path.join(ROOT, "data")
+            tmp = tempfile.mkdtemp(prefix="argos_s01b_pin_")
+            try:
+                for name in os.listdir(data):
+                    if name == "S01B.json":
+                        continue
+                    os.symlink(os.path.join(data, name), os.path.join(tmp, name))
+                with open(os.path.join(data, "S01B.json"), encoding="utf-8") as fh:
+                    pinned = json.load(fh)
+                pinned["as_of"] = pinned_as_of
+                with open(os.path.join(tmp, "S01B.json"), "w", encoding="utf-8") as fh:
+                    json.dump(pinned, fh)
+                return AR.render(now, data_dir=tmp)
+            finally:
+                shutil.rmtree(tmp)
+
+        for now, closed in clocks:
+            self.assertEqual(AR.closed_session(now).isoformat(), closed, now)
+            raw = render_pinned(now)
+            doc = AR.parse(raw)
+            self.assertEqual(doc["as_of"], closed, now)
+            self.assertEqual(doc["s01b_as_of"], pinned_as_of, now)
+            for ccy, row in doc["currencies"].items():
+                block = row["s01b"]
+                html = ""
+                for tr in AR._rows(raw["s01b"]):
+                    if "<b>%s</b>" % ccy in tr and "a3-row" not in tr[:40]:
+                        html = tr
+                        break
+                self.assertTrue(html, "%s %s" % (ccy, now))
+                for key in ("d_rny", "d_tp", "d_fit", "resid"):
+                    val = block[key]
+                    if isinstance(val, int):
+                        # bp() pinta +n, -n o 0
+                        if val > 0:
+                            self.assertIn("+%d" % val, html, "%s %s %s" % (ccy, key, now))
+                        else:
+                            self.assertIn(str(val), html, "%s %s %s" % (ccy, key, now))
+                    elif val == "UNAVAILABLE":
+                        self.assertTrue(
+                            any(w in AR._text(html) for w in ("sin ", "·", "—")),
+                            "%s %s" % (ccy, now),
+                        )
 
 
 if __name__ == "__main__":
