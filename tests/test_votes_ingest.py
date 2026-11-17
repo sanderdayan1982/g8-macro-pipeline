@@ -160,25 +160,46 @@ class HappyPath(unittest.TestCase):
         rows = index(V.rows_from_messages(happy_messages(), SESSION, True))
         self.assertEqual(len(rows), 1 + 12 * 8)
         risk = rows[("RISK_G8", "G8")]
-        self.assertEqual((risk["estado"], risk["valor"], risk["voto"], risk["stale"], risk["version"]),
-                         ("RISK-OFF", "1.275978", "NA", "false", "1.2.1"))
+        self.assertEqual((risk["estado"], risk["voto"], risk["stale"], risk["version"]),
+                         ("RISK-OFF", "NA", "false", "1.2.1"))
+        self.assertEqual(risk["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         eur = rows[("XCCY_G8", "EUR")]
         self.assertEqual((eur["estado"], eur["voto"], eur["parts_expected"], eur["parts_received"]),
                          ("GAP", "NA", "2", "2"))
+        self.assertEqual(eur["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertEqual(rows[("XCCY_OIS_SHADOW", "EUR")]["estado"], "SIN UMBRAL")
+        self.assertEqual(rows[("XCCY_OIS_SHADOW", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("XCCY_OIS_SHADOW", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertEqual(rows[("PSI_G8", "EUR")]["estado"], "NEUTRAL")
-        self.assertEqual(rows[("PSI_G8", "EUR")]["valor"], "12")
-        self.assertEqual(rows[("CURVA_G8", "EUR")]["valor"], "3.5")
+        self.assertEqual(rows[("PSI_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("PSI_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+        self.assertEqual(rows[("CURVA_G8", "EUR")]["estado"], "NORMAL")
+        self.assertEqual(rows[("CURVA_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("CURVA_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "TP_SAFE")
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+        self.assertEqual(rows[("POL_G8", "EUR")]["estado"], "REPRICE")
         self.assertEqual(rows[("POL_G8", "EUR")]["voto"], "+1")
-        self.assertEqual((rows[("IYDT_2Y", "EUR")]["voto"], rows[("IYDT_2Y", "EUR")]["valor"]), ("0", "0.7519"))
+        self.assertEqual(rows[("POL_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+        self.assertEqual(rows[("IYDT_2Y", "EUR")]["estado"], "POS_BELOW_STRONG")
+        self.assertEqual(rows[("IYDT_2Y", "EUR")]["voto"], "0")
+        self.assertEqual(rows[("IYDT_2Y", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+        self.assertEqual(rows[("IYDT_10Y", "EUR")]["estado"], "NEG_BELOW_STRONG")
         self.assertEqual(rows[("IYDT_10Y", "EUR")]["voto"], "0")
+        self.assertEqual(rows[("IYDT_10Y", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertEqual(rows[("FFVA_G8", "EUR")]["voto"], "-1")
         self.assertEqual(rows[("FFVA_G8", "EUR")]["estado"], "DIST")
+        self.assertEqual(rows[("FFVA_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertEqual(rows[("TOT_G8", "EUR")]["estado"], "NEUTRAL")
-        self.assertEqual(rows[("EQF_G8", "EUR")]["valor"], "0.3")
+        self.assertEqual(rows[("TOT_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("TOT_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+        self.assertEqual(rows[("EQF_G8", "EUR")]["estado"], "NEUTRAL")
+        self.assertEqual(rows[("EQF_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("EQF_G8", "EUR")]["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         pos = rows[("POS_G8", "EUR")]
-        self.assertEqual((pos["estado"], pos["valor"], pos["voto"]), ("CROWD SHORT", "-2.665", "NA"))
+        self.assertEqual((pos["estado"], pos["voto"]), ("CROWD SHORT", "NA"))
+        self.assertEqual(pos["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertTrue(all(r["rule_version"] == "2" for r in rows.values()))  # orden expresa de Sander 14-nov-2026 (t158u): rule_version 2
         self.assertTrue(all(r["family"] == V.FAMILIES[r["script"]] for r in rows.values()))
         self.assertNotIn(("RISK_G8", "EUR"), rows)
@@ -214,10 +235,10 @@ class VoteTable(unittest.TestCase):
         self.assertEqual((stale["voto"], stale["stale"]), ("NA", "true"))
         zrow = self.one("FFVA_G8", {"EUR_REGIME": "FLAT_OI", "EUR_STATUS": "FRESH", "EUR_ROLL": "NO",
                                     "EUR_Z_FLOW": "-1.25"})
-        self.assertEqual(zrow["valor"], "-1.25")
+        self.assertEqual((zrow["estado"], zrow["voto"], zrow["valor"]), ("FLAT_OI", "0", ""))  # orden Sander 17-nov t235u, D-6 lista blanca
         both = self.one("FFVA_G8", {"EUR_REGIME": "FLAT_OI", "EUR_STATUS": "FRESH", "EUR_ROLL": "NO",
                                     "EUR_DIRECTIONAL_INTENSITY": "0.4", "EUR_Z_FLOW": "-1.25"})
-        self.assertEqual(both["valor"], "0.4")
+        self.assertEqual((both["estado"], both["voto"], both["valor"]), ("FLAT_OI", "0", ""))  # orden Sander 17-nov t235u, D-6 lista blanca
 
     def test_pol_direction_and_eligibility(self):
         base = {"EUR_STATE": "REPRICE", "EUR_STATUS": "FRESH", "EUR_HAWK_SCORE": "0.2"}
@@ -242,12 +263,12 @@ class VoteTable(unittest.TestCase):
         for name, fields, estado, valor in (
             ("XCCY_G8", {"EUR_REGIME": "GAP", "EUR_STATUS": "FRESH"}, "GAP", ""),
             ("XCCY_OIS_SHADOW", {"EUR_REGIME": "SIN UMBRAL"}, "SIN UMBRAL", ""),
-            ("CURVA_G8", {"EUR_REGIME": "NORMAL", "EUR_STATUS": "FRESH", "EUR_SPREAD_BP": "8"}, "NORMAL", "8"),
+            ("CURVA_G8", {"EUR_REGIME": "NORMAL", "EUR_STATUS": "FRESH", "EUR_SPREAD_BP": "8"}, "NORMAL", ""),  # orden Sander 17-nov t235u, D-6 lista blanca
             ("RTF10_G8", {"EUR_DRIVER": "TP_SAFE", "EUR_STATUS": "FRESH"}, "TP_SAFE", ""),
-            ("TOT_G8", {"TOT_EUR_REGIME": "NEUTRAL", "TOT_EUR_STATUS": "FRESH", "TOT_EUR_SCORE": "1.2"}, "NEUTRAL", "1.2"),
-            ("EQF_G8", {"EQF_EUR_REGIME": "BID", "EQF_EUR_STATUS": "FRESH", "EQF_EUR_SCORE": "0.7"}, "BID", "0.7"),
+            ("TOT_G8", {"TOT_EUR_REGIME": "NEUTRAL", "TOT_EUR_STATUS": "FRESH", "TOT_EUR_SCORE": "1.2"}, "NEUTRAL", ""),  # orden Sander 17-nov t235u, D-6 lista blanca
+            ("EQF_G8", {"EQF_EUR_REGIME": "BID", "EQF_EUR_STATUS": "FRESH", "EQF_EUR_SCORE": "0.7"}, "BID", ""),  # orden Sander 17-nov t235u, D-6 lista blanca
             ("POS_G8", {"EUR_LF_STATE": "CROWD SHORT", "EUR_LF_Z": "-2.665", "EUR_LF_STATUS": "FRESH"},
-             "CROWD SHORT", "-2.665"),
+             "CROWD SHORT", ""),  # orden Sander 17-nov t235u, D-6 lista blanca
         ):
             row = self.one(name, fields)
             self.assertEqual((row["voto"], row["estado"], row["valor"], row["stale"]),
@@ -297,7 +318,7 @@ class HardCases(unittest.TestCase):
             parts("CURVA_G8", {"EUR_REGIME": "INVERTED", "EUR_STATUS": "STALE", "EUR_SPREAD_BP": "9"}),
             SESSION, True))[("CURVA_G8", "EUR")]
         self.assertEqual((row["estado"], row["valor"], row["voto"], row["stale"]),
-                         ("INVERTED", "9", "NA", "true"))
+                         ("INVERTED", "", "NA", "true"))  # orden Sander 17-nov t235u, D-6 lista blanca
 
 
 class FactorRows(unittest.TestCase):
@@ -512,8 +533,15 @@ class GmailClient(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertIn("fecha_cierre,script,version,ccy", proc.stdout)
-        self.assertIn("RISK-OFF", proc.stdout)
-        self.assertIn("1.275978", proc.stdout)
+        printed = list(csv.DictReader(io.StringIO(proc.stdout)))
+        risk = [r for r in printed if r["script"] == "RISK_G8"]
+        self.assertEqual(risk[0]["estado"], "RISK-OFF")
+        self.assertEqual(risk[0]["voto"], "NA")
+        for row in printed:
+            if row["script"] == "E21":
+                self.assertNotEqual(row["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
+            else:
+                self.assertEqual(row["valor"], "", row["script"])  # orden Sander 17-nov t235u, D-6 lista blanca
         self.assertFalse(os.path.exists(votes))
         self.assertEqual(before, sha256_or_none(repo_votes))
 
