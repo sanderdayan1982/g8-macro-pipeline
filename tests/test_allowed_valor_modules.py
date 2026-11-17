@@ -36,6 +36,7 @@ PROBES = {
     "TOT_G8": {"TOT_EUR_REGIME": "X", "TOT_EUR_SCORE": "1"},
     "EQF_G8": {"EQF_EUR_REGIME": "X", "EQF_EUR_SCORE": "1"},
     "POS_G8": {"EUR_LF_STATE": "X", "EUR_LF_Z": "1"},
+    "CRD_G8": {"CRD_EUR_STATE": "X"},
 }
 
 
