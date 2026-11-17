@@ -51,8 +51,9 @@ function isoField(field) {
 }
 
 function cutKind(rel) {
-  if (rel === 'TONA.csv' || rel === 'AONIA.csv' || rel === 'AUD_NOWCAST.csv') return 'csv';
+  if (rel === 'TONA.csv' || rel === 'AONIA.csv' || rel === 'AUD_NOWCAST.csv' || rel === 'CHF_NOM_10Y.csv') return 'csv';
   if (/^RY_G8_[A-Z0-9]+\.csv$/.test(rel)) return 'csv';
+  if (/^NZD_.+\.csv$/.test(rel)) return 'csv';
   if (rel === 'S01B.json') return 's01b';
   return null;
 }
