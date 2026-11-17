@@ -626,8 +626,11 @@ def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at
         # Non-holiday rows the ingestor writes are REGULAR. A holiday with mail
         # overwrites this to HOLIDAY. RELOJES-01 Anexo 1 A1.
         "session_type": "REGULAR",
-        # Publication date of a weekly module. Empty unless a primary source
-        # names it. Never estimated. Orden Sander 17-nov t236u.
+        # Orden Sander 17-nov t237u. Weekly modules (dealers and Japan/MoF
+        # flows) should carry the publication date of the print. Daily
+        # modules stay empty. This parser has no weekly-module list and no
+        # publication-date field, so the cell is left empty rather than
+        # copied from fecha_cierre.
         "report_date": "",
     }
 

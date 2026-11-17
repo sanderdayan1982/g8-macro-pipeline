@@ -1,7 +1,8 @@
-"""Orden Sander 17-nov t236u. report_date al final, vacío, migración idempotente.
+"""Orden Sander 17-nov t237u. report_date al final.
 
-No rellena la columna. El repo no dice qué módulos son semanales ni de dónde
-sale la fecha de publicación, así que el ingestor la deja en blanco.
+Semanales (dealers y flujos de Japón/MoF): fecha de publicación del dato.
+Diarios: vacía. El parser no nombra esos módulos ni un campo de publicación,
+así que no se copia fecha_cierre ni se estima. La migración es idempotente.
 """
 import csv
 import io
