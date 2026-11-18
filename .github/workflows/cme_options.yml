@@ -61,15 +61,8 @@ jobs:
           echo "cme_options_collector rc=${rc} duration=${dur}s rows=${rows}"
           exit "$rc"
 
-      # t186u: paid Databento body, gzipped, never git-added. 90 days.
-      - name: Upload compressed Databento original (t186u)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cme-options-raw-${{ github.run_id }}
-          path: ${{ runner.temp }}/cme-options-raw
-          retention-days: 90
-          if-no-files-found: ignore
+      # orden Sander 18-nov t244u. The gzip stays on the runner. It is not
+      # uploaded as an artifact and it is not git-added.
 
       - name: Build dashboard summary JSON
         env:
