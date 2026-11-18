@@ -110,7 +110,7 @@ class GmailApiErrorFields(unittest.TestCase):
         with open(self.votes, encoding="utf-8") as fh:
             rows = list(csv.DictReader(fh))
         missing = [r for r in rows if r["estado"] == "MISSING"]
-        self.assertEqual(len(missing), 1 + 13 * 8)  # orden Sander 17-nov t235u, D-7
+        self.assertEqual(len(missing), 1 + 14 * 8)  # orden Sander 17-nov t235u, D-7; orden Sander 17-nov t239u
         self.assertTrue(all(r["voto"] == "NA" for r in missing))
 
     def test_403_logs_reason_and_status_only(self):
