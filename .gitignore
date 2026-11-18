@@ -22,3 +22,16 @@ data/s01b/**/*.tmp
 data/options/raw/
 *.dbn
 *.dbn.zst
+
+# t245u (Sander, 18-nov-2026): CME rows live in g8-macro-data.
+# git add of these paths must not republish them on the public tree.
+data/options/canonical/**
+!data/options/canonical/.gitkeep
+data/options/volume_shadow/
+data/options/fxvol_history.csv
+data/options/shadow_history.json
+data/options/backfill_report.json
+data/options/volume_backfill_report.json
+data/OPTIONS_SURFACE.json
+data/CME_OPTIONS_C1_shadow.json
+data/CME_FXVOL_shadow.json
