@@ -1,276 +1,250 @@
 {
- "generated_utc": "2026-11-18T17:32:25Z",
- "section_numbering": "00-07",
- "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
- "as_of": {
-  "rates": "2026-11-18",
-  "cot": "2026-11-10",
-  "options": "2026-11-12",
-  "metals": "2026-11-17",
-  "s01b": "2026-11-18",
-  "factor": "2026-11-18"
- },
- "gates": {
-  "pos_twin": {
-   "status": "PASSED",
-   "label": "POS twin-test: PASSED (60 barras, 12.0 sem)",
-   "bars": 60,
-   "from": "2026-08-25",
-   "to": "2026-09-29"
+  "generated_utc": "2026-11-18T17:32:25Z",
+  "section_numbering": "00-07",
+  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
+  "as_of": {
+    "rates": "2026-11-18",
+    "cot": "2026-11-10",
+    "options": "2026-11-12",
+    "metals": "2026-11-17",
+    "s01b": "2026-11-18",
+    "factor": "2026-11-18"
+  },
+  "gates": {
+    "pos_twin": {
+      "status": "PASSED",
+      "label": "POS twin-test: PASSED (60 barras, 12.0 sem)",
+      "bars": 60,
+      "from": "2026-08-25",
+      "to": "2026-09-29"
+    }
+  },
+  "bullets": [
+    {
+      "sec": "§02 Floor spreads",
+      "text": "USD +2.0 bp TIGHT · CAD +5.0 bp TIGHT · NZD +5.0 bp TIGHT"
+    },
+    {
+      "sec": "§03 Term premium",
+      "text": "JPY TP 1.94 % (TP/NOM 66 % ▲60)"
+    },
+    {
+      "sec": "§01 Spread 10Y vs USD",
+      "text": "EUR−USD -175 bp (z suelo) · CAD−USD -99 bp (z suelo) · AUD−USD +6 bp (z suelo) · NZD−USD -27 bp (z suelo) · CAD Δ1w extremo · NZD Δ1w extremo"
+    },
+    {
+      "sec": "§01 REAL 10Y vs USD",
+      "text": "CAD−USD real -95 bp (z suelo) · NZD−USD real -39 bp (z suelo) · JPY real Δ1w extremo · NZD real Δ1w extremo"
+    },
+    {
+      "sec": "§04/§05 Metales MDP",
+      "text": "XAU z +1.27 REVERSION [REVIEW] · XAG z +0.54 REVERSION [REVIEW] — valoración, no timing"
+    },
+    {
+      "sec": "COT · fuera de la página",
+      "text": "EUR CROWD SHORT (LF z -2.38) · AUD divergencia LF/AM · NZD STRETCH- (LF z -1.70) · CAD divergencia LF/AM · CHF STRETCH- (LF z -1.52)"
+    },
+    {
+      "sec": "§01-b CTF",
+      "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -11 EUR -14 GBP -16 JPY -7 AUD -12 NZD -32 CAD -15 CHF -5"
+    },
+    {
+      "sec": "§07 Factor USD",
+      "text": "f USD 21 s. +2.20 % (z +1.34) · dispersión COMUN p18.3 · S 63 %"
+    }
+  ],
+  "dqm": [],
+  "book": [
+    {
+      "ccy": "USD",
+      "flags": [
+        "COT proxy (−mean LF z)"
+      ],
+      "nom": 5.12,
+      "real": 2.92,
+      "be": 2.2,
+      "nom_asof": "2026-11-16",
+      "tp": 1.5207,
+      "tp_z": 1.3800304840280635,
+      "tp_asof": "2026-11-16",
+      "rfr": 3.92,
+      "floor_bp": 2.0,
+      "floor_badge": "TIGHT",
+      "vs_usd_bp": null,
+      "real_vs_usd_bp": null,
+      "real_vs_usd_z": null,
+      "lf_z": 0.54,
+      "cot_state": "NEUTRAL"
+    },
+    {
+      "ccy": "EUR",
+      "flags": [
+        "vs USD z suelo"
+      ],
+      "nom": 3.3736,
+      "real": 1.3113,
+      "be": 2.0623,
+      "nom_asof": "2026-11-18",
+      "tp": 1.0746,
+      "tp_z": -0.6656684151813045,
+      "tp_asof": "2026-11-16",
+      "rfr": 2.441,
+      "floor_bp": -5.9,
+      "floor_badge": "AMPLE",
+      "vs_usd_bp": -174.6,
+      "real_vs_usd_bp": -160.9,
+      "real_vs_usd_z": -1.72,
+      "lf_z": -2.38,
+      "cot_state": "CROWD SHORT"
+    },
+    {
+      "ccy": "GBP",
+      "flags": [],
+      "nom": 5.3747,
+      "real": 2.2003,
+      "be": 3.1744,
+      "nom_asof": "2026-11-17",
+      "tp": 1.878,
+      "tp_z": -0.3838140459056103,
+      "tp_asof": "2026-11-16",
+      "rfr": 3.9833,
+      "floor_bp": -1.67,
+      "floor_badge": "AMPLE",
+      "vs_usd_bp": 25.5,
+      "real_vs_usd_bp": -72.0,
+      "real_vs_usd_z": -1.21,
+      "lf_z": 0.13,
+      "cot_state": "NEUTRAL"
+    },
+    {
+      "ccy": "JPY",
+      "flags": [
+        "TP/NOM ▲60%"
+      ],
+      "nom": 2.9226,
+      "real": 1.0193,
+      "be": 1.9033,
+      "nom_asof": "2026-11-18",
+      "tp": 1.9372,
+      "tp_z": 0.21027918197259424,
+      "tp_asof": "2026-11-17",
+      "rfr": 1.228,
+      "floor_bp": -2.2,
+      "floor_badge": "AMPLE",
+      "vs_usd_bp": -219.7,
+      "real_vs_usd_bp": -190.1,
+      "real_vs_usd_z": -1.38,
+      "lf_z": 0.74,
+      "cot_state": "NEUTRAL"
+    },
+    {
+      "ccy": "AUD",
+      "flags": [
+        "NOM/REAL/BE EST 17-11 ±6 pb (curva F2 RBA 11-11; vs USD y alertas con RBA)",
+        "TP curva arrastrada (ffill)",
+        "vs USD z suelo",
+        "COT DIV LF/AM"
+      ],
+      "nom": 5.1049,
+      "real": 2.8586,
+      "be": 2.2463,
+      "nom_asof": "2026-11-17",
+      "nom_rba": 5.044,
+      "nom_rba_asof": "2026-11-11",
+      "nom_est": true,
+      "tp": 1.136,
+      "tp_z": 0.6053119850885774,
+      "tp_asof": "2026-11-17",
+      "rfr": 4.85,
+      "floor_bp": 0.0,
+      "floor_badge": "AMPLE",
+      "vs_usd_bp": 6.4,
+      "real_vs_usd_bp": 1.5,
+      "real_vs_usd_z": -2.0,
+      "lf_z": 1.44,
+      "cot_state": "NEUTRAL"
+    },
+    {
+      "ccy": "NZD",
+      "flags": [
+        "REAL IIB (B2)",
+        "TP ACM K=3 short sample",
+        "REAL vs USD z suelo",
+        "vs USD z suelo"
+      ],
+      "nom": 4.85,
+      "real": 2.5318,
+      "be": 2.3182,
+      "nom_asof": "2026-11-16",
+      "tp": 1.56,
+      "tp_z": 0.13849100298918615,
+      "tp_asof": "2026-11-16",
+      "rfr": 2.8,
+      "floor_bp": 5.0,
+      "floor_badge": "TIGHT",
+      "vs_usd_bp": -27.0,
+      "real_vs_usd_bp": -38.8,
+      "real_vs_usd_z": -2.77,
+      "lf_z": -1.7,
+      "cot_state": "STRETCH-"
+    },
+    {
+      "ccy": "CAD",
+      "flags": [
+        "REAL vs USD z suelo",
+        "vs USD z suelo",
+        "COT DIV LF/AM"
+      ],
+      "nom": 4.13,
+      "real": 1.97,
+      "be": 2.16,
+      "nom_asof": "2026-11-16",
+      "tp": 1.1708,
+      "tp_z": 0.33369775262702317,
+      "tp_asof": "2026-11-16",
+      "rfr": 2.55,
+      "floor_bp": 5.0,
+      "floor_badge": "TIGHT",
+      "vs_usd_bp": -99.0,
+      "real_vs_usd_bp": -95.0,
+      "real_vs_usd_z": -2.13,
+      "lf_z": -0.5,
+      "cot_state": "NEUTRAL"
+    },
+    {
+      "ccy": "CHF",
+      "flags": [
+        "NOM SNB live",
+        "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
+        "TP ACM K=3 (nowcast 10Y)",
+        "COT DIV LF/AM",
+        "walls PROXY"
+      ],
+      "nom": 0.567,
+      "real": -0.933,
+      "be": 1.5,
+      "nom_asof": "2026-11-17",
+      "tp": -0.089,
+      "tp_z": 0.016242939823166783,
+      "tp_asof": "2026-11-17",
+      "rfr": -0.04,
+      "floor_bp": -4.0,
+      "floor_badge": "AMPLE",
+      "vs_usd_bp": -455.3,
+      "real_vs_usd_bp": null,
+      "real_vs_usd_z": null,
+      "lf_z": -1.52,
+      "cot_state": "STRETCH-"
+    }
+  ],
+  "doctor_summary": {
+    "priority_counts": {
+      "daily": 8,
+      "weekly": 0,
+      "monthly": 0,
+      "prohibited": 0
+    },
+    "incidents_count": 8,
+    "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:fail: Actions fetch_bis_policy_JP: fallo declarado por el descargador — BIS bulk fallback unavai\n• [1º/UNKNOWN] NZD_CASH_ON.csv: Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash disp"
   }
- },
- "bullets": [
-  {
-   "sec": "§02 Floor spreads",
-   "text": "USD +2.0 bp TIGHT · CAD +5.0 bp TIGHT · NZD +5.0 bp TIGHT"
-  },
-  {
-   "sec": "§03 Term premium",
-   "text": "JPY TP 1.94 % (TP/NOM 66 % ▲60)"
-  },
-  {
-   "sec": "§01 Spread 10Y vs USD",
-   "text": "EUR−USD -175 bp (z suelo) · CAD−USD -99 bp (z suelo) · AUD−USD +6 bp (z suelo) · NZD−USD -27 bp (z suelo) · CAD Δ1w extremo · NZD Δ1w extremo"
-  },
-  {
-   "sec": "§01 REAL 10Y vs USD",
-   "text": "CAD−USD real -95 bp (z suelo) · NZD−USD real -39 bp (z suelo) · JPY real Δ1w extremo · NZD real Δ1w extremo"
-  },
-  {
-   "sec": "§04/§05 Metales MDP",
-   "text": "XAU z +1.27 REVERSION [REVIEW] · XAG z +0.54 REVERSION [REVIEW] — valoración, no timing"
-  },
-  {
-   "sec": "COT · fuera de la página",
-   "text": "EUR CROWD SHORT (LF z -2.38) · AUD divergencia LF/AM · NZD STRETCH- (LF z -1.70) · CAD divergencia LF/AM · CHF STRETCH- (LF z -1.52)"
-  },
-  {
-   "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -11 EUR -14 GBP -16 JPY -7 AUD -12 NZD -32 CAD -15 CHF -5"
-  },
-  {
-   "sec": "§07 Factor USD",
-   "text": "f USD 21 s. +2.20 % (z +1.34) · dispersión COMUN p18.3 · S 63 %"
-  }
- ],
- "dqm": [],
- "walls": [
-  {
-   "pair": "EUR/USD",
-   "note": "sin cadena"
-  },
-  {
-   "pair": "USD/JPY",
-   "note": "sin cadena"
-  },
-  {
-   "pair": "GBP/USD",
-   "note": "sin cadena"
-  },
-  {
-   "pair": "AUD/USD",
-   "note": "sin cadena"
-  },
-  {
-   "pair": "USD/CAD",
-   "note": "sin cadena"
-  },
-  {
-   "pair": "USD/CHF",
-   "note": "sin cadena"
-  }
- ],
- "book": [
-  {
-   "ccy": "USD",
-   "flags": [
-    "COT proxy (−mean LF z)"
-   ],
-   "nom": 5.12,
-   "real": 2.92,
-   "be": 2.2,
-   "nom_asof": "2026-11-16",
-   "tp": 1.5207,
-   "tp_z": 1.3800304840280635,
-   "tp_asof": "2026-11-16",
-   "rfr": 3.92,
-   "floor_bp": 2.0,
-   "floor_badge": "TIGHT",
-   "vs_usd_bp": null,
-   "real_vs_usd_bp": null,
-   "real_vs_usd_z": null,
-   "lf_z": 0.54,
-   "cot_state": "NEUTRAL"
-  },
-  {
-   "ccy": "EUR",
-   "flags": [
-    "vs USD z suelo"
-   ],
-   "nom": 3.3736,
-   "real": 1.3113,
-   "be": 2.0623,
-   "nom_asof": "2026-11-18",
-   "tp": 1.0746,
-   "tp_z": -0.6656684151813045,
-   "tp_asof": "2026-11-16",
-   "rfr": 2.441,
-   "floor_bp": -5.9,
-   "floor_badge": "AMPLE",
-   "vs_usd_bp": -174.6,
-   "real_vs_usd_bp": -160.9,
-   "real_vs_usd_z": -1.72,
-   "lf_z": -2.38,
-   "cot_state": "CROWD SHORT"
-  },
-  {
-   "ccy": "GBP",
-   "flags": [],
-   "nom": 5.3747,
-   "real": 2.2003,
-   "be": 3.1744,
-   "nom_asof": "2026-11-17",
-   "tp": 1.878,
-   "tp_z": -0.3838140459056103,
-   "tp_asof": "2026-11-16",
-   "rfr": 3.9833,
-   "floor_bp": -1.67,
-   "floor_badge": "AMPLE",
-   "vs_usd_bp": 25.5,
-   "real_vs_usd_bp": -72.0,
-   "real_vs_usd_z": -1.21,
-   "lf_z": 0.13,
-   "cot_state": "NEUTRAL"
-  },
-  {
-   "ccy": "JPY",
-   "flags": [
-    "TP/NOM ▲60%"
-   ],
-   "nom": 2.9226,
-   "real": 1.0193,
-   "be": 1.9033,
-   "nom_asof": "2026-11-18",
-   "tp": 1.9372,
-   "tp_z": 0.21027918197259424,
-   "tp_asof": "2026-11-17",
-   "rfr": 1.228,
-   "floor_bp": -2.2,
-   "floor_badge": "AMPLE",
-   "vs_usd_bp": -219.7,
-   "real_vs_usd_bp": -190.1,
-   "real_vs_usd_z": -1.38,
-   "lf_z": 0.74,
-   "cot_state": "NEUTRAL"
-  },
-  {
-   "ccy": "AUD",
-   "flags": [
-    "NOM/REAL/BE EST 17-11 ±6 pb (curva F2 RBA 11-11; vs USD y alertas con RBA)",
-    "TP curva arrastrada (ffill)",
-    "vs USD z suelo",
-    "COT DIV LF/AM"
-   ],
-   "nom": 5.1049,
-   "real": 2.8586,
-   "be": 2.2463,
-   "nom_asof": "2026-11-17",
-   "nom_rba": 5.044,
-   "nom_rba_asof": "2026-11-11",
-   "nom_est": true,
-   "tp": 1.136,
-   "tp_z": 0.6053119850885774,
-   "tp_asof": "2026-11-17",
-   "rfr": 4.85,
-   "floor_bp": 0.0,
-   "floor_badge": "AMPLE",
-   "vs_usd_bp": 6.4,
-   "real_vs_usd_bp": 1.5,
-   "real_vs_usd_z": -2.0,
-   "lf_z": 1.44,
-   "cot_state": "NEUTRAL"
-  },
-  {
-   "ccy": "NZD",
-   "flags": [
-    "REAL IIB (B2)",
-    "TP ACM K=3 short sample",
-    "REAL vs USD z suelo",
-    "vs USD z suelo"
-   ],
-   "nom": 4.85,
-   "real": 2.5318,
-   "be": 2.3182,
-   "nom_asof": "2026-11-16",
-   "tp": 1.56,
-   "tp_z": 0.13849100298918615,
-   "tp_asof": "2026-11-16",
-   "rfr": 2.8,
-   "floor_bp": 5.0,
-   "floor_badge": "TIGHT",
-   "vs_usd_bp": -27.0,
-   "real_vs_usd_bp": -38.8,
-   "real_vs_usd_z": -2.77,
-   "lf_z": -1.7,
-   "cot_state": "STRETCH-"
-  },
-  {
-   "ccy": "CAD",
-   "flags": [
-    "REAL vs USD z suelo",
-    "vs USD z suelo",
-    "COT DIV LF/AM"
-   ],
-   "nom": 4.13,
-   "real": 1.97,
-   "be": 2.16,
-   "nom_asof": "2026-11-16",
-   "tp": 1.1708,
-   "tp_z": 0.33369775262702317,
-   "tp_asof": "2026-11-16",
-   "rfr": 2.55,
-   "floor_bp": 5.0,
-   "floor_badge": "TIGHT",
-   "vs_usd_bp": -99.0,
-   "real_vs_usd_bp": -95.0,
-   "real_vs_usd_z": -2.13,
-   "lf_z": -0.5,
-   "cot_state": "NEUTRAL"
-  },
-  {
-   "ccy": "CHF",
-   "flags": [
-    "NOM SNB live",
-    "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
-    "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM",
-    "walls PROXY"
-   ],
-   "nom": 0.567,
-   "real": -0.933,
-   "be": 1.5,
-   "nom_asof": "2026-11-17",
-   "tp": -0.089,
-   "tp_z": 0.016242939823166783,
-   "tp_asof": "2026-11-17",
-   "rfr": -0.04,
-   "floor_bp": -4.0,
-   "floor_badge": "AMPLE",
-   "vs_usd_bp": -455.3,
-   "real_vs_usd_bp": null,
-   "real_vs_usd_z": null,
-   "lf_z": -1.52,
-   "cot_state": "STRETCH-"
-  }
- ],
- "doctor_summary": {
-  "priority_counts": {
-   "daily": 8,
-   "weekly": 0,
-   "monthly": 0,
-   "prohibited": 0
-  },
-  "incidents_count": 8,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:fail: Actions fetch_bis_policy_JP: fallo declarado por el descargador — BIS bulk fallback unavai\n• [1º/UNKNOWN] NZD_CASH_ON.csv: Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash disp"
- }
 }
