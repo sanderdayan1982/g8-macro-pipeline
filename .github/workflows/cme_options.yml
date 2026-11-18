@@ -82,14 +82,23 @@ jobs:
           echo "build_options_summary rc=${rc} duration=${dur}s rows=${rows}"
           exit "$rc"
 
-      # Dashboard alerts (strike walls card on every new session; $0, repo data only)
+      # t252u: la ejecución normal puede imprimir el cuerpo de opciones
+      # (notify_telegram lo escribe si faltan secretos). Esa salida no entra
+      # en el log del job: se guarda y el push privado la lleva al clon.
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/dashboard_alerts.py
+        run: |
+          set +e
+          python scripts/dashboard_alerts.py > "$RUNNER_TEMP/cme-alerts.log" 2>&1
+          rc=$?
+          set -e
+          rows=$(wc -l < "$RUNNER_TEMP/cme-alerts.log" | tr -d ' ')
+          echo "dashboard_alerts rc=${rc} rows=${rows}"
+          exit "$rc"
 
       # t249u: el commit queda en el clon privado. El push de ese clon es
       # scripts/tools/git_push_retry.sh. Este job no publica en el repo público.
@@ -104,6 +113,14 @@ jobs:
             --rows 1,2,3,6,11,12 \
             --no-push \
             --workflow "cme_options" --session "$(date -u +%F)"
+          if [ -f "$RUNNER_TEMP/cme-alerts.log" ]; then
+            mkdir -p "$clone/data/alerts"
+            cp "$RUNNER_TEMP/cme-alerts.log" "$clone/data/alerts/cme_options_alerts.log"
+            git -C "$clone" add -- data/alerts/cme_options_alerts.log
+            if ! git -C "$clone" diff --cached --quiet; then
+              git -C "$clone" commit -m "data: cme_options alerts log [skip netlify]"
+            fi
+          fi
           ahead=$(git -C "$clone" rev-list --count origin/main..HEAD)
           if [ "$ahead" = 0 ]; then
             echo "private_data push: no-op"
