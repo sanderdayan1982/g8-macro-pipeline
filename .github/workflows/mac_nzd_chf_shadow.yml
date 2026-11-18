@@ -1,0 +1,66 @@
+# Tras un push a main de las familias que publica el Mac
+# (mac/push_nzd_to_github.py FAMILIES: NZ-B2, CH-CURVA, CH-DIARIO, JP-TONA),
+# regenera la sombra CHF y argos_rates.json. Los ficheros que este job escribe
+# no están en `paths`, así que el commit no vuelve a disparar el workflow.
+# El GITHUB_TOKEN tampoco reabre workflows por su propio push.
+name: Mac NZD CHF TONA shadow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - data/NZD_BILL_*.csv
+      - data/NZD_BOND_*.csv
+      - data/NZD_CASH_ON.csv
+      - data/NZD_IIB_*.csv
+      - data/CHF_SPOT_1Y.csv
+      - data/CHF_SPOT_2Y.csv
+      - data/CHF_SPOT_3Y.csv
+      - data/CHF_SPOT_4Y.csv
+      - data/CHF_SPOT_5Y.csv
+      - data/CHF_SPOT_6Y.csv
+      - data/CHF_SPOT_7Y.csv
+      - data/CHF_SPOT_8Y.csv
+      - data/CHF_SPOT_9Y.csv
+      - data/CHF_SPOT_10Y.csv
+      - data/CHF_SPOT_20Y.csv
+      - data/CHF_SPOT_30Y.csv
+      - data/CHF_NOM_10Y.csv
+      - data/CHF_SARON.csv
+      - data/TONA.csv
+
+concurrency:
+  group: g8-shared-data-alerts
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      G8_STEP_GUARD: data
+      G8_GUARD_SKIP: options,futures
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Shadow CHF nowcast
+        run: python scripts/tools/g8step.py --name chf_nowcast_shadow --phase post --cap 40 --min 5 -- python scripts/chf_nowcast_shadow.py
+      - name: Publish argos rates
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          TZ=UTC python scripts/argos_rates.py
+          git add data/CHF_NOWCAST_shadow.json data/CHF_SPOT_2Y_daily_shadow.csv data/CHF_SPOT_5Y_daily_shadow.csv data/argos_rates.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'data: mac nzd chf tona shadow [skip netlify]'
+          bash scripts/tools/git_push_retry.sh 5

@@ -34,6 +34,14 @@ def _rows(raw):
     return header, rows
 
 
+def _cell(row, col):
+    """report_date is copied only when the other side already has it.
+
+    A weekly module's publication date is never estimated in this merge.
+    """
+    return row.get(col) or ""
+
+
 def merge_votes_bytes(main_bytes, other_bytes):
     """Return main_bytes plus rows from other_bytes whose key main does not have.
 
@@ -57,7 +65,7 @@ def merge_votes_bytes(main_bytes, other_bytes):
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=header, lineterminator="\n", extrasaction="ignore")
     for row in missing:
-        writer.writerow({col: (row.get(col) or "") for col in header})
+        writer.writerow({col: _cell(row, col) for col in header})
     extra = buf.getvalue().encode("utf-8")
     if not extra:
         return main_bytes

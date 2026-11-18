@@ -58,13 +58,36 @@ class DatosArgos01(unittest.TestCase):
             self.assertNotEqual(row["dominant_driver"], "", ccy)
 
     def test_chf_real_is_ex_post_nominal_minus_cpi(self):
-        """REAL CHF = NOM SNB − IPC a/a BFS. El salto de BE en pb es el paso mensual, no un %."""
+        """REAL CHF = NOM SNB − IPC a/a BFS. El salto de BE en pb es el paso mensual, no un %.
+
+        orden Sander 17-nov t239u. El nominal es el de la sesión cerrada: misma
+        función de corte que el JSON, sin fecha fija ni reloj del sistema.
+        """
         def last_rows(path, n):
             with open(path, encoding="utf-8") as fh:
                 rows = [r for r in csv.reader(fh) if r and not r[0].startswith("#")]
             return rows[-n:]
 
-        nom = last_rows(os.path.join(ROOT, "data", "CHF_NOM_10Y.csv"), 1)[0]
+        def iso_day(field):
+            raw = str(field or "").replace('"', "").strip()
+            if len(raw) == 8 and raw.isdigit():
+                return raw[:4] + "-" + raw[4:6] + "-" + raw[6:8]
+            if len(raw) >= 10 and raw[4] == "-" and raw[7] == "-":
+                return raw[:10]
+            return ""
+
+        # orden Sander 17-nov t239u
+        cut = AR.closed_session(AR.parse_clock(self.doc["generated_at"])).isoformat()
+        nom_rows = []
+        with open(os.path.join(ROOT, "data", "CHF_NOM_10Y.csv"), encoding="utf-8") as fh:
+            for row in csv.reader(fh):
+                if not row or row[0].startswith("#"):
+                    continue
+                day = iso_day(row[0])
+                if day and day > cut:
+                    continue
+                nom_rows.append(row)
+        nom = nom_rows[-1]
         cpi = last_rows(os.path.join(ROOT, "data", "CHF_CPI_YOY.csv"), 2)
         nom_v = float(nom[1])
         cpi_v = float(cpi[-1][4])
