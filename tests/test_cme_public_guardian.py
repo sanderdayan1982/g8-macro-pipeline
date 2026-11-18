@@ -5,6 +5,8 @@ El barrido de iv30, rr25, bf25, oi, settle, d_oi y percentiles FXVOL sobre
 todo git ls-files sigue encontrando ficheros que ya estaban en main; no se
 afirma aquí para no reescribirlos.
 """
+import csv
+import io
 import json
 import os
 import subprocess
@@ -22,6 +24,7 @@ SHARED_KEYS = {
 BRIEF_KEYS = SHARED_KEYS | {
     "pin", "strikes_c", "strikes_p", "call", "put", "oi", "top",
 }
+FXVOL_VECTOR_KEYS = {"iv30_atm", "rr25", "F1"}
 
 
 def _ls_files():
@@ -43,6 +46,17 @@ def _keys(obj, found):
             _keys(item, found)
 
 
+def _csv_header(raw):
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return []
+    try:
+        return next(csv.reader(io.StringIO(text)))
+    except StopIteration:
+        return []
+
+
 class CmePublicGuardian(unittest.TestCase):
     def test_versioned_tree_has_none_of_the_three_figure_names(self):
         hits = [path for path in _ls_files() if path.rsplit("/", 1)[-1] in FIGURE_NAMES]
@@ -59,6 +73,24 @@ class CmePublicGuardian(unittest.TestCase):
         found = set()
         _keys(json.loads(_blob("data/alerts/state.json")), found)
         self.assertEqual(sorted(found & SHARED_KEYS), [])
+
+    def test_versioned_tree_has_no_fxvol_vector_keys(self):
+        hits = []
+        for path in _ls_files():
+            found = set()
+            if path.endswith(".json"):
+                try:
+                    _keys(json.loads(_blob(path)), found)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    continue
+            elif path.endswith(".csv"):
+                found.update(_csv_header(_blob(path)))
+            else:
+                continue
+            bad = sorted(found & FXVOL_VECTOR_KEYS)
+            if bad:
+                hits.append("%s:%s" % (path, ",".join(bad)))
+        self.assertEqual(hits, [])
 
 
 if __name__ == "__main__":
