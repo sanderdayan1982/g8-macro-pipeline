@@ -166,12 +166,16 @@ class ClearedVolumeShadow(unittest.TestCase):
             wf = fh.read()
         self.assertIn("G8_OPT_VOL_DIR: data/options/volume_shadow", wf)
         self.assertIn("G8_OPT_RAW_DIR: ${{ runner.temp }}/cme-options-raw", wf)
-        # orden Sander 18-nov t245u
-        self.assertNotIn("actions/upload-artifact", wf)
-        self.assertNotIn("cme-options-raw-${{ github.run_id }}", wf)
-        commit = wf.split("Commit & push if changed", 1)[1]
-        self.assertNotIn("cme-options-raw", commit)
-        self.assertNotIn("runner.temp", commit)
+        # orden Sander 18-nov t249u: sin push ni artefacto CME en el público
+        code = "\n".join(
+            ln.split(" #", 1)[0] for ln in wf.splitlines() if not ln.lstrip().startswith("#"))
+        self.assertNotIn("actions/upload-artifact", code)
+        self.assertNotIn("cme-options-raw-${{ github.run_id }}", code)
+        self.assertNotIn("git add", code)
+        self.assertNotIn("git commit", code)
+        self.assertNotIn("git push", code)
+        self.assertIn("bash scripts/tools/git_push_retry.sh", code)
+        self.assertIn('GIT_DIR="$RUNNER_TEMP/g8data/.git"', code)
         with open(os.path.join(ROOT, ".gitignore"), encoding="utf-8") as fh:
             ignore = fh.read()
         self.assertIn("data/options/raw/", ignore)

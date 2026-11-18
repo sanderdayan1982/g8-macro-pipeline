@@ -18,5 +18,8 @@ Fórmulas, calibraciones, umbrales, `cme_options_collector.py`, `build_options_s
 ## Pruebas
 La suite y el run `Validate (smoke)` quedan en el PR. Dos tests que no estaba autorizado a editar siguen exigiendo el push público retirado: `tests.test_p7_push_retry.Workflows.test_R4_data_workflows_use_retry` y `tests.test_cme_options_volume_shadow.ClearedVolumeShadow.test_workflow_uploads_raw_outside_git_and_consumers_ignore_volume`.
 
+## t249u
+El push del clon privado lo hace `scripts/tools/git_push_retry.sh` (`--no-push` en `private_data.py` deja el commit local). `test_R4_data_workflows_use_retry` no se ha editado. `test_workflow_uploads_raw_outside_git_and_consumers_ignore_volume` queda en la regla sin push ni artefacto en el público.
+
 ## Siguiente
 No fusionar. No disparar `cme_options.yml`.

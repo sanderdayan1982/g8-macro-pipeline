@@ -91,19 +91,41 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/dashboard_alerts.py
 
-      # t247u (Sander, 18-nov-2026): este job no hace git add, commit ni push
-      # al repo público. Cubre data/options, OPTIONS_SURFACE.json y data/alerts
-      # aunque esas rutas dejen de estar en .gitignore. El push privado solo
-      # espera al colector y al resumen; no espera a ningún paso de git público.
+      # t249u: el commit queda en el clon privado. El push de ese clon es
+      # scripts/tools/git_push_retry.sh. Este job no publica en el repo público.
       - name: Private data push
         if: steps.collector.outcome == 'success' && steps.summary.outcome == 'success'
         env:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
           set -euo pipefail
-          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
+          clone="$RUNNER_TEMP/g8data"
+          python3 scripts/tools/private_data.py push "$clone" \
             --rows 1,2,3,6,11,12 \
+            --no-push \
             --workflow "cme_options" --session "$(date -u +%F)"
+          ahead=$(git -C "$clone" rev-list --count origin/main..HEAD)
+          if [ "$ahead" = 0 ]; then
+            echo "private_data push: no-op"
+            exit 0
+          fi
+          ask="$RUNNER_TEMP/.g8-askpass"
+          test -x "$ask"
+          git -C "$clone" config --local credential.helper ""
+          (
+            cd "$GITHUB_WORKSPACE"
+            export GIT_DIR="$RUNNER_TEMP/g8data/.git"
+            export GIT_WORK_TREE="$RUNNER_TEMP/g8data"
+            export GIT_ASKPASS="$ask"
+            export SSH_ASKPASS="$ask"
+            export GIT_ASKPASS_REQUIRE=force
+            export GIT_TERMINAL_PROMPT=0
+            export GCM_INTERACTIVE=Never
+            export GIT_CONFIG_COUNT=1
+            export GIT_CONFIG_KEY_0=credential.helper
+            export GIT_CONFIG_VALUE_0=
+            bash scripts/tools/git_push_retry.sh 5
+          )
 
       - name: Private data verify
         if: always()
