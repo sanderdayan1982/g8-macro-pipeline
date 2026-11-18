@@ -39,7 +39,7 @@ Salida: `data/CB_EVENT_48H_shadow.json` (`mode: SHADOW`). No entra en el libro.
 
 `dte_calendar` es la resta de fechas hasta `front`. `dte_bd` cuenta días hábiles del calendario US (CME) desde el día siguiente a la sesión hasta el vencimiento. ΔOI es el cambio del OI de ese lado, y del agregado `oi_front`, frente a la sesión anterior. Sin snapshot previo, o si ese strike no está en la sesión anterior, ΔOI es `null`. No se escribe un cero.
 
-Sesión publicada 2026-10-15, vencimiento EUR `2026-11-06`: `dte_calendar` 22, `dte_bd` 16. CALL WALL 1.135, ΔOI de calls +25. PUT WALL 1.11, ΔOI de puts −13. Agregado 79688, ΔOI +2335. NZD queda vacío: no hay opciones CME. La cotización sigue en convención CME. La inversión de JPY, CAD y CHF de la §08 no se mueve de `dashboard_alerts.py`.
+Sesión publicada 2026-10-15, vencimiento EUR `2026-11-06`: `dte_calendar` 22, `dte_bd` 16. CALL WALL [RETIRADO · licencia], ΔOI de calls [RETIRADO · licencia]. PUT WALL [RETIRADO · licencia], ΔOI de puts [RETIRADO · licencia]. Agregado [RETIRADO · licencia], ΔOI [RETIRADO · licencia]. NZD queda vacío: no hay opciones CME. La cotización sigue en convención CME. La inversión de JPY, CAD y CHF de la §08 no se mueve de `dashboard_alerts.py`.
 
 Salida: `data/CME_OPTIONS_C1_shadow.json`.
 

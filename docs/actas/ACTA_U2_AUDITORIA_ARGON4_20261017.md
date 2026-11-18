@@ -6,7 +6,7 @@ Los commits `011ef19a` y `843918b3` ya incorporaban los seis puntos funcionales 
 ## Hallazgos y decisión
 
 - `tests/test_u1_dashboard_integration.py` solo buscaba texto para comprobar `briefSec`. Ahora ejecuta la función real en Node y exige la numeración visible y `COT · fuera de la página`.
-- La inversión de opciones se comprueba ejecutando `userWalls` y `fmtC2Dist`: CALL CME JPY `0.0065`, referencia `0.006353`, aparece en PUT del operador a `-2.26%`. La prueba también comprueba el cruce de ambos lados.
+- La inversión de opciones se comprueba ejecutando `userWalls` y `fmtC2Dist`: CALL CME JPY `[RETIRADO · licencia]`, referencia `[RETIRADO · licencia]`, aparece en PUT del operador a `[RETIRADO · licencia]`. La prueba también comprueba el cruce de ambos lados.
 - Se ejecuta `shadowAgeOk` con reloj fijo y se prueba `policyCells`: una sombra vencida muestra su `as_of`, marca atraso y recalcula los días. Una fecha imposible que JavaScript normaliza (30-febrero) se rechaza ahora explícitamente.
 - `b2Line` convertía `null` y cadena vacía a cero. Ahora muestra `—`; un cero real sigue siendo `+0.00`. Hay regresión ejecutable sobre la función real.
 

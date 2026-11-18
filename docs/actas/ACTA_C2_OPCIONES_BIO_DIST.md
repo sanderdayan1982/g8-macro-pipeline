@@ -20,7 +20,7 @@ Los cortes son los ya vigentes. No hay umbral nuevo.
 
 En cada muro, `dist_pct = round((k - ref) / ref * 100, 2)` en convención CME, con signo. `abs_dist_pct` es el valor absoluto. `near_pin_05pct` es verdadero si el valor absoluto, antes de redondear, es menor o igual que 0,5. Es un chip, sin voto.
 
-Medido en la superficie del 15-oct-2026. GBP, futuro de referencia `1.3274`. El call wall absoluto sigue en `1.43` (el mayor OI de calls) y queda a `+7.73 %`. El `nearest_call_wall` es `1.33`, a `+0.20 %`, y el chip de 0,5 % se enciende. El `nearest_put_wall` es `1.315`. El `1.33` no está en la sesión previa: su `delta_oi` es `None`, no cero.
+Medido en la superficie del 15-oct-2026. GBP, futuro de referencia `[RETIRADO · licencia]`. El call wall absoluto sigue en `[RETIRADO · licencia]` (el mayor OI de calls) y queda a `[RETIRADO · licencia]`. El `nearest_call_wall` es `[RETIRADO · licencia]`, a `[RETIRADO · licencia]`, y el chip de 0,5 % se enciende. El `nearest_put_wall` es `[RETIRADO · licencia]`. El `[RETIRADO · licencia]` no está en la sesión previa: su `delta_oi` es `None`, no cero.
 
 ## Muro táctico
 
