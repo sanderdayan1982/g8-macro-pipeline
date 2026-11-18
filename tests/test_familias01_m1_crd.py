@@ -476,7 +476,11 @@ class CreditFredShadow(unittest.TestCase):
         blob = _public_surface()
         self.assertNotIn(marker, blob)
         self.assertNotIn("oas_hy_bp", blob)
+        # orden Sander 18-nov t244u: estados CRD_G8 publicables, números no
+        CRD_G8_PUBLIC_STATES = ("SANO", "NEUTRO", "TENSO", "ROTURA", "STALE", "MISSING")
         for name in ("SANO", "TENSO", "ROTURA", "AISLADO"):
+            if name in CRD_G8_PUBLIC_STATES:
+                continue
             self.assertNotIn(name, blob)
 
     def test_t_cr13_aislado_and_dd_are_unavailable_and_the_other_ccys_are_na(self):
