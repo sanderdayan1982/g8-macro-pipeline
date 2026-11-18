@@ -67,7 +67,15 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python scripts/dashboard_alerts.py
+          set +e
+          python scripts/dashboard_alerts.py > "$RUNNER_TEMP/dashboard-alerts.log" 2>&1
+          rc=$?
+          set -e
+          rows=$(wc -l < "$RUNNER_TEMP/dashboard-alerts.log" | tr -d ' ')
+          echo "dashboard_alerts rc=${rc} rows=${rows}"
+          if [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
           python scripts/health_monitor.py
       - name: Publish valid data
         if: always()
