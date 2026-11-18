@@ -197,6 +197,7 @@ COLUMNS = [
     "fecha_cierre", "script", "version", "ccy", "estado", "valor", "voto",
     "stale", "snapshot_id", "hora_recepcion_utc", "id_correo", "bar_close_ms",
     "family", "parts_expected", "parts_received", "rule_version", "session_type",
+    "report_date",
 ]
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -625,6 +626,12 @@ def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at
         # Non-holiday rows the ingestor writes are REGULAR. A holiday with mail
         # overwrites this to HOLIDAY. RELOJES-01 Anexo 1 A1.
         "session_type": "REGULAR",
+        # Orden Sander 17-nov t237u. Weekly modules (dealers and Japan/MoF
+        # flows) should carry the publication date of the print. Daily
+        # modules stay empty. This parser has no weekly-module list and no
+        # publication-date field, so the cell is left empty rather than
+        # copied from fecha_cierre.
+        "report_date": "",
     }
 
 
@@ -1085,19 +1092,54 @@ def _ensure_session_type_column(raw):
     return rebuilt.encode("utf-8")
 
 
+def _ensure_report_date_column(raw):
+    """Add report_date at the end when the header lacks it.
+
+    Existing rows gain an empty field. The value is the publication date of
+    a weekly module and is never estimated here. A file that already has the
+    column is returned unchanged, byte for byte.
+    """
+    if not raw:
+        return raw
+    text = raw.decode("utf-8")
+    if not text:
+        return raw
+    newline = "\r\n" if "\r\n" in text[:4096] else "\n"
+    first, sep, rest = text.partition(newline if newline in text else "\n")
+    if not sep:
+        first = text
+        rest = ""
+        sep = ""
+    try:
+        fields = next(csv.reader([first]))
+    except StopIteration:
+        return raw
+    if "report_date" in fields:
+        return raw
+    out = [first + ",report_date"]
+    if rest:
+        for line in rest.splitlines():
+            out.append(line + "," if line else line)
+    rebuilt = newline.join(out)
+    if text.endswith(("\n", "\r\n")) and not rebuilt.endswith(("\n", "\r\n")):
+        rebuilt += newline
+    return rebuilt.encode("utf-8")
+
+
 def append_rows(path, rows):
     """Append rows whose (fecha_cierre, script, ccy) is new.
 
-    When the header already lists session_type, the previous bytes stay a
-    prefix. When it does not, the column is added (empty on existing rows)
-    and then the new rows are appended. RELOJES-01 Anexo 1 A1.
+    When the header already lists session_type and report_date, the previous
+    bytes stay a prefix. When a column is missing it is added (empty on
+    existing rows) and then the new rows are appended. report_date stays
+    empty: this path does not estimate a publication date.
     """
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     raw = b""
     if os.path.exists(path):
         with open(path, "rb") as fh:
             raw = fh.read()
-    upgraded = _ensure_session_type_column(raw)
+    upgraded = _ensure_report_date_column(_ensure_session_type_column(raw))
     if upgraded != raw:
         with open(path, "wb") as fh:
             fh.write(upgraded)
