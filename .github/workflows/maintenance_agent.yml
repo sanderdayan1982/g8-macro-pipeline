@@ -111,12 +111,13 @@ jobs:
             Busca alternativas oficiales equivalentes para cada API rota o feed atrasado. Verifica fuente,
             definición, unidades, fechas, solapamiento e ingestión antes de cambiar nada. No cambies modelos.
             Haz commits locales sin push. Escribe siempre .agent/report.md con evidencia, estado por prioridad y pendientes.
+            Prohibido `git add -f` y `git add --force`. No añadas rutas ignoradas ni rutas fuera del filtro AUTO de scripts/tools/agent_gate.py.
             Si un workflow de datos falló o una fuente publicó después de su pasada, pide el relanzamiento en
             .agent/recovery.json (formato y lista cerrada en mantenimiento.md); la compuerta lo ejecuta.
           claude_args: |
             --max-turns 30
             --allowedTools "Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Bash(python:*),Bash(python3:*),Bash(node:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git show:*),Bash(gh run list:*),Bash(gh run view:*),Bash(curl:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(date:*),Bash(mkdir:*),Bash(bash scripts/tools/validate_smoke.sh:*)"
-            --disallowedTools "Bash(git push:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh secret:*),Bash(gh workflow:*)"
+            --disallowedTools "Bash(git push:*),Bash(gh pr:*),Bash(gh api:*),Bash(gh secret:*),Bash(gh workflow:*),Bash(git add -f:*),Bash(git add --force:*)"
       - name: Agent Doctor fallback
         id: fallback
         if: always()
@@ -253,6 +254,7 @@ jobs:
           git config user.name g8-maintenance-agent
           git config user.email g8-maintenance-agent@users.noreply.github.com
           cp scripts/tools/agent_gate.py "$RUNNER_TEMP/trusted_gate.py"
+          cp scripts/tools/agent_publish_filter.py "$RUNNER_TEMP/agent_publish_filter.py"
           result=NO_CHANGES
           if [ "$VERIFY_RESULT" != success ] || [ "$AGENT_RESULT" != success ] || [ "$CLAUDE_OUTCOME" != success ]; then result=FAILED; fi
           if [ -f .agent/work.bundle ]; then
@@ -279,6 +281,11 @@ jobs:
               result=REVIEW
             fi
             if [ "$result" = REVIEW ]; then
+              # t249u: agent/maint-* solo si cada ruta pasa ALLOW menos DENY y no está ignorada.
+              if ! python "$RUNNER_TEMP/agent_publish_filter.py" "$BASE"; then
+                echo "agent/maint no se publica: rutas ignoradas o fuera del filtro AUTO" >&2
+                exit 1
+              fi
               branch="agent/maint-${{ github.run_id }}"
               git push origin "HEAD:refs/heads/$branch"
               [ -f .agent/report.md ] || echo 'Revisar logs: no hay informe.' > .agent/report.md
