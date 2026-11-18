@@ -415,13 +415,19 @@ jobs:
                       json.dump(doc, fh, indent=1, ensure_ascii=False)
                   os.replace(tmp, rel)
           PY
+          mkdir -p data/public
+          python3 scripts/tools/cme_public_projection.py \
+            --out data/public/CME_OPTIONS_SURFACE_public.json data/OPTIONS_SURFACE.json \
+            --out data/public/CME_C1_public.json data/CME_OPTIONS_C1_shadow.json \
+            --out data/public/CME_FXVOL_public.json data/CME_FXVOL_shadow.json
           git add data/ \
             data/CB_EVENT_48H_shadow.json \
             data/CHF_NOWCAST_shadow.json \
             data/CHF_SPOT_2Y_daily_shadow.csv \
             data/CHF_SPOT_5Y_daily_shadow.csv \
             data/S01B_shadow_a3.json
-          # t245u: no public add. Private push below still sends
+          # t248u: CME público solo bajo data/public/. Los tres nombres con cifras
+          # siguen en .gitignore y este paso no los añade.
           # data/CME_OPTIONS_C1_shadow.json
           # data/options/shadow_history.json
           # data/CME_FXVOL_shadow.json
