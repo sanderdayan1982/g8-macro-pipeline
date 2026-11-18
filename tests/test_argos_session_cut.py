@@ -209,6 +209,76 @@ class ClosedSessionRows(unittest.TestCase):
                 self.assertEqual(cut["as_of"], session.isoformat())
                 self.assertEqual(blob(cut), blob(raw))
 
+    def test_day_17_nzd_and_chf_nom_stay_out_of_session_16(self):
+        """Un impreso del 17 no entra en la sesión cerrada del 16. Serie sintética."""
+        session = date(2026, 11, 16)
+        later = date(2026, 11, 17)
+        now = "2026-11-17T21:00:00Z"
+        self.assertEqual(AR.closed_session(now), session)
+        days = ending(session, 70)
+        sentinel = 9.17
+        prior = 1.16
+
+        def nzd_bond():
+            lines = ["Date,Value"]
+            for d in days:
+                lines.append("%s,%.2f" % (d.isoformat(), prior))
+            lines.append("%s,%.2f" % (later.isoformat(), sentinel))
+            return "\n".join(lines) + "\n"
+
+        def chf_nom():
+            lines = ["Date,Value,Source"]
+            for d in days:
+                lines.append("%s,%.2f,syn" % (d.isoformat(), prior))
+            lines.append("%s,%.2f,syn" % (later.isoformat(), sentinel))
+            return "\n".join(lines) + "\n"
+
+        def chf_acm():
+            lines = ["DATE,Y10_FIT,RNY10,TP10,QUALITY"]
+            for d in days:
+                lines.append("%s,1.0000,0.6000,0.4000,ACM_K3" % ymd(d))
+            return "\n".join(lines) + "\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            build_dir(tmp, session, later=None)
+            write(tmp, "NZD_BOND_10Y.csv", nzd_bond())
+            write(tmp, "CHF_NOM_10Y.csv", chf_nom())
+            write(tmp, "ACM_G8_CHF.csv", chf_acm())
+            cut = run(now, tmp, True)
+            raw = run(now, tmp, False)
+        self.assertEqual(cut["as_of"], "2026-11-16")
+        self.assertEqual(cut["currencies"]["NZD"]["nominal_10y"], prior)
+        self.assertEqual(cut["currencies"]["CHF"]["nominal_10y"], prior)
+        self.assertNotIn("%.2f" % sentinel, json.dumps(cut["currencies"]["NZD"]))
+        self.assertNotIn("%.2f" % sentinel, json.dumps(cut["currencies"]["CHF"]))
+        self.assertEqual(raw["currencies"]["NZD"]["nominal_10y"], sentinel)
+        self.assertEqual(raw["currencies"]["CHF"]["nominal_10y"], sentinel)
+
+    def test_floor_usd_row_after_the_session_stays_out(self):
+        """orden Sander t241u. FLOOR_USD del día siguiente no entra en la sesión cerrada.
+
+        El reloj ya es el 18, antes de las 17:00 America/New_York: la sesión
+        cerrada sigue siendo el 17. Serie sintética; el 9.18 no es un IORB.
+        """
+        session = date(2026, 11, 17)
+        later = date(2026, 11, 18)
+        now = "2026-11-18T12:00:00Z"
+        self.assertEqual(AR.closed_session(now), session)
+        days = ending(session, 40)
+        prior = 3.50
+        sentinel = 9.18
+        with tempfile.TemporaryDirectory() as tmp:
+            build_dir(tmp, session, later=None)
+            write(tmp, "SOFR.csv", ohlcv([(d, 3.53) for d in days]))
+            write(tmp, "FLOOR_USD.csv", ohlcv([(d, prior) for d in days] + [(later, sentinel)]))
+            cut = run(now, tmp, True)
+            raw = run(now, tmp, False)
+        self.assertEqual(cut["as_of"], "2026-11-17")
+        self.assertEqual(cut["floors"]["USD"]["policy_rate"], prior)
+        self.assertEqual(cut["floors"]["USD"]["date"], "2026-11-17")
+        self.assertNotIn("%.2f" % sentinel, json.dumps(cut["floors"]["USD"]))
+        self.assertEqual(raw["floors"]["USD"]["policy_rate"], sentinel)
+
 
 if __name__ == "__main__":
     unittest.main()

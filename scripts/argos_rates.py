@@ -6,8 +6,9 @@ El HTML lo produce scripts/argos_render.js ejecutando los IIFE del dashboard
 
 as_of es la última sesión 1D ya cerrada (17:00 America/New_York, invierno y
 verano). El render recibe --cut con esa fecha y, antes de calcular niveles y
-floors, deja fuera las filas posteriores de TONA, AONIA, RY_G8_*, AUD_NOWCAST
-y un S01B.json con as_of posterior. docs/index.html y s01b.py no cambian.
+floors, deja fuera las filas posteriores de TONA, AONIA, RY_G8_*, AUD_NOWCAST,
+NZD_*, CHF_NOM_10Y.csv, FLOOR_USD.csv y un S01B.json con as_of posterior.
+docs/index.html y s01b.py no cambian.
 
 FLUJOS-01 Sander 12-nov-2026. No recalcula fórmulas.
 Lo que el panel no muestra queda UNAVAILABLE:
