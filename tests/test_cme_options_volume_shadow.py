@@ -166,10 +166,9 @@ class ClearedVolumeShadow(unittest.TestCase):
             wf = fh.read()
         self.assertIn("G8_OPT_VOL_DIR: data/options/volume_shadow", wf)
         self.assertIn("G8_OPT_RAW_DIR: ${{ runner.temp }}/cme-options-raw", wf)
-        self.assertIn("actions/upload-artifact@v4", wf)
-        self.assertIn("retention-days: 90", wf)
-        self.assertIn("if-no-files-found: ignore", wf)
-        self.assertIn("cme-options-raw-${{ github.run_id }}", wf)
+        # orden Sander 18-nov t245u
+        self.assertNotIn("actions/upload-artifact", wf)
+        self.assertNotIn("cme-options-raw-${{ github.run_id }}", wf)
         commit = wf.split("Commit & push if changed", 1)[1]
         self.assertNotIn("cme-options-raw", commit)
         self.assertNotIn("runner.temp", commit)

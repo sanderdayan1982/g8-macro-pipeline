@@ -408,13 +408,11 @@ class WorkflowVolumeOnly(unittest.TestCase):
         self.assertEqual(self.inputs["volume_end"]["default"], "")
         self.assertIs(self.inputs["dry_run"]["default"], True)
         self.assertNotIn("exit 0", self.text)
-        upload = next(s for s in self.wf["jobs"]["backfill"]["steps"]
-                      if s.get("uses") == "actions/upload-artifact@v4")
-        self.assertEqual(upload["with"]["retention-days"], 90)
-        self.assertEqual(upload["with"]["if-no-files-found"], "ignore")
-        self.assertIn("runner.temp", upload["with"]["path"])
-        self.assertIn("cme-options-volume-raw", upload["with"]["path"])
-        self.assertIn("volume_only", upload["if"])
+        # orden Sander 18-nov t245u
+        uploads = [s for s in self.wf["jobs"]["backfill"]["steps"]
+                   if "upload-artifact" in str(s.get("uses") or "")]
+        self.assertEqual(uploads, [])
+        self.assertNotIn("cme-options-volume-raw-${{ github.run_id }}", self.text)
         self.assertIn("git add -- data/options/volume_shadow data/options/volume_backfill_report.json", self.text)
         self.assertIn("[skip netlify]", self.text)
         commit = 'git commit -m "data: cme options volume-only ${vol_start} ${vol_end} [skip netlify]"'

@@ -13,9 +13,9 @@
 # Default window: 2026-07-01 inclusive, end exclusive = today UTC. It writes only
 # data/options/volume_shadow and data/options/volume_backfill_report.json.
 # dry_run on this mode quotes each month plus the total and does not commit.
-# A paid body is gzipped under runner.temp. Job volume-month uploads one
-# artifact per month (90 days) before the next month starts. The gzip is never
-# git-added. A later month's failure leaves earlier commits and artifacts.
+# A paid body is gzipped under runner.temp. orden Sander 18-nov t244u: that
+# gzip is not uploaded as an artifact and is never git-added. A later month's
+# failure leaves earlier commits.
 #
 # Default input dry_run=true: per-chunk metadata.get_cost / get_record_count /
 # get_billable_size for 2024-06 … 2026-05. No timeseries.get_range.
@@ -294,23 +294,11 @@ jobs:
           echo "private_data verify rc=${rc}"
           exit "$rc"
 
-      # t186u / t189u: paid Databento body, gzipped, never git-added. 90 days.
-      # Full mode writes nothing here, so the step finds no files.
-      # t192u also uploads one artifact per month inside job volume-month,
-      # before the next month starts. This step remains for a dry-run or a
-      # fallback that left files in the parent directory.
-      - name: Upload compressed Databento original (t189u)
-        if: ${{ always() && inputs.mode == 'volume_only' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: cme-options-volume-raw-${{ github.run_id }}
-          path: ${{ runner.temp }}/cme-options-volume-raw
-          retention-days: 90
-          if-no-files-found: ignore
+      # orden Sander 18-nov t244u. The gzip under runner.temp is not uploaded.
 
   # t192u: one matrix cell per calendar month, max-parallel 1. A failed cell
   # cancels cells that have not started. Cells that already finished keep
-  # their commit on main and their own artifact.
+  # their commit on main. The gzip is not uploaded.
   volume-plan:
     if: ${{ inputs.mode == 'volume_only' && inputs.dry_run == false }}
     runs-on: ubuntu-latest
@@ -467,11 +455,4 @@ jobs:
           echo "private_data verify rc=${rc}"
           exit "$rc"
 
-      - name: Upload this month's compressed Databento original
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cme-options-volume-raw-${{ github.run_id }}-${{ matrix.item.id }}
-          path: ${{ runner.temp }}/cme-options-volume-raw/${{ matrix.item.id }}
-          retention-days: 90
-          if-no-files-found: ignore
+      # orden Sander 18-nov t244u. This month's gzip stays on the runner.
