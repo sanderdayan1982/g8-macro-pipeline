@@ -84,6 +84,7 @@ def _load_vectors():
     return {s: doc[s] for s in SESSIONS}
 
 
+@unittest.skip("datos CME trasladados al privado, orden Sander 18-nov")
 class FxvolShadow(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

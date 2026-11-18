@@ -478,6 +478,7 @@ class Familias01C(unittest.TestCase):
         self.assertTrue(S.METHOD_STATES["header"].startswith("[PROV]"))
         self.assertEqual(S.R11_FLIP, frozenset(("JPY", "CAD", "CHF")))
 
+    @unittest.skip("datos CME trasladados al privado, orden Sander 18-nov")
     def test_t_c14_publish_flag_false_keeps_main_keys(self):
         self.assertIs(FX.FXVOL_STATES_PUBLISH, False)
         with open(KEYS_PATH, encoding="utf-8") as fh:

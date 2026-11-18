@@ -71,6 +71,7 @@ class Rv21Vectors(unittest.TestCase):
         iv, rv = 5.46, 6.10
         self.assertEqual(round(iv - rv, 2), -0.64)
 
+    @unittest.skip("datos CME trasladados al privado, orden Sander 18-nov")
     def test_live_eur_matches_the_oracle_and_the_roll_session_is_na(self):
         out, hist, _ = FX.build(ROOT, "2026-11-06")
         eur = out["currencies"]["EUR"]
