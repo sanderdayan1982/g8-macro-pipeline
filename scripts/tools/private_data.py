@@ -306,6 +306,9 @@ def cmd_push(args, token):
     rc = git(["commit", "-m", msg], clone, env, token)
     if rc != 0:
         return rc or 1
+    if args.no_push:
+        print("private_data push: commit local")
+        return 0
     return push_retry(clone, env, token, args.retries, args.retry_sleep)
 
 
@@ -530,6 +533,7 @@ def build_parser():
     push.add_argument("--workspace", default=".")
     push.add_argument("--retries", type=int, default=5)
     push.add_argument("--retry-sleep", type=float, default=5)
+    push.add_argument("--no-push", action="store_true")
 
     redact = sub.add_parser("redact")
     redact.add_argument("--workspace", default=".")

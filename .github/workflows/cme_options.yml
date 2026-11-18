@@ -13,8 +13,9 @@ on:
     - cron: '0 17 * * *'
   workflow_dispatch: {}
 
+# t247u: el token del job no puede hacer push al repo público.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: cme-options
@@ -43,6 +44,7 @@ jobs:
           python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,2,3,6,11,12
 
       - name: Run collector (availability-guarded, catch-up)
+        id: collector
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
           G8_OPT_OUT_DIR: data/options/canonical
@@ -65,6 +67,7 @@ jobs:
       # uploaded as an artifact and it is not git-added.
 
       - name: Build dashboard summary JSON
+        id: summary
         env:
           G8_OPT_OUT_DIR: data/options/canonical
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
@@ -79,37 +82,67 @@ jobs:
           echo "build_options_summary rc=${rc} duration=${dur}s rows=${rows}"
           exit "$rc"
 
-      # Dashboard alerts (strike walls card on every new session; $0, repo data only)
+      # t252u: la ejecución normal puede imprimir el cuerpo de opciones
+      # (notify_telegram lo escribe si faltan secretos). Esa salida no entra
+      # en el log del job: se guarda y el push privado la lleva al clon.
       - name: Dashboard alerts (Telegram on change)
         if: always()
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/dashboard_alerts.py
-
-      - name: Commit & push if changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/options data/OPTIONS_SURFACE.json data/alerts
-          if git diff --cached --quiet; then
-            echo "No new session / no alert-state change — nothing to commit."
-          else
-            git commit -m "chore: options surface update $(date -u +%F)"
-            # Acta P-7: integra main y reintenta (el run tarda ~15 min y otros procesos suben entretanto).
-            bash scripts/tools/git_push_retry.sh 5
-          fi
+          set +e
+          python scripts/dashboard_alerts.py > "$RUNNER_TEMP/cme-alerts.log" 2>&1
+          rc=$?
+          set -e
+          rows=$(wc -l < "$RUNNER_TEMP/cme-alerts.log" | tr -d ' ')
+          echo "dashboard_alerts rc=${rc} rows=${rows}"
+          exit "$rc"
 
-      # PR-A: el commit público de arriba no cambia. El push privado va después.
+      # t249u: el commit queda en el clon privado. El push de ese clon es
+      # scripts/tools/git_push_retry.sh. Este job no publica en el repo público.
       - name: Private data push
+        if: steps.collector.outcome == 'success' && steps.summary.outcome == 'success'
         env:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
           set -euo pipefail
-          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
+          clone="$RUNNER_TEMP/g8data"
+          python3 scripts/tools/private_data.py push "$clone" \
             --rows 1,2,3,6,11,12 \
+            --no-push \
             --workflow "cme_options" --session "$(date -u +%F)"
+          if [ -f "$RUNNER_TEMP/cme-alerts.log" ]; then
+            mkdir -p "$clone/data/alerts"
+            cp "$RUNNER_TEMP/cme-alerts.log" "$clone/data/alerts/cme_options_alerts.log"
+            git -C "$clone" add -- data/alerts/cme_options_alerts.log
+            if ! git -C "$clone" diff --cached --quiet; then
+              git -C "$clone" commit -m "data: cme_options alerts log [skip netlify]"
+            fi
+          fi
+          ahead=$(git -C "$clone" rev-list --count origin/main..HEAD)
+          if [ "$ahead" = 0 ]; then
+            echo "private_data push: no-op"
+            exit 0
+          fi
+          ask="$RUNNER_TEMP/.g8-askpass"
+          test -x "$ask"
+          git -C "$clone" config --local credential.helper ""
+          (
+            cd "$GITHUB_WORKSPACE"
+            export GIT_DIR="$RUNNER_TEMP/g8data/.git"
+            export GIT_WORK_TREE="$RUNNER_TEMP/g8data"
+            export GIT_ASKPASS="$ask"
+            export SSH_ASKPASS="$ask"
+            export GIT_ASKPASS_REQUIRE=force
+            export GIT_TERMINAL_PROMPT=0
+            export GCM_INTERACTIVE=Never
+            export GIT_CONFIG_COUNT=1
+            export GIT_CONFIG_KEY_0=credential.helper
+            export GIT_CONFIG_VALUE_0=
+            bash scripts/tools/git_push_retry.sh 5
+          )
 
       - name: Private data verify
         if: always()
