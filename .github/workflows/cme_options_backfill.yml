@@ -28,7 +28,8 @@
 # Stop starting new chunks after 320 min so the job stays inside timeout-minutes: 360.
 # Relaunch resumes. Cumulative get_cost above 35 USD downloads nothing for that chunk,
 # writes the report, and exits 3. The loop commits and pushes every chunk that already
-# finished, then exits 3 so the job is red. Earlier commits stay on main.
+# finished to the private clone, then exits 3 so the job is red. Earlier commits stay
+# on that clone. t253u: this job cannot push the public repo.
 # Secret: DATABENTO_API_KEY only. Do not dispatch this workflow from a pull request.
 name: CME options backfill
 
@@ -60,8 +61,9 @@ on:
         type: string
         default: ''
 
+# t253u: el token del job no puede hacer push al repo público.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: cme-options-backfill
@@ -103,10 +105,63 @@ jobs:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
           # Set on every workflow run. Unset only in the unit-test shell, which
           # then walks the months itself. A real download leaves this step and
-          # uses job volume-month so each month is uploaded before the next.
+          # uses job volume-month so each month is pushed to the private clone before the next.
           VOLUME_MONTHS_JOB: ${{ inputs.mode == 'volume_only' && inputs.dry_run == false && '1' || '0' }}
         run: |
           set -u
+          # t253u: en Actions el clon existe y pwd es el workspace. git opera ahí.
+          # El test ejecuta este script con otro cwd: el stub ve los mismos comandos.
+          _stage_private() {
+            local clone="${RUNNER_TEMP:-}/g8data"
+            if [ -n "${GITHUB_WORKSPACE:-}" ] && [ "$(pwd)" = "$GITHUB_WORKSPACE" ]; then
+              if [ ! -d "$clone/.git" ]; then
+                echo "private clone missing; refusing a public commit" >&2
+                exit 1
+              fi
+              if [ -d data/options ]; then
+                mkdir -p "$clone/data/options"
+                cp -a data/options/. "$clone/data/options/"
+              fi
+              if [ -n "${RUNNER_TEMP:-}" ] && [ -f "$RUNNER_TEMP/cme-backfill.log" ]; then
+                mkdir -p "$clone/data/alerts"
+                cp "$RUNNER_TEMP/cme-backfill.log" "$clone/data/alerts/cme_options_backfill.log"
+              fi
+              export GIT_DIR="$clone/.git"
+              export GIT_WORK_TREE="$clone"
+            fi
+          }
+          _push_private() {
+            if [ -n "${GITHUB_WORKSPACE:-}" ] && [ "$(pwd)" = "$GITHUB_WORKSPACE" ]; then
+              if [ -z "${GIT_DIR:-}" ]; then
+                echo "refusing public push" >&2
+                exit 1
+              fi
+              local ask="${RUNNER_TEMP:-}/.g8-askpass"
+              if [ ! -x "$ask" ]; then
+                echo "private askpass missing; refusing a public push" >&2
+                exit 1
+              fi
+              (
+                export GIT_ASKPASS="$ask"
+                export SSH_ASKPASS="$ask"
+                export GIT_ASKPASS_REQUIRE=force
+                export GIT_TERMINAL_PROMPT=0
+                export GCM_INTERACTIVE=Never
+                export GIT_CONFIG_COUNT=1
+                export GIT_CONFIG_KEY_0=credential.helper
+                export GIT_CONFIG_VALUE_0=
+                bash scripts/tools/git_push_retry.sh 5
+              )
+            else
+              bash scripts/tools/git_push_retry.sh 5
+            fi
+          }
+          if [ -n "${RUNNER_TEMP:-}" ] && [ "${GITHUB_WORKSPACE:-}" = "$(pwd)" ]; then
+            exec 3>&1
+            exec > "$RUNNER_TEMP/cme-backfill.log" 2>&1
+            trap 'rc=$?; rows=$(wc -l < "$RUNNER_TEMP/cme-backfill.log" | tr -d " "); echo "cme_options_backfill rc=${rc} rows=${rows}" >&3' EXIT
+          fi
+          _stage_private
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           start_s=$(date +%s)
@@ -118,6 +173,7 @@ jobs:
           fi
           commit_month() {
             local month="$1"
+            _stage_private
             git add data/options/canonical data/options/backfill_report.json
             if git diff --cached --quiet; then
               echo "No backfill output to commit for ${month}."
@@ -128,10 +184,14 @@ jobs:
             else
               git commit -m "data: cme options backfill ${month} [skip netlify]"
             fi
-            bash scripts/tools/git_push_retry.sh 5
             if [ -n "${G8_DATA_TOKEN:-}" ]; then
-              python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$month"
+              (
+                unset GIT_DIR
+                unset GIT_WORK_TREE
+                python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --no-push --workflow "cme options backfill" --session "$month"
+              )
             fi
+            _push_private
           }
           # volume_only returns before the full-mode loop. dry_run does not commit.
           # The status variable is expanded with braces so this branch is not
@@ -213,27 +273,37 @@ jobs:
               set -e
               if [ "$rc" -ne 0 ]; then
                 if [ -f data/options/volume_backfill_report.json ]; then
+                  _stage_private
                   git add -- data/options/volume_shadow data/options/volume_backfill_report.json
                   if ! git diff --cached --quiet; then
                     git commit -m "data: cme options volume-only ${ym} [skip netlify]"
-                    bash scripts/tools/git_push_retry.sh 5
                     if [ -n "${G8_DATA_TOKEN:-}" ]; then
-                      python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$ym"
+                      (
+                        unset GIT_DIR
+                        unset GIT_WORK_TREE
+                        python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --no-push --workflow "cme options backfill" --session "$ym"
+                      )
                     fi
+                    _push_private
                   fi
                 fi
                 echo "volume month ${ym} stopped with rc=${rc}; earlier months stay pushed; later months not started"
                 exit "${rc}"
               fi
+              _stage_private
               git add -- data/options/volume_shadow data/options/volume_backfill_report.json
               if git diff --cached --quiet; then
                 echo "No volume output to commit for ${ym}."
               else
                 git commit -m "data: cme options volume-only ${ym} [skip netlify]"
-                bash scripts/tools/git_push_retry.sh 5
                 if [ -n "${G8_DATA_TOKEN:-}" ]; then
-                  python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "$ym"
+                  (
+                    unset GIT_DIR
+                    unset GIT_WORK_TREE
+                    python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --no-push --workflow "cme options backfill" --session "$ym"
+                  )
                 fi
+                _push_private
               fi
             done < <(volume_month_iter "$vol_start" "$vol_end")
             exit "${rc:-0}"
@@ -404,6 +474,52 @@ jobs:
           G8_VOL_RAW_DIR: ${{ runner.temp }}/cme-options-volume-raw/${{ matrix.item.id }}
         run: |
           set -u
+          _stage_private() {
+            local clone="${RUNNER_TEMP:-}/g8data"
+            if [ -n "${GITHUB_WORKSPACE:-}" ] && [ "$(pwd)" = "$GITHUB_WORKSPACE" ]; then
+              if [ ! -d "$clone/.git" ]; then
+                echo "private clone missing; refusing a public commit" >&2
+                exit 1
+              fi
+              if [ -d data/options ]; then
+                mkdir -p "$clone/data/options"
+                cp -a data/options/. "$clone/data/options/"
+              fi
+              if [ -n "${RUNNER_TEMP:-}" ] && [ -f "$RUNNER_TEMP/cme-backfill.log" ]; then
+                mkdir -p "$clone/data/alerts"
+                cp "$RUNNER_TEMP/cme-backfill.log" "$clone/data/alerts/cme_options_backfill.log"
+              fi
+              export GIT_DIR="$clone/.git"
+              export GIT_WORK_TREE="$clone"
+            fi
+          }
+          _push_private() {
+            if [ -n "${GITHUB_WORKSPACE:-}" ] && [ "$(pwd)" = "$GITHUB_WORKSPACE" ]; then
+              if [ -z "${GIT_DIR:-}" ]; then
+                echo "refusing public push" >&2
+                exit 1
+              fi
+              local ask="${RUNNER_TEMP:-}/.g8-askpass"
+              if [ ! -x "$ask" ]; then
+                echo "private askpass missing; refusing a public push" >&2
+                exit 1
+              fi
+              (
+                export GIT_ASKPASS="$ask"
+                export SSH_ASKPASS="$ask"
+                export GIT_ASKPASS_REQUIRE=force
+                export GIT_TERMINAL_PROMPT=0
+                export GCM_INTERACTIVE=Never
+                export GIT_CONFIG_COUNT=1
+                export GIT_CONFIG_KEY_0=credential.helper
+                export GIT_CONFIG_VALUE_0=
+                bash scripts/tools/git_push_retry.sh 5
+              )
+            else
+              bash scripts/tools/git_push_retry.sh 5
+            fi
+          }
+          _stage_private
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           ym="$VOL_MONTH"
@@ -423,14 +539,17 @@ jobs:
           fi
           mkdir -p "$G8_VOL_RAW_DIR"
           set +e
-          python scripts/cme_options_backfill.py --mode volume_only --volume-start "$seg_start" --volume-end "$seg_end" --download
+          python scripts/cme_options_backfill.py --mode volume_only --volume-start "$seg_start" --volume-end "$seg_end" --download > "$RUNNER_TEMP/cme-backfill.log" 2>&1
           rc=$?
           set -e
+          rows=$(wc -l < "$RUNNER_TEMP/cme-backfill.log" | tr -d ' ')
+          echo "cme_options_backfill rc=${rc} rows=${rows}"
           if [ -f data/options/volume_backfill_report.json ] || [ "$rc" -eq 0 ]; then
+            _stage_private
             git add -- data/options/volume_shadow data/options/volume_backfill_report.json
             if ! git diff --cached --quiet; then
               git commit -m "data: cme options volume-only ${ym} [skip netlify]"
-              bash scripts/tools/git_push_retry.sh 5
+              _push_private
             fi
           fi
           if [ "$rc" -ne 0 ]; then
@@ -443,7 +562,27 @@ jobs:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
           set -euo pipefail
-          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --workflow "cme options backfill" --session "${{ matrix.item.id }}"
+          python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" --rows 1,2,3 --no-push --workflow "cme options backfill" --session "${{ matrix.item.id }}"
+          clone="$RUNNER_TEMP/g8data"
+          ahead=$(git -C "$clone" rev-list --count origin/main..HEAD)
+          if [ "$ahead" != 0 ]; then
+            ask="$RUNNER_TEMP/.g8-askpass"
+            test -x "$ask"
+            (
+              cd "$GITHUB_WORKSPACE"
+              export GIT_DIR="$clone/.git"
+              export GIT_WORK_TREE="$clone"
+              export GIT_ASKPASS="$ask"
+              export SSH_ASKPASS="$ask"
+              export GIT_ASKPASS_REQUIRE=force
+              export GIT_TERMINAL_PROMPT=0
+              export GCM_INTERACTIVE=Never
+              export GIT_CONFIG_COUNT=1
+              export GIT_CONFIG_KEY_0=credential.helper
+              export GIT_CONFIG_VALUE_0=
+              bash scripts/tools/git_push_retry.sh 5
+            )
+          fi
 
       - name: Private data verify
         if: always()
