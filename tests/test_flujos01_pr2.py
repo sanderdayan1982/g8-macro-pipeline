@@ -9,6 +9,8 @@ import sys
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Canonical de 59be57c7, anterior a aaf244bd. Solo las sesiones que lee el test de abajo.
+PRE_BACKFILL = os.path.join(ROOT, "tests", "fixtures", "fxvol", "pre_backfill")
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import argos_rates as AR  # noqa: E402
 import cme_fxvol_shadow as FX  # noqa: E402
@@ -72,7 +74,8 @@ class Rv21Vectors(unittest.TestCase):
         self.assertEqual(round(iv - rv, 2), -0.64)
 
     def test_live_eur_matches_the_oracle_and_the_roll_session_is_na(self):
-        out, hist, _ = FX.build(ROOT, "2026-11-06")
+        # orden expresa de Sander 14-nov-2026 (t161u): fixture congelada pre-backfill
+        out, hist, _ = FX.build(PRE_BACKFILL, "2026-11-06")
         eur = out["currencies"]["EUR"]
         symbol = eur["fut"]["px_contract"]
         prices = []
@@ -88,7 +91,7 @@ class Rv21Vectors(unittest.TestCase):
         self.assertEqual(eur["rv21"], _oracle(prices[1:]))
         self.assertEqual(eur["vrp"], round(eur["iv30_atm"] - eur["rv21"], 2))
         self.assertEqual(eur["vol_regime"], "UNAVAILABLE")
-        roll, _, _ = FX.build(ROOT, "2026-09-15")
+        roll, _, _ = FX.build(PRE_BACKFILL, "2026-09-15")
         row = roll["currencies"]["EUR"]
         self.assertEqual(row["rv21"], "NA")
         self.assertEqual(row["vrp"], "NA")
