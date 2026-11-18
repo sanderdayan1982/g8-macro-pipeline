@@ -20,7 +20,7 @@ import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # re-congelado SALUD-1: orden t186u (Sander, 15-nov-2026) — cme_options_collector.py y cme_options.yml
-FROZEN = [('scripts/cme_options_collector.py', '5e0ba91aa147175cfc32c463aed4b79d15be10547819e2d062ebc167e475328e'), ('scripts/build_options_summary.py', 'f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019'), ('.github/workflows/cme_options.yml', 'ea28dca208b51574686d3775f72edc3bb1dd0be61cb4899d3beefb6dbbe1f64b'),  # orden Sander 18-nov t245u
+FROZEN = [('scripts/cme_options_collector.py', '5e0ba91aa147175cfc32c463aed4b79d15be10547819e2d062ebc167e475328e'), ('scripts/build_options_summary.py', 'f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019'), ('.github/workflows/cme_options.yml', '4fdd46fc19074f9349d52e49afe753b78587f8620d2d9ea7453dc0bed8b8aa0b'),  # orden Sander 18-nov t247u
           ('scripts/dashboard_alerts.py', '80bc278923f424fbefc3476b38c2e8f298ac1c823e99bd7c9dbf587ac7a55b12'),  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
           ('scripts/s01b.py', '0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5'), ('scripts/usd_factor.py', 'd96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3'), ('scripts/book_risk.py', '78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50')]
 

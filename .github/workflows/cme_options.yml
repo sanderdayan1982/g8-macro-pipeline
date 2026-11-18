@@ -13,8 +13,9 @@ on:
     - cron: '0 17 * * *'
   workflow_dispatch: {}
 
+# t247u: el token del job no puede hacer push al repo público.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: cme-options
@@ -43,6 +44,7 @@ jobs:
           python3 scripts/tools/private_data.py pull "$RUNNER_TEMP/g8data" --rows 1,2,3,6,11,12
 
       - name: Run collector (availability-guarded, catch-up)
+        id: collector
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
           G8_OPT_OUT_DIR: data/options/canonical
@@ -65,6 +67,7 @@ jobs:
       # uploaded as an artifact and it is not git-added.
 
       - name: Build dashboard summary JSON
+        id: summary
         env:
           G8_OPT_OUT_DIR: data/options/canonical
           G8_OPT_SUMMARY: data/OPTIONS_SURFACE.json
@@ -88,21 +91,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/dashboard_alerts.py
 
-      - name: Commit & push if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/options data/OPTIONS_SURFACE.json data/alerts
-          if git diff --cached --quiet; then
-            echo "No new session / no alert-state change — nothing to commit."
-          else
-            git commit -m "chore: options surface update $(date -u +%F)"
-            # Acta P-7: integra main y reintenta (el run tarda ~15 min y otros procesos suben entretanto).
-            bash scripts/tools/git_push_retry.sh 5
-          fi
-
-      # PR-A: el commit público de arriba no cambia. El push privado va después.
+      # t247u (Sander, 18-nov-2026): este job no hace git add, commit ni push
+      # al repo público. Cubre data/options, OPTIONS_SURFACE.json y data/alerts
+      # aunque esas rutas dejen de estar en .gitignore. El push privado solo
+      # espera al colector y al resumen; no espera a ningún paso de git público.
       - name: Private data push
+        if: steps.collector.outcome == 'success' && steps.summary.outcome == 'success'
         env:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
