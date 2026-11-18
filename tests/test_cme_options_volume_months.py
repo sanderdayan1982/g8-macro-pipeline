@@ -447,17 +447,13 @@ class WorkflowMonths(unittest.TestCase):
         self.assertIn("volume_only", self.month["if"])
         self.assertIn("dry_run", self.month["if"])
         self.assertEqual(self.month["needs"], "volume-plan")
-        upload = next(s for s in self.month["steps"] if s.get("uses") == "actions/upload-artifact@v4")
+        # orden Sander 18-nov t245u
+        uploads = [s for s in self.month["steps"]
+                   if "upload-artifact" in str(s.get("uses") or "")]
+        self.assertEqual(uploads, [])
+        self.assertNotIn("cme-options-volume-raw-${{ github.run_id }}", self.text)
         download = next(s for s in self.month["steps"]
                         if s.get("name") == "Download one volume month and commit it")
-        self.assertLess(self.month["steps"].index(download), self.month["steps"].index(upload))
-        self.assertEqual(upload["with"]["retention-days"], 90)
-        self.assertEqual(upload["with"]["if-no-files-found"], "ignore")
-        self.assertEqual(upload["if"], "always()")
-        self.assertIn("cme-options-volume-raw-${{ github.run_id }}-${{ matrix.item.id }}",
-                      upload["with"]["name"])
-        self.assertIn("runner.temp", upload["with"]["path"])
-        self.assertIn("matrix.item.id", upload["with"]["path"])
         script = download["run"]
         self.assertIn(
             'git commit -m "data: cme options volume-only ${ym} [skip netlify]"', script)
