@@ -2942,9 +2942,21 @@ async function init() {
         ]);
         var r = pair[0];
         if (!r.ok) throw new Error(r.error || 'fetch failed');
+        var doc = JSON.parse(r.text);
+        if (doc && doc.status === 'UNAVAILABLE') {
+            var reason = String(doc.reason || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            var asOf = String(doc.as_of || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            el.innerHTML = '<div class="attr-err">UNAVAILABLE' +
+                (reason ? ' — ' + reason : '') +
+                (asOf ? ' · ' + asOf : '') + '</div>';
+            if (window.G8DQM && window.G8DQM.report) {
+                try { window.G8DQM.report('OPTIONS_SURFACE', { status: 'UNAVAILABLE', lastDate: doc.as_of || null }); } catch (e3) {}
+            }
+            return;
+        }
         var shadow = null;
         if (pair[1] && pair[1].ok) { try { shadow = JSON.parse(pair[1].text); } catch (e2) { shadow = null; } }
-        render(JSON.parse(r.text), shadow);
+        render(doc, shadow);
     } catch (e) {
         var msg = String(e && e.message || e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         el.innerHTML = '<div class="attr-err">OPTIONS_SURFACE.json unreachable — ' + msg +
@@ -3152,9 +3164,21 @@ async function init() {
         ]);
         var r = pair[0];
         if (!r.ok) throw new Error(r.error || 'fetch failed');
+        var doc = JSON.parse(r.text);
+        if (doc && doc.status === 'UNAVAILABLE') {
+            var reason = String(doc.reason || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            var asOf = String(doc.as_of || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            el.innerHTML = '<div class="attr-err">UNAVAILABLE' +
+                (reason ? ' — ' + reason : '') +
+                (asOf ? ' · ' + asOf : '') + '</div>';
+            if (window.G8DQM && window.G8DQM.report) {
+                try { window.G8DQM.report('CME_FXVOL', { status: 'UNAVAILABLE', lastDate: doc.as_of || null }); } catch (e3) {}
+            }
+            return;
+        }
         var surface = null;
         if (pair[1] && pair[1].ok) { try { surface = JSON.parse(pair[1].text); } catch (e2) { surface = null; } }
-        render(JSON.parse(r.text), surface);
+        render(doc, surface);
     } catch (e) {
         var msg = String(e && e.message || e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         el.innerHTML = '<div class="attr-err">CME_FXVOL_shadow.json unreachable — ' + msg + '</div>';

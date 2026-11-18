@@ -399,7 +399,10 @@ jobs:
             data/CHF_SPOT_2Y_daily_shadow.csv \
             data/CHF_SPOT_5Y_daily_shadow.csv \
             data/S01B_shadow_a3.json
-          # t245u: no public add. Private push below still sends
+          # t246u: el árbol de trabajo puede tener cifras tras el pull/sombra.
+          # El commit público conserva el stub. El push privado va después, con el árbol completo.
+          git restore --staged -- data/OPTIONS_SURFACE.json data/CME_OPTIONS_C1_shadow.json data/CME_FXVOL_shadow.json
+          # t245u: no public add of the figure rows. Private push below still sends
           # data/CME_OPTIONS_C1_shadow.json
           # data/options/shadow_history.json
           # data/CME_FXVOL_shadow.json
