@@ -1,17 +1,11 @@
 {
- "deadline_utc": "2026-11-18T03:29:12Z",
+ "deadline_utc": "2026-11-18T22:00:53Z",
  "executor": "actions",
- "failed": [
-  {
-   "name": "bis_jp",
-   "rc": 1,
-   "status": "FAILED"
-  }
- ],
+ "failed": [],
  "job": "daily",
  "reserve_s": "780",
  "restored": [],
- "run_id": "44227211291",
+ "run_id": "44402316240",
  "steps": [
   {
    "allowed_s": 240.0,
@@ -20,8 +14,8 @@
    "name": "sofr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.6,
-   "started_utc": "2026-11-18T03:00:19Z",
+   "secs": 1.1,
+   "started_utc": "2026-11-18T21:32:00Z",
    "status": "OK"
   },
   {
@@ -31,8 +25,8 @@
    "name": "estr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 6.4,
-   "started_utc": "2026-11-18T03:00:21Z",
+   "secs": 1.8,
+   "started_utc": "2026-11-18T21:32:01Z",
    "status": "OK"
   },
   {
@@ -42,8 +36,8 @@
    "name": "sonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.5,
-   "started_utc": "2026-11-18T03:00:27Z",
+   "secs": 1.4,
+   "started_utc": "2026-11-18T21:32:03Z",
    "status": "OK"
   },
   {
@@ -53,8 +47,8 @@
    "name": "aonia",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.9,
-   "started_utc": "2026-11-18T03:00:29Z",
+   "secs": 2.1,
+   "started_utc": "2026-11-18T21:32:05Z",
    "status": "OK"
   },
   {
@@ -64,8 +58,8 @@
    "name": "tona",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.0,
-   "started_utc": "2026-11-18T03:00:30Z",
+   "secs": 1.8,
+   "started_utc": "2026-11-18T21:32:07Z",
    "status": "OK"
   },
   {
@@ -76,7 +70,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 1.0,
-   "started_utc": "2026-11-18T03:00:33Z",
+   "started_utc": "2026-11-18T21:32:09Z",
    "status": "OK"
   },
   {
@@ -86,8 +80,8 @@
    "name": "bis_ocr",
    "phase": "fetch",
    "rc": 0,
-   "secs": 42.2,
-   "started_utc": "2026-11-18T03:00:34Z",
+   "secs": 26.0,
+   "started_utc": "2026-11-18T21:32:10Z",
    "status": "OK"
   },
   {
@@ -97,24 +91,20 @@
    "name": "bis_gb",
    "phase": "fetch",
    "rc": 0,
-   "secs": 86.9,
-   "started_utc": "2026-11-18T03:01:16Z",
+   "secs": 13.7,
+   "started_utc": "2026-11-18T21:32:36Z",
    "status": "OK"
   },
   {
    "allowed_s": 240.0,
    "cap_s": 240.0,
    "cmd": "python scripts/fetch_bis_policy.py JP",
-   "kept_valid_outputs": [
-    "_ingest/latest/actions__fetch_bis_policy_JP.json",
-    "_ingest/runs/actions/fetch_bis_policy_JP/2026-11.jsonl"
-   ],
    "name": "bis_jp",
    "phase": "fetch",
-   "rc": 1,
-   "secs": 225.2,
-   "started_utc": "2026-11-18T03:02:43Z",
-   "status": "FAILED"
+   "rc": 0,
+   "secs": 17.2,
+   "started_utc": "2026-11-18T21:32:50Z",
+   "status": "OK"
   },
   {
    "allowed_s": 240.0,
@@ -123,8 +113,8 @@
    "name": "bis_ch",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.7,
-   "started_utc": "2026-11-18T03:06:28Z",
+   "secs": 14.2,
+   "started_utc": "2026-11-18T21:33:07Z",
    "status": "OK"
   },
   {
@@ -134,8 +124,8 @@
    "name": "bis_au",
    "phase": "fetch",
    "rc": 0,
-   "secs": 20.3,
-   "started_utc": "2026-11-18T03:06:32Z",
+   "secs": 26.2,
+   "started_utc": "2026-11-18T21:33:21Z",
    "status": "OK"
   },
   {
@@ -145,8 +135,8 @@
    "name": "us_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 15.1,
-   "started_utc": "2026-11-18T03:06:52Z",
+   "secs": 3.6,
+   "started_utc": "2026-11-18T21:33:47Z",
    "status": "OK"
   },
   {
@@ -156,8 +146,8 @@
    "name": "cad_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 1.4,
-   "started_utc": "2026-11-18T03:07:08Z",
+   "secs": 1.0,
+   "started_utc": "2026-11-18T21:33:51Z",
    "status": "OK"
   },
   {
@@ -167,8 +157,8 @@
    "name": "aud_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 0.8,
-   "started_utc": "2026-11-18T03:07:09Z",
+   "secs": 1.6,
+   "started_utc": "2026-11-18T21:33:52Z",
    "status": "OK"
   },
   {
@@ -178,8 +168,8 @@
    "name": "eur_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 53.5,
-   "started_utc": "2026-11-18T03:07:10Z",
+   "secs": 10.1,
+   "started_utc": "2026-11-18T21:33:54Z",
    "status": "OK"
   },
   {
@@ -189,8 +179,8 @@
    "name": "gbp_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.4,
-   "started_utc": "2026-11-18T03:08:03Z",
+   "secs": 2.8,
+   "started_utc": "2026-11-18T21:34:04Z",
    "status": "OK"
   },
   {
@@ -200,8 +190,8 @@
    "name": "jpy_bills",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.0,
-   "started_utc": "2026-11-18T03:08:07Z",
+   "secs": 3.7,
+   "started_utc": "2026-11-18T21:34:07Z",
    "status": "OK"
   },
   {
@@ -211,8 +201,8 @@
    "name": "floors",
    "phase": "fetch",
    "rc": 0,
-   "secs": 5.4,
-   "started_utc": "2026-11-18T03:08:10Z",
+   "secs": 3.0,
+   "started_utc": "2026-11-18T21:34:10Z",
    "status": "OK"
   },
   {
@@ -222,19 +212,19 @@
    "name": "acm_tp",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.0,
-   "started_utc": "2026-11-18T03:08:15Z",
+   "secs": 3.2,
+   "started_utc": "2026-11-18T21:34:14Z",
    "status": "OK"
   },
   {
-   "allowed_s": 474.0,
+   "allowed_s": 660.0,
    "cap_s": 660.0,
    "cmd": "python scripts/acm_g8.py USD EUR JPY GBP CAD AUD",
    "name": "acm_g8",
    "phase": "fetch",
    "rc": 0,
-   "secs": 83.4,
-   "started_utc": "2026-11-18T03:08:17Z",
+   "secs": 95.8,
+   "started_utc": "2026-11-18T21:34:17Z",
    "status": "OK"
   },
   {
@@ -245,7 +235,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.9,
-   "started_utc": "2026-11-18T03:09:41Z",
+   "started_utc": "2026-11-18T21:35:53Z",
    "status": "OK"
   },
   {
@@ -256,7 +246,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 1.1,
-   "started_utc": "2026-11-18T03:09:42Z",
+   "started_utc": "2026-11-18T21:35:54Z",
    "status": "OK"
   },
   {
@@ -267,7 +257,7 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.4,
-   "started_utc": "2026-11-18T03:09:43Z",
+   "started_utc": "2026-11-18T21:35:55Z",
    "status": "OK"
   },
   {
@@ -277,8 +267,8 @@
    "name": "real_yields",
    "phase": "fetch",
    "rc": 0,
-   "secs": 18.6,
-   "started_utc": "2026-11-18T03:09:44Z",
+   "secs": 17.2,
+   "started_utc": "2026-11-18T21:35:55Z",
    "status": "OK"
   },
   {
@@ -288,8 +278,8 @@
    "name": "eur_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 3.1,
-   "started_utc": "2026-11-18T03:10:02Z",
+   "secs": 2.9,
+   "started_utc": "2026-11-18T21:36:12Z",
    "status": "OK"
   },
   {
@@ -299,8 +289,8 @@
    "name": "jpy_real",
    "phase": "fetch",
    "rc": 0,
-   "secs": 2.6,
-   "started_utc": "2026-11-18T03:10:05Z",
+   "secs": 3.9,
+   "started_utc": "2026-11-18T21:36:15Z",
    "status": "OK"
   },
   {
@@ -310,8 +300,8 @@
    "name": "chf_cpi",
    "phase": "fetch",
    "rc": 0,
-   "secs": 10.0,
-   "started_utc": "2026-11-18T03:10:08Z",
+   "secs": 3.5,
+   "started_utc": "2026-11-18T21:36:19Z",
    "status": "OK"
   },
   {
@@ -322,11 +312,11 @@
    "phase": "fetch",
    "rc": 0,
    "secs": 0.8,
-   "started_utc": "2026-11-18T03:10:18Z",
+   "started_utc": "2026-11-18T21:36:23Z",
    "status": "OK"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-11-18T03:10:19Z"
+ "written_utc": "2026-11-18T21:36:24Z"
 }
