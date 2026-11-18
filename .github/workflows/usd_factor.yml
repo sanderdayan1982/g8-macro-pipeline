@@ -62,7 +62,14 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/dashboard_alerts.py
+        run: |
+          set +e
+          python scripts/dashboard_alerts.py > "$RUNNER_TEMP/dashboard-alerts.log" 2>&1
+          rc=$?
+          set -e
+          rows=$(wc -l < "$RUNNER_TEMP/dashboard-alerts.log" | tr -d ' ')
+          echo "dashboard_alerts rc=${rc} rows=${rows}"
+          exit "$rc"
 
       # ── Lote 1 (2026-09-24): latido del Mac y credenciales ──
       - name: Ingest watch (latido del Mac + credenciales)
@@ -95,6 +102,16 @@ jobs:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
           set -euo pipefail
+          log="$RUNNER_TEMP/dashboard-alerts.log"
+          clone="$RUNNER_TEMP/g8data"
+          if [ -f "$log" ] && [ -d "$clone/.git" ]; then
+            mkdir -p "$clone/data/alerts"
+            cp "$log" "$clone/data/alerts/usd_factor_alerts.log"
+            git -C "$clone" add -- data/alerts/usd_factor_alerts.log
+            if ! git -C "$clone" diff --cached --quiet; then
+              git -C "$clone" -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m "data: usd_factor alerts log [skip netlify]"
+            fi
+          fi
           python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
             --rows 11,12 --workflow "usd_factor" --session "$(date -u +%F)"
 

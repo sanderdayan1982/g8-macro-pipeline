@@ -314,7 +314,14 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         timeout-minutes: 2
-        run: python scripts/tools/g8step.py --name dashboard_alerts --phase post --cap 60 --min 5 -- python scripts/dashboard_alerts.py
+        run: |
+          set +e
+          python scripts/tools/g8step.py --name dashboard_alerts --phase post --cap 60 --min 5 -- python scripts/dashboard_alerts.py > "$RUNNER_TEMP/dashboard-alerts.log" 2>&1
+          rc=$?
+          set -e
+          rows=$(wc -l < "$RUNNER_TEMP/dashboard-alerts.log" | tr -d ' ')
+          echo "dashboard_alerts rc=${rc} rows=${rows}"
+          exit "$rc"
 
       # ── Lote 1 (2026-09-24): latido del Mac y credenciales — aviso independiente del Mac ──
       - name: Ingest watch (latido del Mac + credenciales)
@@ -454,6 +461,16 @@ jobs:
             src="$RUNNER_TEMP/alerts-full/$f"
             if [ -f "$src" ]; then cp -a "$src" "data/alerts/$f"; fi
           done
+          log="$RUNNER_TEMP/dashboard-alerts.log"
+          clone="$RUNNER_TEMP/g8data"
+          if [ -f "$log" ] && [ -d "$clone/.git" ]; then
+            mkdir -p "$clone/data/alerts"
+            cp "$log" "$clone/data/alerts/daily_update_alerts.log"
+            git -C "$clone" add -- data/alerts/daily_update_alerts.log
+            if ! git -C "$clone" diff --cached --quiet; then
+              git -C "$clone" -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m "data: daily_update alerts log [skip netlify]"
+            fi
+          fi
           python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
             --paths data/options/shadow_history.json data/options/fxvol_history.csv \
               data/CME_OPTIONS_C1_shadow.json data/CME_FXVOL_shadow.json \
