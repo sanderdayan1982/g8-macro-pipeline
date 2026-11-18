@@ -701,7 +701,7 @@
     </div>
     <div class="section-body">
         <div id="uf-panel">
-            <div class="attr-err" style="color:#5d6678">Loading USD_FACTOR.json / BOOK_RISK.json from pipeline repo…</div>
+            <div class="attr-err" style="color:#5d6678">Loading USD_FACTOR.json from pipeline repo…</div>
         </div>
         <div class="section-footer">
             <span class="section-meta">composición y riesgo: cuánto dólar hay en cada pata, qué queda sin el dólar, cuánto riesgo común acumula el libro · nunca una señal de entrada</span>
@@ -712,11 +712,13 @@
 <script>
 /* ════════════════════════════════════════════════════════════════════════
    FACTOR USD — Section 10 module · v1.0.1 (17-sep-2026 · tipografía)
-   Reads data/USD_FACTOR.json (usd_factor.py) and data/BOOK_RISK.json
-   (book_risk.py). The browser paints; it computes nothing.
+   Reads data/USD_FACTOR.json (usd_factor.py). The browser paints; it computes nothing.
+   orden Sander 18-nov t244u: el hueco del libro no lee ningún fichero de libro
+   (ni BOOK_RISK.json, ni book.csv, ni candidate.csv, ni book/positions.csv).
+   Muestra solo el texto LIBRO PRIVADO. El panel completo no está en esta página.
    Spec: docs/actas/ACTA_UF1.md — factor completo, α=0, un solo reloj (Σ EWMA),
    residual 21d, bandas 30/40/30 por convención, UN-NOMBRE, PC1 only,
-   proyección sobre la cesta (no "es dólar"), PRE-TRADE, sin carry.
+   proyección sobre la cesta (no "es dólar"), sin carry.
    ════════════════════════════════════════════════════════════════════════ */
 (function () {
 'use strict';
@@ -728,7 +730,6 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function 
 function nz(x) { return x != null && isFinite(x); }
 function sg(x, nd) { return nz(x) ? (x >= 0 ? '+' : '') + x.toFixed(nd == null ? 2 : nd) : '·'; }
 function num(x, nd) { return nz(x) ? x.toFixed(nd == null ? 2 : nd) : '·'; }
-function usd(x) { if (!nz(x)) return '·'; var a = Math.abs(x); var s = a >= 1e6 ? (a / 1e6).toFixed(2) + 'M' : a >= 1e3 ? (a / 1e3).toFixed(1) + 'k' : a.toFixed(0); return (x < 0 ? '−' : '') + s; }
 function signCol(x) { return !nz(x) ? MUTE : x > 0 ? GREEN : x < 0 ? RED : WHITE; }
 function zCol(z) { if (!nz(z)) return MUTE; var a = Math.abs(z); return a >= 2 ? GOLD : a >= 1.5 ? AMBER : z > 0 ? GREEN : RED; }
 function tile(lbl, val, sub, col) {
@@ -810,59 +811,12 @@ function matrix(uf) {
     return h;
 }
 
-function bookPanel(br) {
-    var b = (br && br.book) || {};
-    var h = '<div class="uf-box"><div class="uf-box-h">Libro · exposiciones lineales FX (snapshot ' + esc(b.snapshot_date || '—') + ')' +
-        (b.status === 'STALE' ? ' <span class="uf-flag">LIBRO DESACTUALIZADO</span>' : '') + '</div>';
-    if (!b.status || b.status === 'SIN LIBRO') {
-        return h + '<div class="uf-sub" style="font-family:\'JetBrains Mono\',monospace;font-size:12px">SIN LIBRO — data/book.csv (id,fecha_snapshot,par,lado,nominal_usd)</div></div>';
-    }
-    if (b.status === 'ERROR') return h + '<div class="attr-err">book.csv: ' + esc(b.error) + '</div></div>';
-    var r = b.risk || {}, st = r.stress || {}, bu = b.buckets_usd || {};
-    h += '<div class="attr-wrap"><table class="attr-table"><thead><tr>' + ['USD'].concat(CCYS).map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody><tr>' +
-        ['USD'].concat(CCYS).map(function (c) { return '<td style="color:' + signCol(bu[c]) + '">' + usd(bu[c]) + '</td>'; }).join('') + '</tr></tbody></table></div>' +
-        '<div class="uf-sub" style="font-size:10px;margin:4px 0 10px">Σ cubos = ' + usd(b.sum_buckets) + ' (identidad de la representación) · ' + b.n_positions + ' posiciones</div>';
-    h += '<div class="uf-kv">' +
-        tile('σ 1d', usd(r.sigma_usd), 'USD · Σ EWMA') +
-        tile('VaR 95 % param', usd(r.var95_param), '1,645·σ') +
-        tile('VaR 95 % hist', usd(r.var95_hist), (r.n_hist || 0) + ' s. · Δ ' + usd(r.var_diff_usd) + (r.cola ? ' · <span class="uf-flag">COLA</span>' : ''), r.cola ? AMBER : WHITE) +
-        tile('Cuota sobre la cesta', nz(r.share_on_basket) ? (r.share_on_basket * 100).toFixed(0) + ' %' : '·', 'proyección de V sobre f · no "es dólar"', nz(r.share_on_basket) && r.share_on_basket > 0.8 ? AMBER : WHITE) +
-        tile('Cesta +1 %', usd(st.basket_up_1pct), 'P&amp;L si f = +1 % (r_i = −β_i·1 %)', signCol(st.basket_up_1pct)) +
-        tile('DOLLAR+', nz(st.dollar_plus) ? usd(st.dollar_plus) : 'sin congelado', nz(st.dollar_plus_shock) ? 'shock ' + (st.dollar_plus_shock * 100).toFixed(2) + ' % (máx 2000-23)' : 'frozen_2000_2023.json pendiente', signCol(st.dollar_plus)) +
-        tile('Cota σ_max', usd(st.sigma_max_bound), 'Σ|q_i|σ_i · dependencia adversa') +
-        tile('Backtest VaR', esc((br.backtest || {}).status || '—'), ((br.backtest || {}).n_forecasts || 0) + ' / ' + ((br.backtest || {}).min || 250) + ' previsiones') +
-        '</div>';
-    h += '<div class="attr-wrap" style="margin-top:10px"><table class="attr-table"><thead><tr><th>pos</th><th>par</th><th>lado</th><th>nominal</th><th title="contribución de Euler q_k\'Σq/V (suman 1; negativa = cobertura)">RC Euler</th></tr></thead><tbody>';
-    (b.euler || []).forEach(function (e) {
-        h += '<tr><td>' + esc(e.id) + '</td><td>' + esc(e.pair) + '</td><td>' + (e.side > 0 ? 'largo' : 'corto') + '</td><td>' + usd(e.nominal_usd) + '</td>' +
-            '<td style="color:' + (nz(e.rc) && e.rc < 0 ? GREEN : nz(e.rc) && e.rc > 0.5 ? AMBER : WHITE) + '">' + (nz(e.rc) ? (e.rc * 100).toFixed(0) + ' %' : '·') + '</td></tr>';
-    });
-    return h + '</tbody></table></div></div>';
+function libroPrivado() {
+    /* orden Sander 18-nov t244u — texto fijo. No hay par, tamaño, entrada, stop, % de uso ni semáforo. */
+    return '<div class="uf-box"><div style="font-family:\'JetBrains Mono\',monospace;font-size:13px;letter-spacing:.04em">LIBRO PRIVADO</div></div>';
 }
 
-function preTrade(br) {
-    var cs = (br && br.candidates) || [];
-    var h = '<div class="uf-box"><div class="uf-box-h">PRE-TRADE · candidato contra el libro</div>';
-    if (!cs.length) return h + '<div class="uf-sub" style="font-family:\'JetBrains Mono\',monospace;font-size:12px">SIN CANDIDATO — data/candidate.csv (mismo formato que book.csv)' + (br && br.candidates_error ? ' · ' + esc(br.candidates_error) : '') + '</div></div>';
-    cs.forEach(function (c) {
-        var s = c.stress_candidate || {};
-        h += '<div style="border-bottom:1px solid #131a26;padding:8px 0 10px;margin-bottom:8px">' +
-            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:12.5px;color:' + GOLD + ';margin-bottom:8px">' + esc(c.id) + ' · ' + (c.side > 0 ? 'largo ' : 'corto ') + esc(c.pair) + ' · ' + usd(c.nominal_usd) + ' <span class="uf-sub">vs ' + esc(c.vs) + '</span></div>' +
-            '<div class="uf-kv">' +
-            tile('ΔVaR 95 %', sg(c.d_var95_param, 0), 'USD · Δσ ' + sg(c.d_sigma_usd, 0), signCol(c.d_var95_param)) +
-            tile('ρ con el libro', nz(c.rho_book) ? sg(c.rho_book, 2) : 'libro vacío', 'q_c\'Σq/√(V_c·V) · ≈1 duplica', nz(c.rho_book) && Math.abs(c.rho_book) > 0.7 ? AMBER : WHITE) +
-            tile('leak β_A − β_B', sg(c.leak_beta, 2), 'dólar escondido (USD: β = 0)', Math.abs(c.leak_beta || 0) >= 1 ? GOLD : Math.abs(c.leak_beta || 0) >= 0.5 ? AMBER : WHITE) +
-            tile('σ cruce', num(c.cross_vol_ann_pct, 1) + ' %', 'anualizada, Σ EWMA') +
-            tile('E21_A − E21_B', sg(c.dE21_pct, 2) + ' %', 'residuales 21 s. · número, no adjetivo', signCol(c.dE21_pct)) +
-            tile('Cuota cesta después', nz(c.share_on_basket_after) ? (c.share_on_basket_after * 100).toFixed(0) + ' %' : '·', 'Δ ' + (nz(c.d_share_on_basket) ? sg(c.d_share_on_basket * 100, 0) + ' pp' : '·')) +
-            tile('Cesta +1 % (cand.)', usd(s.basket_up_1pct), 'DOLLAR+ ' + (nz(s.dollar_plus) ? usd(s.dollar_plus) : '·'), signCol(s.basket_up_1pct)) +
-            tile('Δcubos', ['USD'].concat(CCYS).filter(function (k) { return (c.d_buckets_usd || {})[k]; }).map(function (k) { return k + ' ' + usd(c.d_buckets_usd[k]); }).join(' · ') || '·', 'patas nativas') +
-            '</div></div>';
-    });
-    return h + '</div>';
-}
-
-function diag(uf, br) {
+function diag(uf) {
     var d = uf.diag || {}, tw = d.twins || {}, fu = tw.futures || {}, afe = tw.afe || {}, ing = d.ingestion || {}, fz = d.frozen || {};
     var futs = fu.available ? CCYS.map(function (c) { var x = (fu.by_ccy || {})[c]; return c + ' ' + (x && nz(x.corr) ? num(x.corr, 2) + '/' + num(x.corr_ex_us, 2) : '·'); }).join(' · ') : (fu.note || 'NA');
     var bet = CCYS.map(function (c) { var x = (d.beta_ewma_vs_ols252 || {})[c] || {}; return c + ' ' + num(x.ewma, 2) + '/' + num(x.ols252, 2); }).join(' · ');
@@ -876,7 +830,7 @@ function diag(uf, br) {
         ' · cesta equi vs inv-vol corr 63: ' + num(d.corr63_f_invvol, 3) + ' · factores LOO corr mín: ' + num(d.loo_corr_min, 3) +
         '<br>β EWMA / OLS-252: ' + bet +
         '<br>congelados 2000-2023: ' + (fz.written ? 'máx |f| 1d ' + (fz.max_abs_f_1d * 100).toFixed(2) + ' % (' + esc(fz.max_abs_f_1d_date) + ') · mediana S ' + num(fz.median_S_pc1, 2) + ' · UN-NOMBRE ' + (fz.one_name_freq * 100).toFixed(0) + ' % de los días' : 'PENDIENTE (' + esc(fz.reason || 'se escriben en la primera pasada BCE completa') + ')') +
-        ' · Σ PSD ' + (br && br.sigma_psd === false ? '<span class="uf-flag">FALLA</span>' : 'OK') + ' · usd_factor v' + esc(uf.version) + (br ? ' · book_risk v' + esc(br.version) : '') + '</div>';
+        ' · usd_factor v' + esc(uf.version) + '</div>';
 }
 
 function footer(uf) {
@@ -885,7 +839,7 @@ function footer(uf) {
         '\n· V = q\'Σq · VaR95 = 1,645√V · carga = −q\'Σw/(w\'Σw) · cuota = (q\'Σw)²/(w\'Σw·V) · RC_k = q_k\'Σq/V · ΔV = 2q_c\'Σq + q_c\'Σq_c · σ_max = Σ|q_i|σ_i · sin carry</div>';
 }
 
-function render(uf, br) {
+function render(uf) {
     var el = document.getElementById('uf-panel');
     var age = (uf.diag || {}).age_calendar_days;
     var fc = age == null ? MUTE : age <= 4 ? GREEN : age <= 9 ? AMBER : RED;
@@ -893,10 +847,10 @@ function render(uf, br) {
         ' · <span style="color:' + fc + ';font-weight:700">' + (age == null ? 'NA' : age <= 4 ? 'FRESH' : age <= 9 ? 'AGING' : 'STALE') + '</span>' + (age != null ? ' (' + age + 'd)' : '') +
         ' · generated ' + esc(uf.generated_utc) + '</span><span class="dqm-ts uf-sub">' + esc(uf.source_note || '') + '</span></div>';
     html += header(uf) + tableCcy(uf) + '<div id="uf-matrix">' + matrix(uf) + '</div>' +
-        '<div class="uf-two">' + bookPanel(br) + preTrade(br) + '</div>' + diag(uf, br) + footer(uf);
+        libroPrivado() + diag(uf) + footer(uf);
     el.innerHTML = html;
     el.querySelectorAll('.uf-tab').forEach(function (t) {
-        t.addEventListener('click', function () { MODE = t.dataset.m; render(uf, br); });
+        t.addEventListener('click', function () { MODE = t.dataset.m; render(uf); });
     });
     if (window.G8DQM && window.G8DQM.report) {
         try { window.G8DQM.report('USD_FACTOR', { lastDate: uf.as_of, via: 'repo (factor module v1)' }); } catch (e) {}
@@ -909,12 +863,7 @@ async function init() {
         var r = await window.G8NET.fetchChain([RAW + 'USD_FACTOR.json'], { corsOk: true });
         if (!r.ok) throw new Error(r.error || 'fetch failed');
         var uf = JSON.parse(r.text);
-        var br = null;
-        try {
-            var r2 = await window.G8NET.fetchChain([RAW + 'BOOK_RISK.json'], { corsOk: true });
-            if (r2.ok) br = JSON.parse(r2.text);
-        } catch (e2) { br = null; }
-        render(uf, br);
+        render(uf);
     } catch (e) {
         el.innerHTML = '<div class="attr-err">USD_FACTOR.json unreachable — ' + esc(e.message) +
             ' · run scripts/usd_factor.py (workflow usd_factor.yml) to publish data/USD_FACTOR.json</div>';
