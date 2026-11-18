@@ -72,15 +72,29 @@ import csv
 import copy
 import json
 import os
+import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_LOG_OMIT = re.compile(
+    r"walls|strike|\boi\b|\bpin\b|call wall|put wall|iv30|rr25|bf25|\bsettle\b|percentil|volumen|\bvolume\b",
+    re.I,
+)
+
+
+def _log_ok(text):
+    return _LOG_OMIT.search(text or "") is None
+
+
 try:
     from notify_telegram import send as tg_send
 except Exception:                       # pragma: no cover
     def tg_send(text):
-        print("telegram: notify_telegram.py not importable — message:\n" + text)
+        if _log_ok(text):
+            print("telegram: notify_telegram.py not importable — message:\n" + text)
+        else:
+            print("telegram: notify_telegram.py not importable — cuerpo omitido del log")
         return False
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1378,7 +1392,10 @@ def main(argv):
         try:
             fn(st, lines)
         except Exception as e:                         # Ley 2: ruidoso, nunca corrompe
-            note("ERROR %s: %s" % (fn.__name__, e))
+            if fn.__name__ == "check_walls":
+                note("ERROR opciones")
+            else:
+                note("ERROR %s: %s" % (fn.__name__, e))
     if first and not baseline:
         baseline = True                                # primer arranque = baseline automático
 
@@ -1395,7 +1412,7 @@ def main(argv):
         body.append("")
         sec_names = {"§01": "§01 Spread vs USD", "§1b": "§01-b Lectura 22 s. · CTF (CONTEXT)",
                      "§02": "§02 Floor spreads · tipos oficiales", "§03": "§03 Term premium",
-                     "§04": "§04 Oro", "§05": "§05 Plata", "§06": "§06 Walls", "§07": "§07 Factor USD"}
+                     "§04": "§04 Oro", "§05": "§05 Plata", "§06": "§06 Opciones", "§07": "§07 Factor USD"}
         last_sec = None
         for l in events:
             sec = l[:3]
@@ -1412,29 +1429,42 @@ def main(argv):
                 sys.path.insert(0, tools_dir)
             import agent_doctor as _ad
             _diag = _ad.collect_diagnosis()
-            body.append("")
-            body.append(_ad.format_telegram_summary(_diag))
+            summary = _ad.format_telegram_summary(_diag)
+            if _log_ok(summary):
+                body.append("")
+                body.append(summary)
         except Exception:
             pass
     if NOTES:
+        safe = [n for n in NOTES[:6] if _log_ok(n)]
         body.append("")
-        body.append("DQM: " + " | ".join(NOTES[:6]))
+        body.append("DQM: " + " | ".join(safe) if safe else "DQM: avisos omitidos del log")
 
-    msgs = []
+    alert_msgs = []
     if len(body) > 1:
-        msgs.extend(split_messages(body))
+        alert_msgs.extend(split_messages(body))
+    wall_msgs = []
     for _, blocks in walls:
-        msgs.extend(split_messages(blocks))
-    if not msgs:
+        wall_msgs.extend(split_messages(blocks))
+    if not alert_msgs and not wall_msgs:
         print("dashboard_alerts: sin cambios — nada que enviar")
     else:
-        for i, m in enumerate(msgs):
-            tag = "" if len(msgs) == 1 else " (%d/%d)" % (i + 1, len(msgs))
+        n = len(alert_msgs)
+        for i, m in enumerate(alert_msgs):
+            tag = "" if n == 1 else " (%d/%d)" % (i + 1, n)
             text = m if i == 0 else "<b>G8 MACRO · %s</b>%s\n" % (TODAY.isoformat(), tag) + m
-            print(text)
-            print("-" * 60)
+            if _log_ok(text):
+                print(text)
+                print("-" * 60)
+            else:
+                print("dashboard_alerts: aviso omitido del log")
             if not dry:
                 delivery_ok = tg_send(text) is True and delivery_ok
+        if wall_msgs and dry:
+            print("dashboard_alerts: avisos de opciones omitidos del log")
+        elif wall_msgs:
+            for m in wall_msgs:
+                delivery_ok = tg_send(m) is True and delivery_ok
     if not dry:
         if not delivery_ok:
             st["s01b"] = s01b_before
@@ -1442,7 +1472,7 @@ def main(argv):
             wl = [l for _, blocks in walls for l in blocks]
             build_brief(st, wl)
         except Exception as e:
-            print("brief: error %s" % e)
+            print("brief: error %s" % type(e).__name__)
         save_state(st)
     return 0 if dry or delivery_ok else 1
 
