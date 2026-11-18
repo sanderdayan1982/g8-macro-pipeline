@@ -472,7 +472,7 @@ def process_session(auth, session):
         products[root] = recs
         volume_rows[root] = vol_recs
         oi_counts[root] = n_oi
-        is_opt_map[root] = is_opt
+        is_opt_map[root] = parent.endswith(".OPT")
 
     # Holiday detection BEFORE sanity: zero settles everywhere = no session
     total_settles = sum(len(r) for r in products.values())
