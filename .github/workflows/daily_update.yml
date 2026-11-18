@@ -393,6 +393,28 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           TZ=UTC python scripts/argos_rates.py
+          mkdir -p "$RUNNER_TEMP/alerts-full"
+          for f in brief.json state.json; do
+            if [ -f "data/alerts/private/$f" ]; then
+              cp -a "data/alerts/private/$f" "$RUNNER_TEMP/alerts-full/$f"
+            elif [ -f "data/alerts/$f" ]; then
+              cp -a "data/alerts/$f" "$RUNNER_TEMP/alerts-full/$f"
+            fi
+          done
+          python3 - << 'PY'
+          import json, os
+          for rel in ("data/alerts/brief.json", "data/alerts/state.json"):
+              if not os.path.isfile(rel):
+                  continue
+              with open(rel, encoding="utf-8") as fh:
+                  doc = json.load(fh)
+              if isinstance(doc, dict) and "walls" in doc:
+                  doc.pop("walls")
+                  tmp = rel + ".tmp"
+                  with open(tmp, "w", encoding="utf-8") as fh:
+                      json.dump(doc, fh, indent=1, ensure_ascii=False)
+                  os.replace(tmp, rel)
+          PY
           git add data/ \
             data/CB_EVENT_48H_shadow.json \
             data/CHF_NOWCAST_shadow.json \
@@ -422,6 +444,10 @@ jobs:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
         run: |
           set -euo pipefail
+          for f in brief.json state.json; do
+            src="$RUNNER_TEMP/alerts-full/$f"
+            if [ -f "$src" ]; then cp -a "$src" "data/alerts/$f"; fi
+          done
           python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
             --paths data/options/shadow_history.json data/options/fxvol_history.csv \
               data/CME_OPTIONS_C1_shadow.json data/CME_FXVOL_shadow.json \

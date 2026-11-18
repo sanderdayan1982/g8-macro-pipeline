@@ -902,12 +902,27 @@ def load_state():
         return {}
 
 
+def _write_json(path, doc):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=1, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
+def _write_public_and_private(public_path, doc):
+    """El fichero público no lleva la clave walls. La copia completa va a private/ y daily_update la empuja solo a g8-macro-data."""
+    private_path = os.path.join(os.path.dirname(public_path), "private", os.path.basename(public_path))
+    _write_json(private_path, doc)
+    public = dict(doc) if isinstance(doc, dict) else doc
+    if isinstance(public, dict):
+        public.pop("walls", None)
+    _write_json(public_path, public)
+
+
 def save_state(st):
-    os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
     st["_updated_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
-    with open(STATE_PATH + ".tmp", "w", encoding="utf-8") as fh:
-        json.dump(st, fh, indent=1, ensure_ascii=False)
-    os.replace(STATE_PATH + ".tmp", STATE_PATH)
+    _write_public_and_private(STATE_PATH, st)
 
 
 def summary_baseline(st):
@@ -1348,9 +1363,7 @@ def build_brief(st, wall_lines):
         }
     except Exception:
         pass
-    os.makedirs(os.path.dirname(BRIEF_PATH), exist_ok=True)
-    with open(BRIEF_PATH, "w", encoding="utf-8") as fh:
-        json.dump(b, fh, indent=1, ensure_ascii=False)
+    _write_public_and_private(BRIEF_PATH, b)
 
 
 def main(argv):
