@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 HTML = os.path.join(ROOT, "docs", "index.html")
 # re-congelado SALUD-1: orden t186u (Sander, 15-nov-2026) — cme_options_collector.py y cme_options.yml
 FROZEN = [
-    ("scripts/cme_options_collector.py", "08613dc2e46a8f8502a6269c4ac008aa065f08107091242f63d9a3f65b0e7b89"),
+    ("scripts/cme_options_collector.py", "ba50e4b30dde2f3cf80acccd32a82d3c1ceea7e80730afb7e59b4dbb4b6956d2"),
     ("scripts/build_options_summary.py", "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019"),
     (".github/workflows/cme_options.yml", "37b0d17a6e8c895a55e4f4fcaaf7e0bf9d04163b5de74f4c0e347eeb0a66bef0"),  # orden Sander 18-nov t254u
     ("scripts/dashboard_alerts.py", "80bc278923f424fbefc3476b38c2e8f298ac1c823e99bd7c9dbf587ac7a55b12"),  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)

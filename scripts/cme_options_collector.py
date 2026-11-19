@@ -6,6 +6,10 @@ cme_options_collector.py — v1.1.1 (Gate 1 CLOSED 2026-07-03)
 Daily T+1 collector of CME FX options settlements + open interest per strike,
 via Databento GLBX.MDP3 (licensed CME distributor). Pure `requests` + stdlib.
 
+v1.1.2 (orden Sander 19-nov, t269u): pending sessions are computed from the
+complete sessions already in OUT_DIR (the private canonical/ pulled by the
+workflow), not from state.json, so a second run on the same day pays nothing.
+state.json is still written (health_derivatives reads it) but never read here.
 v1.1.1: cost-guard and pull windows are CAPPED at the dataset's live
 available_end (Databento returns HTTP 422 for any query end beyond it —
 bites whenever the target session is yesterday). Found in first Actions run.
@@ -202,6 +206,40 @@ def load_state():
 def save_state(state):
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(json.dumps(state, indent=2))
+
+
+def session_complete(session, out_dir=None):
+    """A session is complete when OUT_DIR/YYYY-MM-DD/ holds a non-empty
+    {ROOT}.csv for each of the 12 products. That is exactly what
+    process_session writes (all 12 or nothing, after the sanity floors)."""
+    day_dir = Path(out_dir or OUT_DIR) / str(session)
+    header_len = len(",".join(CANON_HEADER))
+    for parent in OPT_PARENTS + FUT_PARENTS:
+        f = day_dir / f"{parent.split('.')[0]}.csv"
+        try:
+            if not f.is_file() or f.stat().st_size <= header_len + 2:
+                return False
+        except OSError:
+            return False
+    return True
+
+
+def present_sessions(out_dir=None):
+    """Sorted dates of complete sessions under OUT_DIR. Empty if missing."""
+    root = Path(out_dir or OUT_DIR)
+    if not root.is_dir():
+        return []
+    found = []
+    for d in root.iterdir():
+        if not d.is_dir():
+            continue
+        try:
+            sess = date.fromisoformat(d.name)
+        except ValueError:
+            continue
+        if session_complete(sess, root):
+            found.append(sess)
+    return sorted(found)
 
 
 def prev_weekday(d):
@@ -523,9 +561,14 @@ def main():
     if target >= today:
         target = prev_weekday(today)
 
+    # orden Sander 19-nov (t269u): pending sessions come from what already
+    # exists in OUT_DIR (the private canonical/ the workflow pulls), not from
+    # state.json. A complete session is never downloaded (or paid) again.
     state = load_state()
-    last = (date.fromisoformat(state["last_success"])
-            if state.get("last_success") else prev_weekday(target))
+    done = [d for d in present_sessions() if d <= target]
+    last = max(done) if done else prev_weekday(target)
+    print(f"[{LOG_TAG}] complete sessions in canonical: {len(done)} "
+          f"(last={last if done else 'none'})")
 
     pending, cur = [], last
     while cur < target and len(pending) < MAX_CATCHUP:
@@ -537,6 +580,9 @@ def main():
     print(f"[{LOG_TAG}] pending sessions: {[str(p) for p in pending]}")
 
     for sess in pending:
+        if session_complete(sess):  # defensive: never pay for a session on disk
+            print(f"[{LOG_TAG}] {sess} already complete in canonical — skip")
+            continue
         result = process_session(auth, sess)
         state["last_success"] = str(sess)
         save_state(state)
