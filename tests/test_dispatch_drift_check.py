@@ -25,6 +25,15 @@ SCHEDULES = ("dispatch_schedule.json", "dispatch_schedule_mesa.json")
 SECRET_PATH = "/ruta/que/no/debe/salir"
 
 
+def _read(path, mode="r"):
+    """Lee y cierra el fichero (sin ResourceWarning)."""
+    if "b" in mode:
+        with open(path, mode) as fh:
+            return fh.read()
+    with open(path, mode, encoding="utf-8") as fh:
+        return fh.read()
+
+
 class Base(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -59,7 +68,7 @@ class Base(unittest.TestCase):
 
     def alerts(self):
         p = os.path.join(self.live, "logs", "ALERTAS.log")
-        return open(p, encoding="utf-8").read() if os.path.exists(p) else ""
+        return _read(p) if os.path.exists(p) else ""
 
 
 class Drift(Base):
@@ -137,12 +146,12 @@ class Drift(Base):
         self.assertIn("votes_final", self.alerts())
 
     def test_DR8_never_writes_a_schedule(self):
-        before = {n: open(os.path.join(self.live, n), "rb").read() for n in SCHEDULES}
+        before = {n: _read(os.path.join(self.live, n), "rb") for n in SCHEDULES}
         self.edit("dispatch_schedule.json", lambda d: d["slots"].pop())
-        before["dispatch_schedule.json"] = open(os.path.join(self.live, "dispatch_schedule.json"), "rb").read()
+        before["dispatch_schedule.json"] = _read(os.path.join(self.live, "dispatch_schedule.json"), "rb")
         self.offline("--alert")
         for n in SCHEDULES:
-            self.assertEqual(open(os.path.join(self.live, n), "rb").read(), before[n], n)
+            self.assertEqual(_read(os.path.join(self.live, n), "rb"), before[n], n)
 
 
 class Static(unittest.TestCase):
