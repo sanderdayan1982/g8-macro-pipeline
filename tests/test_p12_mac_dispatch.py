@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.join(ROOT, "mac"))
 import dispatch_workflows as D  # noqa: E402
 
 TOKEN = "github_pat_SECRET_DISPATCH_do_not_print"
-EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml", "cme_options.yml"}
+EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml"}  # cme_options sale: el colector ya no paga dos veces (orden Sander 19-nov)
 
 
 def utc(s):
@@ -80,7 +80,7 @@ class Schedule(Base):
         self.assertEqual([c[1].rsplit("/", 2)[-2] for c in f.calls], ["intraday_fetch.yml"])
         rc, f = self.run_at("2026-10-06T16:30", Fake())               # 13:17 + 3 h 13 min → fuera; 15:30 y 15:47 sí
         ids = sorted(c[1].rsplit("/", 2)[-2] for c in f.calls)
-        self.assertEqual(ids, ["intraday_fetch.yml", "usd_factor.yml"])
+        self.assertEqual(ids, ["cme_options.yml", "intraday_fetch.yml", "usd_factor.yml"])  # orden expresa de Sander 19-nov (t271u): turno cme_options 13:30 dentro de la ventana
         self.assertEqual(f.calls[0][2].get("inputs"), {"group": "US"})
 
     def test_D2_weekday(self):
