@@ -1,17 +1,12 @@
 {
- "errors": [
-  {
-   "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
-   "kind": "DEGRADED"
-  }
- ],
+ "errors": [],
  "executor": "actions",
  "failing_since_utc": null,
  "files": {
   "NZD_OCR.csv": {
    "backfill": 0,
    "detail": "",
-   "download_id": "20261119T224757Z_actions_fetch-bis-ocr_4061:23959ebe703a",
+   "download_id": "20261120T023125Z_actions_fetch-bis-ocr_4dd5:23959ebe703a",
    "dropped_by_source": 0,
    "file": "NZD_OCR.csv",
    "held": [],
@@ -22,10 +17,10 @@
    "status": "NOOP"
   }
  },
- "finished_utc": "2026-11-19T22:48:27Z",
- "gh_run_id": "44631689132",
+ "finished_utc": "2026-11-20T02:31:31Z",
+ "gh_run_id": "44661275776",
  "job": "fetch_bis_ocr",
- "last_ok_utc": "2026-11-19T22:48:27Z",
+ "last_ok_utc": "2026-11-20T02:31:31Z",
  "not_before": {},
  "rc": 0,
  "requests": [
@@ -35,40 +30,21 @@
      "cls": "OK",
      "detail": "",
      "n": 1,
-     "secs": 0.54,
+     "secs": 6.31,
      "status": 200
     }
    ],
    "cls": "OK",
-   "date_header": "Thu, 19 Nov 2026 22:47:57 GMT",
+   "date_header": "Fri, 20 Nov 2026 02:31:25 GMT",
    "detail": "",
    "last_modified": null,
    "not_before_epoch": null,
    "redirects": [],
    "status": 200,
    "url": "https://stats.bis.org/api/v1/data/WS_CBPOL/D.NZ/all?format=csv"
-  },
-  {
-   "attempts": [
-    {
-     "cls": "OK",
-     "detail": "",
-     "n": 1,
-     "secs": 23.07,
-     "status": 200
-    }
-   ],
-   "cls": "OK",
-   "date_header": "Thu, 19 Nov 2026 22:47:58 GMT",
-   "detail": "",
-   "last_modified": "Wed, 18 Nov 2026 12:42:36 GMT",
-   "not_before_epoch": null,
-   "redirects": [],
-   "status": 200,
-   "url": "https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip"
   }
  ],
- "run_id": "20261119T224757Z_actions_fetch-bis-ocr_4061",
- "started_utc": "2026-11-19T22:47:57Z",
+ "run_id": "20261120T023125Z_actions_fetch-bis-ocr_4dd5",
+ "started_utc": "2026-11-20T02:31:25Z",
  "step": "bis_ocr"
 }

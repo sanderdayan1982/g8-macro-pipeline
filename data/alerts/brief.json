@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-20T00:26:34Z",
+ "generated_utc": "2026-11-20T02:36:10Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
-  "rates": "2026-11-19",
+  "rates": "2026-11-20",
   "cot": "2026-11-10",
-  "options": null,
+  "options": "2026-11-18",
   "metals": "2026-11-17",
   "s01b": "2026-11-19",
   "factor": "2026-11-19"
@@ -26,7 +26,7 @@
   },
   {
    "sec": "§03 Term premium",
-   "text": "JPY TP 1.92 % (TP/NOM 66 % ▲60)"
+   "text": "JPY TP 1.87 % (TP/NOM 65 % ▲60)"
   },
   {
    "sec": "§01 Spread 10Y vs USD",
@@ -121,40 +121,40 @@
    "flags": [
     "TP/NOM ▲60%"
    ],
-   "nom": 2.9152,
-   "real": 0.9908,
-   "be": 1.9244,
-   "nom_asof": "2026-11-19",
-   "tp": 1.9225,
-   "tp_z": 0.1520870413072895,
-   "tp_asof": "2026-11-18",
+   "nom": 2.8689,
+   "real": 0.9682,
+   "be": 1.9008,
+   "nom_asof": "2026-11-20",
+   "tp": 1.873,
+   "tp_z": -0.03702019542598714,
+   "tp_asof": "2026-11-19",
    "rfr": 1.227,
    "floor_bp": -2.3,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -215.5,
-   "real_vs_usd_bp": -188.9,
-   "real_vs_usd_z": -1.32,
+   "vs_usd_bp": -220.1,
+   "real_vs_usd_bp": -191.2,
+   "real_vs_usd_z": -1.44,
    "lf_z": 0.74,
    "cot_state": "NEUTRAL"
   },
   {
    "ccy": "AUD",
    "flags": [
-    "NOM/REAL/BE EST 18-11 ±6 pb (curva F2 RBA 11-11; vs USD y alertas con RBA)",
+    "NOM/REAL/BE EST 19-11 ±7 pb (curva F2 RBA 11-11; vs USD y alertas con RBA)",
     "TP curva arrastrada (ffill)",
     "vs USD z suelo",
     "COT DIV LF/AM"
    ],
-   "nom": 5.1003,
-   "real": 2.8487,
-   "be": 2.2516,
-   "nom_asof": "2026-11-18",
+   "nom": 5.0617,
+   "real": 2.8235,
+   "be": 2.2382,
+   "nom_asof": "2026-11-19",
    "nom_rba": 5.044,
    "nom_rba_asof": "2026-11-11",
    "nom_est": true,
-   "tp": 1.1371,
-   "tp_z": 0.6079443443889933,
-   "tp_asof": "2026-11-18",
+   "tp": 1.1327,
+   "tp_z": 0.5684787277069765,
+   "tp_asof": "2026-11-19",
    "rfr": 4.85,
    "floor_bp": 0.0,
    "floor_badge": "AMPLE",
@@ -217,7 +217,8 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM"
+    "COT DIV LF/AM",
+    "walls PROXY"
    ],
    "nom": 0.614,
    "real": -0.886,
@@ -236,11 +237,6 @@
    "cot_state": "STRETCH-"
   }
  ],
- "notes": [
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
- ],
  "doctor_summary": {
   "priority_counts": {
    "daily": 8,
@@ -249,6 +245,6 @@
    "prohibited": 0
   },
   "incidents_count": 8,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/ERROR] OPTIONS_SURFACE.json: Inconsistencia en opciones: 'latest_session'\n• [1º/WARNING] actions:fetch_bis_ocr:degraded: Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallba\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_ocr:degraded: Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallba\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] OPTIONS_SURFACE.json: Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación"
  }
 }
