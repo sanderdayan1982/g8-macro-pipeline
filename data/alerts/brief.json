@@ -1,10 +1,10 @@
 {
- "generated_utc": "2026-11-20T17:33:09Z",
+ "generated_utc": "2026-11-20T21:08:28Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-20",
-  "cot": "2026-11-10",
+  "cot": "2026-11-17",
   "options": "2026-11-19",
   "metals": "2026-11-17",
   "s01b": "2026-11-20",
@@ -13,7 +13,7 @@
  "gates": {
   "pos_twin": {
    "status": "PASSED",
-   "label": "POS twin-test: PASSED (60 barras, 12.0 sem)",
+   "label": "POS twin-test: PASSED (60 barras, 12.4 sem)",
    "bars": 60,
    "from": "2026-08-25",
    "to": "2026-09-29"
@@ -30,7 +30,7 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "EUR−USD -174 bp (z suelo) · CAD−USD -94 bp (z suelo) · AUD−USD +1 bp (z suelo) · NZD−USD -22 bp (z suelo)"
+   "text": "EUR−USD -174 bp (z suelo) · CAD−USD -94 bp (z suelo) · AUD−USD +1 bp (z suelo) · NZD−USD -28 bp (z suelo)"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
@@ -42,7 +42,7 @@
   },
   {
    "sec": "COT · fuera de la página",
-   "text": "EUR CROWD SHORT (LF z -2.38) · AUD divergencia LF/AM · NZD STRETCH- (LF z -1.70) · CAD divergencia LF/AM · CHF STRETCH- (LF z -1.52)"
+   "text": "EUR CROWD SHORT (LF z -2.48) · AUD divergencia LF/AM · NZD STRETCH- (LF z -1.56) · CAD divergencia LF/AM · CHF CROWD SHORT (LF z -2.05)"
   },
   {
    "sec": "§01-b CTF",
@@ -73,7 +73,7 @@
    "vs_usd_bp": null,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
-   "lf_z": 0.54,
+   "lf_z": 0.78,
    "cot_state": "NEUTRAL"
   },
   {
@@ -94,7 +94,7 @@
    "vs_usd_bp": -174.0,
    "real_vs_usd_bp": -156.2,
    "real_vs_usd_z": -1.48,
-   "lf_z": -2.38,
+   "lf_z": -2.48,
    "cot_state": "CROWD SHORT"
   },
   {
@@ -113,7 +113,7 @@
    "vs_usd_bp": 23.3,
    "real_vs_usd_bp": -75.8,
    "real_vs_usd_z": -1.42,
-   "lf_z": 0.13,
+   "lf_z": -0.22,
    "cot_state": "NEUTRAL"
   },
   {
@@ -134,7 +134,7 @@
    "vs_usd_bp": -220.1,
    "real_vs_usd_bp": -191.2,
    "real_vs_usd_z": -1.44,
-   "lf_z": 0.74,
+   "lf_z": 0.55,
    "cot_state": "NEUTRAL"
   },
   {
@@ -162,7 +162,7 @@
    "vs_usd_bp": 1.0,
    "real_vs_usd_bp": -7.9,
    "real_vs_usd_z": -2.34,
-   "lf_z": 1.44,
+   "lf_z": 1.02,
    "cot_state": "NEUTRAL"
   },
   {
@@ -183,10 +183,10 @@
    "rfr": 2.8,
    "floor_bp": 5.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -22.0,
+   "vs_usd_bp": -28.0,
    "real_vs_usd_bp": -32.5,
    "real_vs_usd_z": -2.44,
-   "lf_z": -1.7,
+   "lf_z": -1.56,
    "cot_state": "STRETCH-"
   },
   {
@@ -209,7 +209,7 @@
    "vs_usd_bp": -94.0,
    "real_vs_usd_bp": -89.0,
    "real_vs_usd_z": -1.88,
-   "lf_z": -0.5,
+   "lf_z": -0.67,
    "cot_state": "NEUTRAL"
   },
   {
@@ -221,31 +221,31 @@
     "COT DIV LF/AM",
     "walls PROXY"
    ],
-   "nom": 0.614,
-   "real": -0.886,
+   "nom": 0.555,
+   "real": -0.945,
    "be": 1.5,
-   "nom_asof": "2026-11-19",
+   "nom_asof": "2026-11-20",
    "tp": -0.0745,
    "tp_z": 0.18803532195225794,
    "tp_asof": "2026-11-19",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -445.6,
+   "vs_usd_bp": -451.5,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
-   "lf_z": -1.52,
-   "cot_state": "STRETCH-"
+   "lf_z": -2.05,
+   "cot_state": "CROWD SHORT"
   }
  ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 8,
+   "daily": 11,
    "weekly": 0,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 8,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/ERROR] OPTIONS_SURFACE.json: Inconsistencia en opciones: 'latest_session'\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "incidents_count": 11,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 11 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] AU_POLICY.csv: Verificación oficial caducada (2026-11-20T18:32:54+00:00): requiere nueva consulta de deci\n• [1º/LATE] CH_POLICY.csv: Verificación oficial caducada (2026-11-20T18:32:54+00:00): requiere nueva consulta de deci"
  }
 }
