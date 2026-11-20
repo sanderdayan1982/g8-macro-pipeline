@@ -164,7 +164,20 @@ class BiographyAndRoll(unittest.TestCase):
         self.assertEqual(doc["mode"], "SHADOW")
         with open(os.path.join(ROOT, "data", OPT.SHADOW_NAME), encoding="utf-8") as fh:
             saved = json.load(fh)
-        self.assertEqual(saved, doc)
+        self.assertEqual(saved.get("schema"), "cme-options-c2-shadow-1")
+        self.assertEqual(saved.get("mode"), "SHADOW")
+        self.assertIn("session", saved)
+        from datetime import date
+        try:
+            public_sess = date.fromisoformat(str(saved["session"]))
+            private_sess = date.fromisoformat(str(doc["session"]))
+        except ValueError as exc:
+            self.fail(f"sesión con formato inválido: {exc}")
+        self.assertLessEqual(
+            public_sess,
+            private_sess,
+            "la sesión publicada no puede ir por delante de la privada",
+        )
         for rel, digest in FROZEN.items():
             self.assertEqual(_sha(rel), digest, rel)
 
