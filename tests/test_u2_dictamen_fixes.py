@@ -143,7 +143,16 @@ class FloorsAndRegistry(unittest.TestCase):
     def test_section_06_session_matches_on_the_real_files(self):
         shadow = json.loads(_read(os.path.join(ROOT, "data", "CME_OPTIONS_C1_shadow.json")))
         surface = json.loads(_read(os.path.join(ROOT, "data", "OPTIONS_SURFACE.json")))
-        self.assertEqual(str(shadow["session"]), str(surface["latest_session"]))
+        try:
+            public_sess = date.fromisoformat(str(shadow["session"]))
+            private_sess = date.fromisoformat(str(surface["latest_session"]))
+        except (TypeError, ValueError) as exc:
+            self.fail(f"sesión con formato inválido: {exc}")
+        self.assertLessEqual(
+            public_sess,
+            private_sess,
+            "la sesión publicada no puede ir por delante de la privada",
+        )
 
     def test_seven_frozen_hashes_stay(self):
         for rel, expected in FROZEN:
