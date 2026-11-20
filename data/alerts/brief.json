@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-20T17:33:09Z",
+ "generated_utc": "2026-11-20T21:04:11Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-20",
   "cot": "2026-11-10",
-  "options": "2026-11-19",
+  "options": null,
   "metals": "2026-11-17",
   "s01b": "2026-11-20",
   "factor": "2026-11-20"
@@ -30,7 +30,7 @@
   },
   {
    "sec": "§01 Spread 10Y vs USD",
-   "text": "EUR−USD -174 bp (z suelo) · CAD−USD -94 bp (z suelo) · AUD−USD +1 bp (z suelo) · NZD−USD -22 bp (z suelo)"
+   "text": "EUR−USD -174 bp (z suelo) · CAD−USD -94 bp (z suelo) · AUD−USD +1 bp (z suelo) · NZD−USD -28 bp (z suelo)"
   },
   {
    "sec": "§01 REAL 10Y vs USD",
@@ -183,7 +183,7 @@
    "rfr": 2.8,
    "floor_bp": 5.0,
    "floor_badge": "TIGHT",
-   "vs_usd_bp": -22.0,
+   "vs_usd_bp": -28.0,
    "real_vs_usd_bp": -32.5,
    "real_vs_usd_z": -2.44,
    "lf_z": -1.7,
@@ -218,25 +218,29 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM",
-    "walls PROXY"
+    "COT DIV LF/AM"
    ],
-   "nom": 0.614,
-   "real": -0.886,
+   "nom": 0.555,
+   "real": -0.945,
    "be": 1.5,
-   "nom_asof": "2026-11-19",
+   "nom_asof": "2026-11-20",
    "tp": -0.0745,
    "tp_z": 0.18803532195225794,
    "tp_asof": "2026-11-19",
    "rfr": -0.04,
    "floor_bp": -4.0,
    "floor_badge": "AMPLE",
-   "vs_usd_bp": -445.6,
+   "vs_usd_bp": -451.5,
    "real_vs_usd_bp": null,
    "real_vs_usd_z": null,
    "lf_z": -1.52,
    "cot_state": "STRETCH-"
   }
+ ],
+ "notes": [
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
  ],
  "doctor_summary": {
   "priority_counts": {
@@ -246,6 +250,6 @@
    "prohibited": 0
   },
   "incidents_count": 8,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/ERROR] OPTIONS_SURFACE.json: Inconsistencia en opciones: 'latest_session'\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/LATE] CME_FXVOL_public.json: as_of anterior a la ventana operativa de la proyección pública\n• [1º/LATE] CME_OPTIONS_SURFACE_public.json: as_of anterior a la ventana operativa de la proyección pública"
  }
 }
