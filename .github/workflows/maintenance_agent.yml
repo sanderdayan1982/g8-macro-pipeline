@@ -98,7 +98,6 @@ jobs:
           python scripts/tools/agent_doctor.py --out-md .agent/diagnosis.md --out-json .agent/diagnosis.json || true
       - name: Claude Code (maintenance)
         id: claude
-        continue-on-error: true
         uses: anthropics/claude-code-action@v1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -128,7 +127,8 @@ jobs:
           if [ ! -f .agent/report.md ] && [ -f .agent/diagnosis.md ]; then
             cp .agent/diagnosis.md .agent/report.md
           fi
-          if [ "$CLAUDE_RAW" = "success" ] || [ -f .agent/report.md ]; then
+          # El informe del fallback no convierte un fallo del agente en success (t283u).
+          if [ "$CLAUDE_RAW" = "success" ]; then
             echo "outcome=success" >> "$GITHUB_OUTPUT"
           else
             echo "outcome=${CLAUDE_RAW:-failure}" >> "$GITHUB_OUTPUT"
