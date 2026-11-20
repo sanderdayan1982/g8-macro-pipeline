@@ -1,14 +1,14 @@
 {
  "model": "EST_AUD_V2",
- "generated_utc": "2026-11-20T02:36:07Z",
+ "generated_utc": "2026-11-20T03:59:41Z",
  "config": "sources/nowcast_aud.json",
  "status": "OK",
  "warnings": [],
  "targets": {
   "NOM2Y": {
    "source": "RBA F2 FCMYGBAG2D",
-   "base_date": "2026-11-11",
-   "base_value": 4.808,
+   "base_date": "2026-11-18",
+   "base_value": 4.813,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -23,24 +23,24 @@
    ],
    "beta": {
     "AU_BILL_6M": 0.8994,
-    "US_2Y": 0.2981
+    "US_2Y": 0.3008
    },
-   "r2": 0.456,
+   "r2": 0.453,
    "n_obs": 756,
    "window": [
-    "2023-11-13",
-    "2026-11-11"
+    "2023-11-20",
+    "2026-11-18"
    ],
    "err_bp_by_h": {
     "1": 3.6,
-    "2": 4.8,
+    "2": 4.7,
     "3": 5.5,
     "4": 6.3,
     "5": 7.0,
     "6": 7.8,
     "7": 8.4,
     "8": 9.0,
-    "9": 9.5,
+    "9": 9.6,
     "10": 10.1
    },
    "drivers_reach": "2026-11-19",
@@ -48,8 +48,8 @@
   },
   "NOM10": {
    "source": "RBA F2 FCMYGBAG10D (via real_yields_g8.py)",
-   "base_date": "2026-11-11",
-   "base_value": 5.044,
+   "base_date": "2026-11-18",
+   "base_value": 5.08,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -63,14 +63,14 @@
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.5782,
-    "US_10Y": 0.5175
+    "AU_BILL_6M": 0.5778,
+    "US_10Y": 0.5197
    },
-   "r2": 0.45,
+   "r2": 0.446,
    "n_obs": 756,
    "window": [
-    "2023-11-13",
-    "2026-11-11"
+    "2023-11-20",
+    "2026-11-18"
    ],
    "err_bp_by_h": {
     "1": 3.7,
@@ -80,7 +80,7 @@
     "5": 6.2,
     "6": 6.8,
     "7": 7.3,
-    "8": 7.7,
+    "8": 7.8,
     "9": 8.2,
     "10": 8.7
    },
@@ -89,8 +89,8 @@
   },
   "BE10": {
    "source": "RBA F2 (10Y nominal − indexado FCMYGBAGID, via real_yields_g8.py)",
-   "base_date": "2026-11-11",
-   "base_value": 2.249,
+   "base_date": "2026-11-18",
+   "base_value": 2.279,
    "drivers": [
     {
      "name": "AU_BILL_6M",
@@ -104,30 +104,30 @@
     }
    ],
    "beta": {
-    "AU_BILL_6M": 0.1366,
-    "US_BE10": 0.4016
+    "AU_BILL_6M": 0.1364,
+    "US_BE10": 0.4003
    },
-   "r2": 0.29,
+   "r2": 0.288,
    "n_obs": 756,
    "window": [
-    "2023-11-13",
-    "2026-11-11"
+    "2023-11-20",
+    "2026-11-18"
    ],
    "err_bp_by_h": {
     "1": 1.6,
     "2": 2.4,
     "3": 2.9,
     "4": 3.4,
-    "5": 3.9,
-    "6": 4.3,
+    "5": 3.8,
+    "6": 4.2,
     "7": 4.6,
     "8": 4.8,
-    "9": 5.1,
+    "9": 5.0,
     "10": 5.3
    },
    "drivers_reach": "2026-11-19",
    "last_estimate": "2026-11-19"
   }
  },
- "rows_estimated_now": 6
+ "rows_estimated_now": 1
 }
