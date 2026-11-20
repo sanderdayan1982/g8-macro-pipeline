@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-20T02:36:10Z",
+ "generated_utc": "2026-11-20T03:56:11Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-20",
   "cot": "2026-11-10",
-  "options": "2026-11-18",
+  "options": null,
   "metals": "2026-11-17",
   "s01b": "2026-11-19",
   "factor": "2026-11-19"
@@ -217,8 +217,7 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM",
-    "walls PROXY"
+    "COT DIV LF/AM"
    ],
    "nom": 0.614,
    "real": -0.886,
@@ -237,6 +236,11 @@
    "cot_state": "STRETCH-"
   }
  ],
+ "notes": [
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
+  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
+ ],
  "doctor_summary": {
   "priority_counts": {
    "daily": 8,
@@ -245,6 +249,6 @@
    "prohibited": 0
   },
   "incidents_count": 8,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/WARNING] actions:fetch_bis_ocr:degraded: Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallba\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] OPTIONS_SURFACE.json: Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación"
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 8 · 2º Semanal: 0 · 3º Mensual: 0):\n• [1º/ERROR] CME_OPTIONS_C1_shadow.json: Artefacto shadow ausente o corrupto\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/UNKNOWN] OPTIONS_SURFACE.json: Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación"
  }
 }
