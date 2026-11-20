@@ -45,10 +45,23 @@ PRIORITY_LABELS = {
 SHADOW_ARTIFACTS = [
     ("MFV_G8_shadow_state.json", "daily", "§04/§05 Metales B2 diario", "metals_update.yml"),
     ("CB_EVENT_48H_shadow.json", "daily", "§02 Calendario BC 48h C2", "daily_update.yml"),
-    ("CME_OPTIONS_C1_shadow.json", "daily", "§06 Opciones CME C1", "cme_options.yml"),
     ("S01B_shadow_a3.json", "daily", "§01-b CTF shadow A3", "daily_update.yml"),
     ("ACM_G8_NZD_phi_shadow.json", "daily", "§01/§03 NZD ACM phi shadow A1", "daily_update.yml"),
     ("CHF_NOWCAST_shadow.json", "daily", "§01/§03 CHF nowcast shadow A2", "daily_update.yml"),
+]
+
+# Ficheros con cifras CME retirados del repo público: no se leen ni se diagnostican aquí.
+RETIRED_PUBLIC_CME = {
+    "OPTIONS_SURFACE.json",
+    "CME_OPTIONS_C1_shadow.json",
+    "CME_FXVOL_shadow.json",
+}
+
+# Frescura CME en la proyección pública (status / as_of / generated_utc). Sin cifras.
+PUBLIC_CME_PROJECTIONS = [
+    ("CME_OPTIONS_SURFACE_public.json", "§06 Options Surface (proyección pública)", "cme_options.yml"),
+    ("CME_C1_public.json", "§06 C1 (proyección pública)", "cme_options.yml"),
+    ("CME_FXVOL_public.json", "§06b FXVOL (proyección pública)", "daily_update.yml"),
 ]
 
 
@@ -121,11 +134,18 @@ def _remediation_for_feed(feed_name, causes, fetcher=""):
             "workflow": "feed_recovery.yml",
             "reason": "%s con %s: refrescar insumos suizos y snapshots" % (fn, causes_s or "atraso"),
         }
-    if fn.startswith("OPTIONS_SURFACE") or "CME_OPTIONS" in fn:
+    if (
+        fn.startswith("OPTIONS_SURFACE")
+        or "CME_OPTIONS" in fn
+        or fn.startswith("CME_C1_")
+        or fn.startswith("CME_FXVOL_")
+        or fn.endswith("_public.json") and fn.startswith("CME_")
+    ):
+        wf = "daily_update.yml" if "FXVOL" in fn else "cme_options.yml"
         return {
-            "action": "Relanzar workflow cme_options.yml y verificar DATABENTO_API_KEY",
-            "workflow": "cme_options.yml",
-            "reason": "%s con %s: regenerar superficie de opciones CME" % (fn, causes_s or "atraso"),
+            "action": "Relanzar %s y revisar la proyección en data/public/ (status, as_of, generated_utc)" % wf,
+            "workflow": wf,
+            "reason": "%s con %s: actualizar proyección pública CME" % (fn, causes_s or "atraso"),
         }
     if fn.startswith("MFV_G8_"):
         return {
@@ -144,6 +164,91 @@ def _remediation_for_feed(feed_name, causes, fetcher=""):
         "workflow": "feed_recovery.yml",
         "reason": "%s con %s: refrescar feeds diarios oficiales y snapshots" % (fn, causes_s or "incidencia"),
     }
+
+
+
+def _public_as_of(doc):
+    """Fecha de sesión de la proyección pública: as_of o generated_utc. Sin leer cifras."""
+    if not isinstance(doc, dict):
+        return None
+    for key in ("as_of", "generated_utc"):
+        raw = doc.get(key)
+        if not isinstance(raw, str) or len(raw) < 10:
+            continue
+        day = raw[:10]
+        try:
+            return dt.date.fromisoformat(day)
+        except ValueError:
+            continue
+    return None
+
+
+def _weekday_shift(day, step):
+    out = day + dt.timedelta(days=step)
+    while out.weekday() >= 5:
+        out = out + dt.timedelta(days=step)
+    return out
+
+
+def cme_public_projection_incidents(data_dir, now=None):
+    """Incidencias de frescura CME a partir de data/public/*_public.json (status, as_of, generated_utc)."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dt.timezone.utc)
+    due = _weekday_shift(now.date(), -1)
+    release = _weekday_shift(due, 1)
+    deadline = dt.datetime.combine(release, dt.time.min, tzinfo=dt.timezone.utc) + dt.timedelta(hours=21)
+    if now < deadline:
+        due = _weekday_shift(due, -1)
+    incidents = []
+    for fname, label, wf in PUBLIC_CME_PROJECTIONS:
+        path = os.path.join(data_dir, "public", fname)
+        doc = _load_json(path) if os.path.isfile(path) else None
+        as_of = _public_as_of(doc) if doc is not None else None
+        if not os.path.isfile(path) or doc is None:
+            causes = ["PUBLIC_PROJECTION_MISSING"]
+            state = "ERROR"
+            detail = "Proyección pública ausente o ilegible"
+        else:
+            raw_status = doc.get("status") if isinstance(doc, dict) else None
+            if not isinstance(raw_status, str) or not raw_status:
+                causes = ["PUBLIC_PROJECTION_NO_STATUS"]
+                state = "ERROR"
+                detail = "Proyección pública sin campo status"
+            elif raw_status == "UNAVAILABLE":
+                causes = ["PUBLIC_PROJECTION_UNAVAILABLE"]
+                state = "WARNING"
+                detail = "Proyección pública en UNAVAILABLE"
+            elif as_of is None:
+                causes = ["PUBLIC_PROJECTION_NO_AS_OF"]
+                state = "ERROR"
+                detail = "Proyección pública sin as_of ni generated_utc usable"
+            elif as_of < due:
+                causes = ["STALE"]
+                state = "LATE"
+                detail = "as_of anterior a la ventana operativa de la proyección pública"
+            else:
+                continue
+        rem = _remediation_for_feed(fname, causes, wf)
+        incidents.append({
+            "kind": "CME_PUBLIC_PROJECTION",
+            "id": fname,
+            "section": label,
+            "state": state,
+            "frequency": "daily",
+            "priority_rank": freq_rank("daily"),
+            "priority_label": PRIORITY_LABELS[1],
+            "last_obs": as_of.isoformat() if as_of else None,
+            "delay_bd": None,
+            "budget_bd": None,
+            "causes": causes,
+            "fetcher": wf,
+            "detail": detail,
+            "remediation": rem["action"],
+            "recovery_workflow": rem["workflow"],
+            "recovery_reason": rem["reason"],
+        })
+    return incidents
 
 
 def collect_diagnosis(data_dir=DATA, reg_path=SOURCES_REG):
@@ -169,6 +274,8 @@ def collect_diagnosis(data_dir=DATA, reg_path=SOURCES_REG):
     for f in feed_items:
         status = f.get("status") or ("ERROR" if "LAST_FETCH_FAILED" in (f.get("flags") or []) else "WARNING")
         fname = f.get("file") or f.get("name") or ""
+        if os.path.basename(fname) in RETIRED_PUBLIC_CME:
+            continue
         reg = by_file.get(fname) or by_id.get(f.get("name") or "") or {}
         freq = f.get("publication_frequency") or f.get("freq") or reg.get("frequency") or "daily"
         rank = freq_rank(freq)
@@ -214,7 +321,7 @@ def collect_diagnosis(data_dir=DATA, reg_path=SOURCES_REG):
             files_field = doc.get("files") or {}
             target_files = [os.path.basename(p) for p in (files_field.keys() if isinstance(files_field, dict) else files_field)]
             primary_file = target_files[0] if target_files else ("NZD_OCR.csv" if job_name == "fetch_bis_ocr" else job_name)
-            if primary_file in seen_feeds:
+            if primary_file in seen_feeds or primary_file in RETIRED_PUBLIC_CME:
                 continue
             reg = by_file.get(primary_file) or {}
             freq = reg.get("frequency") or "daily"
@@ -268,6 +375,8 @@ def collect_diagnosis(data_dir=DATA, reg_path=SOURCES_REG):
                 "recovery_workflow": sh_wf,
                 "recovery_reason": "Regenerar artefacto shadow %s (%s)" % (sh_file, sh_label),
             })
+
+    incidents.extend(cme_public_projection_incidents(data_dir))
 
     # 4. Alertas operativas activas en data/_ingest/watch_state.json
     active_alerts = (watch.get("active") or {}) if isinstance(watch, dict) else {}
