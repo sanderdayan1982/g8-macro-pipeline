@@ -101,7 +101,24 @@ jobs:
             exit 0
           fi
           git commit -m "chore: weekly metals fair value update $(date -u '+%Y-%m-%d')"
+          # t273u: private_data pull --rows 12 overwrites tracked data/alerts/state.json
+          # so refresh_brief can read the private copy. That file must not be committed
+          # to the public repo, so it stays unstaged and git_push_retry (pull --rebase)
+          # fails with "You have unstaged changes". Stash it for the public push, then
+          # restore it so the later private push of rows 11,12 still sees the private copy.
+          stashed=0
+          if ! git diff --quiet -- data/alerts/state.json; then
+            git stash push -m "t273u: private state.json during public push" -- data/alerts/state.json
+            stashed=1
+          fi
+          set +e
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
+          rc=$?
+          set -e
+          if [ "$stashed" = 1 ]; then
+            git stash pop
+          fi
+          exit $rc
 
       - name: Private data push
         if: always()
