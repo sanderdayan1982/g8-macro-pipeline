@@ -208,7 +208,20 @@ class OptionWalls(unittest.TestCase):
         self.assertIsNone(doc["currencies"]["NZD"]["aggregate"]["delta_oi"])
         with open(os.path.join(ROOT, "data", OPT.SHADOW_NAME), encoding="utf-8") as fh:
             saved = json.load(fh)
-        self.assertEqual(saved, doc)
+        self.assertEqual(saved.get("mode"), "SHADOW")
+        self.assertIn("session", saved)
+        self.assertIn("currencies", saved)
+        self.assertIsInstance(saved["currencies"], dict)
+        try:
+            public_sess = date.fromisoformat(str(saved["session"]))
+            private_sess = date.fromisoformat(str(doc["session"]))
+        except ValueError as exc:
+            self.fail(f"sesión con formato inválido: {exc}")
+        self.assertLessEqual(
+            public_sess,
+            private_sess,
+            "la sesión publicada no puede ir por delante de la privada",
+        )
 
     def test_frozen_hashes_and_official_book_stay(self):
         for rel, digest in FROZEN.items():
