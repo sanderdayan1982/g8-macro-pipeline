@@ -57,6 +57,7 @@ jobs:
         run: python scripts/s01b.py --provisional
 
       - name: Dashboard alerts (Telegram on change)
+        id: dash
         if: always()
         continue-on-error: true
         env:
@@ -128,6 +129,16 @@ jobs:
           python3 scripts/tools/step_alarm.py record private_verify_usd_factor "$rc" --detail "private_data verify rc=${rc}"
           python3 scripts/tools/step_alarm.py publish verify_usd_factor --only private_verify_usd_factor --commit
           exit "$rc"
+
+      # t297u (c): este paso con continue-on-error que falla queda en data/_ingest/latest/actions__job_usd_factor_steps.json,
+      # que lee ingest_watch (FAILED → aviso). Se sube aparte (worktree, [skip netlify]); no tumba el job.
+      - name: Registro de pasos con continue-on-error (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          OUT_0: ${{ steps.dash.outcome }}
+        run: python3 scripts/tools/step_alarm.py publish usd_factor_steps --outcome "dashboard_alerts_usd_factor=$OUT_0" --commit
 
       - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
         if: always()
