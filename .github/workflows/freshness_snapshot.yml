@@ -58,4 +58,8 @@ jobs:
           python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 11,12
           rc=$?
           echo "private_data verify rc=${rc}"
+          # t297u (b): rc≠0 (differ>0 o fallo) queda en data/_ingest/latest/actions__job_verify_freshness.json,
+          # que lee ingest_watch. Se sube aparte (worktree, [skip netlify]); el paso sigue sin tumbar el job.
+          python3 scripts/tools/step_alarm.py record private_verify_freshness "$rc" --detail "private_data verify rc=${rc}"
+          python3 scripts/tools/step_alarm.py publish verify_freshness --only private_verify_freshness --commit
           exit "$rc"

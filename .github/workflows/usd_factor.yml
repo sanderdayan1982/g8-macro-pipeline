@@ -123,6 +123,10 @@ jobs:
           python3 scripts/tools/private_data.py verify "$RUNNER_TEMP/g8data" --rows 11,12
           rc=$?
           echo "private_data verify rc=${rc}"
+          # t297u (b): rc≠0 (differ>0 o fallo) queda en data/_ingest/latest/actions__job_verify_usd_factor.json,
+          # que lee ingest_watch. Se sube aparte (worktree, [skip netlify]); el paso sigue sin tumbar el job.
+          python3 scripts/tools/step_alarm.py record private_verify_usd_factor "$rc" --detail "private_data verify rc=${rc}"
+          python3 scripts/tools/step_alarm.py publish verify_usd_factor --only private_verify_usd_factor --commit
           exit "$rc"
 
       - name: Telegram de ingest_watch no entregado → job en rojo (GitHub envía email)
