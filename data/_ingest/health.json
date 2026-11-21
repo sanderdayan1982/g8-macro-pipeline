@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-20T23:20:28.704544Z",
+ "generated_utc": "2026-11-21T02:47:56.062230Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -106,23 +106,9 @@
    "age_business_days": 6,
    "publication_frequency": "daily",
    "slow_fallback": false
-  },
-  {
-   "file": "OPTIONS_SURFACE.json",
-   "state": "NOT_MONITORED",
-   "have_max": null,
-   "expected_obs": null,
-   "calendar": "",
-   "basis": "EXCLUIDO",
-   "reason": "Inconsistencia en opciones: 'latest_session'",
-   "cause": null,
-   "flags": [],
-   "status": "ERROR",
-   "publication_frequency": "excluded",
-   "slow_fallback": false
   }
  ],
- "unknown_count": 0,
+ "unknown_count": 1,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -156,7 +142,7 @@
   },
   {
    "file": "SONIA.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-18",
    "expected_obs": "2026-11-18",
    "calendar": "GB",
@@ -217,7 +203,7 @@
   {
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-21",
    "expected_obs": "2026-11-18",
    "calendar": "US",
    "basis": "PROVISIONAL",
@@ -233,7 +219,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-21",
    "expected_obs": "2026-11-19",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -493,9 +479,9 @@
   },
   {
    "file": "GBP_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -507,9 +493,9 @@
   },
   {
    "file": "GBP_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -521,9 +507,9 @@
   },
   {
    "file": "GBP_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -535,9 +521,9 @@
   },
   {
    "file": "GBP_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -549,9 +535,9 @@
   },
   {
    "file": "GBP_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -791,9 +777,9 @@
   },
   {
    "file": "RY_G8_GBP.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "GB",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1427,7 +1413,7 @@
    "file": "S01B.json",
    "state": "NOT_MONITORED",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-11-20",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
@@ -1819,14 +1805,15 @@
   {
    "file": "OPTIONS_SURFACE.json",
    "state": "NOT_MONITORED",
-   "have_max": null,
+   "have_max": "2026-11-19",
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Inconsistencia en opciones: 'latest_session'",
+   "reason": "Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación incompleta.",
    "cause": null,
    "flags": [],
-   "status": "ERROR",
+   "status": "UNKNOWN",
+   "age_business_days": 1,
    "publication_frequency": "excluded",
    "slow_fallback": false
   },
@@ -1951,7 +1938,7 @@
    "state": "CURRENT",
    "status": "CURRENT",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-11-20",
    "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre",
    "flags": []
   },
@@ -1959,7 +1946,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-20T23:20:28Z",
+   "have_max": "2026-11-21T02:06:56Z",
    "flags": []
   },
   {
