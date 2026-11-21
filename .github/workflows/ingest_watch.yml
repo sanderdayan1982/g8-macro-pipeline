@@ -86,6 +86,33 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/health_monitor.py --notify
 
+      # t295u: maintenance_agent.yml está desactivado; el prediagnóstico sigue
+      # sin Claude. No relanza workflows (--auto-recovery fuera). El artefacto
+      # .agent/ no se commitea (el paso de commit solo añade data/_ingest/*).
+      - name: Prediagnóstico agent_doctor (sin Claude)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          mkdir -p .agent
+          python scripts/tools/agent_doctor.py \
+            --out-md .agent/diagnosis.md \
+            --out-json .agent/diagnosis.json \
+            --telegram-summary \
+            --send-telegram | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-doctor-diagnosis
+          path: |
+            .agent/diagnosis.md
+            .agent/diagnosis.json
+          include-hidden-files: true
+          retention-days: 30
+
       - name: Commit watch state
         if: always()
         run: |
