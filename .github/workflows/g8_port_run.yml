@@ -99,6 +99,7 @@ jobs:
 
       # ── twin-test (runs only when the Pine export exists) ───────────────────
       - name: Twin-test POS
+        id: twin
         if: hashFiles('data/twin/pos_g8_pine.csv') != ''
         continue-on-error: true
         run: python scripts/twin_test.py POS
@@ -113,6 +114,7 @@ jobs:
       #    workflows, so a fresh twin-test verdict could sit stale on the dashboard
       #    for hours/days until one of those happened to run) ──
       - name: Dashboard alerts (refresh brief.json)
+        id: dash
         if: always()
         continue-on-error: true
         env:
@@ -181,6 +183,17 @@ jobs:
           python3 scripts/tools/step_alarm.py record private_verify_g8_port "$rc" --detail "private_data verify rc=${rc}"
           python3 scripts/tools/step_alarm.py publish verify_g8_port --only private_verify_g8_port --commit
           exit "$rc"
+
+      # t297u (c): este paso con continue-on-error que falla queda en data/_ingest/latest/actions__job_g8_port_steps.json,
+      # que lee ingest_watch (FAILED → aviso). Se sube aparte (worktree, [skip netlify]); no tumba el job.
+      - name: Registro de pasos con continue-on-error (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          OUT_0: ${{ steps.twin.outcome }}
+          OUT_1: ${{ steps.dash.outcome }}
+        run: python3 scripts/tools/step_alarm.py publish g8_port_steps --outcome "twin_test_pos=$OUT_0" --outcome "dashboard_alerts_g8_port=$OUT_1" --commit
 
       # ── principle 9: any failure above → Telegram ───────────────────────────
       - name: Alert on failure

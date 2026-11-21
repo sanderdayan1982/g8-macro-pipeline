@@ -3,6 +3,9 @@
 
   record NOMBRE RC [--detail TEXTO]        añade la línea del paso al registro de pasos (formato g8step)
   publish JOB --only NOMBRE … [--commit]   vuelca esos pasos a data/_ingest/latest/actions__job_<JOB>.json
+  publish JOB --outcome NOMBRE=RESULTADO …  (t297u c) registra antes cada paso por su steps.<id>.outcome de
+                                            Actions: success → OK; skipped → OK «no corrió (condición del paso)»;
+                                            failure, cancelled o vacío → FAILED. Se suma a --only.
 
 record: rc 0 → OK; otro rc (o vacío) → FAILED. El registro es G8_STEP_LOG o, si no está,
 $RUNNER_TEMP/g8_alarm_steps.jsonl (record y publish usan el mismo).
@@ -55,6 +58,25 @@ def record(name, rc, detail="", env=None):
     g8step._log(rec, log_path(env), env)
     print("[step_alarm] %s: %s rc=%s" % (name, rec["status"], code))
     return 0
+
+
+OUTCOME_RC = {"success": "0", "skipped": "0"}
+
+
+def record_outcomes(pairs, env=None):
+    """NOMBRE=RESULTADO (steps.<id>.outcome) → record(); devuelve los nombres."""
+    names = []
+    for pair in pairs or []:
+        name, _, outcome = pair.partition("=")
+        name, outcome = name.strip(), outcome.strip().lower()
+        if not name:
+            continue
+        detail = "outcome=%s" % (outcome or "vacío")
+        if outcome == "skipped":
+            detail = "no corrió (condición del paso)"
+        record(name, OUTCOME_RC.get(outcome, "1"), detail, env=env)
+        names.append(name)
+    return names
 
 
 def _substance(doc):
@@ -148,13 +170,17 @@ def main(argv=None):
     r.add_argument("--detail", default="")
     p = sub.add_parser("publish")
     p.add_argument("job")
-    p.add_argument("--only", action="append", required=True)
+    p.add_argument("--only", action="append", default=[])
+    p.add_argument("--outcome", action="append", default=[], help="NOMBRE=steps.<id>.outcome (t297u c)")
     p.add_argument("--commit", action="store_true")
     p.add_argument("--refresh-h", type=float, default=20.0)
     a = ap.parse_args(argv)
     if a.cmd == "record":
         return record(a.name, a.rc, a.detail)
-    return publish(a.job, a.only, commit=a.commit, refresh_h=a.refresh_h)
+    only = list(a.only) + [n for n in record_outcomes(a.outcome) if n not in a.only]
+    if not only:
+        ap.error("publish necesita --only o --outcome")
+    return publish(a.job, only, commit=a.commit, refresh_h=a.refresh_h)
 
 
 if __name__ == "__main__":

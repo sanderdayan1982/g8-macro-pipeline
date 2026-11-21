@@ -90,6 +90,16 @@ jobs:
             bash scripts/tools/git_push_retry.sh 5
           fi
 
+      # t297u (c): este paso con continue-on-error que falla queda en data/_ingest/latest/actions__job_votes_steps.json,
+      # que lee ingest_watch (FAILED → aviso). Se sube aparte (worktree, [skip netlify]); no tumba el job.
+      - name: Registro de pasos con continue-on-error (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          OUT_0: ${{ steps.ingest.outcome }}
+        run: python3 scripts/tools/step_alarm.py publish votes_steps --outcome "votes_ingest=$OUT_0" --commit
+
       - name: Gmail failure stays loud
         if: steps.ingest.outcome == 'failure'
         run: exit 1

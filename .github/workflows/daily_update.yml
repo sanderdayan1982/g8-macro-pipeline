@@ -409,6 +409,14 @@ jobs:
         timeout-minutes: 1
         run: python scripts/tools/g8step.py --ledger daily_shadows --only cb_event_shadow --only cme_options_shadow --only chf_nowcast_shadow --only s01b_shadow_a3 --only credit_fred_shadow
 
+      # t297u (c): Dashboard alerts corre después del registro de plazos y con continue-on-error; su rc va a
+      # data/_ingest/latest/actions__job_daily_dashboard.json, que ingest_watch lee en su siguiente pasada.
+      - name: Registro de Dashboard alerts (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 1
+        run: python scripts/tools/g8step.py --ledger daily_dashboard --only dashboard_alerts
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
