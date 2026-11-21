@@ -400,6 +400,15 @@ jobs:
         timeout-minutes: 2
         run: python scripts/tools/g8step.py --name credit_fred_shadow --phase post --cap 40 --min 5 -- python scripts/credit_fred_shadow.py
 
+      # t297u (a): las cinco sombras posteriores al registro de plazos, con la misma alarma que FXVOL.
+      # Su resultado va a data/_ingest/latest/actions__job_daily_shadows.json, que ingest_watch lee en su
+      # siguiente pasada: FAILED → aviso de paso fallido; TIMEOUT/SKIPPED → aviso de plazo; sin línea → FAILED.
+      - name: Registro de las sombras posteriores (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 1
+        run: python scripts/tools/g8step.py --ledger daily_shadows --only cb_event_shadow --only cme_options_shadow --only chf_nowcast_shadow --only s01b_shadow_a3 --only credit_fred_shadow
+
       # ── 6. Commit CSVs with pull-rebase retry pattern ─────────────────────
       # Fix v2026-06-08: handles concurrent pushes (manual re-runs, rename
       # events, parallel cron). Retries up to 5 times with exponential backoff.
