@@ -370,6 +370,16 @@ jobs:
           echo "cme_fxvol_shadow rc=${rc} duration=${dur}s rows=${rows}"
           exit "$rc"
 
+      # t296u: el paso FXVOL corre después del registro de plazos y de ingest_watch, y con
+      # continue-on-error un rc≠0 (TIMEOUT 124 incluido) no se veía. Su resultado va a su propio
+      # registro (data/_ingest/latest/actions__job_daily_fxvol.json), que ingest_watch lee en su
+      # siguiente pasada: FAILED → aviso de paso fallido; TIMEOUT/SKIPPED → aviso de plazo.
+      - name: Registro del paso FXVOL (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 1
+        run: python scripts/tools/g8step.py --ledger daily_fxvol --only cme_fxvol_shadow
+
       - name: Shadow CHF nowcast
         if: always()
         continue-on-error: true

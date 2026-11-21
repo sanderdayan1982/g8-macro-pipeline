@@ -40,6 +40,7 @@ OI_FLAT_1D = 1.0
 OI_FLAT_1W = 2.0
 ROLL_PRE = 9
 ROLL_POST = 3
+SOLVE_TOL = 1e-12  # t296u: tolerancia de parada de solve() (volatilidad, en tanto por uno)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSON_NAME = "CME_FXVOL_shadow.json"
@@ -68,7 +69,11 @@ def solve(p, F, K, T, cp):
     lo, hi = 1e-4, 5.0
     if b76(F, K, T, hi, cp) < p:
         return None
+    # t296u: misma bisección; para cuando el intervalo ya mide <= SOLVE_TOL
+    # (unas 43 vueltas desde [1e-4, 5]) en lugar de dar siempre 200.
     for _ in range(200):
+        if hi - lo <= SOLVE_TOL:
+            break
         m = 0.5 * (lo + hi)
         if b76(F, K, T, m, cp) < p:
             lo = m
@@ -147,11 +152,32 @@ def roll_window(sd):
                 return a, b, (a <= sd <= b), w
 
 
+# t296u: columnas que usa el cálculo. Se leen por índice (csv.reader) en vez de DictReader.
+READ_COLUMNS = ("symbol", "expiry", "right", "strike", "settle", "oi")
+
+
 def read(path):
+    """Filas del CSV canónico como dict con solo READ_COLUMNS.
+
+    Mismo resultado que DictReader en esas claves: fila en blanco omitida,
+    campo que falta al final de la fila = None. Una columna que no está en la
+    cabecera no entra en el dict (KeyError al usarla, como antes).
+    """
     if not os.path.exists(path):
         return None
     with open(path) as fh:
-        return list(csv.DictReader(fh))
+        reader = csv.reader(fh)
+        header = next(reader, None)
+        if header is None:
+            return []
+        cols = [(name, header.index(name)) for name in READ_COLUMNS if name in header]
+        out = []
+        for row in reader:
+            if not row:
+                continue
+            n = len(row)
+            out.append({name: (row[i] if i < n else None) for name, i in cols})
+        return out
 
 
 def raw_session(root, d, ccy):
