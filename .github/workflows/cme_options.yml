@@ -87,6 +87,7 @@ jobs:
       # (notify_telegram lo escribe si faltan secretos). Esa salida no entra
       # en el log del job: se guarda y el push privado la lleva al clon.
       - name: Dashboard alerts (Telegram on change)
+        id: alerts
         if: always()
         continue-on-error: true
         env:
@@ -105,6 +106,7 @@ jobs:
       # scripts/tools/git_push_retry.sh. Este job no publica en el repo público.
       # t254u: también con el colector en rojo. El log no se imprime.
       - name: Private data push
+        id: push
         if: always()
         env:
           G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
@@ -156,6 +158,7 @@ jobs:
           exit "$data_rc"
 
       - name: Private data verify
+        id: verify
         if: always()
         continue-on-error: true
         run: |
@@ -164,6 +167,26 @@ jobs:
           rc=$?
           echo "private_data verify rc=${rc}"
           exit "$rc"
+
+      # t299u (opción B): este job tiene contents: read en el público. Su estado (rc del colector, resultado
+      # de cada paso, hora UTC, sesión y motivo; ningún número CME) va al repo PRIVADO
+      # (data/_status/cme_options.json) con el mismo G8_DATA_WRITE de «Private data push». ingest_watch lo
+      # lee del clon privado de daily_update y usd_factor y avisa si falla o si no llega.
+      - name: Estado del run al repo privado (alarma ingest_watch)
+        if: always()
+        continue-on-error: true
+        env:
+          G8_DATA_TOKEN: ${{ secrets.G8_DATA_WRITE }}
+          COLLECTOR_RC: ${{ steps.collector.outputs.rc }}
+          OUT_SUMMARY: ${{ steps.summary.outcome }}
+          OUT_ALERTS: ${{ steps.alerts.outcome }}
+          OUT_PUSH: ${{ steps.push.outcome }}
+          OUT_VERIFY: ${{ steps.verify.outcome }}
+        run: |
+          python3 scripts/tools/cme_run_status.py write "$RUNNER_TEMP/g8data" \
+            --session "$(date -u +%F)" --collector-rc "$COLLECTOR_RC" \
+            --outcome "summary=$OUT_SUMMARY" --outcome "dashboard_alerts=$OUT_ALERTS" \
+            --outcome "private_push=$OUT_PUSH" --outcome "private_verify=$OUT_VERIFY"
 
       - name: Collector result
         if: always()
