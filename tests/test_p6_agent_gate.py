@@ -115,7 +115,7 @@ class Workflow(unittest.TestCase):
         self.assertEqual(on["schedule"], [{"cron": "17 17 * * 1,3,5"}])
         self.assertIn("workflow_dispatch", on)
         cl = [s for s in wf["jobs"]["agent"]["steps"] if str(s.get("uses", "")).startswith("anthropics/claude-code-action")][0]
-        self.assertEqual(cl["uses"], "anthropics/claude-code-action@v1")
+        self.assertEqual(cl["uses"], "anthropics/claude-code-action@374f254f5efaf968abfe15d399fd90972e8138b9")
         self.assertEqual(cl["with"]["claude_code_oauth_token"], "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}")
         self.assertNotIn("anthropic_api_key", cl["with"])
 
