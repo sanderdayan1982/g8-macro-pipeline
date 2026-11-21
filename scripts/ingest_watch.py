@@ -405,6 +405,52 @@ def check_credentials(root, now_utc, alerts, info_keys):
             alerts["cred:%s" % cid] = "Credencial %s %s — afecta: %s" % (cid, txt, row.get("affects"))
 
 
+# t299u (opción B): cme_options tiene contents: read en el público; su estado llega por el repo PRIVADO
+# (g8-macro-data/data/_status/cme_options.json, escrito con G8_DATA_WRITE). Se lee del clon que ya baja
+# «Private data pull» en el mismo job (G8_PRIVATE_CLONE). cme_options corre a diario a las 13:30 y 17:00 UTC
+# (más el turno del dispatch del Mac); con 2–4 h de retraso de cron, 36 h cubren un día entero sin pasada
+# y avisan antes de perder un segundo día.
+CME_STATUS_REL = os.path.join("data", "_status", "cme_options.json")
+CME_STATUS_MAX_AGE_H = 36.0
+
+
+def check_private_status(clone, now_utc, alerts, info, prev_active=None):
+    prev_active = prev_active or {}
+    if not clone:
+        # sin clon privado en esta pasada (p. ej. ingest_watch.yml): no hay evidencia ni de fallo ni de
+        # recuperación; un aviso abierto sigue abierto con el mismo texto (no se reenvía ni se da por resuelto)
+        for k, v in sorted(prev_active.items()):
+            if k.startswith("cme_options:"):
+                alerts[k] = v.get("text", k)
+        return
+    if not os.path.isdir(clone):
+        alerts["cme_options:no_clone"] = ("cme_options: no se pudo leer su estado — el clon privado no está "
+                                          "(¿falló «Private data pull»?)")
+        return
+    path = os.path.join(clone, CME_STATUS_REL)
+    if not os.path.exists(path):
+        alerts["cme_options:missing"] = ("cme_options: su estado no llega al repo privado (%s no existe)"
+                                         % CME_STATUS_REL.replace(os.sep, "/"))
+        return
+    try:
+        doc = _load(path)
+    except ValueError:
+        alerts["cme_options:unreadable"] = "cme_options: estado ilegible en el repo privado"
+        return
+    when = doc.get("written_utc")
+    try:
+        age = (now_utc - _parse(when)).total_seconds() / 3600.0
+    except (TypeError, ValueError):
+        age = None
+    if age is None or age > CME_STATUS_MAX_AGE_H:
+        alerts["cme_options:silence"] = (
+            "cme_options: sin estado nuevo desde %s (límite %.0f h): el workflow no corre o no llega a escribir"
+            % (when or "—", CME_STATUS_MAX_AGE_H))
+    if doc.get("status") != "OK":
+        alerts["cme_options:fail"] = "cme_options: run con fallo — %s" % (str(doc.get("reason") or "sin motivo")[:200])
+    info.append("cme_options: estado %s, sesión %s, escrito %s" % (doc.get("status"), doc.get("session"), when))
+
+
 def main(argv=None, now=time.time, root=ROOT):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -414,12 +460,15 @@ def main(argv=None, now=time.time, root=ROOT):
     now_utc = datetime.fromtimestamp(now_ts, tz=timezone.utc)
     alerts, info, info_keys, retired = {}, [], set(), set()
     book = notify.AlertBook(os.path.join(root, "data", "_ingest", "watch_state.json"))
-    for fn in (check_executors, check_actions, check_credentials):
+    for fn in (check_executors, check_actions, check_credentials, check_private_status):
         try:
             if fn is check_actions:
                 fn(root, now_utc, alerts, info, prev_active=book.state.get("active", {}), retired_keys=retired)
             elif fn is check_executors:
                 fn(root, now_utc, alerts, info)
+            elif fn is check_private_status:
+                fn(os.environ.get("G8_PRIVATE_CLONE", ""), now_utc, alerts, info,
+                   prev_active=book.state.get("active", {}))
             else:
                 fn(root, now_utc, alerts, info_keys)
         except Exception as e:                                      # Ley 2: el vigilante nunca calla un fallo propio

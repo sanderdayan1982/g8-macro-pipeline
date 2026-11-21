@@ -77,6 +77,7 @@ jobs:
         if: always()
         continue-on-error: true
         env:
+          G8_PRIVATE_CLONE: ${{ runner.temp }}/g8data   # t299u: estado de cme_options (repo privado)
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/ingest_watch.py --result "$RUNNER_TEMP/ingest_watch.json"
