@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-21T06:40:35.217704Z",
+ "generated_utc": "2026-11-21T07:08:04.729089Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -106,9 +106,24 @@
    "age_business_days": 6,
    "publication_frequency": "daily",
    "slow_fallback": false
+  },
+  {
+   "file": "OPTIONS_SURFACE.json",
+   "state": "NOT_MONITORED",
+   "have_max": "2026-11-19",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "EXCLUIDO",
+   "reason": "Inconsistencia en opciones: Incomplete canonical session",
+   "cause": null,
+   "flags": [],
+   "status": "ERROR",
+   "age_business_days": 1,
+   "publication_frequency": "excluded",
+   "slow_fallback": false
   }
  ],
- "unknown_count": 1,
+ "unknown_count": 0,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -1809,10 +1824,10 @@
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación incompleta.",
+   "reason": "Inconsistencia en opciones: Incomplete canonical session",
    "cause": null,
    "flags": [],
-   "status": "UNKNOWN",
+   "status": "ERROR",
    "age_business_days": 1,
    "publication_frequency": "excluded",
    "slow_fallback": false
@@ -1946,7 +1961,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-21T03:31:10Z",
+   "have_max": "2026-11-21T07:08:04Z",
    "flags": []
   },
   {
