@@ -320,14 +320,27 @@ def _log(rec, log_path, env):
         fh.write(json.dumps(rec, sort_keys=True, ensure_ascii=False) + "\n")
 
 
-def ledger(job, env=None, root=ROOT, now=time.time):
-    """Vuelca el registro de pasos a data/_ingest/latest/actions__job_<job>.json y al resumen del job."""
+def ledger(job, env=None, root=ROOT, now=time.time, only=None):
+    """Vuelca el registro de pasos a data/_ingest/latest/actions__job_<job>.json y al resumen del job.
+
+    t296u: con `only` (nombres de paso) el registro lleva solo esos pasos. Un paso pedido que no dejó
+    línea en G8_STEP_LOG (no llegó a correr o lo cortó el límite de GitHub) entra como FAILED sin código,
+    para que ingest_watch lo vea como incidencia y no como silencio.
+    """
     env = os.environ if env is None else env
     path = env.get("G8_STEP_LOG")
     steps = []
     if path and os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
             steps = [json.loads(x) for x in fh if x.strip()]
+    if only:
+        wanted = list(only)
+        steps = [s for s in steps if s.get("name") in wanted]
+        seen = {s.get("name") for s in steps}
+        for name in wanted:
+            if name not in seen:
+                steps.append({"name": name, "status": FAILED, "rc": None, "secs": None, "allowed_s": None,
+                              "detail": "sin registro del paso en G8_STEP_LOG"})
     bad = [s for s in steps if s["status"] in (TIMEOUT, SKIPPED)]
     restored = [dict(r, step=s["name"]) for s in steps for r in s.get("restored", [])]
     unrestorable = [dict(r, step=s["name"]) for s in steps for r in s.get("unrestorable", [])]
@@ -366,9 +379,10 @@ def main(argv=None):
     ap.add_argument("--min", type=float, default=20)
     ap.add_argument("--phase", choices=("fetch", "post"), default="fetch")
     ap.add_argument("--ledger")
+    ap.add_argument("--only", action="append", help="con --ledger: solo estos pasos (t296u)")
     a = ap.parse_args(argv)
     if a.ledger:
-        return ledger(a.ledger)
+        return ledger(a.ledger, only=a.only)
     if not a.name or not cmd:
         ap.error("--name y un comando tras -- son obligatorios")
     return run_step(a.name, cmd, a.cap, a.min, a.phase)
