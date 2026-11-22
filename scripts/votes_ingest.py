@@ -196,6 +196,11 @@ HAS_STATUS = {
     "XCCY_G8", "PSI_G8", "CURVA_G8", "RTF10_G8", "POL_G8",
     "IYDT_2Y", "IYDT_10Y", "FFVA_G8", "TOT_G8", "EQF_G8", "POS_G8",
 }
+# Fila USD del FFVA (ICEUS:DX1!, fuera de Databento GLBX.MDP3 y de las pruebas de volumen CME).
+# El cálculo vivo del FFVA sigue en Pine (9-FFVA); no cambia el voto en vivo.
+FFVA_ROW_SOURCE_LABELS = {
+    "USD": "FUENTE=ICE · fuera de las pruebas de volumen",
+}
 
 # Cabecera publicada antes de E7. Solo esta se migra; otras cabeceras de
 # prueba o intermedias no se tocan, para no alterar tests ya existentes.
@@ -764,6 +769,7 @@ def _vote(name, ccy, kv, estado, status, bar_stale):
             return "NA", stale
         return IYDT_BANDS.get(estado, "NA"), False
     if name == "FFVA_G8":
+        # Para USD (ICEUS:DX1!): ver FFVA_ROW_SOURCE_LABELS["USD"]; no altera el voto en vivo.
         roll = kv.get("%s_ROLL" % ccy, "")
         if stale or proxy or roll == "YES" or estado == "STALE":
             return "NA", stale or estado == "STALE"
