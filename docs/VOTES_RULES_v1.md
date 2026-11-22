@@ -5,6 +5,8 @@ Aprobado por Sander (FAMILIAS-00, 14-nov-2026 00:18 WAT; fallo de Gmail, 14-nov-
 
 `rule_version=2` (orden expresa de Sander 14-nov-2026 18:23 WAT, t158u; voto, 18:44 WAT, t159u): `FRESH_PROXY` cuenta como fresco solo para la marca `stale` (`stale=false`). El `voto` de `IYDT_2Y`, `IYDT_10Y`, `FFVA_G8` y `POL_G8` sigue siendo `NA`, como antes. El `estado` conserva su etiqueta. `2` va solo en las filas nuevas.
 
+`rule_version=3` (orden expresa de Sander 22-nov-2026, t318u): `POS_EXTREME` = +1 y `NEG_EXTREME` = −1 en `IYDT_2Y` e `IYDT_10Y` cuando `STATUS=FRESH`. Cualquier otra banda no listada sigue en NA. `3` va solo en las filas nuevas; las filas ya escritas con `rule_version` 1 o 2 no se reescriben.
+
 `id_correo` (orden de Sander 14-nov-2026 18:44 WAT, t160u) es `sha256` del id de Gmail en hexadecimal, los primeros 16 caracteres. Nunca el id en claro. Varios ids van unidos por `;`, cada uno hasheado y la lista ordenada. La deduplicación y la clave de solo añadir siguen siendo `(fecha_cierre, script, ccy)` y `MESSAGE_ID` del cuerpo; no usan el id de Gmail.
 
 ## Qué se escribe
@@ -83,7 +85,7 @@ Divisas de los módulos de correo: USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF. Edici
 
 | script | voto | estado | valor |
 |---|---|---|---|
-| IYDT_2Y, IYDT_10Y | `POS_STRONG` +1; `NEG_STRONG` −1; `POS_BELOW_STRONG` y `NEG_BELOW_STRONG` 0; cualquier otra banda, incluida una `EXTREME`, NA. No hay banda EXTREME en el código ni en el cierre del 12-nov: no se trata como STRONG. `STATUS=FRESH` aplica la banda. `STATUS=FRESH_PROXY` → voto NA y `stale=false`. Cualquier otro `STATUS` → `stale=true` y voto NA. | la banda | el score |
+| IYDT_2Y, IYDT_10Y | `POS_STRONG` y `POS_EXTREME` +1; `NEG_STRONG` y `NEG_EXTREME` −1; `POS_BELOW_STRONG` y `NEG_BELOW_STRONG` 0; cualquier otra banda, NA. Desde el 22-nov-2026 (`rule_version=3`, orden t318u) las bandas EXTREME sí votan (±1). El cierre del 12-nov no las traía; las filas ya escritas no se reescriben. `STATUS=FRESH` aplica la banda. `STATUS=FRESH_PROXY` → voto NA y `stale=false`. Cualquier otro `STATUS` → `stale=true` y voto NA. | la banda | el score |
 | FFVA_G8 | `ACCUM` y `SC` +1; `DIST` y `LIQ` −1; `FLAT_OI` 0; `ROLL=YES`, estado/status `STALE`, o `STATUS=FRESH_PROXY` → NA (`FRESH_PROXY` deja `stale=false`). | el régimen crudo | `DIRECTIONAL_INTENSITY`, o un número tipo `Z_FLOW` si la intensidad no viene |
 | POL_G8 | `REPRICE_COUNTED` `FULL` o `PATH` con `NOW_DIRECTION` `HAWKISH` +1, `DOVISH` −1; `NONE` → 0. `CLASS_ELIGIBLE` distinto de `YES`, o `STATUS=FRESH_PROXY`, → NA (`FRESH_PROXY` deja `stale=false`). | `STATE`, o `NOW_DIRECTION` si `STATE` viene vacío | `HAWK_SCORE` |
 | POS_G8 | NA | `LF_STATE` | `LF_Z` |

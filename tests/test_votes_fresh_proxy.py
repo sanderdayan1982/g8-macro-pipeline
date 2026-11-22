@@ -99,7 +99,7 @@ class FreshProxy(unittest.TestCase):
         row = usd_row("FRESH_PROXY")
         self.assertEqual(row["stale"], "false")
         self.assertEqual(row["voto"], "NA")
-        self.assertEqual(row["rule_version"], "2")
+        self.assertEqual(row["rule_version"], "3")
         self.assertEqual(row["estado"], "CROWD SHORT")
         self.assertNotEqual(row["estado"], "FRESH")
 
@@ -108,7 +108,7 @@ class FreshProxy(unittest.TestCase):
         self.assertEqual(row["stale"], "true")
         self.assertEqual(row["voto"], "NA")
         self.assertEqual(row["estado"], "CROWD SHORT")
-        self.assertEqual(row["rule_version"], "2")
+        self.assertEqual(row["rule_version"], "3")
 
     def test_directional_fresh_proxy_keeps_vote_na_and_stale_false(self):
         cases = (
@@ -130,7 +130,7 @@ class FreshProxy(unittest.TestCase):
             proxy = one(name, fields)
             self.assertEqual(proxy["stale"], "false", name)
             self.assertEqual(proxy["voto"], "NA", name)
-            self.assertEqual(proxy["rule_version"], "2", name)
+            self.assertEqual(proxy["rule_version"], "3", name)
             fresh_fields = dict(fields)
             for key in list(fresh_fields):
                 if key.endswith("_STATUS"):
