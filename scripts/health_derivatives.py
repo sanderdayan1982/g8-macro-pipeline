@@ -29,8 +29,16 @@ def cash(root, now, item, read_json):
         while not SC.is_bd(cals,'NZ',expected_book): expected_book-=timedelta(days=1)
         book_date=_parse_date(fetch['files']['NZD_BOND_10Y.csv']['max_date'])
         finished=timestamp(fetch['finished_utc'])
-        dates=obs_dates_from_bytes((root/'data/NZD_CASH_ON.csv').read_bytes())
-        latest=max(dates) if dates else None
+        raw=(root/'data/NZD_CASH_ON.csv').read_bytes()
+        dates=obs_dates_from_bytes(raw)
+        official=dates
+        try:
+            import feed_proxy as FP
+            official=FP.official_dates_from_bytes(raw) or dates
+            all_dates=FP.all_dates_from_bytes(raw) or dates
+        except Exception:
+            all_dates=dates
+        latest=max(official) if official else None
         valid=(fetch['rc']==0 and not fetch.get('errors') and file['status']=='WRITTEN'
                and file.get('kept_from_previous',0)==0 and publication['download_kind']=='FRESH'
                and publication['status'] in ('PUBLISH','PUBLISHED','NOOP') and not publication.get('held')
@@ -40,8 +48,14 @@ def cash(root, now, item, read_json):
                and book_date is not None and expected_book<=book_date<=now.date())
         item['verified_download_utc']=fetch['finished_utc']
         if valid:
-            item.update(status='CURRENT',state='VERIFIED_SPARSE',have_max=latest.isoformat(),
-                        reason='Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.')
+            has_proxy=bool(all_dates) and max(all_dates)!=latest
+            have=max(all_dates) if has_proxy else latest
+            if has_proxy:
+                item.update(status='CURRENT',state='PROXY',have_max=have.isoformat(),
+                            reason='Última observación oficial B2 en %s, contrastada con descarga y publicación. Huecos posteriores cubiertos con PROXY (NZD_OCR); un dato PROXY no vota y no se hace pasar por overnight oficial.' % latest.isoformat())
+            else:
+                item.update(status='CURRENT',state='VERIFIED_SPARSE',have_max=latest.isoformat(),
+                            reason='Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.')
         else:
             item.update(status='UNKNOWN',reason='Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.')
     except (KeyError,ValueError,TypeError,OSError):

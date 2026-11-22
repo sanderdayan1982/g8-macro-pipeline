@@ -451,6 +451,16 @@ def check_private_status(clone, now_utc, alerts, info, prev_active=None):
     info.append("cme_options: estado %s, sesión %s, escrito %s" % (doc.get("status"), doc.get("session"), when))
 
 
+
+def check_feed_proxy(root, now_utc, alerts, info):
+    """Regla de feed muerto (t323u): avisos 2/3 d.h. y recuperación. No escribe CSV."""
+    try:
+        import feed_proxy as FP
+        FP.check_for_ingest_watch(root, now_utc, alerts, info)
+    except Exception as e:
+        alerts["proxy:error"] = "feed_proxy: error al revisar feeds: %s" % e
+
+
 def main(argv=None, now=time.time, root=ROOT):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -460,7 +470,7 @@ def main(argv=None, now=time.time, root=ROOT):
     now_utc = datetime.fromtimestamp(now_ts, tz=timezone.utc)
     alerts, info, info_keys, retired = {}, [], set(), set()
     book = notify.AlertBook(os.path.join(root, "data", "_ingest", "watch_state.json"))
-    for fn in (check_executors, check_actions, check_credentials, check_private_status):
+    for fn in (check_executors, check_actions, check_credentials, check_private_status, check_feed_proxy):
         try:
             if fn is check_actions:
                 fn(root, now_utc, alerts, info, prev_active=book.state.get("active", {}), retired_keys=retired)
@@ -469,6 +479,8 @@ def main(argv=None, now=time.time, root=ROOT):
             elif fn is check_private_status:
                 fn(os.environ.get("G8_PRIVATE_CLONE", ""), now_utc, alerts, info,
                    prev_active=book.state.get("active", {}))
+            elif fn is check_feed_proxy:
+                fn(root, now_utc, alerts, info)
             else:
                 fn(root, now_utc, alerts, info_keys)
         except Exception as e:                                      # Ley 2: el vigilante nunca calla un fallo propio
