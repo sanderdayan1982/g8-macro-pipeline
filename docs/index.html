@@ -1172,7 +1172,7 @@ var FEED_REGISTRY = {
     /* ── 01 attribution — repo real yields (linkers) ───────────────────── */
     USD_RY: repo('RY_G8_USD.csv', 'USD Nominal/Real/BE 10Y (DGS10 · DFII10 TIPS · T10YIE — FRED via pipeline)', 'daily', 4, '01'),
     GBP_RY: repo('RY_G8_GBP.csv', 'GBP Real/BE 10Y (ILG, BoE)', 'daily', 4, '01'),
-    CAD_RY: repo('RY_G8_CAD.csv', 'CAD Real/BE 10Y (RRB, BoC)', 'daily', 4, '01'),
+    CAD_RY: repo('RY_G8_CAD.csv', 'CAD Real/BE largo (RRB 2050, BoC)', 'daily', 4, '01'),
     /* iAGS (indexed Australian Government Securities) publish on a less
        regular cadence than TIPS/ILG/RRB, so a 4-day budget flips this lone
        feed to false DEGRADED/STALE recurrently. 8 bd is a realistic linker
@@ -1450,7 +1450,7 @@ var REPO_ACM = { USD: 1, EUR: 1, JPY: 1, GBP: 1, CAD: 1, AUD: 1, CHF: 1 };
 var RY_QUALITY = {
     USD: { tier: 1, instr: 'TIPS',      hz: '10Y' },
     GBP: { tier: 1, instr: 'ILG',       hz: '10Y' },
-    CAD: { tier: 1, instr: 'RRB',       hz: '10Y' },
+    CAD: { tier: 1, instr: 'RRB 2050',  hz: 'largo' },
     AUD: { tier: 1, instr: 'iAGS',      hz: '10Y' },
     EUR: { tier: 2, instr: 'DE-interp', hz: '10Y' },
     JPY: { tier: 2, instr: 'JGBi OTR',  hz: '10Y' },
