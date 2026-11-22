@@ -109,8 +109,9 @@ class RegistryLocks(unittest.TestCase):
         import csv
         with open(ROOT / "sources" / "registry.csv", encoding="utf-8") as fh:
             rows = {r["feed_id"]: r for r in csv.DictReader(fh)}
-        self.assertEqual(rows["SWPT"]["status"], "NOT_INGESTED")
-        self.assertEqual(rows["USD_TP_MIRROR"]["status"], "EXISTS_BROWSER")
+        # t333u, orden expresa Sander 22-nov: se levanta el candado temporal de t331u B4.
+        self.assertEqual(rows["SWPT"]["status"], "EXISTS_REPO")
+        self.assertEqual(rows["USD_TP_MIRROR"]["status"], "RETIRED")
         self.assertIn("fetch_swpt.py", rows["SWPT"]["notes"])
         self.assertIn("RETIRADO t331u B4", rows["USD_TP_MIRROR"]["notes"])
 
