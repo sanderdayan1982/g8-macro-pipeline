@@ -1,0 +1,44 @@
+# t339u: PR listo para OK de Sander. Enganche de fetch_sovereign_10y_daily.py
+# para poder lanzar a mano el primer dato DE/ES 10Y. Sin cron: no se inventa
+# cadencia (DE ~12:29 CET T+0; ES T+1 a T+2, sin hora intradía oficial).
+# Idempotente: sin cambio en los tres CSV no hay commit. Spread solo misma sesión.
+# No es un turno del dispatcher (candado de 49 intacto).
+name: DE/ES 10Y daily
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sovereign-10y-daily
+  cancel-in-progress: false
+
+jobs:
+  sovereign_10y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch DE par and ES 10Y daily
+        run: python3 scripts/fetch_sovereign_10y_daily.py --data-dir data
+
+      - name: Commit DE/ES 10Y daily files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/DE_10Y_PAR_DAILY.csv data/ES_10Y_DAILY.csv data/ES_DE_10Y_SPREAD_DAILY.csv
+          if git diff --cached --quiet; then
+            echo "DE/ES 10Y sin cambios."
+          else
+            git commit -m "data: DE/ES 10Y daily $(date -u +%F) [skip netlify]"
+            bash scripts/tools/git_push_retry.sh 5
+          fi
