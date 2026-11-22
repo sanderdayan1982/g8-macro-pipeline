@@ -2565,7 +2565,7 @@ function row(p, s, pol) {
         ? '<span class="attr-val" title="diferencial overnight−OCR en blanco mientras el overnight es PROXY">NA</span>'
         : '<span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh;
     var badgeCell = isProxy
-        ? '<span class="fls-badge" style="background:#13202e;color:#9ba3b4">NA</span>'
+        ? '<span class="fls-badge" style="background:#13202e;color:#9ba3b4">SIN DATO</span>'
         : badge;
     var dateCell = isProxy && lastMeta.proxyDate
         ? String(lastMeta.proxyDate)

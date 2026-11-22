@@ -21,7 +21,7 @@ import unittest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # re-congelado SALUD-1: orden t186u (Sander, 15-nov-2026) — cme_options_collector.py y cme_options.yml
 FROZEN = [('scripts/cme_options_collector.py', 'ba50e4b30dde2f3cf80acccd32a82d3c1ceea7e80730afb7e59b4dbb4b6956d2'), ('scripts/build_options_summary.py', 'f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019'), ('.github/workflows/cme_options.yml', '1d249e64146cdc7defa6cd0d8e07fa131fbd49326c1fe632932b3f0501587696'),  # orden Sander 18-nov t254u
-          ('scripts/dashboard_alerts.py', '80bc278923f424fbefc3476b38c2e8f298ac1c823e99bd7c9dbf587ac7a55b12'),  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
+          ('scripts/dashboard_alerts.py', '5b2ff39aec056cb0345dfe4de4123f71d196b492e0662a89145ba30445822c99'),  # t332u, orden expresa Sander 22-nov — re-congelado PROXY→NA; era SALUD-TESTS-01 / CIRO #4 P2 (04-nov)
           ('scripts/s01b.py', '0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5'), ('scripts/usd_factor.py', 'd96bbaa366637a5d1238eac2af1e03096561ff63d92fc3bc246919bad804d3d3'), ('scripts/book_risk.py', '78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50')]
 
 
