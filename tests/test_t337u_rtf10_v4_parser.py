@@ -304,7 +304,8 @@ class AlertVersion4Accepted(unittest.TestCase):
             row = rows[("RTF10_G8", ccy)]
             self.assertEqual(row["version"], "4.0.0")
             self.assertEqual(row["snapshot_id"], snap)
-            self.assertEqual(row["estado"], "NA")
+            # t339u, orden expresa Sander 22-nov: estado de salud, no se deriva de READING
+            self.assertEqual(row["estado"], "OK")
             self.assertEqual(row["voto"], "NA")
             self.assertEqual(row["valor"], "")
             self.assertLessEqual(int(row["parts_expected"]), 14)
@@ -323,7 +324,8 @@ class AlertVersion4Accepted(unittest.TestCase):
         self.assertEqual(merged.get("EUR_DRIVER"), "TP_FISCAL")
         rows = index(V.rows_from_messages(mails, SESSION, True))
         eur = rows[("RTF10_G8", "EUR")]
-        self.assertEqual(eur["estado"], "NA")
+        # t339u, orden expresa Sander 22-nov: estado de salud, no se deriva de READING
+        self.assertEqual(eur["estado"], "OK")
         self.assertEqual(eur["voto"], "NA")
         self.assertNotEqual(eur["estado"], "TP_FISCAL")
         self.assertNotEqual(eur["estado"], merged["EUR_READING"])
@@ -343,7 +345,8 @@ class AlertVersion4Accepted(unittest.TestCase):
         for ccy in CCYS:
             row = rows[("RTF10_G8", ccy)]
             self.assertEqual(row["voto"], "NA")
-            self.assertEqual(row["estado"], "NA")
+            # t339u, orden expresa Sander 22-nov: estado de salud, no se deriva de READING
+            self.assertEqual(row["estado"], "OK")
             # estado es NA fijo, no un mapeo de READING (que a veces también es NA).
             if merged["%s_READING" % ccy] not in ("NA", "NA_FEED", "—"):
                 self.assertNotEqual(row["estado"], merged["%s_READING" % ccy])
