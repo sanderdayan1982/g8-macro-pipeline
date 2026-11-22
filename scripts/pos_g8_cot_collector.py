@@ -753,7 +753,7 @@ def main(argv=None):
         "pine_ref": PINE_REF,
         "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "source": "CFTC SODA (gpe5-46if TFF, 72hh-3qpy Disaggregated), Futures-Only",
-        "report_date": report_date,
+        "report_date": report_date,  # CFTC as-of / position date (Tuesday), not the Friday publication
         "freshness": {"status": status, "age_days": age, "stale_after_days": STALE_DAYS},
         "thresholds": THR,
         "am_thresholds_shadow": AM_THR_SHADOW,
@@ -762,6 +762,9 @@ def main(argv=None):
         "usd": usd_row,
         "metals": metal_rows,
     }
+    # t331u B4: additive fields only. Schema and existing keys stay 1.2.0.
+    import cftc_cadence as _cadence
+    doc.update(_cadence.document_fields(report_date))
 
     try:
         wrote = commit_cot(out_path, doc)
