@@ -17,7 +17,7 @@ XAG_MFV,MFV_G8_XAG.csv,weekly,CME,,PUBLIC,EXISTS_REPO,repo,,,,Salida semanal del
 EUR_NOM_ECB,EUR_BILL_10Y.csv,daily,EU,1,PUBLIC,EXISTS_REPO,ECB Data Portal API (fetch_eur_bills.py),,,,Punto de curva oficial. Un tenor vecino no es equivalente (cambiaría la metodología). Sin sustituto de concepto distinto.,none,
 CHF_NOM_SNB,CHF_NOM_10Y.csv,daily,CH,1,PUBLIC,EXISTS_REPO,SNB data portal + www.snb.ch RSS interestRates (fetch_chf_snb.py on Mac),,,,Punto de curva oficial. Un tenor vecino no es equivalente (cambiaría la metodología). Sin sustituto de concepto distinto.,none,
 NZD_NOM_RBNZ,NZD_BOND_10Y.csv,daily,NZ,1,PUBLIC,EXISTS_REPO,RBNZ B2 hb2-daily-close.xlsx (fetch_nzd_b2.py on Mac + GitHub API push),,,,Punto de curva oficial. Un tenor vecino no es equivalente (cambiaría la metodología). Sin sustituto de concepto distinto.,none,
-USD_TP_MIRROR,ACM_TP_10Y.csv,weekly,US,,PUBLIC,EXISTS_BROWSER,eco3min.fr,,,,Sin sustituto de concepto distinto. El registry ya contempla un fallback de acceso a la misma serie (NY Fed term-premia-tabs xlsx); eso no es un PROXY.,none,
+USD_TP_MIRROR,ACM_TP_10Y.csv,weekly,US,,PUBLIC,RETIRED,eco3min.fr,,,,Feed retirado; no aplica sustituto. El ACM diario de la NY Fed ya está en el repo.,retired,
 USD_NOM_FRED,,daily,US,,PUBLIC,RETIRED,FRED,,,,Feed retirado; no aplica sustituto.,retired,
 USD_REAL_FRED,,daily,US,,PUBLIC,RETIRED,FRED,,,,Feed retirado; no aplica sustituto.,retired,
 USD_BE_FRED,,daily,US,,PUBLIC,RETIRED,FRED,,,,Feed retirado; no aplica sustituto.,retired,
@@ -107,7 +107,7 @@ MOVE_SYNTH,,daily,CME,,DATABENTO,NEW_PORT,own CME options collector (OZN),,,,"Da
 AUDJPY,,daily,EU,,PUBLIC,NEW_PORT,ECB ref cross,,,,NEW_PORT: aún no hay fichero en el repo público. Sin sustituto que aplicar hasta que se ingiera la serie primaria.,not_ingested,
 XAUXAG,,daily,CME,,DATABENTO,NEW_PORT,Databento GC/SI or LBMA,,,,"Dato con licencia (CME/ICE/Databento): no se propone sustituto público. El fallback de acceso, si existe, sigue en el registry y no se publica en el repo público.",licensed_no_public,
 RRPONTSYD,,daily,US,,PUBLIC,NOT_INGESTED,FRED,,,,Aún no se ingiere; no hay serie en el repo sobre la que aplicar un proxy.,not_ingested,
-SWPT,,weekly,US,,PUBLIC,NOT_INGESTED,FRED,,,,Aún no se ingiere; no hay serie en el repo sobre la que aplicar un proxy.,not_ingested,
+SWPT,SWPT.csv,weekly,US,,PUBLIC,EXISTS_REPO,FRED,,,,Serie oficial FRED/H.4.1 (SWPT). Sin sustituto de concepto distinto.,none,
 CFTC_TFF,pos_g8_cot.json,weekly,US,,PUBLIC,EXISTS_REPO,CFTC,,,,Informe CFTC (semanal). Sin sustituto equivalente.,none,
 NZD_CASH_ON,NZD_CASH_ON.csv,daily,NZ,2,PUBLIC,EXISTS_REPO,RBNZ B2 INM.DN.NZK (Mac local fetch),NZD_OCR,NZD_OCR.csv,RBNZ OCR vigente (BIS/WS_CBPOL y CSV del repo),"Autorizado por Sander (t323u) como proxy TEMPORAL del overnight interbancario (INM.DN.NZK) cuando B2 deja la columna en «-». No es el mismo concepto: el suelo NZD = cash − OCR queda ≈0 mientras el proxy esté activo. Un dato PROXY no vota. Cuando B2 vuelva a imprimir el overnight, recuperación automática a la fuente primaria.",active,Único sustituto activo (t323u).
 NZD_BILL_90D,NZD_BILL_90D.csv,daily,NZ,1,PUBLIC,EXISTS_REPO,RBNZ B2 INM.DB03.NZZV (Mac local fetch),,,,Punto de curva oficial. Un tenor vecino no es equivalente (cambiaría la metodología). Sin sustituto de concepto distinto.,none,
@@ -124,3 +124,7 @@ AUD_NOM_2Y,AUD_NOM_2Y.csv,weekly,AU,,PUBLIC,EXISTS_REPO,RBA F2 daily table (FCMY
 CAD_NOM_2Y,CAD_NOM_2Y.csv,daily,CA,1,PUBLIC,EXISTS_REPO,BoC Valet BD.CDN.2YR.DQ.YLD via acm_g8.py v2.6,,,,Punto de curva oficial. Un tenor vecino no es equivalente (cambiaría la metodología). Sin sustituto de concepto distinto.,none,
 AUD_NOWCAST,AUD_NOWCAST.csv,daily,AU,,PUBLIC,DERIVED_EST,modelo aud_nowcast.py (acta P-8): último dato RBA F2 + variaciones estimadas con RBA F1 6M y FRED DGS2/DGS10 del día anterior,,,,Ya es una estimación EST (acta P-8) entre publicaciones semanales de la RBA; no es un sustituto de otra serie y no se usa como proxy de feed muerto.,none,
 CHF_CPI_YOY,CHF_CPI_YOY.csv,monthly,CH,,PUBLIC,EXISTS_REPO,BFS LIK Indexierungstabelle cc-e-05.02.08 (dam-api.bfs.admin.ch; verificado 2026-10-06),,,,"IPC suizo mensual (BFS). El fallback del registry (cubo SNB) es otra vía de la misma estadística, no un concepto distinto.",none,
+CHF_SPOT_SNB1A,,daily,CH,,PUBLIC,NEW_PORT,SNB warehouse SNB1A.SNB.NSS.KZS.EID,,,,"NEW_PORT: rendeiduebd es respaldo y control de fin de mes, no un PROXY.",not_ingested,t333u / t331u B2
+DE10Y_PAR,,daily,EU,,PUBLIC,NEW_PORT,Bundesbank BBSIS R10XX ZAR,,,,"NEW_PORT: serie nueva diaria; la mensual IRS.M.DE se conserva para reconciliar, no es un PROXY.",not_ingested,t333u / t331u B3
+ES10Y_DAILY,,daily,EU,,PUBLIC,NEW_PORT,BdE D_G0B1F0ZP,,,,"NEW_PORT: serie nueva diaria; la mensual IRS.M.ES se conserva para reconciliar, no es un PROXY.",not_ingested,t333u / t331u B3
+ES_DE_10Y_SPREAD,,daily,EU,,PUBLIC,NEW_PORT,derived same-session,,,,NEW_PORT: derivado; si falta una pata queda en blanco.,not_ingested,t333u / t331u B3

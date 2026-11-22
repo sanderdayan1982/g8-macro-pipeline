@@ -27,7 +27,8 @@ class F1Config(unittest.TestCase):
     def test_every_registered_production_feed_has_exactly_one_rule(self):
         reg = rows("registry.csv")
         feeds = [r["feed_id"] for r in reg if r["status"].startswith("EXISTS") or r["status"] == "NOT_INGESTED"]
-        self.assertEqual(sorted(r["feed_id"] for r in reg if r["status"] == "NOT_INGESTED"), ["RRPONTSYD", "SWPT"])
+        # t333u, orden expresa Sander 22-nov: SWPT pasa a EXISTS_REPO; solo queda RRPONTSYD sin ingestión.
+        self.assertEqual(sorted(r["feed_id"] for r in reg if r["status"] == "NOT_INGESTED"), ["RRPONTSYD"])
         seen = {}
         for r in RULES:
             for f in filter(None, r["feeds"].split(";")):
@@ -35,7 +36,9 @@ class F1Config(unittest.TestCase):
         self.assertEqual(sorted(set(feeds) - set(seen)), [], "feeds sin regla")
         self.assertEqual({f: v for f, v in seen.items() if len(v) > 1}, {}, "feed en varias reglas")
         self.assertEqual(sorted(set(seen) - set(feeds)), [], "regla con feed inexistente")
-        self.assertEqual(len(feeds), 55)                        # 52 feeds (P-10: + CHF_CPI_YOY) + CFTC_TFF (alias) + RRPONTSYD/SWPT (sin ingestión)
+        # t333u, orden expresa Sander 22-nov: se retira USD_TP_MIRROR (ya no EXISTS_BROWSER).
+        # 52 EXISTS_REPO previos + SWPT + RRPONTSYD = 54 (las series nuevas B2/B3 entran como NEW_PORT y no cuentan aquí).
+        self.assertEqual(len(feeds), 54)
 
     def test_every_data_file_is_covered(self):
         files = {os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}

@@ -35,7 +35,8 @@ class FeedProxyUnit(unittest.TestCase):
 
     def test_substitutes_table_has_all_registry_feeds_and_one_active(self):
         subs = FP.load_substitutes(ROOT)
-        self.assertEqual(len(subs), 125)
+        # t333u, orden expresa Sander 22-nov: +CHF_SPOT_SNB1A, DE10Y_PAR, ES10Y_DAILY, ES_DE_10Y_SPREAD (125+4=129).
+        self.assertEqual(len(subs), 129)
         active = [s for s in subs if s.approval_status == "active"]
         self.assertEqual([s.feed_id for s in active], ["NZD_CASH_ON"])
         # ninguno propone un sustituto público para un feed con licencia
