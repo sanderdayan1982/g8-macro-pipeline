@@ -51,16 +51,22 @@ class NewFreshnessRows(unittest.TestCase):
         self.assertIn("ES_10Y_DAILY.csv", outs["ES_DE_10Y_SPREAD_DAILY.csv"]["inputs"])
 
     def test_existing_rules_unchanged_versus_main(self):
-        prefix = _prefix_without_new("freshness_rules.csv", set(NEW))
+        # t336u, orden expresa Sander 22-nov: el candado ignora la fila nueva SWPT y restaura
+        # SWPT en los feeds de NOT_INGESTED; el resto de reglas no se toca.
+        prefix = _prefix_without_new("freshness_rules.csv", set(NEW) | {"SWPT"})
+        prefix = prefix.replace(b"NOT_INGESTED,RRPONTSYD,,", b"NOT_INGESTED,RRPONTSYD;SWPT,,", 1)
         self.assertEqual(hashlib.sha256(prefix).hexdigest(), MAIN_RULES_SHA256)
-        pfx = _prefix_without_new("freshness_params.csv", set(NEW))
+        pfx = _prefix_without_new("freshness_params.csv", set(NEW) | {"SWPT"})
         self.assertEqual(hashlib.sha256(pfx).hexdigest(), MAIN_PARAMS_SHA256)
 
-    def test_swpt_still_only_on_existing_not_ingested_rule(self):
-        rules = _rows("freshness_rules.csv")
-        holding = [r["rule_id"] for r in rules if "SWPT" in (r.get("feeds") or "").split(";")]
-        self.assertEqual(holding, ["NOT_INGESTED"])
-        self.assertFalse(any(r["rule_id"] == "SWPT" for r in rules))
+    def test_swpt_has_weekly_rule_and_left_not_ingested(self):
+        # t336u, orden expresa Sander 22-nov: SWPT ya no vive en NOT_INGESTED; regla semanal propia.
+        rules = {r["rule_id"]: r for r in _rows("freshness_rules.csv")}
+        holding = [r["rule_id"] for r in _rows("freshness_rules.csv") if "SWPT" in (r.get("feeds") or "").split(";")]
+        self.assertEqual(holding, ["SWPT"])
+        self.assertEqual(rules["SWPT"]["frequency"], "weekly:THU")
+        self.assertNotIn("SWPT", (rules["NOT_INGESTED"].get("feeds") or "").split(";"))
+        self.assertIn("RRPONTSYD", (rules["NOT_INGESTED"].get("feeds") or "").split(";"))
 
     def test_cad_ry_rule_not_touched(self):
         prefix = _prefix_without_new("freshness_rules.csv", set(NEW))

@@ -901,8 +901,8 @@ class Mapping(unittest.TestCase):
                  "ACM_G8_NZD_phi_shadow.json", "CB_EVENT_48H_shadow.json", "CME_OPTIONS_C1_shadow.json", "CME_FXVOL_shadow.json",
                  "CHF_NOWCAST_shadow.json", "CHF_SPOT_2Y_daily_shadow.csv", "CHF_SPOT_5Y_daily_shadow.csv",
                  "S01B_shadow_a3.json",
-                 "argos_rates.json",  # FLUJOS-01 Sander 12-nov-2026: derivado del render, sin regla de frescura nueva
-                 "SWPT.csv"}  # t334u, orden expresa Sander 22-nov: SWPT se ingiere, pero su regla de calendario no se puede añadir sin sacar SWPT de la regla existente NOT_INGESTED
+                 "argos_rates.json"}  # FLUJOS-01 Sander 12-nov-2026: derivado del render, sin regla de frescura nueva
+        # t336u, orden expresa Sander 22-nov: SWPT.csv sale del extra; ya tiene regla semanal propia
         self.assertEqual(sorted(files - set(OUT) - extra), [])
 
     def test_registry_feeds_map_to_outputs(self):
@@ -1022,6 +1022,47 @@ class Report(unittest.TestCase):
         for f in (".github/workflows/daily_update.yml", ".github/workflows/cme_options.yml"):
             with open(os.path.join(ROOT, f), encoding="utf-8") as fh:
                 self.assertNotIn("freshness_report", fh.read(), f)       # FINAL y opciones sin cambios
+
+
+# ── t336u · SWPT semanal oficial (jueves 16:30 ET, dato del miércoles) ──────────────────────────────────────────
+class SwptWeeklyT336u(unittest.TestCase):
+    # t336u, orden expresa Sander 22-nov: SWPT deja NOT_INGESTED y entra en regla weekly:THU / weekly_before:1.
+
+    def test_swpt_has_own_weekly_thursday_rule(self):
+        r, p = RULES["SWPT"], PARAMS["SWPT"]
+        self.assertEqual(r["frequency"], "weekly:THU")
+        self.assertEqual(r["pub_local"], "16:30")
+        self.assertEqual(r["timezone"], "America/New_York")
+        self.assertEqual(r["calendar"], "US")
+        self.assertEqual(p["model"], "weekly_before:1")
+        self.assertNotIn("SWPT", (RULES["NOT_INGESTED"].get("feeds") or "").split(";"))
+        self.assertEqual(OUT["SWPT.csv"]["rule_id"], "SWPT")
+
+    def test_thursday_publication_expects_wednesday_observation(self):
+        # 19-nov-2026 jueves hábil US: publicación 16:30 ET = 21:30Z; obs = mié 18-nov.
+        pubs = FR.publications(RULES["SWPT"], PARAMS["SWPT"], "US", "America/New_York", CALS, T("2026-11-19T22:45Z"))
+        d, due, _ = pubs[0]
+        self.assertEqual(d, date(2026, 11, 18))
+        self.assertEqual(due, datetime(2026, 11, 19, 21, 30, tzinfo=UTC))
+
+    def test_thanksgiving_moves_publication_to_next_us_business_day(self):
+        # jue 26-nov-2026 Thanksgiving: no hay publicación ese día; pasa al vie 27 16:30 ET.
+        # Obs = último hábil ≤ 25-nov (mié 25).
+        pubs = FR.publications(RULES["SWPT"], PARAMS["SWPT"], "US", "America/New_York", CALS, T("2026-11-27T23:00Z"))
+        d, due, _ = pubs[0]
+        self.assertEqual(due.astimezone(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M"), "2026-11-27 16:30")
+        self.assertEqual(d, date(2026, 11, 25))
+        dues = [x[1].astimezone(ZoneInfo("America/New_York")).date() for x in pubs]
+        self.assertNotIn(date(2026, 11, 26), dues)
+
+    def test_current_when_wednesday_obs_present_after_thursday_pub(self):
+        # AL DÍA CON LA FUENTE: con la obs del miércoles tras la hora oficial del jueves, estado CURRENT.
+        r = ev("SWPT.csv", T("2026-11-19T22:45Z"), ["2026-11-18"])
+        self.assertEqual(r["state"], "CURRENT")
+        r = ev("SWPT.csv", T("2026-11-19T22:45Z"), ["2026-11-11"])
+        self.assertIn(r["state"], FR.LATE_STATES)
+
+
 
 
 if __name__ == "__main__":
