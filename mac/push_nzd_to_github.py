@@ -66,8 +66,8 @@ FAMILIES = [
     ("NZ-B2", ["NZD_BILL_*.csv", "NZD_BOND_*.csv", "NZD_CASH_ON.csv", "NZD_IIB_*.csv"],   # nunca NZD_OCR (Actions)
      ["NZD_BILL_30D.csv", "NZD_BILL_60D.csv", "NZD_BILL_90D.csv", "NZD_BOND_1Y.csv", "NZD_BOND_2Y.csv",
       "NZD_BOND_5Y.csv", "NZD_BOND_10Y.csv", "NZD_CASH_ON.csv"], ["Date", "Value"], "nzd"),
-    ("CH-CURVA", ["CHF_SPOT_*.csv"],
-     ["CHF_SPOT_%dY.csv" % n for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30)], ["Date", "Value"], "chf"),
+    ("CH-CURVA", ["CHF_SPOT_%dY.csv" % n for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30)],
+     ["CHF_SPOT_%dY.csv" % n for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30)], ["Date", "Value"], "chf"),  # t334u: no incluir CHF_SPOT_*Y_DAILY.csv (SNB1A)
     ("CH-DIARIO", ["CHF_NOM_10Y.csv", "CHF_SARON.csv"], ["CHF_NOM_10Y.csv", "CHF_SARON.csv"],
      ["Date", "Value", "Source"], "chf"),
     ("JP-TONA", ["TONA.csv"], ["TONA.csv"], ["DATE", "OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"], "tona"),

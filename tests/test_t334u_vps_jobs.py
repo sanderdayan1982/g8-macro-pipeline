@@ -117,3 +117,55 @@ class UnitsAndNoDispatcher(unittest.TestCase):
             self.assertNotIn("dispatch_prod", text)
         t = Path(os.path.join(ROOT, "vps", "g8-snb-daily.timer")).read_text()
         self.assertIn("07:45:00", t)
+
+
+class ChCurvaGlobExcludesDaily(unittest.TestCase):
+    def test_ch_curva_patterns_do_not_match_snb1a_daily(self):
+        import glob as G
+        import sys
+        sys.path.insert(0, os.path.join(ROOT, "mac"))
+        import push_nzd_to_github as N
+        fam = next(x for x in N.FAMILIES if x[0] == "CH-CURVA")
+        tmp = tempfile.mkdtemp()
+        for name in ("CHF_SPOT_1Y.csv", "CHF_SPOT_10Y.csv", "CHF_SPOT_1Y_DAILY.csv", "CHF_SPOT_30Y_DAILY.csv"):
+            Path(os.path.join(tmp, name)).write_text("Date,Value\n")
+        cwd = os.getcwd()
+        try:
+            os.chdir(tmp)
+            matched = set()
+            for pat in fam[1]:
+                matched.update(os.path.basename(x) for x in G.glob(pat))
+        finally:
+            os.chdir(cwd)
+        self.assertIn("CHF_SPOT_1Y.csv", matched)
+        self.assertIn("CHF_SPOT_10Y.csv", matched)
+        self.assertNotIn("CHF_SPOT_1Y_DAILY.csv", matched)
+        self.assertNotIn("CHF_SPOT_30Y_DAILY.csv", matched)
+
+
+class TestMacfetchConservesProxyColumns(unittest.TestCase):
+    """t334u: al conservar fechas que la descarga no trae, no se pierde Status=PROXY."""
+
+    def test_conserved_proxy_rows_keep_status(self):
+        import tempfile
+        from g8common import macfetch
+        tmp = tempfile.mkdtemp()
+        path = os.path.join(tmp, "NZD_CASH_ON.csv")
+        Path(path).write_bytes(
+            b"Date,Value,Status,Source,ProxyDate\n"
+            b"2026-11-12,2.8,,,\n"
+            b"2026-11-13,2.75,PROXY,NZD_OCR,2026-11-13\n"
+            b"2026-11-20,2.75,PROXY,NZD_OCR,2026-11-13\n"
+        )
+        logs = []
+        F = macfetch.Fetch("t", tmp, budget_s=5, now=lambda: 0, sleep=lambda s: None, log=logs.append)
+        ok = F.write(path, b"Date,Value\n2026-11-12,2.8\n", expect_header=["Date", "Value"])
+        self.assertTrue(ok)
+        rec = F.files["NZD_CASH_ON.csv"]
+        self.assertEqual(rec["kept_from_previous"], 2)
+        text = Path(path).read_text(encoding="utf-8")
+        self.assertIn("Date,Value,Status,Source,ProxyDate", text)
+        self.assertIn("2026-11-13,2.75,PROXY,NZD_OCR,2026-11-13", text)
+        self.assertIn("2026-11-20,2.75,PROXY,NZD_OCR,2026-11-13", text)
+        self.assertIn("2026-11-12,2.8", text)
+

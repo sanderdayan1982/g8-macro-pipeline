@@ -82,7 +82,12 @@ def main(argv=None):
         if not token:
             raise RuntimeError("G8_FULL ausente")
         result = run(args.workdir, args.state, token, from_date=args.from_date)
-        rec.update(ok=True, rc=0, consecutive_fail=0, **{k: result[k] for k in result if k != "push"})
+        rec["ok"] = True
+        rec["rc"] = 0
+        rec["consecutive_fail"] = 0
+        rec["last_obs"] = result.get("last_obs")
+        rec["publishing_date"] = result.get("publishing_date")
+        rec["n_files"] = result.get("n_files")
         rec["sha"] = (result.get("push") or {}).get("sha")
         rec["changed"] = (result.get("push") or {}).get("changed")
         rec["files"] = (result.get("push") or {}).get("files")

@@ -243,7 +243,21 @@ class Fetch(object):
                 if missing:
                     rows = dict(missing)
                     rows.update(new.rows)
-                    out = S.Series(new.comments or old.comments, new.header, rows, new.eol, new.value_col,
+                    header = new.header
+                    # Conservar columnas extra de la copia anterior (Status, Source, ProxyDate).
+                    # Si se usa solo new.header (Date,Value), to_bytes pierde el Status y
+                    # el publicador toma las fechas conservadas por oficiales.
+                    if old.header.count(",") > new.header.count(","):
+                        header = old.header
+                        n_cols = old.header.count(",") + 1
+                        padded = {}
+                        for d, (ln, v) in rows.items():
+                            cells = ln.split(",")
+                            if len(cells) < n_cols:
+                                ln = ln + ("," * (n_cols - len(cells)))
+                            padded[d] = (ln, v)
+                        rows = padded
+                    out = S.Series(new.comments or old.comments, header, rows, new.eol, new.value_col,
                                    new.trailing_eol).to_bytes()
                     kept = len(missing)
             except (OSError, S.SeriesError):
