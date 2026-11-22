@@ -1,15 +1,17 @@
 {
- "at_utc": "2026-11-22T22:31:51Z",
+ "at_utc": "2026-11-22T23:18:20Z",
  "compare_summary": {
   "ACUERDO": 48,
   "FUERA_DE_F3": 1
  },
  "counts": {
-  "CURRENT": 25,
+  "CURRENT": 65,
+  "DUE": 4,
   "NOT_MONITORED": 8,
-  "NO_OBS_DATE": 7,
-  "NO_PUBLICATION": 92,
-  "UNKNOWN_SCHEDULE": 8
+  "NO_OBS_DATE": 4,
+  "NO_PUBLICATION": 48,
+  "PENDING_TIME_UNKNOWN": 2,
+  "UNKNOWN_SCHEDULE": 9
  },
  "mode": "PARALELO_SIN_AVISOS",
  "official_engine": "dashboard_alerts.py §05 (sin cambios)",
@@ -159,7 +161,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "ESTR",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -417,8 +419,19 @@
    "timezone": "America/Toronto"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-20",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "AU",
+   "due_obs": "2026-11-20",
+   "due_since": "2026-11-22T22:53:00Z",
    "expected_obs": "2026-11-19",
    "facts": {
     "available": true,
@@ -486,8 +499,9 @@
    "have_max": "2026-11-19",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-22T23:53:00Z",
    "rule_id": "AONIA",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "Australia/Sydney"
   },
   {
@@ -651,7 +665,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "FLOORS",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1577,7 +1591,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1671,7 +1685,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1765,7 +1779,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1859,7 +1873,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1953,7 +1967,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -2047,7 +2061,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "EUR_CURVE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -3180,8 +3194,19 @@
    "timezone": "America/Toronto"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-20",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "AU",
+   "due_obs": "2026-11-20",
+   "due_since": "2026-11-22T22:53:00Z",
    "expected_obs": "2026-11-19",
    "facts": {
     "available": true,
@@ -3249,13 +3274,25 @@
    "have_max": "2026-11-19",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-22T23:53:00Z",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "Australia/Sydney"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-20",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "AU",
+   "due_obs": "2026-11-20",
+   "due_since": "2026-11-22T22:53:00Z",
    "expected_obs": "2026-11-19",
    "facts": {
     "available": true,
@@ -3323,13 +3360,25 @@
    "have_max": "2026-11-19",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-22T23:53:00Z",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "Australia/Sydney"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-20",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "AU",
+   "due_obs": "2026-11-20",
+   "due_since": "2026-11-22T22:53:00Z",
    "expected_obs": "2026-11-19",
    "facts": {
     "available": true,
@@ -3397,8 +3446,9 @@
    "have_max": "2026-11-19",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-22T23:53:00Z",
    "rule_id": "AUD_F1",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "Australia/Sydney"
   },
   {
@@ -3672,8 +3722,19 @@
    "timezone": "America/Toronto"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-23",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
+   "due_obs": "2026-11-23",
+   "due_since": "2026-11-22T23:00:00Z",
    "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
@@ -3745,8 +3806,9 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-23T23:00:00Z",
    "rule_id": "EUR_RY",
-   "state": "NO_PUBLICATION",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/Berlin"
   },
   {
@@ -4835,7 +4897,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_R10",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -4902,7 +4964,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_SARON",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6256,7 +6318,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "USD_FACTOR",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -6488,7 +6550,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "ECB_CACHE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -6507,7 +6569,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "ECB_CACHE",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
@@ -6750,7 +6812,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6769,7 +6831,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6788,7 +6850,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6807,7 +6869,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6826,7 +6888,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6845,7 +6907,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6864,7 +6926,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6883,7 +6945,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6902,7 +6964,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6921,7 +6983,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6940,7 +7002,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6959,7 +7021,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6978,7 +7040,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -6997,7 +7059,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7016,7 +7078,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7035,7 +7097,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7054,7 +7116,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7073,7 +7135,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7092,7 +7154,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7111,7 +7173,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7130,7 +7192,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7149,7 +7211,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7168,7 +7230,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7187,7 +7249,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7206,7 +7268,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7225,7 +7287,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7244,7 +7306,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7263,7 +7325,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7282,7 +7344,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7301,7 +7363,7 @@
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CHF_SPOT_SNB1A",
-   "state": "NO_PUBLICATION",
+   "state": "CURRENT",
    "timezone": "Europe/Zurich"
   },
   {
@@ -7346,7 +7408,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": null,
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": false,
     "reason": "sin registros todavía para scripts:fetch_sovereign_10y_daily"
@@ -7355,18 +7417,19 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": null,
+   "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
-   "reason": "fichero ausente",
    "rule_id": "DE10Y_PAR",
-   "state": "NO_OBS_DATE",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": null,
+   "due_obs": "2026-11-19",
+   "due_since": "2026-11-22T23:00:00Z",
+   "expected_obs": "2026-11-18",
    "facts": {
     "available": false,
     "reason": "sin registros todavía para scripts:fetch_sovereign_10y_daily"
@@ -7375,12 +7438,12 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": null,
+   "have_max": "2026-11-18",
    "missing": [],
    "model": "bd_offset",
-   "reason": "fichero ausente",
+   "overdue_at": "2026-11-23T23:00:00Z",
    "rule_id": "ES10Y_DAILY",
-   "state": "NO_OBS_DATE",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Europe/Madrid"
   },
   {
@@ -7392,15 +7455,23 @@
     "reason": "sin registros todavía para scripts:fetch_sovereign_10y_daily"
    },
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
-   "flags": [],
+   "final_ref": "2026-11-20T21:30:00Z",
+   "flags": [
+    "INPUT_VERSION_UNKNOWN",
+    "INPUT_TIMING_UNKNOWN"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": null,
+   "have_max": "2026-11-20",
+   "inputs_max_at_final": {
+    "DE_10Y_PAR_DAILY.csv": null,
+    "ES_10Y_DAILY.csv": null
+   },
    "missing": [],
    "model": "derived",
-   "reason": "fichero ausente",
+   "reason": "fechas de las entradas desconocidas",
    "rule_id": "ES_DE_10Y_SPREAD",
-   "state": "NO_OBS_DATE",
+   "state": "UNKNOWN_SCHEDULE",
    "timezone": "Europe/Berlin"
   },
   {
