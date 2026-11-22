@@ -542,7 +542,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching RFR + floor CSVs from pipeline repo (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF: SARON − SNB policy rate (SNB zirepo + RSS via local fetch; tiered remuneration) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch · un dato marcado PROXY usa el OCR vigente (no vota) hasta que B2 vuelva a publicar el overnight · TONA: This service uses the API provided by the “Bank of Japan Time-Series Data Search.” The Bank of Japan does not guarantee the content of the service.</span>
+                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF: SARON − SNB policy rate (SNB zirepo + RSS via local fetch; tiered remuneration) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch · un dato marcado PROXY usa el OCR vigente (no vota) hasta que B2 vuelva a publicar el overnight; el diferencial overnight−OCR queda NA, no 0 · TONA: This service uses the API provided by the “Bank of Japan Time-Series Data Search.” The Bank of Japan does not guarantee the content of the service.</span>
             </div>
         </div>
     </section>
@@ -2553,21 +2553,31 @@ function row(p, s, pol) {
               : last > 2  ? '<span class="fls-badge fls-tight">TIGHT</span>'
               :             '<span class="fls-badge fls-amp">AMPLE</span>';
     var lastMeta = s._rfrLast || {};
-    var proxyTag = lastMeta.status === 'PROXY'
-        ? ' <span class="fls-badge" style="background:#3a2a08;color:#fdb813" title="proxy de feed; un dato PROXY no vota">PROXY · '
-          + (lastMeta.source || '') + (lastMeta.proxyDate ? ' · ' + lastMeta.proxyDate : '') + '</span>'
+    var isProxy = String(lastMeta.status || '').toUpperCase() === 'PROXY';
+    var proxyTag = isProxy
+        ? ' <span class="fls-badge" style="background:#3a2a08;color:#fdb813" title="proxy de feed; un dato PROXY no vota; el diferencial overnight−OCR queda NA, no 0' + proxyBandTitle() + '">PROXY · '
+          + (lastMeta.source || '') + (lastMeta.proxyDate ? ' · ' + lastMeta.proxyDate : '') + proxyBandShort() + '</span>'
         : '';
-    var zh = z === null ? '' :
+    var zh = (z === null || isProxy) ? '' :
         '<span class="attr-z ' + (Math.abs(z) > 2 ? 'attr-z-hi' : Math.abs(z) > 1 ? 'attr-z-md' : 'attr-z-lo') + '">Z ' +
         (z > 0 ? '+' : '') + z.toFixed(1) + '</span>';
+    var spreadCell = isProxy
+        ? '<span class="attr-val" title="diferencial overnight−OCR en blanco mientras el overnight es PROXY">NA</span>'
+        : '<span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh;
+    var badgeCell = isProxy
+        ? '<span class="fls-badge" style="background:#13202e;color:#9ba3b4">SIN DATO</span>'
+        : badge;
+    var dateCell = isProxy && lastMeta.proxyDate
+        ? String(lastMeta.proxyDate)
+        : (lastD.slice(0, 4) + '-' + lastD.slice(4, 6) + '-' + lastD.slice(6, 8));
     return '<tr data-fls-ccy="' + (p.key || p.ccy) + '" style="cursor:pointer" title="Click: ver serie en el gráfico">' +
         '<td><span class="attr-ccy">' + p.ccy + '</span><span class="attr-sub">vs ' + p.ref +
-            ' · ' + lastD.slice(0, 4) + '-' + lastD.slice(4, 6) + '-' + lastD.slice(6, 8) + '</span></td>' +
-        '<td><span class="attr-val">' + (last > 0 ? '+' : '') + last.toFixed(1) + '</span>' + zh + '</td>' +
-        '<td>' + fmtD(d1w) + '</td>' +
-        '<td>' + fmtD(d1m) + '</td>' +
+            ' · ' + dateCell + '</span></td>' +
+        '<td>' + spreadCell + '</td>' +
+        '<td>' + (isProxy ? 'NA' : fmtD(d1w)) + '</td>' +
+        '<td>' + (isProxy ? 'NA' : fmtD(d1m)) + '</td>' +
         '<td>' + spark(v.slice(-90)) + '</td>' +
-        '<td' + (st === 'LIVE' || lastMeta.status === 'PROXY' ? '' : ' style="opacity:.55"') + '>' + badge + proxyTag + staleTag + '</td>' +
+        '<td' + (st === 'LIVE' || isProxy ? '' : ' style="opacity:.55"') + '>' + badgeCell + proxyTag + staleTag + '</td>' +
         policyCells(p, pol) + '</tr>';
 }
 
@@ -2575,6 +2585,34 @@ function row(p, s, pol) {
    trace, full history), instead of 8 overlapping lines. Table rows also select. */
 var _flsData = null, _flsKey = 'USD';
 var FLS_LABEL = { USD: 'USD', EUR: 'EUR', GBP: 'GBP', JPY: 'JPY', CAD: 'CAD', AUD: 'AUD', NZD: 'NZD', NZD_BKBM: 'NZD·90d', CHF: 'CHF' };
+
+function proxyBandTitle() {
+    var b = window._flsProxyBand;
+    if (!b || b.n == null) return '';
+    return '; banda 2026 B2−OCR: media ' + (b.mean >= 0 ? '+' : '') + Number(b.mean).toFixed(1) +
+           ' pb (p5 ' + (b.p5 >= 0 ? '+' : '') + Number(b.p5).toFixed(0) +
+           ' / p95 ' + (b.p95 >= 0 ? '+' : '') + Number(b.p95).toFixed(0) +
+           ', máx ' + Number(b.max).toFixed(0) + ', mín ' + Number(b.min).toFixed(0) +
+           ', n=' + b.n + ')';
+}
+function proxyBandShort() {
+    var b = window._flsProxyBand;
+    if (!b || b.n == null) return '';
+    return ' · banda +' + Number(b.mean).toFixed(1) + ' pb';
+}
+
+function blankProxyFloorPoints(rfr, series) {
+    /* t331u: after spreadSeries (untouched), drop overnight−OCR points whose
+       RFR row is PROXY so the differential is never shown as 0. */
+    var proxy = {};
+    (rfr || []).forEach(function (r) {
+        if (String(r.status || '').toUpperCase() === 'PROXY') proxy[r.d] = r;
+    });
+    var out = (series || []).filter(function (x) { return !proxy[x.d]; });
+    out._rfrLast = series && series._rfrLast;
+    out._proxyBlanked = Object.keys(proxy).length;
+    return out;
+}
 
 function floorSelector(data) {
     var h = '<div class="acm-ccy-selector" id="fls-ccy-selector">';
@@ -2641,8 +2679,13 @@ function floorChart(key) {
     Plotly.react('fls-chart', traces, layout, { displayModeBar: false, responsive: true });
     var note = document.getElementById('fls-chart-note');
     if (note) {
+        var lastMeta = (s && s._rfrLast) || {};
+        var isProxy = String(lastMeta.status || '').toUpperCase() === 'PROXY';
+        var lastTxt = isProxy
+            ? '<b style="color:#fdb813">NA</b> (PROXY' + (lastMeta.source ? ' · ' + lastMeta.source : '') + '; el diferencial overnight−OCR no se pinta como 0)'
+            : '<b style="color:' + color + '">' + (last > 0 ? '+' : '') + last.toFixed(1) + ' bp</b> (' + lastD + ')';
         note.innerHTML = '<b style="color:' + color + '">' + p.ccy + '</b> vs ' + p.ref + ' · último ' +
-            '<b style="color:' + color + '">' + (last > 0 ? '+' : '') + last.toFixed(1) + ' bp</b> (' + lastD + ') · ' +
+            lastTxt + ' · ' +
             'historia ' + first + ' → ' + lastD + ' (' + n + ' obs)' +
             (p.noBadge ? ' · funding a plazo, sin umbrales de floor' : ' · umbrales: 2 bp TIGHT · 10 bp PRESSURE') +
             ' · 3M / 1Y / 3Y / ALL arriba';
@@ -2679,6 +2722,7 @@ function init() {
             .then(function (rs) {
                 var s = spreadSeries(rs[0], rs[1]);
                 s._rfrLast = rs[0] && rs[0].length ? rs[0][rs[0].length - 1] : null;
+                s = blankProxyFloorPoints(rs[0], s);
                 data[p.key || p.ccy] = s;
                 pols[p.key || p.ccy] = policyInfo(rs[1]);
             })
@@ -2686,6 +2730,14 @@ function init() {
     });
     jobs.push(loadCbCalendar());
     jobs.push(loadCbShadow());
+    jobs.push((function () {
+        var url = RAW + '_ingest/NZD_CASH_ON_proxy_band.json';
+        var p = (window.G8NET && window.G8NET.fetchChain)
+            ? window.G8NET.fetchChain([url], { corsOk: true }).then(function (r) { return r.ok ? r.text : null; })
+            : fetch(url, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; });
+        return p.then(function (txt) { try { window._flsProxyBand = txt ? JSON.parse(txt) : null; } catch (e) { window._flsProxyBand = null; } })
+                .catch(function () { window._flsProxyBand = null; });
+    })());
     Promise.all(jobs).then(function () {
         var rows = '';
         PAIRS.forEach(function (p) {

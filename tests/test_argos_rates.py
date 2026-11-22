@@ -33,6 +33,11 @@ class ArgosRatesParity(unittest.TestCase):
 
     def test_file_matches_a_fresh_render_at_the_same_utc_clock(self):
         self.assertEqual(self.again, self.doc)
+        # t332u, orden expresa Sander 22-nov
+        nzd = self.doc["floors"]["NZD"]
+        self.assertEqual(nzd["spread_bp"], "NA")
+        self.assertEqual(nzd["regime"], "SIN DATO")
+        self.assertNotEqual(nzd["regime"], "AMPLE")
 
     def test_clock_and_unavailable_points(self):
         self.assertRegex(self.doc["generated_at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
@@ -89,7 +94,15 @@ class ArgosRatesParity(unittest.TestCase):
                     html = tr
                     break
             self.assertTrue(html, key)
-            if row["spread_bp"] != "UNAVAILABLE":
+            # t332u, orden expresa Sander 22-nov
+            if key == "NZD":
+                self.assertEqual(row["spread_bp"], "NA")
+                self.assertEqual(row["regime"], "SIN DATO")
+                self.assertNotIn("AMPLE", html)
+                self.assertIn("NA", html)
+                self.assertIn("SIN DATO", html)
+                continue
+            if row["spread_bp"] not in ("UNAVAILABLE", "NA"):
                 self.assertIn("%.1f" % abs(row["spread_bp"]), html)
             self.assertIn(row["regime"], html)
 
