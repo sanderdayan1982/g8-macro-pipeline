@@ -87,6 +87,13 @@ def log(msg):
     print("[push] " + msg, flush=True)
 
 
+def commit_msg(body):
+    """t334u: en el VPS, G8_COMMIT_PREFIX=[vps-push] y G8_COMMIT_SUFFIX=[skip netlify]. En el Mac no se definen."""
+    prefix = os.environ.get("G8_COMMIT_PREFIX", "").strip()
+    suffix = os.environ.get("G8_COMMIT_SUFFIX", "").strip()
+    return " ".join(p for p in (prefix, body, suffix) if p)
+
+
 def read_token():
     t = os.environ.get("GITHUB_TOKEN", "").strip()
     if not t:
@@ -365,7 +372,7 @@ def main(argv=None, repo_factory=None, now=time.time, cfg_dir="~/.g8"):
         report = {}
         try:
             out = repo.publish(make_build(fam, files, header, local, run_id, started, report, download_id=did),
-                               "%s %s %s" % (ex, fam, run_id), dry=a.dry_run)
+                               commit_msg("%s %s %s" % (ex, fam, run_id)), dry=a.dry_run)
         except G.GitHubError as e:
             frep.update(status="PUBLISH_FAIL", cls=e.cls, detail=e.detail)
             alerts["fam:%s" % fam] = "Mac %s: descarga correcta pero PUBLICACIÓN FALLIDA (%s)" % (fam, e.cls)
@@ -407,7 +414,7 @@ def finish(rec, alerts, repo, a, cfg_dir, now):
         body = runlog.dumps(rec)
         try:
             out = repo.publish(G.Build([rp, lp], lambda cur, head: ({rp: body, lp: body} if cur.get(rp) is None else {}, None)),
-                               "%s heartbeat %s" % (rec["executor"], rec["run_id"]))
+                               commit_msg("%s heartbeat %s" % (rec["executor"], rec["run_id"])))
             rec["heartbeat"] = out.record()
             if out.status != G.PUBLISHED:
                 alerts["heartbeat"] = "Mac: latido no publicado (%s)" % out.status

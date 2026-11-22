@@ -39,8 +39,9 @@ class F1Config(unittest.TestCase):
         retired = {r["feed_id"] for r in reg if r["status"] == "RETIRED"}
         self.assertEqual(sorted(set(seen) - set(feeds) - retired), [], "regla con feed inexistente")
         # t333u, orden expresa Sander 22-nov: se retira USD_TP_MIRROR (ya no EXISTS_BROWSER).
-        # 52 EXISTS_REPO previos + SWPT + RRPONTSYD = 54 (las series nuevas B2/B3 entran como NEW_PORT y no cuentan aquí).
-        self.assertEqual(len(feeds), 54)
+        # t334u, orden expresa Sander 22-nov: +CHF_SPOT_SNB1A, DE10Y_PAR, ES10Y_DAILY, ES_DE_10Y_SPREAD
+        # pasan a EXISTS_REPO (54+4=58). CAD_RY ya estaba. SWPT sigue en la regla existente NOT_INGESTED.
+        self.assertEqual(len(feeds), 58)
 
     def test_every_data_file_is_covered(self):
         files = {os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "data", "*.csv")) + glob.glob(os.path.join(ROOT, "data", "*.json"))}
