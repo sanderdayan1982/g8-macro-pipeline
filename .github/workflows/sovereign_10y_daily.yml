@@ -1,11 +1,11 @@
-# t339u: PR listo para OK de Sander. Enganche de fetch_sovereign_10y_daily.py
-# para poder lanzar a mano el primer dato DE/ES 10Y. Sin cron: no se inventa
-# cadencia (DE ~12:29 CET T+0; ES T+1 a T+2, sin hora intradía oficial).
+# t340u, orden expresa Sander 23-nov: enganche de fetch_sovereign_10y_daily.py
+# con cron L–V 14:00 WAT (13:00 UTC). No es un turno del dispatcher (candado de 49 intacto).
 # Idempotente: sin cambio en los tres CSV no hay commit. Spread solo misma sesión.
-# No es un turno del dispatcher (candado de 49 intacto).
 name: DE/ES 10Y daily
 
 on:
+  schedule:
+    - cron: '0 13 * * 1-5'
   workflow_dispatch: {}
 
 permissions:

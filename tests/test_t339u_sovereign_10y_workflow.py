@@ -1,4 +1,4 @@
-"""t339u: el workflow DE/ES 10Y diario solo toca esos tres CSV y tiene dispatch (sin cron)."""
+"""t339u/t340u: el workflow DE/ES 10Y diario solo toca esos tres CSV, tiene dispatch y cron L–V 14:00 WAT."""
 import os
 import re
 import unittest
@@ -18,10 +18,12 @@ class Sovereign10yWorkflow(unittest.TestCase):
         with open(WF, encoding="utf-8") as fh:
             cls.text = fh.read()
 
-    def test_workflow_exists_and_has_dispatch_without_cron(self):
+    def test_workflow_exists_and_has_dispatch_and_weekday_cron(self):
+        # t339u, orden expresa Sander 23-nov: nuevo workflow soberano 10Y
+        # cron L–V 14:00 WAT = 13:00 UTC (WAT = UTC+1 todo el año).
         self.assertTrue(os.path.isfile(WF))
         self.assertIn("workflow_dispatch:", self.text)
-        self.assertNotRegex(self.text, r"^\s*- cron:", re.M)
+        self.assertRegex(self.text, r"cron:\s*'0 13 \* \* 1-5'")
 
     def test_only_adds_the_three_daily_files(self):
         adds = re.findall(r"git add (.+)", self.text)
