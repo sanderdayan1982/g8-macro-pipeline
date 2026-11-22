@@ -16,7 +16,7 @@ import cme_options_shadow as OPT  # noqa: E402
 FROZEN = {
     "scripts/cme_options_collector.py": "ba50e4b30dde2f3cf80acccd32a82d3c1ceea7e80730afb7e59b4dbb4b6956d2",
     "scripts/build_options_summary.py": "f0fdf61d1047d3d899b5037f3047dc194329b4a4d5de42b59bed1346e304e019",
-    "scripts/dashboard_alerts.py": "80bc278923f424fbefc3476b38c2e8f298ac1c823e99bd7c9dbf587ac7a55b12",  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
+    "scripts/dashboard_alerts.py": "5b2ff39aec056cb0345dfe4de4123f71d196b492e0662a89145ba30445822c99",  # t332u, orden expresa Sander 22-nov — re-congelado PROXY→NA; era SALUD-TESTS-01 / CIRO #4 P2 (04-nov)
     "scripts/book_risk.py": "78514c2daa319d08454a99dae8225f7c2208da1fcd34cab13eb2547d72ef9d50",
     "scripts/s01b.py": "0c43d6dd54677974bf4ffde880de049396f4b0d9cdd1c6e39964d796ef132ee5",
 }

@@ -1012,7 +1012,7 @@ class Report(unittest.TestCase):
     def test_official_engine_untouched_and_workflow_step_non_blocking(self):
         with open(os.path.join(ROOT, "scripts", "dashboard_alerts.py"), "rb") as fh:
             self.assertEqual(hashlib.sha256(fh.read()).hexdigest(),
-                             "80bc278923f424fbefc3476b38c2e8f298ac1c823e99bd7c9dbf587ac7a55b12")  # re-congelado SALUD-TESTS-01: orden CIRO #4 P2 (04-nov-2026, commits 30580207 + 5756b7d2)
+                             "5b2ff39aec056cb0345dfe4de4123f71d196b492e0662a89145ba30445822c99")  # t332u, orden expresa Sander 22-nov — re-congelado PROXY→NA; era SALUD-TESTS-01 / CIRO #4 P2 (04-nov)
         with open(os.path.join(ROOT, ".github", "workflows", "ingest_watch.yml"), encoding="utf-8") as fh:
             wf = fh.read()
         step = wf[wf.index("scripts/freshness_report.py") - 400: wf.index("scripts/freshness_report.py") + 60]

@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import os
 import sys
 from dataclasses import dataclass, field
@@ -449,6 +450,11 @@ def watch(root, as_of, apply=False, force_cash_from=None):
                 dest = os.path.join(root, "data", sub.file)
                 Path(dest).write_bytes(new_b)
                 written[sub.file] = new_b
+                if sub.feed_id == "NZD_CASH_ON":
+                    try:
+                        write_nzd_cash_on_proxy_band(root, as_of=as_of)
+                    except Exception:
+                        pass
         else:
             if not sub.file or sub.approval_status in ("retired", "not_ingested", "excluded", "licensed_no_public"):
                 # no avisar en masa por feeds no ingeridos / licenciados / retirados
@@ -516,6 +522,112 @@ def all_dates_from_bytes(data):
         from g8common.freshness import obs_dates_from_bytes
         return obs_dates_from_bytes(data)
     return [r["date"] for r in rows]
+
+
+
+def measure_official_spread_bp(cash_rows, ocr_steps, year=2026):
+    """Overnight − OCR in basis points, official B2 rows only (not PROXY), for `year`.
+
+    ocr_steps is a list of (date, value) step observations, forward-filled.
+    Returns a list of (date, cash, ocr, bp) sorted by date.
+    """
+    steps = sorted(( _as_date(d) if not hasattr(d, "year") else d, float(v) ) for d, v in ocr_steps)
+    out = []
+    for r in cash_rows:
+        d = r["date"] if isinstance(r, dict) else r[0]
+        if hasattr(d, "year"):
+            pass
+        else:
+            d = _as_date(d)
+        if d is None or d.year != year:
+            continue
+        status = (r.get("status") or "").strip().upper() if isinstance(r, dict) else ""
+        if status == STATUS_PROXY:
+            continue
+        try:
+            cash = float(r["value"] if isinstance(r, dict) else r[1])
+        except (TypeError, ValueError):
+            continue
+        ocr = None
+        for sd, sv in steps:
+            if sd <= d:
+                ocr = sv
+            else:
+                break
+        if ocr is None:
+            continue
+        out.append((d, cash, ocr, (cash - ocr) * 100.0))
+    out.sort(key=lambda x: x[0])
+    return out
+
+
+def summarize_spread_band(points):
+    """Out-of-sample band: n, mean, median, p5, p95, min, max (bp)."""
+    vals = [p[3] for p in points]
+    if not vals:
+        return {"n": 0, "mean": None, "median": None, "p5": None, "p95": None, "min": None, "max": None}
+    s = sorted(vals)
+    n = len(s)
+
+    def pct(p):
+        if n == 1:
+            return s[0]
+        k = (n - 1) * (p / 100.0)
+        lo = int(k)
+        hi = min(lo + 1, n - 1)
+        w = k - lo
+        return s[lo] * (1 - w) + s[hi] * w
+
+    mid = s[n // 2] if n % 2 else 0.5 * (s[n // 2 - 1] + s[n // 2])
+    return {
+        "n": n,
+        "mean": round(sum(vals) / n, 3),
+        "median": round(mid, 3),
+        "p5": round(pct(5), 3),
+        "p95": round(pct(95), 3),
+        "min": round(min(vals), 3),
+        "max": round(max(vals), 3),
+        "first_date": _iso(points[0][0]),
+        "last_date": _iso(points[-1][0]),
+        "unit": "bp",
+        "definition": "overnight − OCR, official B2 rows only (Status empty or not PROXY)",
+    }
+
+
+def write_nzd_cash_on_proxy_band(root, year=2026, as_of=None):
+    """Write data/_ingest/NZD_CASH_ON_proxy_band.json from the repo CSVs. Returns the payload."""
+    cash_path = Path(root) / "data" / "NZD_CASH_ON.csv"
+    ocr_path = Path(root) / "data" / "NZD_OCR.csv"
+    cash_rows = parse_rows(cash_path.read_text(encoding="utf-8", errors="replace")) if cash_path.exists() else []
+    ocr_steps = []
+    if ocr_path.exists():
+        import csv
+        from io import StringIO
+        text = ocr_path.read_text(encoding="utf-8", errors="replace")
+        rdr = csv.DictReader(StringIO(text))
+        for row in rdr:
+            d = (row.get("DATE") or row.get("Date") or "").strip()
+            v = row.get("CLOSE") if row.get("CLOSE") not in (None, "") else row.get("Value")
+            dd = _as_date(d)
+            if dd is None or v in (None, ""):
+                continue
+            try:
+                ocr_steps.append((dd, float(v)))
+            except ValueError:
+                continue
+    pts = measure_official_spread_bp(cash_rows, ocr_steps, year=year)
+    band = summarize_spread_band(pts)
+    payload = {
+        "feed_id": "NZD_CASH_ON",
+        "substitute": "NZD_OCR",
+        "year": year,
+        "as_of": _iso(as_of) if as_of else None,
+        **band,
+    }
+    dest = Path(root) / "data" / "_ingest" / "NZD_CASH_ON_proxy_band.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    return payload
 
 
 def main(argv=None):

@@ -157,6 +157,25 @@ def read_series(name, col="CLOSE", datecol="DATE"):
     return out or None
 
 
+def last_row_status(name):
+    """Status of the last dated row in a repo CSV (PROXY / '' / None if unreadable)."""
+    path = os.path.join(DATA, name)
+    if not os.path.exists(path):
+        return None
+    last = None
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as fh:
+            rows = [l for l in fh if l.strip() and not l.startswith("#")]
+        for r in csv.DictReader(rows):
+            d = (r.get("DATE") or r.get("Date") or "").strip().replace("-", "")[:8]
+            if len(d) != 8:
+                continue
+            last = (d, (r.get("Status") or "").strip().upper())
+    except Exception:
+        return None
+    return last[1] if last else None
+
+
 def read_json(name):
     p = os.path.join(DATA, name)
     try:
@@ -292,6 +311,13 @@ def check_floors(st, lines):
         sp = [(d, (va - vb) * 100.0) for d, va, vb in ffill_join(a, b)]
         if not sp:
             continue
+        # t331u: a PROXY overnight (NZD_CASH_ON = OCR) must not print a 0 bp spread.
+        if last_row_status(rfr) == "PROXY":
+            prev = s.get(ccy, {})
+            if prev.get("badge") and prev.get("badge") != "NA":
+                lines.append("§02 %s %s−%s NA · PROXY (diferencial overnight−oficial en blanco)" % (ccy, rfr[:-4], ref))
+            s[ccy] = {"badge": "NA", "zband": "", "last": None, "date": sp[-1][0].isoformat(), "proxy": True}
+            continue
         vals = [v for _, v in sp]
         last, z = vals[-1], zscore(vals)
         badge = floor_badge(last)
@@ -327,6 +353,9 @@ def check_policy_coherence(st, lines):
             continue
         sp = [(d, (va - vb) * 100.0) for d, va, vb in ffill_join(a, b)]
         if len(sp) < POLICY_MED_N + POLICY_GAP_DAYS:
+            continue
+        if last_row_status(rfr) == "PROXY":
+            s[ccy] = {"status": "NA", "proxy": True}
             continue
         base = sorted(v for _, v in sp[-(POLICY_MED_N + POLICY_GAP_DAYS):-POLICY_GAP_DAYS])
         med = base[len(base) // 2]
@@ -1151,7 +1180,10 @@ def build_book(st):
         rf = read_series(RFR[c])
         if c == "NZD":
             cash = read_series("NZD_CASH_ON.csv", col="Value", datecol="Date")
-            if cash and bdays_between(cash[-1][0], TODAY) <= 7:
+            if last_row_status("NZD_CASH_ON.csv") == "PROXY":
+                r["flags"].append("RFR overnight PROXY (NZD_OCR); diferencial overnight−OCR = NA")
+                # do not substitute the proxied cash series for the official overnight
+            elif cash and bdays_between(cash[-1][0], TODAY) <= 7:
                 rf = cash                                   # overnight interbank cash (B2)
             else:
                 r["flags"].append("RFR = OCR (sin cash B2)")
