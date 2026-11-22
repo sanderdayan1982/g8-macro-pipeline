@@ -72,7 +72,9 @@ def _was_monitoring_exclusion(item):
 
 def _restore_exclusion(item, prior):
     """Keep a diagnostic note and do not let a later check flip EXCLUDED to an issue."""
-    if item.get('status') not in ('ERROR', 'LATE', 'MISSING'):
+    # UNKNOWN is included: a later consistency check (e.g. collector state vs
+    # summary) must not leave an already-excluded feed as "sin verificar".
+    if item.get('status') not in ('ERROR', 'LATE', 'MISSING', 'UNKNOWN'):
         return
     item['note'] = item.get('reason')
     item['status'] = 'EXCLUDED'
