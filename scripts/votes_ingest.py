@@ -730,15 +730,103 @@ def _rtf10_v4_health_estado(kv):
     return None
 
 
-def _rtf10_stale_if_no_v4(write_missing):
-    """STALE en el intento final (05:20 WAT, tras el cierre D1 y el corte 05:15).
+def _rtf10_version_is_v4(version):
+    """SCRIPT_VERSION 4.x (hoy 4.0.0). No cuenta 3.10.0 ni un STALE placeholder."""
+    return (version or "").strip().startswith("4")
 
-    Reutiliza write_missing, el mismo mecanismo del lector para lo que no
-    llegó al cierre esperado. No se engancha a missing_rows ni al v3-only
-    histórico: esos caminos están bloqueados por tests existentes (MISSING /
-    DRIVER). El enganche se documenta; hace falta orden expresa para tocarlos.
+
+def first_rtf10_v4_session_from_rows(rows):
+    """Fecha del primer correo v4, derivada de la historia (votes.csv).
+
+    No está hardcodeada. Solo filas RTF10_G8 con version 4.x (un v4 ya
+    ingerido: OK / DEGRADED / ERROR). Un STALE posterior se escribe con
+    la versión de catálogo 3.10.0 y no mueve esta fecha.
     """
-    return "STALE" if write_missing else None
+    first = None
+    for row in rows or []:
+        if row.get("script") != "RTF10_G8":
+            continue
+        if not _rtf10_version_is_v4(row.get("version")):
+            continue
+        day = (row.get("fecha_cierre") or "").strip()
+        if not day:
+            continue
+        if first is None or day < first:
+            first = day
+    return date.fromisoformat(first) if first else None
+
+
+def first_rtf10_v4_session_from_messages(messages, session):
+    """Si el lote actual trae un correo v4, esa sesión también cuenta."""
+    if isinstance(session, str):
+        session = date.fromisoformat(session)
+    for mail in messages or []:
+        kv = parse_payload(mail.get("body") or "")
+        if kv and kv.get("MODULE") == "RTF10_G8" and _is_rtf10_v4(kv):
+            return session
+    return None
+
+
+def first_rtf10_v4_session_from_votes_path(path):
+    if not path or not os.path.exists(path) or os.path.getsize(path) == 0:
+        return None
+    with open(path, encoding="utf-8", newline="") as fh:
+        return first_rtf10_v4_session_from_rows(csv.DictReader(fh))
+
+
+def resolve_first_rtf10_v4_session(history_rows, messages, session, history_date=None):
+    hist = history_date if history_date is not None else first_rtf10_v4_session_from_rows(history_rows)
+    current = first_rtf10_v4_session_from_messages(messages, session)
+    if hist and current:
+        return hist if hist <= current else current
+    return hist or current
+
+
+def _as_date(value):
+    if value is None:
+        return None
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        return date.fromisoformat(value)
+    return value
+
+
+def _rtf10_v4_regime(session, first_v4_session):
+    """STALE solo rige desde la fecha del primer correo v4 recibido."""
+    first = _as_date(first_v4_session)
+    if first is None:
+        return False
+    return _as_date(session) >= first
+
+
+def _rtf10_stale_if_no_v4(write_missing, session=None, first_v4_session=None):
+    """STALE en el intento final (05:20 WAT, tras expected_bar_close_ms y el corte 05:15).
+
+    t340u, orden expresa Sander 23-nov: solo desde la fecha del primer
+    correo v4 recibido (historia persistida en votes.csv, no hardcodeada).
+    Los días anteriores quedan MISSING / DRIVER como estaban.
+    """
+    if not write_missing or not _rtf10_v4_regime(session, first_v4_session):
+        return None
+    return "STALE"
+
+
+def _rtf10_stale_rows(session, *, snap_id="", received_at="", mail_ids="",
+                      bar_ms=None, parts_n="", received=0, version=""):
+    expected = expected_bar_close_ms(session)
+    if bar_ms is None:
+        bar_ms = expected
+    bar_stale = bar_ms != expected
+    version = version or MODULE["RTF10_G8"]["version"]
+    parts_expected = parts_n if parts_n != "" else MODULE["RTF10_G8"]["parts"]
+    rows = []
+    for ccy in _ccys_for("RTF10_G8"):
+        rows.append(_with_hash(_blank_row(
+            session, "RTF10_G8", ccy, "STALE", "NA", bar_stale, snap_id,
+            received_at, mail_ids, bar_ms, parts_expected, received, version,
+        ), "missing", expected_bar_close_ms=expected))
+    return rows
 
 
 def _estado_valor(name, ccy, kv):
@@ -1114,17 +1202,25 @@ def _snapshot_incomplete_reason(name, part_items):
     return bad, merged, received, declared_n, detail
 
 
-def rows_from_messages(messages, session, write_missing):
+def rows_from_messages(messages, session, write_missing, first_rtf10_v4_session=None):
     """Bodies in, rows out. No network and no disk.
 
     `write_missing` is true only on the final attempt (scheduled 05:20 WAT,
     after the 05:15 WAT cutoff, and only after every page of the mailbox
     window has been listed). Until then, absent or incomplete modules are
     left unwritten so the final pass can still complete them.
+
+    `first_rtf10_v4_session` is the date of the first v4 email already
+    received (from votes.csv history and/or this batch). It is not
+    hardcoded. Before that date, RTF10 stays MISSING / DRIVER.
     """
     if isinstance(session, str):
         session = date.fromisoformat(session)
     expected = expected_bar_close_ms(session)
+    first_rtf10_v4_session = resolve_first_rtf10_v4_session(
+        None, messages, session, history_date=first_rtf10_v4_session,
+    )
+    v4_regime = _rtf10_v4_regime(session, first_rtf10_v4_session)
     # module → bar_ms → snapshot_id → list[(mail, kv)]
     grouped = {}
     mono = {}
@@ -1190,6 +1286,18 @@ def rows_from_messages(messages, session, write_missing):
         bar_stale = bar_ms != expected
         # Catalog count stays a reference. Rows use the PARTS the mails declared.
         parts_n = "" if declared_n is None else declared_n
+        # t340u: desde el primer v4, un día con solo v3 no escribe DRIVER
+        # (votes.csv es append-only). En el final, estado=STALE.
+        if (name == "RTF10_G8" and v4_regime and not _is_rtf10_v4(merged)):
+            if not write_missing:
+                present.discard(name)
+                continue
+            rows.extend(_rtf10_stale_rows(
+                session, snap_id=snap_id, received_at=received_at,
+                mail_ids=mail_ids, bar_ms=bar_ms, parts_n=parts_n,
+                received=received, version=version,
+            ))
+            continue
         if bad:
             # t339u: un paquete v4 con BATCH_STATUS=ERROR es el estado ERROR,
             # no INGEST_INCOMPLETE (faltan partes). Se escribe ya en el
@@ -1255,7 +1363,11 @@ def rows_from_messages(messages, session, write_missing):
                 motion["report_date"] = ""
                 rows.append(motion)
     if write_missing:
-        rows.extend(missing_rows(session, names=[n for n, *_ in MODULES if n not in present]))
+        missing_names = [n for n, *_ in MODULES if n not in present]
+        if v4_regime and "RTF10_G8" in missing_names:
+            missing_names = [n for n in missing_names if n != "RTF10_G8"]
+            rows.extend(_rtf10_stale_rows(session))
+        rows.extend(missing_rows(session, names=missing_names))
     return rows
 
 
@@ -1884,14 +1996,24 @@ def default_sender(text):
     notify_telegram.send(text)
 
 
-def build_rows(messages, session, write_missing, factor_doc):
-    rows = rows_from_messages(messages, session, write_missing)
+def build_rows(messages, session, write_missing, factor_doc, first_rtf10_v4_session=None):
+    rows = rows_from_messages(
+        messages, session, write_missing,
+        first_rtf10_v4_session=first_rtf10_v4_session,
+    )
     rows.extend(rows_from_factor(factor_doc, session))
     return rows
 
 
-def gmail_failure_rows(session, write_missing, factor_doc):
-    rows = missing_rows(session) if write_missing else []
+def gmail_failure_rows(session, write_missing, factor_doc, first_rtf10_v4_session=None):
+    if not write_missing:
+        rows = []
+    elif _rtf10_v4_regime(session, first_rtf10_v4_session):
+        names = [n for n, *_ in MODULES if n != "RTF10_G8"]
+        rows = missing_rows(session, names=names)
+        rows.extend(_rtf10_stale_rows(session))
+    else:
+        rows = missing_rows(session)
     rows.extend(rows_from_factor(factor_doc, session))
     return rows
 
@@ -1923,6 +2045,7 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
     factor_path = args.factor or os.path.join(ROOT, "data", "USD_FACTOR.json")
     votes_path = args.votes or os.path.join(ROOT, "data", "votes.csv")
     weekly_path = args.weekly or os.path.join(ROOT, "data", "votes_weekly.json")
+    first_v4_hist = first_rtf10_v4_session_from_votes_path(votes_path)
     factor_doc = load_factor(factor_path)
     if factor_doc is None:
         print("USD_FACTOR.json unreadable at %s — E21 rows are not invented" % factor_path, file=sys.stderr)
@@ -1932,7 +2055,9 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
     if args.from_json:
         with open(args.from_json, encoding="utf-8") as fh:
             messages = json.load(fh)
-        rows = build_rows(messages, session, write_missing, factor_doc)
+        rows = build_rows(messages, session, write_missing, factor_doc,
+                        first_rtf10_v4_session=resolve_first_rtf10_v4_session(
+                            None, messages, session, history_date=first_v4_hist))
     else:
         http = http or urllib_http
         sleep = sleep or time.sleep
@@ -1945,9 +2070,12 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
             )
         except GmailError as exc:
             failure = exc
-            rows = gmail_failure_rows(session, write_missing, factor_doc)
+            rows = gmail_failure_rows(session, write_missing, factor_doc,
+                                    first_rtf10_v4_session=first_v4_hist)
         else:
-            rows = build_rows(messages, session, write_missing, factor_doc)
+            rows = build_rows(messages, session, write_missing, factor_doc,
+                        first_rtf10_v4_session=resolve_first_rtf10_v4_session(
+                            None, messages, session, history_date=first_v4_hist))
 
     # RELOJES-01 Anexo 1 A1. No mail on a full close: nothing, including no
     # MISSING on the final attempt. Mail that did arrive is stored normally.

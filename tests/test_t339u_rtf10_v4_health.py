@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import sys
 import unittest
+from datetime import date
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -156,8 +157,11 @@ class V4HealthEstado(unittest.TestCase):
     def test_stale_means_no_v4_at_final_d1_attempt(self):
         # El intento final (write_missing=True) es el mecanismo ya existente
         # del cierre D1 (05:20 WAT, tras expected_bar_close_ms y el corte 05:15).
-        self.assertEqual(V._rtf10_stale_if_no_v4(True), "STALE")
-        self.assertIsNone(V._rtf10_stale_if_no_v4(False))
+        # STALE solo rige desde la fecha del primer correo v4.
+        first = SESSION
+        self.assertEqual(V._rtf10_stale_if_no_v4(True, SESSION, first), "STALE")
+        self.assertIsNone(V._rtf10_stale_if_no_v4(False, SESSION, first))
+        self.assertIsNone(V._rtf10_stale_if_no_v4(True, SESSION, None))
 
 
 class CoexistenceV3DoesNotOverwriteV4(unittest.TestCase):
@@ -189,6 +193,93 @@ class CoexistenceV3DoesNotOverwriteV4(unittest.TestCase):
         self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "TP_SAFE")
         self.assertEqual(rows[("RTF10_G8", "EUR")]["voto"], "NA")
         self.assertEqual(rows[("RTF10_G8", "EUR")]["version"], "3.10.0")
+
+
+
+class StaleOnlyFromFirstV4Email(unittest.TestCase):
+    """t340u: STALE solo desde la fecha del primer correo v4 (historia, no hardcode)."""
+
+    FIRST = date(2026, 11, 20)  # fecha derivada en el test, no una constante del lector
+
+    def test_history_derives_first_v4_session_not_hardcoded(self):
+        history = [
+            {"fecha_cierre": "2026-11-18", "script": "RTF10_G8", "version": "3.10.0",
+             "estado": "TP_SAFE"},
+            {"fecha_cierre": "2026-11-20", "script": "RTF10_G8", "version": "4.0.0",
+             "estado": "OK"},
+            {"fecha_cierre": "2026-11-21", "script": "RTF10_G8", "version": "3.10.0",
+             "estado": "STALE"},
+        ]
+        first = V.first_rtf10_v4_session_from_rows(history)
+        self.assertEqual(first, date(2026, 11, 20))
+        # Un STALE con version 3.10.0 no adelanta ni retrasa la fecha.
+        self.assertEqual(
+            V.first_rtf10_v4_session_from_rows(history + [
+                {"fecha_cierre": "2026-11-17", "script": "RTF10_G8",
+                 "version": "3.10.0", "estado": "STALE"},
+            ]),
+            date(2026, 11, 20),
+        )
+        self.assertIsNone(V.first_rtf10_v4_session_from_rows([
+            {"fecha_cierre": "2026-11-18", "script": "RTF10_G8", "version": "3.10.0",
+             "estado": "TP_SAFE"},
+        ]))
+
+    def test_days_before_first_v4_stay_missing_or_driver(self):
+        before = date(2026, 11, 19)
+        # Sin correo: MISSING, no STALE.
+        rows = index(V.rows_from_messages(
+            [], before, True, first_rtf10_v4_session=self.FIRST,
+        ))
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "MISSING")
+        self.assertTrue(all(
+            r["estado"] == "MISSING" for r in rows.values() if r["script"] == "RTF10_G8"
+        ))
+        # Solo v3: DRIVER → TP_SAFE, no STALE.
+        v3 = v3_mails(_driver_fields(), alert_version="3")
+        # BAR en v3_mails usa SESSION (21-nov). Hay que alinear la barra al día anterior.
+        # Usamos rows_from_messages con session=SESSION y first_v4 en el futuro
+        # relativo, más un v3 del propio SESSION (fixture), first = día siguiente.
+        later_first = date(2026, 11, 22)
+        rows = index(V.rows_from_messages(
+            v3, SESSION, True, first_rtf10_v4_session=later_first,
+        ))
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "TP_SAFE")
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["voto"], "NA")
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["version"], "3.10.0")
+
+    def test_after_first_v4_no_v4_or_only_v3_is_stale(self):
+        first = date(2026, 11, 20)
+        # Sin correo v4 en un día posterior: STALE, no MISSING.
+        rows = index(V.rows_from_messages(
+            [], SESSION, True, first_rtf10_v4_session=first,
+        ))
+        for ccy in CCYS:
+            self.assertEqual(rows[("RTF10_G8", ccy)]["estado"], "STALE")
+            self.assertEqual(rows[("RTF10_G8", ccy)]["voto"], "NA")
+        # Solo v3 después del primer v4: STALE, no DRIVER.
+        v3 = v3_mails(_driver_fields(), alert_version="3")
+        rows = index(V.rows_from_messages(
+            v3, SESSION, True, first_rtf10_v4_session=first,
+        ))
+        for ccy in CCYS:
+            self.assertEqual(rows[("RTF10_G8", ccy)]["estado"], "STALE")
+            self.assertEqual(rows[("RTF10_G8", ccy)]["voto"], "NA")
+            self.assertNotEqual(rows[("RTF10_G8", ccy)]["estado"], "TP_SAFE")
+        # En el primer intento no se escribe DRIVER (append-only no lo puede pisar después).
+        early = [r for r in V.rows_from_messages(
+            v3, SESSION, False, first_rtf10_v4_session=first,
+        ) if r["script"] == "RTF10_G8"]
+        self.assertEqual(early, [])
+
+    def test_without_v4_history_existing_paths_unchanged(self):
+        # Sin historia v4, los caminos antiguos no se tocan (no hace falta
+        # editar test_votes_ingest.py).
+        rows = index(V.rows_from_messages([], SESSION, True))
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "MISSING")
+        v3 = v3_mails(_driver_fields(), alert_version="3")
+        rows = index(V.rows_from_messages(v3, SESSION, True))
+        self.assertEqual(rows[("RTF10_G8", "EUR")]["estado"], "TP_SAFE")
 
 
 if __name__ == "__main__":
