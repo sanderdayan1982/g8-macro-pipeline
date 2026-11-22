@@ -63,3 +63,12 @@ jobs:
           python3 scripts/tools/step_alarm.py record private_verify_freshness "$rc" --detail "private_data verify rc=${rc}"
           python3 scripts/tools/step_alarm.py publish verify_freshness --only private_verify_freshness --commit
           exit "$rc"
+
+      # ── Ley 2 (fallos ruidosos): cualquier paso rojo → Telegram, no solo email ──
+      - name: Alert on failure
+        if: failure()
+        timeout-minutes: 1
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=freshness_snapshot run=${{ github.run_number }} — ver Actions"
