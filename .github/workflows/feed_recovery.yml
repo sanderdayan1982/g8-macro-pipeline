@@ -48,6 +48,7 @@ jobs:
         timeout-minutes: 4
         run: |
           python scripts/usd_factor.py
+          python3 scripts/tools/strip_usd_factor_public.py  # DATOS-02 C (t319u): antes de cualquier git add
           python scripts/book_risk.py
       - name: Recover latest elapsed CTF session without historical backfill
         id: final
@@ -63,6 +64,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email github-actions[bot]@users.noreply.github.com
+          python3 scripts/tools/strip_usd_factor_public.py  # DATOS-02 C: el paso factor es continue-on-error
           git add data/
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'chore: verified feed recovery and dashboard snapshots'
