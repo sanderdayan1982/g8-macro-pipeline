@@ -35,7 +35,9 @@ class F1Config(unittest.TestCase):
                 seen.setdefault(f, []).append(r["rule_id"])
         self.assertEqual(sorted(set(feeds) - set(seen)), [], "feeds sin regla")
         self.assertEqual({f: v for f, v in seen.items() if len(v) > 1}, {}, "feed en varias reglas")
-        self.assertEqual(sorted(set(seen) - set(feeds)), [], "regla con feed inexistente")
+        # t333u, orden expresa Sander 22-nov: la regla MIRROR del feed RETIRED no cuenta como «inexistente».
+        retired = {r["feed_id"] for r in reg if r["status"] == "RETIRED"}
+        self.assertEqual(sorted(set(seen) - set(feeds) - retired), [], "regla con feed inexistente")
         # t333u, orden expresa Sander 22-nov: se retira USD_TP_MIRROR (ya no EXISTS_BROWSER).
         # 52 EXISTS_REPO previos + SWPT + RRPONTSYD = 54 (las series nuevas B2/B3 entran como NEW_PORT y no cuentan aquí).
         self.assertEqual(len(feeds), 54)
