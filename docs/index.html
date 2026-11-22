@@ -638,7 +638,7 @@
           <div class="attr-err" style="color:#5d6678">Loading public/CME_FXVOL_public.json…</div>
         </div>
         <div class="section-footer">
-            <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor, ~$0.40/mo) — collector v1.1.0 with availability/cost/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session; reference = settle of the next QUARTERLY future, the contract the option exercises into (summary v1.1 [F1] — v1.0 used the nearest future, wrong for monthly serials). Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
+            <span class="footer-note">Source: Databento GLBX.MDP3 (licensed CME distributor; coste no publicado) — collector v1.1.0 with availability/fingerprint/sanity guards, Friday+holiday calendar, noisy-failure doctrine. Semantics: official settlement + open interest of the SAME session T (OI publishes early T+1); front = first expiry strictly after the session; reference = settle of the next QUARTERLY future, the contract the option exercises into (summary v1.1 [F1] — v1.0 used the nearest future, wrong for monthly serials). Walls = top OI strikes on the front chain — context/permission layer, never an entry trigger; CME options OI is a fraction of the OTC FX market. Gate 0 verdict (22 sessions, closed 2026-07-03): EUR/JPY/GBP/AUD CLEAN · CAD PROXY (asymmetric: calls live, puts dead — directional proxy only) · CHF/NZD NA. Expiry-week distortion: counts on a dying front chain compress in the days before the 1st-Friday expiry — walls layer will carry a roll filter.</span>
         </div>
     </div>
 </section>
@@ -818,7 +818,7 @@ function libroPrivado() {
 
 function diag(uf) {
     var d = uf.diag || {}, tw = d.twins || {}, fu = tw.futures || {}, afe = tw.afe || {}, ing = d.ingestion || {}, fz = d.frozen || {};
-    var futs = fu.available ? CCYS.map(function (c) { var x = (fu.by_ccy || {})[c]; return c + ' ' + (x && nz(x.corr) ? num(x.corr, 2) + '/' + num(x.corr_ex_us, 2) : '·'); }).join(' · ') : (fu.note || 'NA');
+    var futs = (fu.available && fu.by_ccy) ? CCYS.map(function (c) { var x = (fu.by_ccy || {})[c]; return c + ' ' + (x && nz(x.corr) ? num(x.corr, 2) + '/' + num(x.corr_ex_us, 2) : '·'); }).join(' · ') : (fu.note || 'privado / licencia');
     var bet = CCYS.map(function (c) { var x = (d.beta_ewma_vs_ols252 || {})[c] || {}; return c + ' ' + num(x.ewma, 2) + '/' + num(x.ols252, 2); }).join(' · ');
     var ingOk = ing.triangulation_ok === undefined ? esc(ing.note || '') : (ing.triangulation_ok && ing.dates_sorted_unique && ing.all_positive ? 'OK (err ' + (ing.triangulation_max_abs_err || 0).toExponential(1) + ')' : 'FALLA');
     return '<div class="uf-diag"><b style="color:' + GOLD + '">DIAG</b> · as-of ' + esc(uf.as_of) + ' · fuente ' + esc(uf.source) + ' · FIX ' + esc(d.fix) + ' · calendario ' + esc(d.calendar) +
