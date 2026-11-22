@@ -38,3 +38,4 @@ scripts/fetch_chf_cpi.py,actions,daily_update.yml + intraday_fetch.yml,CHF_CPI_Y
 mac/dispatch_workflows.py,mac,launchd com.g8.dispatch,workflow_dispatch de GitHub Actions,NO_ES_DESCARGADOR,g8http (GitHub API),,logs/ALERTAS.log,Lanzador de workflows a su hora (acta P-12)
 scripts/credit_fred_shadow.py,actions,daily_update.yml,ninguno (CRD_PUBLISH=False),EXCLUIDO,,,,FAMILIAS-01 M1 sombra ICE BofA: calcula en memoria y no publica. continue-on-error.
 mac/dispatch_drift_check.py,mac,manual (sin agente launchd),aviso de deriva del horario del lanzador,NO_ES_DESCARGADOR,g8http (GitHub API pública; sin token),,stdout + logs/ALERTAS.log (--alert),Compara el horario del Mac con mac/ del repo; no sincroniza ni lanza
+scripts/fetch_swpt.py,ninguno,ninguno,SWPT.csv,PENDIENTE,urllib.request (FRED_API_KEY por nombre; fallback fredgraph),escritura atómica,,t331u B4: script listo; no enganchado a workflow. El status de SWPT sigue NOT_INGESTED (test_f1_config).
