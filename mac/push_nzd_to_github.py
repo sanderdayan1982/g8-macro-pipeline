@@ -183,6 +183,9 @@ def load_json_file(path, default):
 def make_build(fam, files, header, local, run_id, now_utc, report, download_id=None):
     qpath, dprefix = QUAR % fam, DECIDE % fam
     paths = ["data/" + f for f in files] + [qpath, REGISTRY, HORIZON]
+    # NZD_OCR lo publica Actions, no esta familia; se lee solo para el proxy (t329u).
+    if "NZD_CASH_ON.csv" in files and "data/NZD_OCR.csv" not in paths:
+        paths.append("data/NZD_OCR.csv")
 
     def fn(cur, head):
         reg = parse_registry(cur.get(REGISTRY))
@@ -205,6 +208,10 @@ def make_build(fam, files, header, local, run_id, now_utc, report, download_id=N
                 repo_series[f] = None
                 continue
             try:
+                # Las filas PROXY no son observaciones oficiales: si el parse las
+                # mezclara, apply_one las tomaría por primaria y las borraría.
+                if f == "NZD_CASH_ON.csv" and FP is not None:
+                    b = FP.official_csv_bytes(b)
                 repo_series[f] = S.parse(b)
             except S.SeriesError as e:
                 repo_series[f] = None
@@ -232,6 +239,13 @@ def make_build(fam, files, header, local, run_id, now_utc, report, download_id=N
                 official = out.get("data/NZD_CASH_ON.csv") or prev
                 ocr_path = os.path.join(LOCAL_DATA, "NZD_OCR.csv")
                 ocr_text = open(ocr_path, encoding="utf-8").read() if os.path.exists(ocr_path) else None
+                def _txt(b):
+                    if b is None:
+                        return None
+                    return b if isinstance(b, str) else b.decode("utf-8")
+                # El Mac no guarda NZD_OCR (lo publica Actions); úsalo del tip de main.
+                if ocr_text is None and cur.get("data/NZD_OCR.csv"):
+                    ocr_text = _txt(cur.get("data/NZD_OCR.csv"))
                 as_of = now_utc.date() if hasattr(now_utc, "date") else None
                 root = os.path.abspath(os.path.join(HERE, ".."))
                 if not os.path.exists(os.path.join(root, "sources", "substitutes.csv")):
@@ -239,12 +253,11 @@ def make_build(fam, files, header, local, run_id, now_utc, report, download_id=N
                 subs = [s for s in FP.load_substitutes(root) if s.feed_id == "NZD_CASH_ON" and s.approval_status == "active"]
                 if official and subs and as_of:
                     cals = __import__("g8common.schedule", fromlist=["schedule"]).load_calendars(root)
-                    def _txt(b):
-                        return b if isinstance(b, str) else b.decode("utf-8")
+                    official_view = FP.official_csv_bytes(official)
                     new_b, ev, st = FP.apply_one(
                         root, subs[0], cals, as_of,
                         file_text=_txt(prev) if prev else _txt(official),
-                        official_text=_txt(official),
+                        official_text=_txt(official_view),
                         sub_text=ocr_text,
                     )
                     if new_b is not None:

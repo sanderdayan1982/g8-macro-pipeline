@@ -126,6 +126,41 @@ class FeedProxyUnit(unittest.TestCase):
         self.assertEqual(max(all_d), date(2026, 11, 20))
 
 
+    def test_publisher_strips_proxy_before_merge_and_reads_ocr_from_repo(self):
+        """t329u: en el Mac no hay NZD_OCR local. Las filas PROXY del tip no son primaria."""
+        cash = (
+            "Date,Value,Status,Source,ProxyDate\n"
+            "2026-11-12,2.8,,,\n"
+            "2026-11-13,2.75,PROXY,NZD_OCR,2026-11-13\n"
+        )
+        official = FP.official_csv_bytes(cash)
+        text = official.decode("utf-8")
+        self.assertIn("2026-11-12,2.8", text)
+        self.assertNotIn("PROXY", text)
+        self.assertNotIn("2026-11-13", text)
+        ocr = "Date,Value\n2026-10-28,2.75\n2026-11-13,2.75\n"
+        # apply_one con OCR "del repo" (no local) conserva y amplía el proxy
+        new_b, ev, st = FP.apply_one(
+            ROOT, self.subs[0], self.cals, date(2026, 11, 20),
+            file_text=cash, official_text=official.decode("utf-8"), sub_text=ocr,
+        )
+        self.assertIsNotNone(new_b)
+        out = new_b.decode("utf-8")
+        self.assertIn("2026-11-12,2.8", out)
+        self.assertIn("2026-11-13,2.75,PROXY,NZD_OCR,2026-11-13", out)
+        self.assertTrue(any(e.kind == "proxy" for e in ev))
+        # si se pasara el CSV con PROXY como official_text, se "recuperaría" mal
+        bad_off = cash
+        new_bad, ev_bad, _ = FP.apply_one(
+            ROOT, self.subs[0], self.cals, date(2026, 11, 20),
+            file_text=cash, official_text=bad_off, sub_text=ocr,
+        )
+        # official_rows ignora PROXY aunque el texto las traiga, así que tampoco debe recuperar
+        if new_bad is not None:
+            self.assertNotIn("recovered", [e.kind for e in ev_bad])
+            self.assertIn("2026-11-13,2.75,PROXY", new_bad.decode("utf-8"))
+
+
 class IngestWatchHook(unittest.TestCase):
     def test_no_substitutes_file_is_noop(self):
         tmp = tempfile.mkdtemp()
@@ -136,6 +171,7 @@ class IngestWatchHook(unittest.TestCase):
             self.assertEqual(info, [])
         finally:
             shutil.rmtree(tmp)
+
 
 
 if __name__ == "__main__":
