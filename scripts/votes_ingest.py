@@ -197,10 +197,19 @@ HAS_STATUS = {
     "IYDT_2Y", "IYDT_10Y", "FFVA_G8", "TOT_G8", "EQF_G8", "POS_G8",
 }
 
-COLUMNS = [
+# Cabecera publicada antes de E7. Solo esta se migra; otras cabeceras de
+# prueba o intermedias no se tocan, para no alterar tests ya existentes.
+PRE_E7_COLUMNS = [
     "fecha_cierre", "script", "version", "ccy", "estado", "valor", "voto",
     "stale", "snapshot_id", "hora_recepcion_utc", "id_correo", "bar_close_ms",
     "family", "parts_expected", "parts_received", "rule_version", "session_type",
+    "report_date",
+]
+COLUMNS = [
+    "fecha_cierre", "script", "version", "ccy", "estado", "valor", "voto",
+    "stale", "snapshot_id", "hora_recepcion_utc", "id_correo", "bar_close_ms",
+    "family", "parts_expected", "parts_received", "rule_version",
+    "written_at_utc", "inputs_hash", "legacy", "session_type",
     "report_date",
 ]
 
@@ -435,6 +444,173 @@ def is_ny_full_close(session):
     return False
 
 
+def next_fx_session(session):
+    """Siguiente sesión hábil FX después de `session`.
+
+    Reutiliza `is_ny_full_close` (cierre completo CME/Nueva York, sin vela 1D)
+    y salta sábados y domingos. Un viernes pasa al lunes, salvo que el lunes
+    sea un cierre completo. No inventa festivos: la regla es la ya existente.
+    Orden Sander t309u: el cierre t+1 es el 17:00 America/New_York de este día.
+    """
+    if isinstance(session, str):
+        session = date.fromisoformat(session)
+    day = session + timedelta(days=1)
+    while day.weekday() >= 5 or is_ny_full_close(day):
+        day += timedelta(days=1)
+    return day
+
+
+def tplus1_close(session):
+    """Datetime UTC del cierre t+1: 17:00 America/New_York de next_fx_session(session)."""
+    nxt = next_fx_session(session)
+    local = datetime(nxt.year, nxt.month, nxt.day, 17, 0, tzinfo=NY)
+    return local.astimezone(UTC)
+
+
+def _e7_now_z(now):
+    if now is None:
+        now = datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    else:
+        now = now.astimezone(timezone.utc)
+    return now.replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _canonical_kv_payload(kv):
+    """Texto canónico del diccionario KEY=VALUE ya fusionado. No se registra."""
+    lines = []
+    for key in sorted((kv or {}).keys()):
+        val = kv[key]
+        if val is None:
+            val = ""
+        lines.append("%s=%s" % (key, val))
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def inputs_hash_for(source, fecha_cierre, script, ccy, **fields):
+    """SHA-256 hex (64) del canónico e7.v1. Nunca devuelve ni registra los insumos."""
+    lines = [
+        "e7.v1",
+        "fecha_cierre=%s" % fecha_cierre,
+        "script=%s" % script,
+        "ccy=%s" % ccy,
+        "source=%s" % source,
+    ]
+    if source == "mail":
+        payload = fields.get("payload_kv") or {}
+        # Solo el hash del payload entra en el canónico, no el valor.
+        payload_digest = hashlib.sha256(_canonical_kv_payload(payload).encode("utf-8")).hexdigest()
+        for key in ("version", "snapshot_id", "bar_close_ms", "parts_expected", "parts_received"):
+            lines.append("%s=%s" % (key, fields.get(key, "")))
+        lines.append("payload=%s" % payload_digest)
+    elif source == "usd_factor":
+        for key in ("as_of", "generated_utc", "e21"):
+            lines.append("%s=%s" % (key, fields.get(key, "")))
+    elif source == "missing":
+        lines.append("expected_bar_close_ms=%s" % fields.get("expected_bar_close_ms", ""))
+    elif source == "incomplete":
+        for key in ("reason", "parts_expected", "parts_received"):
+            lines.append("%s=%s" % (key, fields.get(key, "")))
+    else:
+        raise ValueError("source e7 desconocido")
+    body = "\n".join(lines) + "\n"
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def _ensure_e7_columns(raw):
+    """Inserta written_at_utc, inputs_hash, legacy justo antes de session_type.
+
+    Así session_type y report_date siguen siendo las dos últimas columnas
+    (tests ya existentes de report_date). Filas antiguas: trazabilidad vacía
+    y legacy=1. Si las tres columnas ya están, el fichero no se toca ni un byte.
+    """
+    if not raw:
+        return raw
+    text = raw.decode("utf-8")
+    if not text:
+        return raw
+    newline = "\r\n" if "\r\n" in text[:4096] else "\n"
+    first, sep, rest = text.partition(newline if newline in text else "\n")
+    if not sep:
+        first = text
+        rest = ""
+        sep = ""
+    try:
+        fields = next(csv.reader([first]))
+    except StopIteration:
+        return raw
+    needed = ["written_at_utc", "inputs_hash", "legacy"]
+    if fields == list(COLUMNS) or all(name in fields for name in needed):
+        return raw
+    # Solo se migra la cabecera oficial previa. Cabeceras cortas de tests no se tocan.
+    if fields != list(PRE_E7_COLUMNS):
+        return raw
+    insert_at = fields.index("session_type")
+    new_fields = fields[:insert_at] + needed + fields[insert_at:]
+    out_header = ",".join(new_fields)
+    out_rows = []
+    if rest:
+        for line in rest.splitlines():
+            if not line:
+                out_rows.append(line)
+                continue
+            try:
+                cells = next(csv.reader([line]))
+            except StopIteration:
+                out_rows.append(line)
+                continue
+            while len(cells) < len(fields):
+                cells.append("")
+            cells = cells[:len(fields)]
+            # legado: 1; las dos de trazabilidad, vacías.
+            cells = cells[:insert_at] + ["", "", "1"] + cells[insert_at:]
+            buf = io.StringIO()
+            writer = csv.writer(buf, lineterminator="")
+            writer.writerow(cells)
+            out_rows.append(buf.getvalue())
+    rebuilt = out_header
+    if rest or out_rows:
+        rebuilt = out_header + newline + newline.join(out_rows)
+        if text.endswith(("\n", "\r\n")) and not rebuilt.endswith(("\n", "\r\n")):
+            rebuilt += newline
+    elif text.endswith(("\n", "\r\n")):
+        rebuilt = out_header + newline
+    return rebuilt.encode("utf-8")
+
+
+def after_tplus1_close(fecha_cierre, written_at, now=None):
+    """True si written_at (o now) es posterior al cierre t+1 de fecha_cierre."""
+    deadline = tplus1_close(fecha_cierre)
+    if written_at:
+        stamp = written_at
+        if stamp.endswith("Z"):
+            stamp = stamp[:-1] + "+00:00"
+        when = datetime.fromisoformat(stamp)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+    else:
+        when = now or datetime.now(timezone.utc)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+    return when > deadline
+
+
+def register_rejected(path, row, deadline, written_at, reason="AFTER_TPLUS1_CLOSE"):
+    """Anota el rechazo. Solo clave, hora, plazo y motivo. Sin insumos ni cuerpos."""
+    rec = {
+        "fecha_cierre": row.get("fecha_cierre", ""),
+        "script": row.get("script", ""),
+        "ccy": row.get("ccy", ""),
+        "written_at_utc": written_at,
+        "deadline_utc": deadline.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "reason": reason,
+    }
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec, separators=(",", ":"), sort_keys=True) + "\n")
+
+
 def parse_when(value):
     """ISO-8601, RFC2822, or epoch milliseconds → UTC 'YYYY-MM-DDTHH:MM:SSZ'."""
     if value is None:
@@ -615,7 +791,8 @@ def _vote(name, ccy, kv, estado, status, bar_stale):
 
 
 def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at,
-               mail_ids, bar_ms, parts_expected, parts_received, version, valor=""):
+               mail_ids, bar_ms, parts_expected, parts_received, version, valor="",
+               written_at="", inputs_hash="", legacy=""):
     return {
         "fecha_cierre": session.isoformat(),
         "script": name,
@@ -633,6 +810,9 @@ def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at
         "parts_expected": str(parts_expected),
         "parts_received": str(parts_received),
         "rule_version": RULE_VERSION,
+        "written_at_utc": written_at,
+        "inputs_hash": inputs_hash,
+        "legacy": legacy,
         # Non-holiday rows the ingestor writes are REGULAR. A holiday with mail
         # overwrites this to HOLIDAY. RELOJES-01 Anexo 1 A1.
         "session_type": "REGULAR",
@@ -645,6 +825,14 @@ def _blank_row(session, name, ccy, estado, voto, stale, snapshot_id, received_at
     }
 
 
+def _with_hash(row, source, **fields):
+    """Rellena inputs_hash. No registra ni devuelve los insumos."""
+    row["inputs_hash"] = inputs_hash_for(
+        source, row["fecha_cierre"], row["script"], row["ccy"], **fields
+    )
+    return row
+
+
 def missing_rows(session, names=None):
     """One MISSING row per module and its currencies. voto is NA. Nothing is filled with 0."""
     rows = []
@@ -653,10 +841,10 @@ def missing_rows(session, names=None):
         if names is not None and name not in names:
             continue
         for ccy in _ccys_for(name):
-            rows.append(_blank_row(
+            rows.append(_with_hash(_blank_row(
                 session, name, ccy, "MISSING", "NA", False, "", "", "",
                 expected, parts, 0, MODULE[name]["version"],
-            ))
+            ), "missing", expected_bar_close_ms=expected))
     return rows
 
 
@@ -948,10 +1136,11 @@ def rows_from_messages(messages, session, write_missing):
                 )
                 continue
             for ccy in _ccys_for(name):
-                rows.append(_blank_row(
+                rows.append(_with_hash(_blank_row(
                     session, name, ccy, "INGEST_INCOMPLETE", "NA", bar_stale, snap_id,
                     received_at, mail_ids, bar_ms, parts_n, received, version,
-                ))
+                ), "incomplete", reason=detail.get("reason", ""),
+                    parts_expected=parts_n, parts_received=received))
             continue
         for ccy in _ccys_for(name):
             estado, valor = _estado_valor(name, ccy, merged)
@@ -963,21 +1152,24 @@ def rows_from_messages(messages, session, write_missing):
             else:
                 status = None
             voto, stale = _vote(name, ccy, merged, estado, status, bar_stale)
-            rows.append(_blank_row(
+            rows.append(_with_hash(_blank_row(
                 session, name, ccy, estado, voto, stale, snap_id, received_at, mail_ids,
                 bar_ms, parts_n, received if name not in MONOLITHIC else 1, version, valor,
-            ))
+            ), "mail", version=version, snapshot_id=snap_id, bar_close_ms=bar_ms,
+                parts_expected=parts_n, parts_received=received if name not in MONOLITHIC else 1,
+                payload_kv=merged))
         if name == "CURVA_G8":
             # {CCY}_MOTION viaja en el mismo correo. No es otro módulo de partes.
             # Orden Sander 17-nov t239u.
             present.add("CURVA_MOTION")
             got_n = received if name not in MONOLITHIC else 1
             for ccy in _ccys_for("CURVA_MOTION"):
-                motion = _blank_row(
+                motion = _with_hash(_blank_row(
                     session, "CURVA_MOTION", ccy, merged.get("%s_MOTION" % ccy, ""),
                     "NA", bar_stale, snap_id, received_at, mail_ids, bar_ms,
                     parts_n, got_n, version, "",
-                )
+                ), "mail", version=version, snapshot_id=snap_id, bar_close_ms=bar_ms,
+                    parts_expected=parts_n, parts_received=got_n, payload_kv=merged)
                 motion["report_date"] = ""
                 rows.append(motion)
     if write_missing:
@@ -1041,24 +1233,25 @@ def rows_from_factor(doc, session):
             continue
         raw = entry.get("E21")
         if raw is None or not fresh:
-            rows.append(_blank_row(
+            rows.append(_with_hash(_blank_row(
                 session, "E21", ccy, "STALE" if raw is not None else "MISSING", "NA", True,
                 snap, generated, "", bar, 1, 1, version,
                 _public_valor("E21", "" if raw is None else _num_text(raw)),
-            ))
+            ), "usd_factor", as_of=as_of, generated_utc=generated,
+                e21="" if raw is None else _num_text(raw)))
             continue
         try:
             number = Decimal(str(raw))
         except InvalidOperation:
-            rows.append(_blank_row(
+            rows.append(_with_hash(_blank_row(
                 session, "E21", ccy, "STALE", "NA", True, snap, generated, "", bar, 1, 1, version,
                 _public_valor("E21", ""),
-            ))
+            ), "usd_factor", as_of=as_of, generated_utc=generated, e21=""))
             continue
-        rows.append(_blank_row(
+        rows.append(_with_hash(_blank_row(
             session, "E21", ccy, "FRESH", _sign(number), False, snap, generated, "",
             bar, 1, 1, version, _public_valor("E21", _num_text(raw)),
-        ))
+        ), "usd_factor", as_of=as_of, generated_utc=generated, e21=_num_text(raw)))
     return rows
 
 
@@ -1149,7 +1342,7 @@ def _ensure_report_date_column(raw):
     return rebuilt.encode("utf-8")
 
 
-def append_rows(path, rows):
+def append_rows(path, rows, now=None, rejected_path=None, enforce_tplus1=False):
     """Append rows whose (fecha_cierre, script, ccy) is new.
 
     When the header already lists session_type and report_date, the previous
@@ -1162,16 +1355,34 @@ def append_rows(path, rows):
     if os.path.exists(path):
         with open(path, "rb") as fh:
             raw = fh.read()
-    upgraded = _ensure_report_date_column(_ensure_session_type_column(raw))
+    upgraded = _ensure_e7_columns(_ensure_report_date_column(_ensure_session_type_column(raw)))
     if upgraded != raw:
         with open(path, "wb") as fh:
             fh.write(upgraded)
         raw = upgraded
     have = read_existing_keys(path) if raw else set()
+    written = _e7_now_z(now)
+    if rejected_path is None:
+        rejected_path = os.path.join(os.path.dirname(os.path.abspath(path)), "_ingest", "votes_rejected.jsonl")
     fresh = []
+    rejected = 0
     for row in rows:
         key = (row["fecha_cierre"], row["script"], row["ccy"])
         if key in have:
+            continue
+        row = dict(row)
+        if not row.get("written_at_utc"):
+            row["written_at_utc"] = written
+        if "legacy" not in row:
+            row["legacy"] = ""
+        if enforce_tplus1 and after_tplus1_close(row["fecha_cierre"], row["written_at_utc"], now=now):
+            register_rejected(rejected_path, row, tplus1_close(row["fecha_cierre"]), row["written_at_utc"])
+            rejected += 1
+            sys.stderr.write(
+                "e7 reject AFTER_TPLUS1_CLOSE %s %s %s deadline=%s\n"
+                % (row["fecha_cierre"], row["script"], row["ccy"],
+                   tplus1_close(row["fecha_cierre"]).strftime("%Y-%m-%dT%H:%M:%SZ"))
+            )
             continue
         have.add(key)
         fresh.append(row)
@@ -1603,7 +1814,7 @@ def gmail_failure_rows(session, write_missing, factor_doc):
     return rows
 
 
-def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
+def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enforce_tplus1=False):
     parser = argparse.ArgumentParser(description="Append one session to data/votes.csv")
     parser.add_argument("--from-json", dest="from_json", help="local message JSON; no Gmail call")
     parser.add_argument("--session", help="YYYY-MM-DD session date (WAT). Default: previous weekday")
@@ -1678,6 +1889,24 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None):
             return 1
         return 0
 
+    if enforce_tplus1:
+        kept = []
+        written = _e7_now_z(now)
+        rejected_path = os.path.join(os.path.dirname(os.path.abspath(votes_path)), "_ingest", "votes_rejected.jsonl")
+        for row in rows:
+            row = dict(row)
+            if not row.get("written_at_utc"):
+                row["written_at_utc"] = written
+            if after_tplus1_close(row["fecha_cierre"], row["written_at_utc"], now=now):
+                register_rejected(rejected_path, row, tplus1_close(row["fecha_cierre"]), row["written_at_utc"])
+                sys.stderr.write(
+                    "e7 reject AFTER_TPLUS1_CLOSE %s %s %s deadline=%s\n"
+                    % (row["fecha_cierre"], row["script"], row["ccy"],
+                       tplus1_close(row["fecha_cierre"]).strftime("%Y-%m-%dT%H:%M:%SZ"))
+                )
+                continue
+            kept.append(row)
+        rows = kept
     append_rows(votes_path, rows)
     write_weekly(weekly_path, read_votes(votes_path), now)
     if failure is not None:
@@ -1693,4 +1922,7 @@ def main(argv=None, **kwargs):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # El CLI (workflow y ejecución manual del script) aplica el cierre t+1.
+    # Las llamadas de librería, incluidos los tests ya existentes, pasan
+    # enforce_tplus1=False salvo que lo pidan.
+    sys.exit(main(enforce_tplus1=True))
