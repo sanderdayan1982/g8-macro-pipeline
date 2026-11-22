@@ -1,0 +1,22 @@
+[Unit]
+Description=G8 VPS · SNB1A diario (t334u) · no es un turno del dispatcher
+OnFailure=g8-alarm@%n.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=g8
+Group=g8
+Environment=G8_MODE=prod
+Environment=G8_SNB_WORKDIR=/srv/g8/prod/work/pipeline
+Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/snb1a.json
+EnvironmentFile=/etc/g8/secrets.env
+ExecStart=/srv/g8/venv/bin/python /srv/g8/bin/snb_daily.py
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/srv/g8/prod/work /srv/g8/prod/state /srv/g8/logs
+TimeoutStartSec=600

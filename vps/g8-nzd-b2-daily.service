@@ -1,0 +1,24 @@
+[Unit]
+Description=G8 VPS · nzd-b2 + CHF + TONA diario (t334u) · no es un turno del dispatcher
+OnFailure=g8-alarm@%n.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=g8
+Group=g8
+Environment=G8_MODE=prod
+Environment=G8_NZD_WORKDIR=/srv/g8/prod/work/pipeline
+Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/nzd-b2.json
+Environment=G8_EXECUTOR_ID=vps-prod
+Environment=G8_RBNZ_PROXY_BASE=https://g8-institutional.netlify.app/proxy/rbnz
+EnvironmentFile=/etc/g8/secrets.env
+ExecStart=/srv/g8/venv/bin/python /srv/g8/bin/nzd_b2_daily.py
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/srv/g8/prod/work /srv/g8/prod/state /srv/g8/logs
+TimeoutStartSec=900

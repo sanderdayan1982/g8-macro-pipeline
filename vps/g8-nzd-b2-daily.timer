@@ -1,0 +1,12 @@
+[Unit]
+Description=G8 VPS · nzd-b2 18:30 y reintento 20:00 UTC (19:30 / 21:00 WAT)
+
+[Timer]
+OnCalendar=*-*-* 18:30:00
+OnCalendar=*-*-* 20:00:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-nzd-b2-daily.service
+
+[Install]
+WantedBy=timers.target

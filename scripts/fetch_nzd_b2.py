@@ -65,6 +65,19 @@ HIST_URL = (
     "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/"
     "statistics/series/b/b2/hb2-daily-close-1985-2017.xlsx"
 )
+# t334u: si G8_RBNZ_PROXY_BASE está definido (capa G8NET /proxy/rbnz del dashboard),
+# se descarga por esa base en vez del origen (el VPS recibe 403 directo).
+RBNZ_ORIGIN = "https://www.rbnz.govt.nz"
+
+def resolved_urls():
+    base = os.environ.get("G8_RBNZ_PROXY_BASE", "").strip().rstrip("/")
+    if not base:
+        return URL, HIST_URL
+    def via(u):
+        if not u.startswith(RBNZ_ORIGIN):
+            raise RuntimeError("proxy solo para el origen RBNZ")
+        return base + u[len(RBNZ_ORIGIN):]
+    return via(URL), via(HIST_URL)
 REFERER = "https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates"
 
 HEADERS = {
@@ -282,7 +295,7 @@ def hist_workbook():
         print(f"[fetch_nzd_b2] hist: using cached {cp}")
         content = open(cp, "rb").read()
     else:
-        content = download_xlsx(HIST_URL)
+        content = download_xlsx(resolved_urls()[1])
         _S.write_atomic(cp, content)
         print(f"[fetch_nzd_b2] hist: cached → {cp}")
     wb = load_workbook(BytesIO(content), data_only=True)
@@ -341,7 +354,7 @@ def main() -> int:
             print(f"[fetch_nzd_b2] FATAL hist: {e}", file=sys.stderr)
             return 1
     try:
-        content = download_xlsx(URL)
+        content = download_xlsx(resolved_urls()[0])
     except Exception as e:
         print(f"[fetch_nzd_b2] FATAL download: {e}", file=sys.stderr)
         _fetch().error("descarga B2: %s" % e)

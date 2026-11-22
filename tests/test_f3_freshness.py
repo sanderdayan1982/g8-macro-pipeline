@@ -901,7 +901,8 @@ class Mapping(unittest.TestCase):
                  "ACM_G8_NZD_phi_shadow.json", "CB_EVENT_48H_shadow.json", "CME_OPTIONS_C1_shadow.json", "CME_FXVOL_shadow.json",
                  "CHF_NOWCAST_shadow.json", "CHF_SPOT_2Y_daily_shadow.csv", "CHF_SPOT_5Y_daily_shadow.csv",
                  "S01B_shadow_a3.json",
-                 "argos_rates.json"}  # FLUJOS-01 Sander 12-nov-2026: derivado del render, sin regla de frescura nueva
+                 "argos_rates.json",  # FLUJOS-01 Sander 12-nov-2026: derivado del render, sin regla de frescura nueva
+                 "SWPT.csv"}  # t334u, orden expresa Sander 22-nov: SWPT se ingiere, pero su regla de calendario no se puede añadir sin sacar SWPT de la regla existente NOT_INGESTED
         self.assertEqual(sorted(files - set(OUT) - extra), [])
 
     def test_registry_feeds_map_to_outputs(self):

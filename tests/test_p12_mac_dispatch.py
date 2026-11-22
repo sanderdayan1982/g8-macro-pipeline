@@ -29,6 +29,9 @@ import dispatch_workflows as D  # noqa: E402
 
 TOKEN = "github_pat_SECRET_DISPATCH_do_not_print"
 EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml"}  # cme_options sale: el colector ya no paga dos veces (orden Sander 19-nov)
+# t334u, orden expresa Sander 22-nov: SWPT se engancha en .github/ con cron propio.
+# No es un turno del dispatcher (candado de 49 de test_dispatch_prod.py intacto).
+STANDALONE = {"swpt_update.yml"}
 
 
 def utc(s):
@@ -160,8 +163,8 @@ class Consistency(unittest.TestCase):
         for wf, crons in by_wf.items():
             self.assertEqual(crons, self.crons(wf), wf)
         scheduled = {n for n in os.listdir(self.wdir) if n.endswith(".yml") and self.crons(n)}
-        self.assertEqual(scheduled - set(by_wf) - EXCLUDED, set(), "workflow con cron sin turno ni exclusión")
-        self.assertEqual(set(by_wf) & EXCLUDED, set())
+        self.assertEqual(scheduled - set(by_wf) - EXCLUDED - STANDALONE, set(), "workflow con cron sin turno ni exclusión")
+        self.assertEqual(set(by_wf) & (EXCLUDED | STANDALONE), set())
         for n in EXCLUDED:
             self.assertIn(n.replace(".yml", ""), self.sched["_doc"])
 

@@ -42,3 +42,7 @@ AUD_NOWCAST,derived,60,Derivado calculado en la pasada FINAL tras sus entradas (
 AUD_NOWCAST_META,not_monitored,,Metadatos de AUD_NOWCAST.csv (acta P-8): solo se muestra su fecha,PROVISIONAL,
 CHF_CPI,prev_month_end,5760,BFS publica el IPC en los primeros días hábiles del mes siguiente (1-oct-2026 para septiembre); 4 días de margen,PROVISIONAL,Mensual: observación esperada = último día del mes anterior
 VOTES,not_monitored,,FAMILIAS-00 votos de la suite fuera de vigilancia. El panel 08 no se construye.,APROBADO,
+CHF_SPOT_SNB1A,bd_offset,60,"Hora oficial SNB (~08:31 Europe/Zurich, PublishingDate); 60 min = propuesta operativa",PROVISIONAL,t334u
+DE10Y_PAR,bd_offset,60,Hora oficial Bundesbank (~12:29 CET); 60 min = propuesta operativa,PROVISIONAL,t334u
+ES10Y_DAILY,bd_offset,,Hora de publicación intradía no documentada; offset oficial T+1 a T+2 sesiones,PROVISIONAL,t334u: sin pub_local → sin margen inventado (test_g)
+ES_DE_10Y_SPREAD,derived,60,Derivado de DE10Y_PAR y ES10Y_DAILY en la misma sesión; 60 min = propuesta operativa,PROVISIONAL,t334u

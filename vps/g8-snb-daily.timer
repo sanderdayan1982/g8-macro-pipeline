@@ -1,0 +1,11 @@
+[Unit]
+Description=G8 VPS · SNB1A diario 07:45 UTC (08:45 Europe/Zurich / WAT)
+
+[Timer]
+OnCalendar=*-*-* 07:45:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-snb-daily.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,46 @@
+# t334u: Fed H.4.1 / FRED SWPT semanal. OK expreso Sander a enganchar .github/.
+# Publicación oficial ~jueves 20:30 UTC → cron 21:00 UTC jueves.
+# Idempotente: sin cambio en data/SWPT.csv no hay commit.
+name: SWPT weekly
+
+on:
+  schedule:
+    - cron: '0 21 * * 4'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: swpt-update
+  cancel-in-progress: false
+
+jobs:
+  swpt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch SWPT (FRED)
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python3 scripts/fetch_swpt.py --data-dir data
+
+      - name: Commit SWPT.csv
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/SWPT.csv
+          if git diff --cached --quiet; then
+            echo "SWPT sin cambios."
+          else
+            git commit -m "data: SWPT weekly $(date -u +%F) [skip netlify]"
+            bash scripts/tools/git_push_retry.sh 5
+          fi
