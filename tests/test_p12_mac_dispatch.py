@@ -31,7 +31,8 @@ TOKEN = "github_pat_SECRET_DISPATCH_do_not_print"
 EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml"}  # cme_options sale: el colector ya no paga dos veces (orden Sander 19-nov)
 # t334u, orden expresa Sander 22-nov: SWPT se engancha en .github/ con cron propio.
 # No es un turno del dispatcher (candado de 49 de test_dispatch_prod.py intacto).
-STANDALONE = {"swpt_update.yml"}
+# t339u, orden expresa Sander 23-nov: nuevo workflow soberano 10Y
+STANDALONE = {"swpt_update.yml", "sovereign_10y_daily.yml"}
 
 
 def utc(s):
