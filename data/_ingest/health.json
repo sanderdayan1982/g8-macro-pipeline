@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-22T21:43:22.702626Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-11-22T22:31:52.881828Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -15,29 +15,12 @@
   "CHF_SPOT_10Y.csv",
   "CHF_SPOT_20Y.csv",
   "CHF_SPOT_30Y.csv",
-  "CHF_CPI_YOY.csv"
+  "CHF_CPI_YOY.csv",
+  "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "CHF_CURVE_MONTH_END_CONTROL.csv",
-   "state": "STALE",
-   "have_max": "2026-10-30",
-   "expected_obs": "2026-11-19",
-   "calendar": "CH",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 4,
  "feeds": [
   {
@@ -2286,20 +2269,17 @@
   },
   {
    "file": "CHF_CURVE_MONTH_END_CONTROL.csv",
-   "state": "STALE",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-10-30",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-10-30",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "publication_frequency": "monthly:BD1",
+   "slow_fallback": true
   },
   {
    "file": "CHF_CURVE_METH_BREAK.json",
@@ -2355,6 +2335,20 @@
    "flags": [],
    "status": "UNKNOWN",
    "publication_frequency": "derived",
+   "slow_fallback": false
+  },
+  {
+   "file": "SWPT.csv",
+   "state": "NO_PUBLICATION",
+   "have_max": "2026-11-18",
+   "expected_obs": "2026-11-18",
+   "calendar": "US",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "publication_frequency": "weekly:THU",
    "slow_fallback": false
   },
   {
