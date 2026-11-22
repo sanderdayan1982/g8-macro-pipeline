@@ -105,6 +105,27 @@ class PushRetry(unittest.TestCase):
         self.assertEqual(self.read_main("data/other.csv"), "o4")
 
 
+    def test_unstaged_local_changes_do_not_block_push(self):
+        """t329u: un cambio local no commiteado (p. ej. private_data pull) no debe impedir el rebase."""
+        w = self.clone("work")
+        self.write(w, "data/_ingest/health.json", "new-health")
+        self.git(w, "add", ".")
+        self.git(w, "commit", "-qm", "health")
+        self.write(w, "data/other.csv", "local-dirty")
+        self.write(w, "data/pulled_private.csv", "copied-untracked")
+        self.other_pushes("data/alerts/brief.json", "meanwhile")
+        rc, out = self.run_script(w)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.read_main("data/_ingest/health.json"), "new-health")
+        self.assertEqual(self.read_main("data/alerts/brief.json"), "meanwhile")
+        with open(os.path.join(w, "data/other.csv"), encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), "local-dirty")
+        with open(os.path.join(w, "data/pulled_private.csv"), encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), "copied-untracked")
+        self.assertNotIn("new-health", self.read_main("data/other.csv"))
+
+
+
 class Workflows(unittest.TestCase):
     def test_R4_data_workflows_use_retry(self):
         wdir = os.path.join(ROOT, ".github", "workflows")
