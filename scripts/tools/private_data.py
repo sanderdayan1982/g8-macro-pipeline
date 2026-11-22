@@ -37,7 +37,7 @@ ROWS = {
     7: ["data/CME_OPTIONS_C1_shadow.json"],
     8: ["data/CME_FXVOL_shadow.json"],
     9: ["data/futures/canonical/%s.csv" % name for name in FUTURES],
-    10: ["data/futures/canonical/DX.csv"],
+    10: ["data/futures/canonical/DX.csv"],  # FUENTE=ICE · fuera de las pruebas de volumen
     11: ["data/alerts/brief.json"],
     12: ["data/alerts/state.json"],
     13: ["tests/fixtures/fxvol/FXVOL_test_vectors.json"],
