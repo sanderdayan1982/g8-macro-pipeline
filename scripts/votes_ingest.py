@@ -93,7 +93,7 @@ GMAIL_QUERY = 'from:noreply@tradingview.com subject:"Alert:" -subject:"G8-COLLEC
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 LIST_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
-RULE_VERSION = "2"  # orden expresa de Sander 14-nov-2026 (t158u): FRESH_PROXY counts as fresh
+RULE_VERSION = "3"  # orden expresa de Sander 22-nov-2026 (t318u): IYDT EXTREME = ±1; filas nuevas solamente
 RETRIES = 3
 # Pause between consecutive messages.get calls. Orden Sander 14-nov-2026 16:28 WAT.
 MESSAGES_GET_PAUSE_S = 0.15
@@ -180,13 +180,16 @@ ALLOWED_VALOR_MODULES = frozenset({
     "E21",
 })
 
-# Bands seen in the 12-nov field list. No EXTREME band exists in this repo or in
-# that field list, so an EXTREME (or any other) band is NA, not STRONG.
+# Bands seen in the 12-nov field list, plus EXTREME (IYDT-2Y v1.7.2 emite
+# POS_EXTREME/NEG_EXTREME; orden Sander 22-nov-2026 t318u, rule_version 3).
+# Any other band is NA, not STRONG.
 IYDT_BANDS = {
     "POS_STRONG": "+1",
     "NEG_STRONG": "-1",
     "POS_BELOW_STRONG": "0",
     "NEG_BELOW_STRONG": "0",
+    "POS_EXTREME": "+1",
+    "NEG_EXTREME": "-1",
 }
 ALWAYS_NA = {
     "RISK_G8", "XCCY_G8", "XCCY_OIS_SHADOW", "CURVA_G8", "RTF10_G8",

@@ -200,7 +200,7 @@ class HappyPath(unittest.TestCase):
         pos = rows[("POS_G8", "EUR")]
         self.assertEqual((pos["estado"], pos["voto"]), ("CROWD SHORT", "NA"))
         self.assertEqual(pos["valor"], "")  # orden Sander 17-nov t235u, D-6 lista blanca
-        self.assertTrue(all(r["rule_version"] == "2" for r in rows.values()))  # orden expresa de Sander 14-nov-2026 (t158u): rule_version 2
+        self.assertTrue(all(r["rule_version"] == "3" for r in rows.values()))  # orden expresa de Sander 22-nov-2026 (t318u): rule_version 3
         self.assertTrue(all(r["family"] == V.FAMILIES[r["script"]] for r in rows.values()))
         self.assertNotIn(("RISK_G8", "EUR"), rows)
 
@@ -215,7 +215,7 @@ class VoteTable(unittest.TestCase):
         cases = {
             "POS_STRONG": "+1", "NEG_STRONG": "-1",
             "POS_BELOW_STRONG": "0", "NEG_BELOW_STRONG": "0",
-            "POS_EXTREME": "NA", "NEG_EXTREME": "NA", "WARM": "NA",
+            "POS_EXTREME": "+1", "NEG_EXTREME": "-1", "WARM": "NA",
         }
         for band, voto in cases.items():
             row = self.one("IYDT_2Y", {"Y2_EUR_SCORE": "1", "Y2_EUR_SCORE_BAND": band, "Y2_EUR_STATUS": "FRESH"})
@@ -358,6 +358,69 @@ class AppendOnly(unittest.TestCase):
         self.assertEqual(V.append_rows(path, rows), 0)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), data)
+
+    def test_rule_version_2_iydt_extreme_row_is_not_rewritten(self):
+        """Filas ya escritas con rule_version 2 no se reescriben (t318u)."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        path = os.path.join(tmp, "votes.csv")
+        header = ",".join(V.COLUMNS)
+        old_fields = {
+            "fecha_cierre": "2026-11-19",
+            "script": "IYDT_2Y",
+            "version": "1.7.2",
+            "ccy": "AUD",
+            "estado": "NEG_EXTREME",
+            "valor": "",
+            "voto": "NA",
+            "stale": "false",
+            "snapshot_id": "",
+            "hora_recepcion_utc": "",
+            "id_correo": "",
+            "bar_close_ms": "",
+            "family": "IYDT",
+            "parts_expected": "8",
+            "parts_received": "8",
+            "rule_version": "2",
+            "written_at_utc": "",
+            "inputs_hash": "",
+            "legacy": "",
+            "session_type": "",
+            "report_date": "",
+        }
+        original = (header + "\n" + ",".join(old_fields[c] for c in V.COLUMNS) + "\n").encode()
+        with open(path, "wb") as fh:
+            fh.write(original)
+        # Misma clave, incluso si el mapeo nuevo daría voto -1 y rule_version 3.
+        attempt = dict(old_fields, voto="-1", rule_version="3")
+        self.assertEqual(V.append_rows(path, [attempt]), 0)
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), original)
+        with open(path, encoding="utf-8", newline="") as fh:
+            saved = list(csv.DictReader(fh))
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0]["voto"], "NA")
+        self.assertEqual(saved[0]["rule_version"], "2")
+        self.assertEqual(saved[0]["estado"], "NEG_EXTREME")
+        # Sesión nueva: entra con la regla 3 y voto -1; el prefijo no se toca.
+        fresh_msgs = parts("IYDT_2Y", {"Y2_AUD_SCORE": "1", "Y2_AUD_SCORE_BAND": "NEG_EXTREME",
+                                       "Y2_AUD_STATUS": "FRESH"}, bar=V.expected_bar_close_ms(date(2026, 11, 22)))
+        fresh = [r for r in V.rows_from_messages(fresh_msgs, date(2026, 11, 22), False)
+                 if r["script"] == "IYDT_2Y" and r["ccy"] == "AUD"]
+        self.assertEqual(len(fresh), 1)
+        self.assertEqual(fresh[0]["voto"], "-1")
+        self.assertEqual(fresh[0]["rule_version"], "3")
+        self.assertEqual(V.append_rows(path, fresh), 1)
+        with open(path, "rb") as fh:
+            later = fh.read()
+        self.assertTrue(later.startswith(original))
+        with open(path, encoding="utf-8", newline="") as fh:
+            saved = list(csv.DictReader(fh))
+        self.assertEqual(saved[0]["voto"], "NA")
+        self.assertEqual(saved[0]["rule_version"], "2")
+        self.assertEqual(saved[1]["voto"], "-1")
+        self.assertEqual(saved[1]["rule_version"], "3")
+        self.assertEqual(saved[1]["fecha_cierre"], "2026-11-22")
 
 
 class GmailFailure(unittest.TestCase):
