@@ -715,6 +715,13 @@ def _estado_valor_from_mail(name, ccy, kv):
         # Estado de movimiento. Valor siempre vacío. Orden Sander 17-nov t239u.
         return kv.get("%s_MOTION" % ccy, ""), ""
     if name == "RTF10_G8":
+        # t337u, orden expresa Sander 22-nov: ALERT_VERSION=4 no trae
+        # DRIVER/POL/LER/CONF/BETA. La orden no define qué campo alimenta
+        # `estado` en v4; se deja NA (no se inventa un mapeo desde READING
+        # ni READING_MAIN). v3 (ALERT_VERSION ausente o 3 / SCRIPT_VERSION
+        # 3.10.0) sigue leyendo DRIVER, histórico.
+        if (kv.get("ALERT_VERSION") or "").strip() == "4":
+            return "NA", ""
         return kv.get("%s_DRIVER" % ccy, ""), ""
     if name == "POL_G8":
         state = kv.get("%s_STATE" % ccy, "") or kv.get("%s_NOW_DIRECTION" % ccy, "")
