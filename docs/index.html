@@ -542,7 +542,7 @@
                 <div class="attr-err" style="color:#5d6678">Fetching RFR + floor CSVs from pipeline repo (resolves to data or explained error)…</div>
             </div>
             <div class="section-footer">
-                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF: SARON − SNB policy rate (SNB zirepo + RSS via local fetch; tiered remuneration) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch · TONA: This service uses the API provided by the “Bank of Japan Time-Series Data Search.” The Bank of Japan does not guarantee the content of the service.</span>
+                <span class="footer-note">Spread &gt; 0 sustained = reserve scarcity / collateral pressure in that system (precedes XCCY stress) · USD vs IORB · EUR vs DFR · GBP/JPY/AUD vs policy rate · CAD vs BoC target · CHF: SARON − SNB policy rate (SNB zirepo + RSS via local fetch; tiered remuneration) · NZD: overnight cash − OCR (floor puro, ≈0 salvo estrés) y BKBM 90d − OCR (term) desde RBNZ B2 via local fetch · un dato marcado PROXY usa el OCR vigente (no vota) hasta que B2 vuelva a publicar el overnight · TONA: This service uses the API provided by the “Bank of Japan Time-Series Data Search.” The Bank of Japan does not guarantee the content of the service.</span>
             </div>
         </div>
     </section>
@@ -2395,7 +2395,10 @@ function getCsv(name) {
            dates normalised to compact yyyymmdd so ffill ordering is consistent. */
         return p.data.map(function (r) {
                 var d = r.DATE != null ? r.DATE : r.Date, v = r.CLOSE != null ? r.CLOSE : r.Value;
-                return { d: String(d == null ? '' : d).replace(/-/g, '').slice(0, 8), v: v };
+                var st = r.Status != null && r.Status !== '' ? String(r.Status) : '';
+                var src = r.Source != null && r.Source !== '' ? String(r.Source) : '';
+                var pd = r.ProxyDate != null && r.ProxyDate !== '' ? String(r.ProxyDate) : '';
+                return { d: String(d == null ? '' : d).replace(/-/g, '').slice(0, 8), v: v, status: st, source: src, proxyDate: pd };
             })
             .filter(function (r) { return /^\d{8}$/.test(r.d) && r.d <= new Date().toISOString().slice(0, 10).replace(/-/g, '') && r.v !== null && r.v !== '' && isFinite(r.v); })
             .sort(function (a, b) { return a.d < b.d ? -1 : 1; });
@@ -2549,6 +2552,11 @@ function row(p, s, pol) {
               : last > 10 ? '<span class="fls-badge fls-press">PRESSURE</span>'
               : last > 2  ? '<span class="fls-badge fls-tight">TIGHT</span>'
               :             '<span class="fls-badge fls-amp">AMPLE</span>';
+    var lastMeta = s._rfrLast || {};
+    var proxyTag = lastMeta.status === 'PROXY'
+        ? ' <span class="fls-badge" style="background:#3a2a08;color:#fdb813" title="proxy de feed; un dato PROXY no vota">PROXY · '
+          + (lastMeta.source || '') + (lastMeta.proxyDate ? ' · ' + lastMeta.proxyDate : '') + '</span>'
+        : '';
     var zh = z === null ? '' :
         '<span class="attr-z ' + (Math.abs(z) > 2 ? 'attr-z-hi' : Math.abs(z) > 1 ? 'attr-z-md' : 'attr-z-lo') + '">Z ' +
         (z > 0 ? '+' : '') + z.toFixed(1) + '</span>';
@@ -2559,7 +2567,7 @@ function row(p, s, pol) {
         '<td>' + fmtD(d1w) + '</td>' +
         '<td>' + fmtD(d1m) + '</td>' +
         '<td>' + spark(v.slice(-90)) + '</td>' +
-        '<td' + (st === 'LIVE' ? '' : ' style="opacity:.55"') + '>' + badge + staleTag + '</td>' +
+        '<td' + (st === 'LIVE' || lastMeta.status === 'PROXY' ? '' : ' style="opacity:.55"') + '>' + badge + proxyTag + staleTag + '</td>' +
         policyCells(p, pol) + '</tr>';
 }
 
@@ -2668,7 +2676,12 @@ function init() {
     var data = {}, pols = {};
     var jobs = PAIRS.map(function (p) {
         return Promise.all([getCsv(p.rfr), getCsv(p.flr)])
-            .then(function (rs) { data[p.key || p.ccy] = spreadSeries(rs[0], rs[1]); pols[p.key || p.ccy] = policyInfo(rs[1]); })
+            .then(function (rs) {
+                var s = spreadSeries(rs[0], rs[1]);
+                s._rfrLast = rs[0] && rs[0].length ? rs[0][rs[0].length - 1] : null;
+                data[p.key || p.ccy] = s;
+                pols[p.key || p.ccy] = policyInfo(rs[1]);
+            })
             .catch(function (e) { console.warn('[fls]', p.ccy, e.message); });
     });
     jobs.push(loadCbCalendar());
