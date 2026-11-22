@@ -334,6 +334,8 @@ def parse(doc):
             rate_m = re.search(r"([+-]?\d+\.\d+)%", _text(tds[6]) if len(tds) > 6 else "")
             since_m = re.search(r"\d{4}-\d{2}-\d{2}", _text(tds[7]) if len(tds) > 7 else "")
             stale = _staleness(text)
+            # t332u, orden expresa Sander 22-nov: PROXY overnight → spread NA, régimen SIN DATO.
+            is_proxy = "PROXY" in text and "SIN DATO" in text
 
             def num_td(i):
                 if i >= len(tds):
@@ -341,11 +343,18 @@ def parse(doc):
                 m = re.search(r"[+-]?\d+\.\d+", _text(tds[i]))
                 return float(m.group(0)) if m else "UNAVAILABLE"
 
+            if is_proxy:
+                spread_bp, d1w_bp, d1m_bp, regime = "NA", "NA", "NA", "SIN DATO"
+            else:
+                spread_bp = float(spread_m.group(1)) if spread_m else "UNAVAILABLE"
+                d1w_bp, d1m_bp = num_td(2), num_td(3)
+                regime = regime_m.group(1) if regime_m else "UNAVAILABLE"
+
             floors[key_m.group(1)] = {
-                "spread_bp": float(spread_m.group(1)) if spread_m else "UNAVAILABLE",
-                "d1w_bp": num_td(2),
-                "d1m_bp": num_td(3),
-                "regime": regime_m.group(1) if regime_m else "UNAVAILABLE",
+                "spread_bp": spread_bp,
+                "d1w_bp": d1w_bp,
+                "d1m_bp": d1m_bp,
+                "regime": regime,
                 "date": date_m.group(1) if date_m else "UNAVAILABLE",
                 "ref": ref_m.group(1).strip() if ref_m else "UNAVAILABLE",
                 "policy_rate": float(rate_m.group(1)) if rate_m else "UNAVAILABLE",
