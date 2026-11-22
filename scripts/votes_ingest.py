@@ -695,6 +695,52 @@ def _public_valor(name, valor):
     return ""
 
 
+def _is_rtf10_v4(kv):
+    """ALERT_VERSION=4 es el esquema nuevo. Ausente o 3 = histórico v3."""
+    return (kv.get("ALERT_VERSION") or "").strip() == "4"
+
+
+def _rtf10_fresh_n(kv):
+    """Cuántas de las 8 divisas traen {CCY}_STATUS=FRESH.
+
+    En RTF10_G8_v4.0.0.pine, f_status / f_worst emiten exactamente
+    FRESH, STALE o NA (peor de 10Y, 2Y y FX). Solo FRESH cuenta.
+    """
+    n = 0
+    for ccy in CCYS:
+        if (kv.get("%s_STATUS" % ccy) or "").strip() == "FRESH":
+            n += 1
+    return n
+
+
+def _rtf10_v4_health_estado(kv):
+    """Estado de presentación (salud del dato). No usa READING ni DRIVER.
+
+    t339u, orden expresa Sander 22-nov:
+      OK       = BATCH_STATUS=DATA y ≥6/8 divisas FRESH
+      DEGRADED = BATCH_STATUS=DATA y <6/8 FRESH
+      ERROR    = paquete BATCH_STATUS=ERROR
+      STALE    = no hay correo v4 al cierre D1 (ver _rtf10_stale_if_no_v4)
+    """
+    batch = (kv.get("BATCH_STATUS") or "").strip()
+    if batch == "ERROR":
+        return "ERROR"
+    if batch == "DATA":
+        return "OK" if _rtf10_fresh_n(kv) >= 6 else "DEGRADED"
+    return None
+
+
+def _rtf10_stale_if_no_v4(write_missing):
+    """STALE en el intento final (05:20 WAT, tras el cierre D1 y el corte 05:15).
+
+    Reutiliza write_missing, el mismo mecanismo del lector para lo que no
+    llegó al cierre esperado. No se engancha a missing_rows ni al v3-only
+    histórico: esos caminos están bloqueados por tests existentes (MISSING /
+    DRIVER). El enganche se documenta; hace falta orden expresa para tocarlos.
+    """
+    return "STALE" if write_missing else None
+
+
 def _estado_valor(name, ccy, kv):
     estado, valor = _estado_valor_from_mail(name, ccy, kv)
     return estado, _public_valor(name, valor)
@@ -715,13 +761,14 @@ def _estado_valor_from_mail(name, ccy, kv):
         # Estado de movimiento. Valor siempre vacío. Orden Sander 17-nov t239u.
         return kv.get("%s_MOTION" % ccy, ""), ""
     if name == "RTF10_G8":
-        # t337u, orden expresa Sander 22-nov: ALERT_VERSION=4 no trae
-        # DRIVER/POL/LER/CONF/BETA. La orden no define qué campo alimenta
-        # `estado` en v4; se deja NA (no se inventa un mapeo desde READING
-        # ni READING_MAIN). v3 (ALERT_VERSION ausente o 3 / SCRIPT_VERSION
-        # 3.10.0) sigue leyendo DRIVER, histórico.
-        if (kv.get("ALERT_VERSION") or "").strip() == "4":
-            return "NA", ""
+        # t339u, orden expresa Sander 22-nov: en v4 el estado es salud del
+        # dato (OK / DEGRADED / ERROR), no dirección. No se deriva de
+        # READING ni READING_MAIN. {CCY}_STATUS del pine es FRESH / STALE / NA.
+        # v3 (ALERT_VERSION ausente o 3) sigue leyendo DRIVER, histórico,
+        # cuando no hay v4.
+        if _is_rtf10_v4(kv):
+            health = _rtf10_v4_health_estado(kv)
+            return (health if health is not None else "NA"), ""
         return kv.get("%s_DRIVER" % ccy, ""), ""
     if name == "POL_G8":
         state = kv.get("%s_STATE" % ccy, "") or kv.get("%s_NOW_DIRECTION" % ccy, "")
@@ -1114,10 +1161,16 @@ def rows_from_messages(messages, session, write_missing):
         best = None
         for bar_ms, snaps in bars.items():
             for snap_id, items in snaps.items():
-                bad, _merged, _received, _declared, _detail = _snapshot_incomplete_reason(name, items)
+                bad, merged, _received, _declared, _detail = _snapshot_incomplete_reason(name, items)
                 sent = max(_sent_ms(kv) for _m, kv, _line in items)
                 # Prefer a complete snapshot, then the later SENT_MS, then snap_id.
-                rank = (0 if bad else 1, sent, snap_id)
+                # t339u, orden expresa Sander 22-nov: en RTF10, el estado lo
+                # escribe solo v4. Un v3 posterior el mismo día no lo pisa.
+                if name == "RTF10_G8":
+                    is_v4 = 1 if _is_rtf10_v4(merged) else 0
+                    rank = (is_v4, 0 if bad else 1, sent, snap_id)
+                else:
+                    rank = (0 if bad else 1, sent, snap_id)
                 if best is None or rank > best[0]:
                     best = (rank, bar_ms, items, snap_id)
         if best:
@@ -1138,6 +1191,19 @@ def rows_from_messages(messages, session, write_missing):
         # Catalog count stays a reference. Rows use the PARTS the mails declared.
         parts_n = "" if declared_n is None else declared_n
         if bad:
+            # t339u: un paquete v4 con BATCH_STATUS=ERROR es el estado ERROR,
+            # no INGEST_INCOMPLETE (faltan partes). Se escribe ya en el
+            # primer intento: el paquete es definitivo.
+            if (name == "RTF10_G8" and _is_rtf10_v4(merged)
+                    and (merged.get("BATCH_STATUS") or "").strip() == "ERROR"):
+                for ccy in _ccys_for(name):
+                    rows.append(_with_hash(_blank_row(
+                        session, name, ccy, "ERROR", "NA", bar_stale, snap_id,
+                        received_at, mail_ids, bar_ms, parts_n, received, version,
+                    ), "mail", version=version, snapshot_id=snap_id,
+                        bar_close_ms=bar_ms, parts_expected=parts_n,
+                        parts_received=received, payload_kv=merged))
+                continue
             if not write_missing:
                 present.discard(name)
                 print(
