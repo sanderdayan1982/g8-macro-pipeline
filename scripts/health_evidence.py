@@ -63,8 +63,33 @@ def _calendar_dates(root, country):
         return None
 
 
+def _was_monitoring_exclusion(item):
+    """Feed already parked as excluded from freshness surveillance."""
+    return item.get('status') == 'EXCLUDED' or (
+        item.get('publication_frequency') == 'excluded' and item.get('state') == 'NOT_MONITORED'
+    )
+
+
+def _restore_exclusion(item, prior):
+    """Keep a diagnostic note and do not let a later check flip EXCLUDED to an issue."""
+    # UNKNOWN is included: a later consistency check (e.g. collector state vs
+    # summary) must not leave an already-excluded feed as "sin verificar".
+    if item.get('status') not in ('ERROR', 'LATE', 'MISSING', 'UNKNOWN'):
+        return
+    item['note'] = item.get('reason')
+    item['status'] = 'EXCLUDED'
+    if prior.get('state') is not None:
+        item['state'] = prior['state']
+    if prior.get('publication_frequency'):
+        item['publication_frequency'] = prior['publication_frequency']
+    if prior.get('reason') is not None:
+        item['reason'] = prior['reason']
+
+
 def refine(root, now, item, policy):
     name = item['file']
+    keep_excluded = _was_monitoring_exclusion(item)
+    prior = {k: item.get(k) for k in ('status', 'state', 'reason', 'publication_frequency')}
     # Absence is intentional but remains visible. Never relabel annual estimates monthly.
     if name == 'OFFICIAL_GOLD_DEMAND.csv':
         exists = (root / 'data' / name).exists()
@@ -81,6 +106,8 @@ def refine(root, now, item, policy):
         return
     if name == 'OPTIONS_SURFACE.json':
         HD.options(root, now, item, read_json)
+        if keep_excluded:
+            _restore_exclusion(item, prior)
         return
     if name.startswith('MFV_G8_'):
         HD.metals(root, now, item, read_json)

@@ -102,6 +102,20 @@ def outstanding_fetch_failure(facts, filename):
     return False
 
 
+def is_counted_issue(item):
+    """A freshness issue shown as an incidencia. Excluded/not-monitored feeds do not count.
+    PROHIBITED (retired annual file that reappeared) remains an issue even if frequency is excluded."""
+    status = item.get("status")
+    if item.get("state") == "PROHIBITED":
+        return status in ("LATE", "ERROR", "MISSING")
+    if status == "EXCLUDED" or (
+        item.get("publication_frequency") == "excluded" and item.get("state") == "NOT_MONITORED"
+    ):
+        return False
+    return status in ("LATE", "ERROR", "MISSING")
+
+
+
 def build(root, now, report=None):
     root = Path(root)
     src = F.TreeSource(str(root))
@@ -234,7 +248,7 @@ def build(root, now, report=None):
         items.append({"file": "manual/" + reg["feed_id"], "status": status, "state": "MANUAL",
                       "have_max": entry.get("date"), "expected_obs": None, "flags": ["MANUAL"], "publication_frequency": "excluded" if entry.get("disabled") else reg.get("frequency", "unknown"), "slow_fallback": False,
                       "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual" if entry.get("disabled") else "Constante manual; caducidad %s días; no es una observación diaria" % reg["manual_expiry_days"]})
-    issues = [x for x in items if x["status"] in ("LATE", "ERROR", "MISSING")]
+    issues = [x for x in items if is_counted_issue(x)]
     unknown = [x for x in items if x["status"] == "UNKNOWN"]
     return {"schema": "G8_HEALTH/1", "generated_utc": now.isoformat().replace("+00:00", "Z"),
             "status": "DEGRADED" if issues else "UNVERIFIED" if unknown else "CURRENT",
