@@ -53,10 +53,11 @@ class NewFreshnessRows(unittest.TestCase):
     def test_existing_rules_unchanged_versus_main(self):
         # t336u, orden expresa Sander 22-nov: el candado ignora la fila nueva SWPT y restaura
         # SWPT en los feeds de NOT_INGESTED; el resto de reglas no se toca.
-        prefix = _prefix_without_new("freshness_rules.csv", set(NEW) | {"SWPT"})
+        # t336u, orden expresa Sander 22-nov: regla nueva, no modifica ninguna existente
+        prefix = _prefix_without_new("freshness_rules.csv", set(NEW) | {"SWPT", "CHF_CURVE_MONTH_END"})
         prefix = prefix.replace(b"NOT_INGESTED,RRPONTSYD,,", b"NOT_INGESTED,RRPONTSYD;SWPT,,", 1)
         self.assertEqual(hashlib.sha256(prefix).hexdigest(), MAIN_RULES_SHA256)
-        pfx = _prefix_without_new("freshness_params.csv", set(NEW) | {"SWPT"})
+        pfx = _prefix_without_new("freshness_params.csv", set(NEW) | {"SWPT", "CHF_CURVE_MONTH_END"})
         self.assertEqual(hashlib.sha256(pfx).hexdigest(), MAIN_PARAMS_SHA256)
 
     def test_swpt_has_weekly_rule_and_left_not_ingested(self):
