@@ -1,5 +1,6 @@
 """t345u: timer soberano 10Y, evidencia B2 del VPS, argos al cambiar entradas, bak del code_lag."""
 import json
+import re
 import os
 import shutil
 import tempfile
@@ -45,10 +46,13 @@ class SovereignVpsTimer(unittest.TestCase):
         self.assertNotIn("g8_port_run", job)
         self.assertNotIn("dispatch_prod", job)
 
-    def test_github_cron_kept_because_existing_test_requires_it(self):
+    def test_github_workflow_is_dispatch_only_cron_lives_on_vps(self):
+        # t345u dejó este test exigiendo el cron de GitHub porque test_t339u lo pedía.
+        # t346u, orden expresa Sander 23-nov: cron movido al VPS
         text = Path(GH_WF).read_text(encoding="utf-8")
-        self.assertRegex(text, r"cron:\s*'0 13 \* \* 1-5'")
         self.assertIn("workflow_dispatch:", text)
+        self.assertNotRegex(text, r"^\s*- cron:", re.M)
+        self.assertNotIn("schedule:", text)
 
 
 class CodeLagBak(unittest.TestCase):

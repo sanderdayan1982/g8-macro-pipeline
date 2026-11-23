@@ -1,11 +1,13 @@
-# t340u, orden expresa Sander 23-nov: enganche de fetch_sovereign_10y_daily.py
-# con cron L–V 14:00 WAT (13:00 UTC). No es un turno del dispatcher (candado de 49 intacto).
+# t340u, orden expresa Sander 23-nov: enganche de fetch_sovereign_10y_daily.py.
+# t346u, orden expresa Sander 23-nov: cron movido al VPS.
+# El workflow queda solo con workflow_dispatch, como respaldo manual.
+# Publicación L–V 14:00 WAT: timer systemd g8-sovereign-10y-daily (OnCalendar Mon..Fri 13:00 UTC).
+# No es un turno del dispatcher (candado de 49 intacto).
 # Idempotente: sin cambio en los tres CSV no hay commit. Spread solo misma sesión.
+# Nunca dos publicaciones del mismo feed: no hay schedule aquí.
 name: DE/ES 10Y daily
 
 on:
-  schedule:
-    - cron: '0 13 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
