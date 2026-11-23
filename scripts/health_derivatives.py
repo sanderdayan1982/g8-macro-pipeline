@@ -13,10 +13,19 @@ def timestamp(s):
     return d
 
 
+def b2_evidence_path(root):
+    """Prefers the VPS publication record; Mac evidence is only a fallback for tests."""
+    latest = root/'data/_ingest/latest'
+    vps = latest/'vps-prod__nzchf-tona.json'
+    if vps.is_file():
+        return vps
+    return latest/'mac-primary__nzchf-tona.json'
+
+
 def cash(root, now, item, read_json):
     if item['status'] in ('ERROR','LATE'): return
     try:
-        report=read_json(root/'data/_ingest/latest/mac-primary__nzchf-tona.json')
+        report=read_json(b2_evidence_path(root))
         fetch=report['fetch_detail']['nzd']
         publication=report['families']['NZ-B2']
         file=fetch['files']['NZD_CASH_ON.csv']

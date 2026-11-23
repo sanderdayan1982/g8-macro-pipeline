@@ -1,0 +1,11 @@
+[Unit]
+Description=G8 VPS · DE/ES 10Y L–V 13:00 UTC (14:00 WAT)
+
+[Timer]
+OnCalendar=Mon..Fri 13:00:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-sovereign-10y-daily.service
+
+[Install]
+WantedBy=timers.target
