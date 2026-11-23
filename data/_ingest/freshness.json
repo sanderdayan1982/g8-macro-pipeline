@@ -1,5 +1,5 @@
 {
- "at_utc": "2026-11-23T18:00:25Z",
+ "at_utc": "2026-11-23T18:33:56Z",
  "compare_summary": {
   "ACUERDO": 48,
   "FUERA_DE_F3": 1
@@ -304,14 +304,14 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
       "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      },
      "step:tona": {
@@ -331,7 +331,10 @@
     },
     "latest": {
      "errors": [],
-     "failing_since_utc": null,
+     "executor": "vps-prod",
+     "family": "JP-TONA",
+     "family_detail": "",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
@@ -339,22 +342,17 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T12:36:51Z",
-     "last_ok_utc": "2026-11-23T12:36:51Z",
-     "not_before": {},
+     "finished_utc": "2026-11-23T18:32:00Z",
+     "publish_failed_family": null,
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "status": 200
-      }
-     ],
-     "run_id": "20261123T123650Z_actions_fetch-tona_cebc",
-     "source": "actions",
-     "started_utc": "2026-11-23T12:36:50Z",
-     "where": "actions__fetch_tona.json"
+     "requests": [],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
+     "source": "mac",
+     "started_utc": "2026-11-23T18:31:37Z",
+     "where": "vps-prod__nzchf-tona.json"
     },
-    "latest_source": "actions:fetch_tona"
+    "latest_source": "mac:JP-TONA/tona"
    },
    "file": "TONA.csv",
    "flags": [],
@@ -4547,22 +4545,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4571,22 +4575,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4614,22 +4624,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4638,22 +4654,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4681,22 +4703,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4705,22 +4733,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4748,22 +4782,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4772,22 +4812,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4815,22 +4861,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4839,22 +4891,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4882,22 +4940,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4906,22 +4970,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -4949,22 +5019,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -4973,22 +5049,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5016,22 +5098,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5040,22 +5128,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5083,22 +5177,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5107,22 +5207,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5150,22 +5256,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5174,22 +5286,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5217,22 +5335,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5241,22 +5365,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5285,22 +5415,28 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
        "src_max": "2026-11-20",
-       "status": "PUBLISH",
-       "written": true
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5309,22 +5445,28 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
       "src_max": "2026-11-20",
-      "status": "PUBLISH",
-      "written": true
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5353,7 +5495,7 @@
       "executor": "vps-prod",
       "family": "NZ-B2",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
@@ -5361,14 +5503,20 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5377,7 +5525,7 @@
      "executor": "vps-prod",
      "family": "NZ-B2",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
@@ -5385,14 +5533,20 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:NZ-B2/nzd"
@@ -5421,22 +5575,38 @@
       "executor": "vps-prod",
       "family": "CH-DIARIO",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
+       "src_max": "2026-11-23",
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5445,22 +5615,38 @@
      "executor": "vps-prod",
      "family": "CH-DIARIO",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-11-20",
+      "src_max": "2026-11-23",
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-DIARIO/chf"
@@ -5469,7 +5655,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_R10",
@@ -5488,22 +5674,38 @@
       "executor": "vps-prod",
       "family": "CH-DIARIO",
       "family_detail": "",
-      "family_status": "PUBLISHED",
+      "family_status": "NOOP",
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-19",
-       "status": "PUBLISH",
-       "written": true
+       "src_max": "2026-11-20",
+       "status": "NOOP",
+       "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
-      "publish_status": "PUBLISHED",
+      "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5512,22 +5714,38 @@
      "executor": "vps-prod",
      "family": "CH-DIARIO",
      "family_detail": "",
-     "family_status": "PUBLISHED",
+     "family_status": "NOOP",
      "file": {
       "detail": "",
       "held": 0,
-      "src_max": "2026-11-19",
-      "status": "PUBLISH",
-      "written": true
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
-     "publish_status": "PUBLISHED",
+     "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-DIARIO/chf"
@@ -5536,7 +5754,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-19",
+   "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CH_SARON",
@@ -5563,14 +5781,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5587,14 +5821,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5630,14 +5880,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5654,14 +5920,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5697,14 +5979,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5721,14 +6019,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5764,14 +6078,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5788,14 +6118,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5831,14 +6177,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5855,14 +6217,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5898,14 +6276,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5922,14 +6316,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -5965,14 +6375,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -5989,14 +6415,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6032,14 +6474,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -6056,14 +6514,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6099,14 +6573,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -6123,14 +6613,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6166,14 +6672,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -6190,14 +6712,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6233,14 +6771,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -6257,14 +6811,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
@@ -6300,14 +6870,30 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-23T08:30:50Z",
+      "finished_utc": "2026-11-23T18:32:00Z",
       "publish_failed_family": null,
       "publish_status": "NOOP",
       "rc": 0,
-      "requests": [],
-      "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+      "requests": [
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       },
+       {
+        "cls": "OK",
+        "detail": "",
+        "status": 200
+       }
+      ],
+      "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
       "source": "mac",
-      "started_utc": "2026-11-23T08:30:07Z",
+      "started_utc": "2026-11-23T18:31:37Z",
       "where": "vps-prod__nzchf-tona.json"
      }
     },
@@ -6324,14 +6910,30 @@
       "status": "NOOP",
       "written": false
      },
-     "finished_utc": "2026-11-23T08:30:50Z",
+     "finished_utc": "2026-11-23T18:32:00Z",
      "publish_failed_family": null,
      "publish_status": "NOOP",
      "rc": 0,
-     "requests": [],
-     "run_id": "20261123T083007Z_vps-prod_nzchf-tona_a3de",
+     "requests": [
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "detail": "",
+       "status": 200
+      }
+     ],
+     "run_id": "20261123T183137Z_vps-prod_nzchf-tona_aa3f",
      "source": "mac",
-     "started_utc": "2026-11-23T08:30:07Z",
+     "started_utc": "2026-11-23T18:31:37Z",
      "where": "vps-prod__nzchf-tona.json"
     },
     "latest_source": "mac:CH-CURVA/chf"
