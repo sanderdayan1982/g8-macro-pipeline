@@ -1,0 +1,25 @@
+[Unit]
+Description=G8 VPS · Factor USD §10 (t354u/t357u) · no es un turno del dispatcher
+OnFailure=g8-alarm@%n.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=g8
+Group=g8
+Environment=G8_MODE=prod
+Environment=G8_VPS_JOB=usd-factor
+Environment=G8_USDF_LOCK=/srv/g8/prod/state/locks/usd-factor.lock
+Environment=G8_ALERTAS_LOG=/srv/g8/logs/ALERTAS.log
+Environment=G8_USDF_WORKDIR=/srv/g8/prod/work/usd-factor
+Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/usd-factor.json
+EnvironmentFile=/etc/g8/secrets.env
+ExecStart=/srv/g8/venv/bin/python /srv/g8/bin/usd_factor_vps.py
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/srv/g8/prod/work /srv/g8/prod/state /srv/g8/logs
+TimeoutStartSec=1500
