@@ -210,13 +210,52 @@ def is_counted_issue(item):
     return status in ("LATE", "ERROR", "MISSING")
 
 
-def expected_resolution_utc(rule, passes, cals, pub_day):
+def load_freshness_outputs(root):
+    path = Path(root) / "sources/freshness_outputs.csv"
+    out = {}
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if row.get("file"):
+                out[row["file"]] = row
+    return out
+
+
+def expected_resolution_utc(rule, passes, cals, pub_day, rules=None, outputs=None):
     """First scheduled query after the official publication instant (pub_local).
 
     That instant is the 'hora prevista de resolución': the first query_groups pass
     after pub_local on the publication day. The +24 h clock starts there.
     Rules without pub_local (or without a query pass after publication) have no clock.
+
+    t357u: for a derived series the clock is the latest expected_resolution_utc
+    of its inputs (freshness_outputs.inputs), so e.g. ES_DE_10Y_SPREAD can
+    become UNKNOWN_OVERDUE.
     """
+    if (rule.get("frequency") or "").strip() == "derived" and rules is not None and outputs is not None:
+        by_file = {}
+        for r in rules:
+            for name in (r.get("files") or "").split(";"):
+                name = name.strip()
+                if name:
+                    by_file[name] = r
+        clocks = []
+        rid = rule.get("rule_id")
+        for out_name in (rule.get("files") or "").split(";"):
+            out_name = out_name.strip()
+            if not out_name:
+                continue
+            meta = outputs.get(out_name) or {}
+            for inp in (meta.get("inputs") or "").split(";"):
+                inp = inp.strip()
+                if not inp:
+                    continue
+                irule = by_file.get(inp)
+                if not irule or irule.get("rule_id") == rid:
+                    continue
+                clock = expected_resolution_utc(irule, passes, cals, pub_day, rules, outputs)
+                if clock is not None:
+                    clocks.append(clock)
+        return max(clocks) if clocks else None
     if not (rule.get("pub_local") or "").strip() or not (rule.get("query_groups") or "").strip():
         return None
     try:
@@ -228,8 +267,8 @@ def expected_resolution_utc(rule, passes, cals, pub_day):
     return cov[0]["passes"][0][0]
 
 
-def mark_unknown_overdue(items, now, rules, passes, cals):
-    """Flag UNKNOWN items still unresolved 24 h after expected_resolution_utc (t352u)."""
+def mark_unknown_overdue(items, now, rules, passes, cals, outputs=None):
+    """Flag UNKNOWN items still unresolved 24 h after expected_resolution_utc (t352u / t357u)."""
     by_file = {}
     for r in rules:
         for name in (r.get("files") or "").split(";"):
@@ -251,7 +290,7 @@ def mark_unknown_overdue(items, now, rules, passes, cals):
                 pub_day = None
         if pub_day is None:
             continue
-        resol = expected_resolution_utc(rule, passes, cals, pub_day)
+        resol = expected_resolution_utc(rule, passes, cals, pub_day, rules, outputs)
         if resol is None:
             continue
         item["expected_resolution_utc"] = resol.isoformat().replace("+00:00", "Z")
@@ -413,7 +452,8 @@ def build(root, now, report=None, require_vps_status=False):
         with (root / "sources/schedules.csv").open(encoding="utf-8") as fh:
             overdue_passes = list(csv.DictReader(fh))
         overdue_cals = SC.load_calendars(str(root))
-        mark_unknown_overdue(items, now, overdue_rules, overdue_passes, overdue_cals)
+        overdue_outputs = load_freshness_outputs(root)
+        mark_unknown_overdue(items, now, overdue_rules, overdue_passes, overdue_cals, overdue_outputs)
     except (OSError, ValueError, KeyError, TypeError, csv.Error):
         pass
     issues = [x for x in items if is_counted_issue(x)]
