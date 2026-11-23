@@ -207,6 +207,12 @@ def run(data_dir="data", opener=None):
     _write(os.path.join(data_dir, ES_FILE), render_dv(es, "BdE.%s" % ES_CODE))
     spread = same_session_spread(es, de)
     _write(os.path.join(data_dir, SPREAD_FILE), render_spread(spread))
+    # t347u: procedencia del derivado; el cálculo del spread no cambia.
+    _scripts = os.path.dirname(os.path.abspath(__file__))
+    if _scripts not in sys.path:
+        sys.path.insert(0, _scripts)
+    from g8common.derived_provenance import write_for_data_dir
+    write_for_data_dir(data_dir, SPREAD_FILE, [DE_FILE, ES_FILE])
     both = sum(1 for d in spread if spread[d][2] is not None)
     blank = sum(1 for d in spread if spread[d][2] is None)
     return {

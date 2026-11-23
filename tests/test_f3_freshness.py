@@ -379,11 +379,46 @@ class GroupedAndDerived(unittest.TestCase):
                   input_max_at=lambda f, t: D(driver_max), evidence=evidence)
 
     def test_derived_behind_inputs_and_version_uncertainty(self):
-        r = self._derived(["2026-09-22"], "2026-09-23")
-        self.assertEqual((r["state"], r["missing"]), ("BEHIND_INPUTS", ["2026-09-23"]))
+        # t347u, orden expresa Sander 23-nov: derivadas con procedencia
+        # 1) sin procedencia → INPUT_VERSION_UNKNOWN se mantiene
         r = self._derived(["2026-09-23"], "2026-09-23")
         self.assertEqual(r["state"], "CURRENT")
         self.assertIn("INPUT_VERSION_UNKNOWN", r["flags"])            # nunca «al día» sin declarar la incertidumbre
+        # 2) alguna entrada más nueva → BEHIND_INPUTS se mantiene
+        r = self._derived(["2026-09-22"], "2026-09-23")
+        self.assertEqual((r["state"], r["missing"]), ("BEHIND_INPUTS", ["2026-09-23"]))
+        # 3) procedencia completa, generado después de la entrada más reciente
+        #    → peor estado de las entradas, fecha = última sesión común
+        inputs = [x for x in OUT["ACM_G8_NZD.csv"]["inputs"].split(";") if x]
+        prov = {"generated_utc": "2026-09-24T11:00:00Z",
+                "inputs": {f: {"sha": "sha-" + f, "date": "2026-09-23"} for f in inputs}}
+        shas = {f: "sha-" + f for f in inputs}
+        dates = {f: D("2026-09-23") for f in inputs}
+        obs = {f: {D("2026-09-22"), D("2026-09-23")} for f in inputs}
+        r = ev("ACM_G8_NZD.csv", T("2026-09-24T12:00Z"), ["2026-09-23"],
+               input_max_at=lambda f, t: D("2026-09-23"),
+               provenance=prov, input_states={f: "CURRENT" for f in inputs},
+               input_shas=shas, input_dates=dates, input_obs=obs)
+        self.assertEqual(r["state"], "CURRENT")
+        self.assertEqual(r["expected_obs"], "2026-09-23")
+        self.assertEqual(r["last_common_session"], "2026-09-23")
+        self.assertNotIn("INPUT_VERSION_UNKNOWN", r["flags"])
+        # el estado es el peor de las entradas
+        states = {f: "CURRENT" for f in inputs}
+        states[inputs[0]] = "OVERDUE"
+        r = ev("ACM_G8_NZD.csv", T("2026-09-24T12:00Z"), ["2026-09-23"],
+               input_max_at=lambda f, t: D("2026-09-23"),
+               provenance=prov, input_states=states,
+               input_shas=shas, input_dates=dates, input_obs=obs)
+        self.assertEqual(r["state"], "OVERDUE")
+        self.assertNotIn("INPUT_VERSION_UNKNOWN", r["flags"])
+        # entrada más nueva que la procedencia (sha distinto) → BEHIND_INPUTS
+        shas_new = dict(shas, **{inputs[0]: "sha-NUEVA"})
+        r = ev("ACM_G8_NZD.csv", T("2026-09-24T12:00Z"), ["2026-09-23"],
+               input_max_at=lambda f, t: D("2026-09-23"),
+               provenance=prov, input_states={f: "CURRENT" for f in inputs},
+               input_shas=shas_new, input_dates=dates, input_obs=obs)
+        self.assertEqual(r["state"], "BEHIND_INPUTS")
 
     # C3-3 · observada ≠ aceptada ≠ publicada ≠ consumida
     REV = {"query_utc": "2026-09-24T07:00:00Z", "ok": True, "wrote": True,

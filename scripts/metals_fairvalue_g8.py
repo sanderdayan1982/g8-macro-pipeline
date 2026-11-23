@@ -1139,6 +1139,16 @@ def main():
                 print(f"  shadow : no publicado ({exc})")
 
     MP.manifest(Path(DATA_DIR), PROVENANCE, targets)
+    # t347u: procedencia por salida derivada; no cambia el cálculo ni el manifiesto de metales.
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from g8common.derived_provenance import write_for_data_dir
+    for name, inputs in (("MFV_G8_XAU.csv", ["pos_g8_cot.json"]),
+                         ("MFV_G8_XAG.csv", ["pos_g8_cot.json"])):
+        if os.path.isfile(os.path.join(DATA_DIR, name)) and os.path.isfile(os.path.join(DATA_DIR, "pos_g8_cot.json")):
+            try:
+                write_for_data_dir(DATA_DIR, name, inputs)
+            except (FileNotFoundError, OSError) as exc:
+                print("  [WARN] procedencia %s no escrita: %s" % (name, exc))
     print(f"\nSummary: {ok_count} clean of {len(targets)}")
     return 0
 

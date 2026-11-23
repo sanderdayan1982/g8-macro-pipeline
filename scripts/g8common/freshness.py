@@ -29,9 +29,11 @@ Reglas (sources/freshness_rules.csv + freshness_params.csv + freshness_outputs.c
       – Sin hora: PENDING_TIME_UNKNOWN durante el día local P; exigible al terminar P. NUNCA un día extra.
   · weekly_before:N — publicación semanal (frequency weekly:XXX) con datos hasta el último día hábil ≤ P − N días.
   · prev_month_end — publicación el primer día hábil del mes con datos hasta el último día hábil del mes anterior.
-  · derived — exigible = mínimo de las fechas máximas de sus entradas MOTORAS (columna drivers; por defecto todas)
-    del repo en la última pasada FINAL
-    (hora programada + G); además marca INPUT_VERSION_UNKNOWN (los derivados no registran qué versión usaron) y
+  · derived — sin procedencia: exigible = mínimo de las fechas máximas de sus entradas MOTORAS (columna drivers;
+    por defecto todas) del repo en la última pasada FINAL (hora programada + G), y marca INPUT_VERSION_UNKNOWN.
+    Con procedencia (sha y fecha de cada entrada + generated_utc): estado = peor de las entradas y fecha =
+    última sesión común, SOLO si se generó después de su entrada más reciente; BEHIND_INPUTS si alguna entrada
+    es más nueva; INPUT_VERSION_UNKNOWN si no guarda procedencia. AUD_NOWCAST sigue EST y no vota (t347u).
     INPUTS_REVISED_AFTER si hay evidencia de una revisión de una entrada posterior a la última escritura.
   · event / none — UNKNOWN_SCHEDULE (sin obligación inventada). · not_monitored — NOT_MONITORED con su motivo.
 G solo gobierna DUE → OVERDUE: no retrasa ninguna consulta ni hace CURRENT un dato que falta.
@@ -91,6 +93,32 @@ def obs_dates_from_bytes(data, date_key=""):
         if d:
             out.add(d)
     return out
+
+
+def valued_obs_dates_from_bytes(data, date_key=""):
+    """Fechas de observación con al menos un valor no vacío (las filas en blanco no cuentan)."""
+    if data is None:
+        return None
+    if date_key:
+        return obs_dates_from_bytes(data, date_key)
+    out = set()
+    for line in data.decode("utf-8", errors="ignore").splitlines():
+        parts = line.split(",")
+        d = _parse_date(parts[0] if parts else "")
+        if d and any(p.strip() for p in parts[1:]):
+            out.add(d)
+    return out
+
+
+def last_common_session(obs_by_file):
+    """Última fecha presente (con valor) en todas las entradas; None si falta alguna o no hay intersección."""
+    if not obs_by_file:
+        return None
+    sets = list(obs_by_file.values())
+    if any(not s for s in sets):
+        return None
+    common = set.intersection(*sets)
+    return max(common) if common else None
 
 
 # ── calendario ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -273,14 +301,16 @@ def classify_cause(fname, obs, due_first, now, scheduled, runs, downloads, evide
 
 
 def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evidence=None, facts=None, passes=None,
-             runs=None, evidence_available=True, written_at=None):
+             runs=None, evidence_available=True, written_at=None, provenance=None, input_states=None,
+             input_shas=None, input_dates=None, input_obs=None):
     """→ dict con el estado del eje A, sus fundamentos y los hechos del eje B.
     have_dates: fechas de observación presentes en la salida (None = fichero ausente).
     input_max_at(file, instant) → fecha máxima de esa entrada en ese instante (o None si no se puede saber).
     evidence: historial de descargas de la salida y de sus entradas ({file: [registros]}).
     runs: ejecuciones REALES registradas de las fuentes de la salida (Actions, g8step, latido del Mac).
     evidence_available: False en reproducciones históricas (no existía el historial): la causa queda incierta.
-    written_at: instante de la última escritura publicada de la salida (derivados), o None si se desconoce."""
+    written_at: instante de la última escritura publicada de la salida (derivados), o None si se desconoce.
+    provenance/input_states/input_shas/input_dates/input_obs: procedencia de un derivado (t347u); opcionales."""
     model = param["model"]
     cal = output.get("calendar") or rule.get("calendar") or ""
     tz = output.get("timezone") or rule.get("timezone") or "UTC"
@@ -304,7 +334,9 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
                    age_days=(now.date() - have_max).days)
         return res
     if model == "derived":
-        return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at)
+        return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at,
+                                 provenance=provenance, input_states=input_states, input_shas=input_shas,
+                                 input_dates=input_dates, input_obs=input_obs)
 
     pubs = publications(rule, param, cal, tz, cals, now)
     exigible = [(d, due, ex) for d, due, ex in pubs if ex <= now]
@@ -377,42 +409,174 @@ def _covers(ranges, lo, hi):
     return any(a <= lo and b >= hi for a, b in ranges)
 
 
-def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None):
+def _as_date(v):
+    if v is None or v == "":
+        return None
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return v
+    if isinstance(v, datetime):
+        return v.date()
+    return _parse_date(str(v))
+
+
+def _parse_utc(s):
+    if not s:
+        return None
+    s = str(s).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        try:
+            dt = datetime.strptime(s[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt
+
+
+# peor estado de las entradas (más alto = peor). CURRENT y NO_PUBLICATION empatan como sanos.
+_STATE_RANK = {
+    "ERROR": 90, "FINAL_MISSING": 85, "MISSING": 85,
+    "STALE": 80, "OVERDUE": 70, "BEHIND_INPUTS": 65,
+    "INPUT_REVISED": 60, "INPUT_REVISION_UNRESOLVED": 55,
+    "DUE": 40, "PENDING_TIME_UNKNOWN": 35,
+    "UNKNOWN_SCHEDULE": 30, "NO_OBS_DATE": 25,
+    "CURRENT": 0, "NO_PUBLICATION": 0,
+}
+
+
+def worst_input_state(states):
+    """Peor estado de una colección; ignora NOT_MONITORED. None si no hay votantes."""
+    voters = [s for s in states if s and s != "NOT_MONITORED"]
+    if not voters:
+        return None
+    worst = max(voters, key=lambda s: _STATE_RANK.get(s, 30))
+    if _STATE_RANK.get(worst, 30) == 0:
+        return "NO_PUBLICATION" if all(s == "NO_PUBLICATION" for s in voters) else "CURRENT"
+    return worst
+
+
+def _provenance_complete(provenance, inputs):
+    """Procedencia usable: generated_utc parseable y sha+fecha de cada entrada declarada."""
+    if not provenance or not inputs:
+        return False
+    if _parse_utc(provenance.get("generated_utc")) is None:
+        return False
+    recs = provenance.get("inputs") or {}
+    for f in inputs:
+        item = recs.get(f)
+        if not item or not item.get("sha") or not item.get("date"):
+            return False
+    return True
+
+
+def _input_is_newer(provenance, inputs, input_shas, input_dates, input_max_at, now):
+    """True si alguna entrada actual es más nueva que la procedencia (sha o fecha)."""
+    recs = (provenance or {}).get("inputs") or {}
+    for f in inputs:
+        rec = recs.get(f) or {}
+        cur_sha = (input_shas or {}).get(f)
+        if cur_sha and rec.get("sha") and cur_sha != rec["sha"]:
+            return True, f, rec.get("date")
+        stored = _as_date(rec.get("date"))
+        cur_d = _as_date((input_dates or {}).get(f))
+        if cur_d and stored and cur_d > stored:
+            return True, f, cur_d.isoformat()
+        if input_max_at is not None:
+            m = input_max_at(f, now)
+            if m and stored and m > stored:
+                return True, f, m.isoformat()
+    return False, None, None
+
+
+def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None,
+                      provenance=None, input_states=None, input_shas=None, input_dates=None, input_obs=None):
     inputs = [x for x in (output.get("inputs") or "").split(";") if x]
-    res["flags"].append("INPUT_VERSION_UNKNOWN")         # los derivados no registran qué versión de entradas usaron
     if output.get("external_inputs"):
         res["flags"].append("EXTERNAL_INPUTS_UNVERSIONED")
-    if not inputs or input_max_at is None:
-        res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin entradas del repo evaluables")
-        return res
-    g = timedelta(minutes=int(param["g_min"])) if (param.get("g_min") or "").strip() else None
-    if g is None:
-        # sin hora exigible documentada (METALS): solo se compara con las entradas actuales, sin OVERDUE
-        cur = [input_max_at(f, now) for f in inputs]
-        res["inputs_max"] = {f: (d.isoformat() if d else None) for f, d in zip(inputs, cur)}
-        known = [d for d in cur if d]
-        res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin hora exigible documentada",
-                   covers_inputs=bool(known) and have_max >= min(known))
-        return res
-    drivers = [x for x in (output.get("drivers") or "").split(";") if x] or inputs
-    fin = last_final(now)
-    ref = fin if fin + g <= now else last_final(fin - timedelta(minutes=1))
-    at_ref = [input_max_at(f, ref) for f in drivers]      # la fecha exigible la marcan las entradas «motoras»
-    res["inputs_max_at_final"] = {f: (d.isoformat() if d else None) for f, d in zip(drivers, at_ref)}
-    res["final_ref"] = ref.strftime("%Y-%m-%dT%H:%M:%SZ")
-    if any(d is None for d in at_ref):
-        res["flags"].append("INPUT_TIMING_UNKNOWN")
-    known = [d for d in at_ref if d]
-    if not known:
-        res.update(state="UNKNOWN_SCHEDULE", reason="fechas de las entradas desconocidas")
-        return res
-    need = min(known)
-    res["expected_obs"] = need.isoformat()
-    if have_max >= need:
-        res["state"] = "CURRENT"
+    # AUD_NOWCAST sigue EST y no vota: se evalúa por el camino legado (t347u).
+    use_legacy = (output.get("rule_id") == "AUD_NOWCAST") or not _provenance_complete(provenance, inputs)
+    if use_legacy:
+        res["flags"].append("INPUT_VERSION_UNKNOWN")         # no guarda procedencia (o no vota)
+        if not inputs or input_max_at is None:
+            res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin entradas del repo evaluables")
+            return res
+        g = timedelta(minutes=int(param["g_min"])) if (param.get("g_min") or "").strip() else None
+        if g is None:
+            # sin hora exigible documentada (METALS): solo se compara con las entradas actuales, sin OVERDUE
+            cur = [input_max_at(f, now) for f in inputs]
+            res["inputs_max"] = {f: (d.isoformat() if d else None) for f, d in zip(inputs, cur)}
+            known = [d for d in cur if d]
+            res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin hora exigible documentada",
+                       covers_inputs=bool(known) and have_max >= min(known))
+            return res
+        drivers = [x for x in (output.get("drivers") or "").split(";") if x] or inputs
+        fin = last_final(now)
+        ref = fin if fin + g <= now else last_final(fin - timedelta(minutes=1))
+        at_ref = [input_max_at(f, ref) for f in drivers]      # la fecha exigible la marcan las entradas «motoras»
+        res["inputs_max_at_final"] = {f: (d.isoformat() if d else None) for f, d in zip(drivers, at_ref)}
+        res["final_ref"] = ref.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if any(d is None for d in at_ref):
+            res["flags"].append("INPUT_TIMING_UNKNOWN")
+        known = [d for d in at_ref if d]
+        if not known:
+            res.update(state="UNKNOWN_SCHEDULE", reason="fechas de las entradas desconocidas")
+            return res
+        need = min(known)
+        res["expected_obs"] = need.isoformat()
+        if have_max >= need:
+            res["state"] = "CURRENT"
+        else:
+            res["state"] = "BEHIND_INPUTS"
+            res["missing"] = [need.isoformat()]
     else:
-        res["state"] = "BEHIND_INPUTS"
-        res["missing"] = [need.isoformat()]
+        # procedencia completa: peor estado y última sesión común SOLO si se generó después
+        # de su entrada más reciente (t347u, orden expresa Sander 23-nov: derivadas con procedencia).
+        res["generated_utc"] = provenance.get("generated_utc")
+        res["input_provenance"] = {f: dict(provenance["inputs"][f]) for f in inputs}
+        common = last_common_session(input_obs) if input_obs is not None else None
+        if common is None and input_dates:
+            # aproximación: si no hay conjuntos de fechas, la sesión común no puede superar el mínimo
+            known_d = [_as_date(input_dates.get(f)) for f in inputs]
+            if all(known_d):
+                common = min(known_d)
+        if common is None:
+            stored = [_as_date(provenance["inputs"][f]["date"]) for f in inputs]
+            if all(stored):
+                common = min(stored)
+        if common is not None:
+            res["expected_obs"] = common.isoformat()
+            res["last_common_session"] = common.isoformat()
+        newer, which, new_date = _input_is_newer(provenance, inputs, input_shas, input_dates, input_max_at, now)
+        if newer:
+            res["state"] = "BEHIND_INPUTS"
+            res["reason"] = "entrada más nueva que la procedencia"
+            res["missing"] = [new_date or (common.isoformat() if common else "")]
+            if which:
+                res["newer_input"] = which
+        else:
+            # generado después de la entrada más reciente (sha y fecha coinciden con lo guardado)
+            voters = {}
+            for f, st in (input_states or {}).items():
+                if f not in inputs:
+                    continue
+                if f == "AUD_NOWCAST.csv":          # no vota
+                    continue
+                voters[f] = st
+            worst = worst_input_state(voters.values()) if voters else None
+            if worst is not None:
+                res["state"] = worst
+                res["input_states"] = voters
+            elif common is not None and have_max >= common:
+                res["state"] = "CURRENT"
+            elif common is not None:
+                res["state"] = "BEHIND_INPUTS"
+                res["missing"] = [common.isoformat()]
+            else:
+                res.update(state="UNKNOWN_SCHEDULE", reason="sin sesión común de las entradas")
     # C3-3 · revisiones de las entradas: observada ≠ aceptada ≠ publicada ≠ consumida por el derivado
     ev = evidence or {}
     if written_at is None:                               # sin git: última escritura registrada de la propia salida

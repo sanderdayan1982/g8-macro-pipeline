@@ -21,6 +21,7 @@ ALLOWED = (
     "data/DE_10Y_PAR_DAILY.csv",
     "data/ES_10Y_DAILY.csv",
     "data/ES_DE_10Y_SPREAD_DAILY.csv",
+    "data/_ingest/derived_provenance/ES_DE_10Y_SPREAD_DAILY.json",
 )
 
 
