@@ -12,6 +12,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import argos_rates as AR  # noqa: E402
 
 JSON_PATH = os.path.join(ROOT, "data", "argos_rates.json")
+FIX_ARGOS_JSON = os.path.join(ROOT, "tests", "fixtures", "t344u", "argos", "argos_rates.json")
+FIX_ARGOS_DATA = os.path.join(ROOT, "tests", "fixtures", "t344u", "argos", "data")
 
 
 def _row_html(html, ccy):
@@ -23,6 +25,15 @@ def _row_html(html, ccy):
     return ""
 
 
+
+def _fixture_doc_and_raw():
+    # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+    with open(FIX_ARGOS_JSON, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    raw = AR.render(doc["generated_at"], data_dir=FIX_ARGOS_DATA)
+    return doc, raw, AR.parse(raw)
+
+
 class ArgosRatesParity(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -32,25 +43,29 @@ class ArgosRatesParity(unittest.TestCase):
         cls.again = AR.parse(cls.raw)
 
     def test_file_matches_a_fresh_render_at_the_same_utc_clock(self):
-        self.assertEqual(self.again, self.doc)
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        doc, raw, again = _fixture_doc_and_raw()
+        self.assertEqual(again, doc)
         # t332u, orden expresa Sander 22-nov
-        nzd = self.doc["floors"]["NZD"]
+        nzd = doc["floors"]["NZD"]
         self.assertEqual(nzd["spread_bp"], "NA")
         self.assertEqual(nzd["regime"], "SIN DATO")
         self.assertNotEqual(nzd["regime"], "AMPLE")
 
     def test_clock_and_unavailable_points(self):
-        self.assertRegex(self.doc["generated_at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-        self.assertEqual(self.doc["as_of"], AR.closed_session(AR.parse_clock(self.doc["generated_at"])).isoformat())
-        self.assertEqual(self.doc["clock"], "UTC")
-        self.assertEqual(self.doc["c3"], {"quadrant": "UNAVAILABLE", "value": "UNAVAILABLE", "label": "UNAVAILABLE"})
-        blob = self.raw["attr"] + self.raw["s01b"] + self.raw["floors"]
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        doc, raw, again = _fixture_doc_and_raw()
+        self.assertRegex(doc["generated_at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+        self.assertEqual(doc["as_of"], AR.closed_session(AR.parse_clock(doc["generated_at"])).isoformat())
+        self.assertEqual(doc["clock"], "UTC")
+        self.assertEqual(doc["c3"], {"quadrant": "UNAVAILABLE", "value": "UNAVAILABLE", "label": "UNAVAILABLE"})
+        blob = raw["attr"] + raw["s01b"] + raw["floors"]
         self.assertNotIn("driver", blob.lower())
         self.assertNotIn("2×2", blob)
         self.assertNotIn("cuadrante", blob.lower())
         # FLUJOS-01-PR2 autorizado Sander 12-nov-2026 08:57
-        for ccy, row in self.doc["currencies"].items():
-            block = AR._computed_one((self.raw.get("legs") or {}).get(ccy))
+        for ccy, row in doc["currencies"].items():
+            block = AR._computed_one((raw.get("legs") or {}).get(ccy))
             self.assertEqual(row["level_change_1d"], block["level_change_1d"], ccy)
             self.assertEqual(row["level_change_22d"], block["level_change_22d"], ccy)
             self.assertEqual(row["level_change_1d"]["source"], "computed", ccy)
@@ -63,8 +78,10 @@ class ArgosRatesParity(unittest.TestCase):
             self.assertIn(row["staleness"], ("LIVE", "DEGRADED", "STALE", "DEAD"), ccy)
 
     def test_levels_and_floor_spreads_are_the_painted_numbers(self):
-        for ccy, row in self.doc["currencies"].items():
-            html = _row_html(self.raw["attr"], ccy)
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        doc, raw, again = _fixture_doc_and_raw()
+        for ccy, row in doc["currencies"].items():
+            html = _row_html(raw["attr"], ccy)
             self.assertTrue(html, ccy)
             for key in ("nominal_10y", "real_10y", "breakeven_10y", "term_premium", "rny"):
                 val = row[key]
@@ -87,9 +104,9 @@ class ArgosRatesParity(unittest.TestCase):
                             if token not in html:
                                 token = "%s 0" % lab
                         self.assertIn(token, html, "%s %s %s" % (ccy, key, token))
-        for key, row in self.doc["floors"].items():
+        for key, row in doc["floors"].items():
             html = ""
-            for tr in AR._rows(self.raw["floors"]):
+            for tr in AR._rows(raw["floors"]):
                 if 'data-fls-ccy="%s"' % key in tr:
                     html = tr
                     break

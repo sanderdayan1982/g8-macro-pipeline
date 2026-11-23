@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import argos_rates as AR  # noqa: E402
 
 JSON_PATH = os.path.join(ROOT, "data", "argos_rates.json")
+FIX_ARGOS_JSON = os.path.join(ROOT, "tests", "fixtures", "t344u", "argos", "argos_rates.json")
+FIX_ARGOS_DATA = os.path.join(ROOT, "tests", "fixtures", "t344u", "argos", "data")
 REQUIRED = (
     "date", "nominal_10y", "real_10y", "breakeven_10y", "term_premium", "rny",
     "dominant_driver", "staleness", "level_change_1d", "level_change_22d", "s01b",
@@ -38,8 +40,12 @@ class DatosArgos01(unittest.TestCase):
         cls.raw = AR.render(cls.doc["generated_at"])
 
     def test_driver_matches_the_panel_22_session_window(self):
-        for ccy, row in self.doc["currencies"].items():
-            legs = (self.raw.get("legs") or {}).get(ccy) or {}
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        with open(FIX_ARGOS_JSON, encoding="utf-8") as fh:
+            doc = json.load(fh)
+        raw = AR.render(doc["generated_at"], data_dir=FIX_ARGOS_DATA)
+        for ccy, row in doc["currencies"].items():
+            legs = (raw.get("legs") or {}).get(ccy) or {}
             self.assertIn("d_be_22", legs, ccy)
             self.assertEqual(row["dominant_driver"], AR.panel_driver(legs), ccy)
             self.assertIn(row["dominant_driver"], ("BE_LED", "REAL_LED", "UNAVAILABLE"), ccy)

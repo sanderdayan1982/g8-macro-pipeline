@@ -113,18 +113,29 @@ class FeedProxyUnit(unittest.TestCase):
         self.assertGreaterEqual(st3.late_bd, 3)
 
     def test_published_cash_file_has_proxy_rows_from_13_nov(self):
-        text = Path(ROOT, "data", "NZD_CASH_ON.csv").read_text()
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        text = Path(ROOT, "tests", "fixtures", "t344u", "nzd", "NZD_CASH_ON.csv").read_text()
         self.assertTrue(text.startswith("Date,Value,Status,Source,ProxyDate"))
         self.assertIn("2026-11-12,2.8,,,\n", text)
         self.assertIn("2026-11-13,2.75,PROXY,NZD_OCR,2026-11-13", text)
-        self.assertIn("2026-11-20,2.75,PROXY,NZD_OCR,2026-11-13", text)
+        self.assertIn("2026-11-19,2.75,PROXY,NZD_OCR,2026-11-13", text)
+        # RBNZ B2 oficial 20-nov = 2.84 (página B2, released 23-nov-2026); 13-19 siguen PROXY
+        self.assertIn("2026-11-20,2.84,,,\n", text)
+        self.assertNotIn("2026-11-20,2.75,PROXY", text)
 
     def test_proxy_does_not_look_like_official_to_health(self):
-        raw = Path(ROOT, "data", "NZD_CASH_ON.csv").read_bytes()
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        raw = Path(ROOT, "tests", "fixtures", "t344u", "nzd", "NZD_CASH_ON.csv").read_bytes()
         off = FP.official_dates_from_bytes(raw)
         all_d = FP.all_dates_from_bytes(raw)
-        self.assertEqual(max(off), date(2026, 11, 12))
+        self.assertEqual(max(off), date(2026, 11, 20))
         self.assertEqual(max(all_d), date(2026, 11, 20))
+        self.assertIn(date(2026, 11, 12), off)
+        self.assertIn(date(2026, 11, 20), off)
+        for d in (date(2026, 11, 13), date(2026, 11, 16), date(2026, 11, 17),
+                  date(2026, 11, 18), date(2026, 11, 19)):
+            self.assertNotIn(d, off)
+            self.assertIn(d, all_d)
 
 
     def test_publisher_strips_proxy_before_merge_and_reads_ocr_from_repo(self):
