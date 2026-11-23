@@ -461,6 +461,115 @@ def check_feed_proxy(root, now_utc, alerts, info):
         alerts["proxy:error"] = "feed_proxy: error al revisar feeds: %s" % e
 
 
+
+# t352u / t353u / t354u: dos publicaciones con éxito en el mismo turno (dispatch + cron retrasado).
+PUBLISH_CYCLES = (
+    {"id": "usd_factor", "paths": ("data/USD_FACTOR.json",), "message": "chore: usd factor update",
+     "cycle_cron": "30 15 * * 1-5", "slots": 2},
+    {"id": "daily_update", "paths": (), "message": "chore: daily data update",
+     "cycle_cron": "30 21 * * 1-5", "slots": 1},
+    {"id": "metals", "paths": ("data/MFV_G8_state.json",), "message": "chore: weekly metals fair value update",
+     "cycle_cron": "0 7 * * 6", "slots": 1},
+)
+
+
+def _cron_dows(field):
+    """GitHub cron dow: 0 or 7 = Sunday, 1 = Monday, 6 = Saturday. Supports N or N-M."""
+    out = set()
+    for part in field.split(","):
+        part = part.strip()
+        if part in ("*",):
+            return set(range(7))
+        if "-" in part:
+            a, b = part.split("-", 1)
+            a, b = int(a) % 7, int(b) % 7
+            if a <= b:
+                out.update(range(a, b + 1))
+            else:
+                out.update(list(range(a, 7)) + list(range(0, b + 1)))
+        else:
+            out.add(int(part) % 7)
+    return out
+
+
+def _python_to_cron_dow(d):
+    return (d.weekday() + 1) % 7
+
+
+def cycle_window(cron, now_utc):
+    """Last occurrence of cron at or before now, and the next one after that (UTC)."""
+    minute_s, hour_s, _dom, _mon, dow_s = cron.split()
+    minute, hour = int(minute_s), int(hour_s)
+    allowed = _cron_dows(dow_s)
+    occ = []
+    d = now_utc.date() - timedelta(days=12)
+    end = now_utc.date() + timedelta(days=12)
+    while d <= end:
+        if _python_to_cron_dow(d) in allowed:
+            occ.append(datetime(d.year, d.month, d.day, hour, minute, tzinfo=timezone.utc))
+        d += timedelta(days=1)
+    last = [t for t in occ if t <= now_utc]
+    if not last:
+        return None, None
+    start = last[-1]
+    nxt = [t for t in occ if t > start]
+    return start, (nxt[0] if nxt else None)
+
+
+def list_publish_commits(root, paths, message_prefix):
+    """Return [(sha, authored_utc, subject)] for commits whose subject starts with message_prefix."""
+    import subprocess
+    args = ["git", "-C", str(root), "log", "--format=%H\t%aI\t%s", "-n", "80"]
+    if paths:
+        args += ["--"] + list(paths)
+    try:
+        out = subprocess.check_output(args, stderr=subprocess.DEVNULL, text=True)
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    rows = []
+    for line in out.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) < 3:
+            continue
+        sha, when, subj = parts
+        if not subj.startswith(message_prefix):
+            continue
+        try:
+            t = datetime.fromisoformat(when.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        rows.append((sha, t, subj))
+    return rows
+
+
+def duplicate_turn_alerts(commits, start, end, slots):
+    if start is None or end is None:
+        return []
+    in_cycle = [c for c in commits if start <= c[1] < end]
+    if len(in_cycle) > slots:
+        return in_cycle
+    return []
+
+
+def check_duplicate_turn_publishes(root, now_utc, alerts, info):
+    """Incidencia: mismo feed publicado dos veces en el mismo turno."""
+    for job in PUBLISH_CYCLES:
+        start, end = cycle_window(job["cycle_cron"], now_utc)
+        commits = list_publish_commits(root, job["paths"], job["message"])
+        dup = duplicate_turn_alerts(commits, start, end, job["slots"])
+        if not dup:
+            continue
+        shas = ", ".join(c[0][:8] for c in dup)
+        alerts["actions:%s:duplicate_turn" % job["id"]] = (
+            "mismo feed publicado dos veces en el mismo turno (%s: %d publicaciones, cabían %d, "
+            "turno %s–%s, commits %s)."
+            % (job["id"], len(dup), job["slots"],
+               start.strftime("%Y-%m-%dT%H:%MZ"), end.strftime("%Y-%m-%dT%H:%MZ"), shas)
+        )
+
+
 def main(argv=None, now=time.time, root=ROOT):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -470,7 +579,7 @@ def main(argv=None, now=time.time, root=ROOT):
     now_utc = datetime.fromtimestamp(now_ts, tz=timezone.utc)
     alerts, info, info_keys, retired = {}, [], set(), set()
     book = notify.AlertBook(os.path.join(root, "data", "_ingest", "watch_state.json"))
-    for fn in (check_executors, check_actions, check_credentials, check_private_status, check_feed_proxy):
+    for fn in (check_executors, check_actions, check_credentials, check_private_status, check_feed_proxy, check_duplicate_turn_publishes):
         try:
             if fn is check_actions:
                 fn(root, now_utc, alerts, info, prev_active=book.state.get("active", {}), retired_keys=retired)
@@ -479,7 +588,7 @@ def main(argv=None, now=time.time, root=ROOT):
             elif fn is check_private_status:
                 fn(os.environ.get("G8_PRIVATE_CLONE", ""), now_utc, alerts, info,
                    prev_active=book.state.get("active", {}))
-            elif fn is check_feed_proxy:
+            elif fn is check_feed_proxy or fn is check_duplicate_turn_publishes:
                 fn(root, now_utc, alerts, info)
             else:
                 fn(root, now_utc, alerts, info_keys)
