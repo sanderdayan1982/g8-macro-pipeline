@@ -1,4 +1,4 @@
-"""t339u/t340u: el workflow DE/ES 10Y diario solo toca esos tres CSV, tiene dispatch y cron L–V 14:00 WAT."""
+"""t339u/t340u/t346u: el workflow DE/ES 10Y diario solo toca esos tres CSV y queda como respaldo manual (dispatch, sin cron)."""
 import os
 import re
 import unittest
@@ -20,10 +20,18 @@ class Sovereign10yWorkflow(unittest.TestCase):
 
     def test_workflow_exists_and_has_dispatch_and_weekday_cron(self):
         # t339u, orden expresa Sander 23-nov: nuevo workflow soberano 10Y
-        # cron L–V 14:00 WAT = 13:00 UTC (WAT = UTC+1 todo el año).
+        # t346u, orden expresa Sander 23-nov: cron movido al VPS
         self.assertTrue(os.path.isfile(WF))
         self.assertIn("workflow_dispatch:", self.text)
-        self.assertRegex(self.text, r"cron:\s*'0 13 \* \* 1-5'")
+        self.assertNotRegex(self.text, r"^on:\s*$\n(?:.*\n)*?\s*schedule:", re.M)
+        self.assertNotRegex(self.text, r"^\s*- cron:", re.M)
+        # El timer vive en infra/vps del repo privado; la copia revisable en este repo es vps/.
+        timer = os.path.join(ROOT, "vps", "g8-sovereign-10y-daily.timer")
+        self.assertTrue(os.path.isfile(timer), "falta el espejo público del timer VPS")
+        with open(timer, encoding="utf-8") as fh:
+            ttxt = fh.read()
+        self.assertIn("OnCalendar=Mon..Fri 13:00:00", ttxt)
+        self.assertIn("g8-sovereign-10y-daily.service", ttxt)
 
     def test_only_adds_the_three_daily_files(self):
         adds = re.findall(r"git add (.+)", self.text)
