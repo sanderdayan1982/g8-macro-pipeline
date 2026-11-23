@@ -115,9 +115,8 @@ def step(cmd, workdir, env, secrets=(), timeout=1500):
             out = out.replace(s, "***")
     name = " ".join(os.path.basename(c) if i == 1 else c for i, c in enumerate(cmd[:4]))
     print("[metals_vps] paso %s rc=%s" % (name, r.returncode))
-    tail = out.strip().splitlines()[-15:]
-    for line in tail:
-        print("[metals_vps]   " + line)
+    # No stdout de productores ni private_data en logs: puede contener derivados CME/ICE.
+    print("[metals_vps] salida suprimida: %d líneas" % len(out.splitlines()))
     return r.returncode
 
 
@@ -176,11 +175,13 @@ def run(job, workdir):
         msg = "[vps-push] %s fair value %s compute=%s [skip netlify]" % (
             job, today, "ok" if out["compute_ok"] else "fallo")
         out["push"] = P.commit_and_push(workdir, allowed, msg, token, owned=OWNED)
-        env_w = dict(base, G8_DATA_TOKEN=write_tok)
-        rc = step([py, "scripts/tools/private_data.py", "push", priv, "--rows", "11,12",
-                   "--workflow", "metals_update", "--session", today], workdir, env_w, secrets)
-        if rc != 0:
-            raise RuntimeError("private push rc=%s" % rc)
+        # Publicación privada también [vps-push], solo los mismos paths de filas 11,12.
+        private_paths = ("data/alerts/brief.json", "data/alerts/state.json")
+        P.fetch_ff_only(priv, write_tok, allowed=private_paths)
+        for rel in private_paths:
+            shutil.copyfile(os.path.join(workdir, rel), os.path.join(priv, rel))
+        out["private_push"] = P.commit_and_push(priv, private_paths,
+            "[vps-push] metals_update %s [skip netlify]" % today, write_tok, owned=private_paths)
         vrc = step([py, "scripts/tools/private_data.py", "verify", priv, "--rows", "11,12"], workdir, base, secrets)
         out["verify_rc"] = vrc
         step([py, "scripts/tools/step_alarm.py", "record", "private_verify_metals", str(vrc),
