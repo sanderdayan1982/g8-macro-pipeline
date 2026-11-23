@@ -21,19 +21,21 @@ import dashboard_alerts as DA
 
 class NzdProxySpreadNa(unittest.TestCase):
     def test_2026_official_band_from_repo_csvs(self):
-        cash = FP.parse_rows((ROOT / "data" / "NZD_CASH_ON.csv").read_text(encoding="utf-8"))
+        # t343u, orden expresa Sander 23-nov: test desacoplado de datos vivos
+        fix = ROOT / "tests" / "fixtures" / "t344u" / "nzd"
+        cash = FP.parse_rows((fix / "NZD_CASH_ON_2026.csv").read_text(encoding="utf-8"))
         ocr = []
         import csv, io
-        text = (ROOT / "data" / "NZD_OCR.csv").read_text(encoding="utf-8")
+        text = (fix / "NZD_OCR_2026.csv").read_text(encoding="utf-8")
         for row in csv.DictReader(io.StringIO(text)):
             d = FP._as_date(row["DATE"])
             ocr.append((d, float(row["CLOSE"])))
         pts = FP.measure_official_spread_bp(cash, ocr, year=2026)
         band = FP.summarize_spread_band(pts)
-        self.assertEqual(band["n"], 94)
+        self.assertEqual(band["n"], 95)
         self.assertEqual(band["first_date"], "2026-01-08")
-        self.assertEqual(band["last_date"], "2026-11-12")
-        self.assertAlmostEqual(band["mean"], 7.745, places=3)
+        self.assertEqual(band["last_date"], "2026-11-20")
+        self.assertAlmostEqual(band["mean"], 7.758, places=3)
         self.assertEqual(band["median"], 7.0)
         self.assertEqual(band["p5"], 3.0)
         self.assertEqual(band["p95"], 13.0)
@@ -41,9 +43,10 @@ class NzdProxySpreadNa(unittest.TestCase):
         self.assertEqual(band["max"], 35.0)
         # PROXY rows in 2026 are excluded from the band
         self.assertTrue(any((r.get("status") or "").upper() == "PROXY" and str(r["date"]).startswith("2026") for r in cash))
-        payload = json.loads((ROOT / "data" / "_ingest" / "NZD_CASH_ON_proxy_band.json").read_text())
-        self.assertEqual(payload["n"], 94)
+        payload = json.loads((fix / "NZD_CASH_ON_proxy_band.json").read_text())
+        self.assertEqual(payload["n"], 95)
         self.assertEqual(payload["feed_id"], "NZD_CASH_ON")
+        self.assertEqual(payload["last_date"], "2026-11-20")
 
     def test_dashboard_alerts_floor_is_na_when_last_cash_is_proxy(self):
         with tempfile.TemporaryDirectory() as td:
