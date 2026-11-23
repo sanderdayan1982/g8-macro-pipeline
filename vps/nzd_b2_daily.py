@@ -80,7 +80,7 @@ def refresh_argos_and_drop_mac_latest(workdir, token):
     msg = "[vps-push] argos refresh / clear mac-primary latest [skip netlify]"
     # If the mac-primary file was deleted, it must already be tracked for commit_and_push
     # to pick it up (tracked dirty). Untracked deletions are N/A.
-    push = P.commit_and_push(workdir, allowed, msg, token)
+    push = P.commit_and_push(workdir, allowed, msg, token, owned=P.NZD_B2_OWNED)
     return {"argos": result, "removed_mac_latest": removed, "push": push}
 
 def _run(cmd, cwd, env, timeout=600):
@@ -92,7 +92,7 @@ def run(workdir, token):
     sys.path.insert(0, HERE)
     import vps_git_push as P  # noqa: WPS433
 
-    P.fetch_ff_only(workdir, token)
+    P.fetch_ff_only(workdir, token, allowed=P.NZD_B2_OWNED)
     data = os.path.join(workdir, "data")
     mac = os.path.join(workdir, "mac")
     mac_data = os.path.join(mac, "data")
