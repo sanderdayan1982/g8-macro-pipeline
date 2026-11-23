@@ -104,7 +104,27 @@ def _run(cmd, cwd, env=None, timeout=180):
     return r
 
 
-def auth_env(token, base=None):
+def prepare_git_home(cwd):
+    """HOME and global gitconfig inside the worktree (t346u).
+
+    systemd units use ProtectHome=yes, so /home/<user> is unreadable and
+    ``git pull --rebase --autostash`` can fail with rc=128. Git must not
+    need that home. The workdir is already in ReadWritePaths. No secrets.
+    """
+    gitdir = os.path.join(cwd, ".git")
+    if not os.path.isdir(gitdir):
+        gitdir = os.path.join(cwd, ".vps-git")
+        os.makedirs(gitdir, exist_ok=True)
+    home = os.path.join(gitdir, "vps-home")
+    os.makedirs(os.path.join(home, ".config", "git"), exist_ok=True)
+    cfg = os.path.join(home, ".gitconfig")
+    if not os.path.exists(cfg):
+        with open(cfg, "w", encoding="utf-8") as fh:
+            fh.write("# vps job-local gitconfig (t346u); no secrets\n")
+    return home, cfg
+
+
+def auth_env(token, base=None, cwd=None):
     env = dict(base or os.environ)
     if not token:
         raise PushError("G8_FULL ausente")
@@ -115,7 +135,48 @@ def auth_env(token, base=None):
     env["GIT_CONFIG_VALUE_0"] = "AUTHORIZATION: basic %s" % raw
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_ASKPASS"] = "true"
+    if cwd:
+        home, cfg = prepare_git_home(cwd)
+        env["HOME"] = home
+        env["XDG_CONFIG_HOME"] = os.path.join(home, ".config")
+        env["GIT_CONFIG_GLOBAL"] = cfg
+        # rebase reescribe el commit y, con ProtectHome, no hay identidad en /home
+        env.setdefault("GIT_AUTHOR_NAME", "g8-vps")
+        env.setdefault("GIT_AUTHOR_EMAIL", "g8-vps@users.noreply.github.com")
+        env.setdefault("GIT_COMMITTER_NAME", env["GIT_AUTHOR_NAME"])
+        env.setdefault("GIT_COMMITTER_EMAIL", env["GIT_AUTHOR_EMAIL"])
     return env
+
+
+def _sync_then_push(cwd, env, remote, branch):
+    """Fetch + rebase onto origin, then push. No ``pull --rebase --autostash``.
+
+    Leftover tracked dirty (same-job files not in this commit) is stashed in
+    the repo and restored after the push. ProtectHome-safe: uses env from
+    auth_env(..., cwd=cwd).
+    """
+    leftover = [p for st, p in iter_porcelain(cwd) if not _untracked(st)]
+    stashed = False
+    if leftover:
+        _run(["git", "stash", "push", "-q", "-m", "vps-push-leftover", "--"] + leftover, cwd, env)
+        stashed = True
+    last = None
+    try:
+        for _ in range(1, 6):
+            try:
+                _run(["git", "fetch", "-q", remote, branch], cwd, env, timeout=180)
+                _run(["git", "rebase", "-X", "theirs", "%s/%s" % (remote, branch)], cwd, env, timeout=180)
+                _run(["git", "push", remote, "HEAD:" + branch], cwd, env, timeout=180)
+                last = None
+                break
+            except PushError as e:
+                last = e
+                subprocess.run(["git", "rebase", "--abort"], cwd=cwd, env=env, capture_output=True)
+    finally:
+        if stashed:
+            subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, env=env, capture_output=True)
+    if last:
+        raise last
 
 
 def iter_porcelain(cwd):
@@ -140,7 +201,7 @@ def _untracked(status):
 
 
 def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main", owned=None):
-    """Add only allowed dirty paths, commit if needed, pull --rebase, push.
+    """Add only allowed dirty paths, commit if needed, rebase onto origin, push.
 
     Returns dict: {changed: bool, sha: str|None, files: list, skipped: bool}
     Aborts if a dirty path is not in the allowed list.
@@ -159,7 +220,7 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
     if unexpected:
         raise PushError("rutas no permitidas sucias: %s" % ",".join(unexpected[:8]))
     change = [p for st, p in dirty if p in allowed]
-    env = auth_env(token)
+    env = auth_env(token, cwd=cwd)
     if not change:
         sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cwd, text=True).strip()
         return {"changed": False, "sha": sha, "files": [], "skipped": True}
@@ -173,18 +234,7 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
     _run(["git", "commit", "-m", message], cwd, env_c)
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cwd, text=True).strip()
     # integrar main y empujar; 5 intentos al estilo git_push_retry
-    last = None
-    for i in range(1, 6):
-        try:
-            _run(["git", "pull", "--rebase", "--autostash", "-X", "theirs", remote, branch], cwd, env, timeout=180)
-            _run(["git", "push", remote, "HEAD:" + branch], cwd, env, timeout=180)
-            last = None
-            break
-        except PushError as e:
-            last = e
-            subprocess.run(["git", "rebase", "--abort"], cwd=cwd, capture_output=True)
-    if last:
-        raise last
+    _sync_then_push(cwd, env, remote, branch)
     return {"changed": True, "sha": sha, "files": change, "skipped": False}
 
 
@@ -226,12 +276,11 @@ def append_dirty_reset_alert(job, paths, log_path=None, now_utc=None):
 def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
     """Fetch + merge --ff-only, without leaving foreign leftover dirt to block the job.
 
-    Tracked dirty files are stashed around the merge (same idea as commit_and_push
-    --autostash). After pop, if *allowed* is set, tracked files not in that list
+    Tracked dirty files are stashed around the merge (same idea as _sync_then_push). After pop, if *allowed* is set, tracked files not in that list
     are restored from HEAD and a DIRTY_RESET line is logged. Real fetch/merge
     errors still raise PushError (nothing is silenced).
     """
-    env = auth_env(token)
+    env = auth_env(token, cwd=cwd)
     _run(["git", "fetch", "-q", remote, branch], cwd, env, timeout=180)
     tracked = [p for st, p in iter_porcelain(cwd) if not _untracked(st)]
     stashed = False
