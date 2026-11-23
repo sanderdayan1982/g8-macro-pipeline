@@ -376,6 +376,80 @@ def parse(doc):
     }
 
 
+
+# t345u: huella de las entradas que pinta el render (argos_render.js).
+INPUT_NAMES = (
+    "TONA.csv", "AONIA.csv", "AUD_NOWCAST.csv", "CHF_NOM_10Y.csv",
+    "FLOOR_USD.csv", "FLOOR_EUR.csv", "FLOOR_CAD.csv", "S01B.json",
+    "SOFR.csv", "SONIA.csv", "CORRA.csv", "ESTR.csv",
+)
+INPUT_GLOBS = ("RY_G8_*.csv", "NZD_*.csv", "ACM_G8_*.csv", "*_POLICY.csv")
+
+
+def input_paths(data_dir):
+    import glob
+    data_dir = os.path.abspath(data_dir)
+    out = []
+    for name in INPUT_NAMES:
+        path = os.path.join(data_dir, name)
+        if os.path.isfile(path):
+            out.append(path)
+    for pattern in INPUT_GLOBS:
+        out.extend(sorted(glob.glob(os.path.join(data_dir, pattern))))
+    # unique, stable
+    seen = set()
+    uniq = []
+    for path in out:
+        if path not in seen:
+            seen.add(path)
+            uniq.append(path)
+    return uniq
+
+
+def inputs_fingerprint(data_dir):
+    import hashlib
+    h = hashlib.sha256()
+    for path in input_paths(data_dir):
+        rel = os.path.basename(path)
+        h.update(rel.encode("utf-8") + b"\0")
+        with open(path, "rb") as fh:
+            h.update(fh.read() + b"\0")
+    return h.hexdigest()
+
+
+def _core_doc(doc):
+    if not isinstance(doc, dict):
+        return doc
+    out = dict(doc)
+    out.pop("generated_at", None)
+    return out
+
+
+def refresh_if_inputs_changed(root=None, now=None, data_dir=None):
+    """Rewrite data/argos_rates.json only when painted inputs changed (t345u)."""
+    root = os.path.abspath(root or ROOT)
+    data_dir = data_dir or os.path.join(root, "data")
+    out_path = os.path.join(data_dir, "argos_rates.json")
+    if now is None:
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    fp = inputs_fingerprint(data_dir)
+    inputs = input_paths(data_dir)
+    out_mtime = os.path.getmtime(out_path) if os.path.isfile(out_path) else None
+    inputs_newer = out_mtime is None or any(os.path.getmtime(p) > out_mtime for p in inputs)
+    doc = parse(render(now, data_dir=data_dir))
+    previous = None
+    if os.path.isfile(out_path):
+        with open(out_path, encoding="utf-8") as fh:
+            previous = json.load(fh)
+    painted_same = previous is not None and _core_doc(previous) == _core_doc(doc)
+    if painted_same and not inputs_newer:
+        return {"changed": False, "fingerprint": fp, "path": out_path}
+    text = json.dumps(doc, indent=1, ensure_ascii=False) + "\n"
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return {"changed": True, "fingerprint": fp, "path": out_path, "inputs_newer": inputs_newer}
+
+
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
     now = None

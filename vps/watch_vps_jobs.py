@@ -266,6 +266,12 @@ def push_status_api(status, token, prev=None, transport=None, repo=STATUS_REPO, 
 
 
 
+def is_backup_name(name):
+    """Skip leftover backups (*.bak and *.bak-t342u-…, t345u)."""
+    n = (name or "").split("/")[-1]
+    return n.endswith(".bak") or ".bak." in n or ".bak-" in n
+
+
 def _basename_only(name):
     name = str(name).replace("\\", "/").rstrip("/")
     return name.rsplit("/", 1)[-1]
@@ -296,7 +302,7 @@ def list_main_bin_blobs(token, repo=INFRA_REPO, prefix=INFRA_BIN, transport=None
             continue
         name = _basename_only(item.get("name") or "")
         sha = item.get("sha")
-        if name and sha and not name.endswith(".bak"):
+        if name and sha and not is_backup_name(name):
             out[name] = sha
     return out
 
@@ -318,7 +324,7 @@ def evaluate_code_lag(bin_files, main_blobs, state, now_utc, max_sec=CODE_LAG_MA
     new_state = {}
     for name in names:
         name = _basename_only(name)
-        if not name or name.endswith(".bak"):
+        if not name or is_backup_name(name):
             continue
         bsha = (bin_files or {}).get(name)
         msha = (main_blobs or {}).get(name)
@@ -354,7 +360,7 @@ def scan_bin_dir(bin_dir, runner=None):
     except OSError:
         return files
     for name in names:
-        if name.endswith(".bak") or name.startswith("."):
+        if is_backup_name(name) or name.startswith("."):
             continue
         path = os.path.join(bin_dir, name)
         if not os.path.isfile(path):

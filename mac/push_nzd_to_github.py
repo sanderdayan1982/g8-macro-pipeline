@@ -159,16 +159,18 @@ def _sha_files(files):
     return h.hexdigest()
 
 
-def download_identity(fam, files, fetch_rc, fetch_started, run_id, state):
+def download_identity(fam, files, fetch_rc, fetch_started, run_id, state, mtime_files=None):
     """Identidad de la descarga que produjo los CSV locales de una familia (hallazgo #1).
-    FRESH: el descargador terminó con 0 y TODOS los ficheros de la familia se escribieron después del inicio
-           de esta tanda (--fetch-started) → identidad nueva, puede confirmar candidatos de otra descarga.
+    FRESH: el descargador terminó con 0 y los ficheros obligatorios (mtime_files, o todos si no se
+           indica) se escribieron después del inicio de esta tanda (--fetch-started).
+           Los IIB cerrados, que el fetcher ya no reescribe, no impiden FRESH (t345u).
     RETRY_PREVIOUS: los ficheros son byte a byte los de la última descarga correcta registrada → se reintenta
            su publicación CONSERVANDO su identidad original (no cuenta como confirmación nueva).
     UNVERIFIED: cualquier otro caso (fetch fallido con ficheros cambiados, ejecución manual sin marca de
            tiempo…) → None: se puede publicar lo que no requiere confirmación, pero no confirma nada."""
+    check = list(mtime_files or files)
     sha = _sha_files(files)
-    mtimes = [os.path.getmtime(os.path.join(LOCAL_DATA, f)) for f in files]
+    mtimes = [os.path.getmtime(os.path.join(LOCAL_DATA, f)) for f in check]
     if fetch_rc == "0" and fetch_started is not None and mtimes and min(mtimes) >= fetch_started:
         did = "%s:%s:%s" % (run_id, fam, sha[:12])
         state[fam] = {"download_id": did, "sha256": sha, "run_id": run_id}
@@ -365,7 +367,7 @@ def main(argv=None, repo_factory=None, now=time.time, cfg_dir="~/.g8"):
             frep["detail"] = "copia local ilegible: %s" % e
             alerts["fam:%s" % fam] = "Mac %s: no publicada — %s" % (fam, frep["detail"])
             continue
-        did, dkind = download_identity(fam, files, fetch_status.get(fkey), a.fetch_started, run_id, dl_state)
+        did, dkind = download_identity(fam, files, fetch_status.get(fkey), a.fetch_started, run_id, dl_state, mtime_files=required)
         frep.update(download_id=did, download_kind=dkind)
         if not a.dry_run:
             S.write_atomic(dl_state_path, runlog.dumps(dl_state))
