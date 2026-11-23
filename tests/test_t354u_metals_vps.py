@@ -74,5 +74,36 @@ class MetalsWeeklyVps(unittest.TestCase):
             self.assertIsNone(IP_RE.search(read(os.path.join(VPS, n))), n)
 
 
+class MetalsShadowVps(unittest.TestCase):
+    """orden Sander 24-nov: migrado al VPS, sin cron ni turno en GitHub (metals_shadow, t354u)."""
+
+    def test_timer_keeps_weekday_2245_utc(self):
+        t = read(os.path.join(VPS, "g8-metals-shadow.timer"))
+        self.assertIn("OnCalendar=Mon..Fri 22:45:00", t)
+        self.assertIn("Unit=g8-metals-shadow.service", t)
+
+    def test_unit_own_clone_and_lock_shared_feed_lock(self):
+        u = read(os.path.join(VPS, "g8-metals-shadow.service"))
+        self.assertIn("G8_METALS_WORKDIR=/srv/g8/prod/work/metals-shadow", u)
+        self.assertIn("G8_METALS_LOCK=/srv/g8/prod/state/locks/metals-shadow.lock", u)
+        self.assertIn("G8_METALS_FEED_LOCK=/srv/g8/prod/state/locks/metals-feed.lock", u)
+        self.assertIn("ProtectHome=yes", u)
+        self.assertIn("--job metals-shadow", u)
+        self.assertIsNone(IP_RE.search(u))
+
+    def test_workflow_dispatch_only(self):
+        y = read(WF)
+        self.assertIn("workflow_dispatch:", y)
+        self.assertNotRegex(y, r"^\s*schedule:", )
+        self.assertNotRegex(y, r"^\s*- cron:")
+
+    def test_shadow_slot_and_exception_out(self):
+        with open(os.path.join(ROOT, "mac", "dispatch_schedule.json"), encoding="utf-8") as fh:
+            ids = [s["id"] for s in json.load(fh)["slots"]]
+        self.assertNotIn("metals_shadow", ids)
+        with open(os.path.join(ROOT, "mac", "dispatch_drift_exceptions.json"), encoding="utf-8") as fh:
+            self.assertNotIn("metals_shadow", [e.get("id") for e in json.load(fh)["exceptions"]])
+
+
 if __name__ == "__main__":
     unittest.main()
