@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-23T16:40:49.681294Z",
+ "generated_utc": "2026-11-23T18:00:27.395381Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -22,21 +22,14 @@
  "needs_repair": true,
  "issues": [
   {
-   "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-20",
-   "expected_obs": "2026-11-23",
-   "calendar": "TARGET",
-   "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "file": "vps/code_lag:dispatch_prod.py.bak-t342u-20261123T082857Z",
+   "status": "ERROR",
+   "state": "CODE_LAG",
    "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
+    "VPS_UNITS"
    ],
-   "status": "LATE",
-   "publication_frequency": "daily",
-   "slow_fallback": false
+   "have_max": "2026-11-23T16:52:13Z",
+   "reason": "código en ejecución distinta de origin/main más de 1 h (dispatch_prod.py.bak-t342u-20261123T082857Z, age_sec=3601)"
   }
  ],
  "unknown_count": 3,
@@ -2315,39 +2308,36 @@
   },
   {
    "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-20",
+   "state": "CURRENT",
+   "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "LATE",
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "ES_10Y_DAILY.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-11-18",
+   "state": "CURRENT",
+   "have_max": "2026-11-19",
    "expected_obs": "2026-11-18",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
    "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "expected_obs": null,
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -2388,7 +2378,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-23T15:52:22Z",
+   "have_max": "2026-11-23T17:30:40Z",
    "flags": []
   },
   {
@@ -2503,6 +2493,16 @@
    "publication_frequency": "excluded",
    "slow_fallback": false,
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
+  },
+  {
+   "file": "vps/code_lag:dispatch_prod.py.bak-t342u-20261123T082857Z",
+   "status": "ERROR",
+   "state": "CODE_LAG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-23T16:52:13Z",
+   "reason": "código en ejecución distinta de origin/main más de 1 h (dispatch_prod.py.bak-t342u-20261123T082857Z, age_sec=3601)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
