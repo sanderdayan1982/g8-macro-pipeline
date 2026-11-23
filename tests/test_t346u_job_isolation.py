@@ -123,5 +123,82 @@ class FollowUpDoesNotLeakOrAbort(unittest.TestCase):
         self.assertIn("rutas no permitidas sucias", str(cm.exception))
 
 
+class FollowUpRebaseUnderUnreadableHome(unittest.TestCase):
+    """t346u: ProtectHome deja /home ilegible; el follow-up no debe usar esa HOME
+    ni ``git pull --rebase --autostash``."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.work = os.path.join(self.tmp, "work")
+        self.remote = os.path.join(self.tmp, "remote.git")
+        self.locked_home = os.path.join(self.tmp, "locked-home")
+        os.makedirs(self.locked_home)
+        os.chmod(self.locked_home, 0)
+        subprocess.check_call(
+            ["git", "init", "-q", "--bare", "--initial-branch=main", self.remote],
+            stdout=subprocess.DEVNULL,
+        )
+        subprocess.check_call(["git", "clone", "-q", self.remote, self.work], stdout=subprocess.DEVNULL)
+        _git(self.work, "checkout", "-q", "-b", "main")
+        _write(os.path.join(self.work, "data", "TONA.csv"),
+               "DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20261118,1,1,1,1,0\n")
+        _write(os.path.join(self.work, "data", "argos_rates.json"), "{}\n")
+        _write(os.path.join(self.work, "data", "_ingest", "latest", "mac-primary__nzchf-tona.json"), "{}\n")
+        _git(self.work, "add", "data")
+        _git(self.work, "commit", "-qm", "init")
+        _git(self.work, "push", "-q", "origin", "HEAD:main")
+
+    def tearDown(self):
+        os.chmod(self.locked_home, 0o700)
+
+    def test_commit_and_push_with_unreadable_home_leftover_and_diverged_remote(self):
+        # remote moves (como el push por API de las familias)
+        other = os.path.join(self.tmp, "other")
+        subprocess.check_call(["git", "clone", "-q", self.remote, other], stdout=subprocess.DEVNULL)
+        _write(os.path.join(other, "data", "heartbeat.txt"), "h\n")
+        _git(other, "add", "data/heartbeat.txt")
+        _git(other, "commit", "-qm", "heartbeat")
+        _git(other, "push", "-q", "origin", "HEAD:main")
+        # leftover del propio job + cambios del follow-up
+        _write(os.path.join(self.work, "data", "TONA.csv"),
+               "DATE,OPEN,HIGH,LOW,CLOSE,VOLUME\n20261118,1,1,1,1,0\nDIRTY\n")
+        os.remove(os.path.join(self.work, "data", "_ingest", "latest", "mac-primary__nzchf-tona.json"))
+        _write(os.path.join(self.work, "data", "argos_rates.json"), '{"generated_at": "x"}\n')
+        old_home = os.environ.get("HOME")
+        os.environ["HOME"] = self.locked_home
+        os.environ["XDG_CONFIG_HOME"] = os.path.join(self.locked_home, ".config")
+        try:
+            out = P.commit_and_push(
+                self.work,
+                ("data/argos_rates.json", "data/_ingest/latest/mac-primary__nzchf-tona.json"),
+                "[vps-push] argos refresh / clear mac-primary latest [skip netlify]",
+                token="x", owned=P.NZD_B2_OWNED,
+            )
+        finally:
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+            os.environ.pop("XDG_CONFIG_HOME", None)
+        self.assertTrue(out["changed"])
+        self.assertIn("DIRTY", Path(self.work, "data", "TONA.csv").read_text())
+        # git usó HOME dentro del worktree, no el home bloqueado
+        vps_home = os.path.join(self.work, ".git", "vps-home")
+        self.assertTrue(os.path.isdir(vps_home))
+        self.assertTrue(os.path.isfile(os.path.join(vps_home, ".gitconfig")))
+        # el commit llegó al remoto, encima del latido
+        log = subprocess.check_output(["git", "log", "--oneline", "origin/main"], cwd=self.work, text=True)
+        self.assertIn("argos refresh", log)
+        self.assertIn("heartbeat", log)
+
+    def test_unit_keeps_protect_home(self):
+        unit = Path(ROOT, "vps", "g8-nzd-b2-daily.service").read_text(encoding="utf-8")
+        self.assertIn("ProtectHome=yes", unit)
+        self.assertNotIn("ProtectHome=no", unit)
+        src = Path(ROOT, "vps", "vps_git_push.py").read_text(encoding="utf-8")
+        self.assertNotIn('pull", "--rebase", "--autostash"', src)
+        self.assertIn("prepare_git_home", src)
+
+
 if __name__ == "__main__":
     unittest.main()
