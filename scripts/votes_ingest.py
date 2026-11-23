@@ -668,6 +668,39 @@ def parse_payload(body):
     return out or None
 
 
+# orden Sander 24-nov: FFVA VOL z63 validado (v1.6.0/a3, vol~63/1/4)
+FFVA_VOL_FIXED_VERSION = "v1.6.0/a3"
+FFVA_VOL_FIXED_SPEC = "vol~63/1/4"
+FFVA_VOL_FIXED_CCYS = CCYS
+_PROV_MARK = "[PROV]"
+
+
+def _config_key_tokens(raw):
+    return [bit.strip() for bit in (raw or "").split(";") if bit.strip()]
+
+
+def ffva_vol_params_fixed(kv, ccy=None):
+    """True when CONFIG_KEY is the validated VOL z63 parameter set.
+
+    Accepted only if the key carries version v1.6.0/a3 and token
+    vol~63/1/4, without [PROV], for all 8 currencies (USD, EUR, GBP,
+    JPY, AUD, NZD, CAD, CHF). Any other config, or the same with
+    [PROV], is not fixed — the reader leaves it as it was.
+    VPART is not read and does not vote.
+    orden Sander 24-nov (t358u).
+    """
+    if ccy is not None and ccy not in FFVA_VOL_FIXED_CCYS:
+        return False
+    raw = kv.get("CONFIG_KEY", "") if isinstance(kv, dict) else (kv or "")
+    raw = (raw or "").strip()
+    if not raw or _PROV_MARK in raw:
+        return False
+    tokens = _config_key_tokens(raw)
+    if not tokens or tokens[0] != FFVA_VOL_FIXED_VERSION:
+        return False
+    return FFVA_VOL_FIXED_SPEC in tokens
+
+
 def _ccys_for(name):
     return ("G8",) if name == "RISK_G8" else CCYS
 
@@ -1342,6 +1375,11 @@ def rows_from_messages(messages, session, write_missing, first_rtf10_v4_session=
             else:
                 status = None
             voto, stale = _vote(name, ccy, merged, estado, status, bar_stale)
+            # t358u: classify CONFIG_KEY. FIXED only for v1.6.0/a3 + vol~63/1/4
+            # without [PROV], in all 8 currencies. Result is not stored on the
+            # row (schema unchanged). VPART is not read and does not vote.
+            if name == "FFVA_G8":
+                ffva_vol_params_fixed(merged, ccy)
             rows.append(_with_hash(_blank_row(
                 session, name, ccy, estado, voto, stale, snap_id, received_at, mail_ids,
                 bar_ms, parts_n, received if name not in MONOLITHIC else 1, version, valor,
