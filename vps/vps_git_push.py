@@ -12,11 +12,80 @@ import os
 import re
 import subprocess
 import sys
+import fnmatch
 
 SNB_ALLOWED = tuple("data/CHF_SPOT_%dY_DAILY.csv" % y for y in range(1, 31)) + (
     "data/CHF_CURVE_MONTH_END_CONTROL.csv",
     "data/CHF_CURVE_METH_BREAK.json",
 )
+
+
+# Salidas del job nzd-b2 (el mismo clon corre B2 + CHF curva/diario + TONA).
+# No incluye CHF_SPOT_*Y_DAILY.csv (eso es SNB1A; t334u).
+NZD_B2_OWNED = (
+    "data/TONA.csv",
+    "data/CHF_NOM_10Y.csv",
+    "data/CHF_SARON.csv",
+    "data/CHF_NOWCAST_shadow.json",
+    "data/argos_rates.json",
+    "data/NZD_*",
+    "data/CHF_SPOT_*_shadow.csv",
+    "data/CHF_SPOT_1Y.csv",
+    "data/CHF_SPOT_2Y.csv",
+    "data/CHF_SPOT_3Y.csv",
+    "data/CHF_SPOT_4Y.csv",
+    "data/CHF_SPOT_5Y.csv",
+    "data/CHF_SPOT_6Y.csv",
+    "data/CHF_SPOT_7Y.csv",
+    "data/CHF_SPOT_8Y.csv",
+    "data/CHF_SPOT_9Y.csv",
+    "data/CHF_SPOT_10Y.csv",
+    "data/CHF_SPOT_20Y.csv",
+    "data/CHF_SPOT_30Y.csv",
+    "data/_ingest/latest/mac-primary__nzchf-tona.json",
+    "data/_ingest/latest/vps-prod__nzchf-tona.json",
+    "data/_ingest/latest/actions__fetch_tona.json",
+    "data/_ingest/evidence/TONA.csv.jsonl",
+    "data/_ingest/runs/vps-prod/",
+    "data/_ingest/runs/actions/fetch_tona/",
+    "data/_ingest/runs/mac-primary/nzchf-tona/",
+)
+
+SOV10Y_OWNED = (
+    "data/DE_10Y_PAR_DAILY.csv",
+    "data/ES_10Y_DAILY.csv",
+    "data/ES_DE_10Y_SPREAD_DAILY.csv",
+)
+
+# workdirs distintos por job (t343u / t346u)
+JOB_WORKDIR_DEFAULTS = {
+    "snb": "/srv/g8/prod/work/snb",
+    "nzd-b2": "/srv/g8/prod/work/nzd-b2",
+    "sovereign-10y": "/srv/g8/prod/work/sovereign-10y",
+}
+
+JOB_OWNED = {
+    "snb": SNB_ALLOWED,
+    "nzd-b2": NZD_B2_OWNED,
+    "sovereign-10y": SOV10Y_OWNED,
+}
+
+
+def path_owned(path, owned):
+    """True if path is exact, prefix (dir/) or fnmatch pattern in *owned*."""
+    path = (path or "").replace("\\", "/")
+    for rule in owned or ():
+        rule = (rule or "").replace("\\", "/")
+        if not rule:
+            continue
+        if rule.endswith("/") and (path == rule[:-1] or path.startswith(rule)):
+            return True
+        if any(ch in rule for ch in "*?["):
+            if fnmatch.fnmatch(path, rule):
+                return True
+        if path == rule:
+            return True
+    return False
 
 
 class PushError(RuntimeError):
@@ -70,11 +139,13 @@ def _untracked(status):
     return status == "??"
 
 
-def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"):
+def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main", owned=None):
     """Add only allowed dirty paths, commit if needed, pull --rebase, push.
 
     Returns dict: {changed: bool, sha: str|None, files: list, skipped: bool}
     Aborts if a dirty path is not in the allowed list.
+    *owned*: rutas de ESTE job que pueden quedar sucias sin entrar en este commit
+    (no se publican aquí, no se descartan, no abortan). Cualquier sucio ajeno sigue siendo error.
     """
     if not message.startswith("[vps-push]"):
         raise PushError("el mensaje debe empezar por [vps-push]")
@@ -83,7 +154,8 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
     dirty = list(iter_porcelain(cwd))
     # Untracked files outside the allowlist are left alone (cache, mac/, state/).
     # Tracked unexpected dirty paths still abort: no se publica nada fuera de lista.
-    unexpected = [p for st, p in dirty if p not in allowed and not _untracked(st)]
+    unexpected = [p for st, p in dirty
+                  if p not in allowed and not _untracked(st) and not path_owned(p, owned)]
     if unexpected:
         raise PushError("rutas no permitidas sucias: %s" % ",".join(unexpected[:8]))
     change = [p for st, p in dirty if p in allowed]
@@ -176,7 +248,8 @@ def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
         subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, capture_output=True)
     if allowed is None:
         return
-    reset = [p for st, p in iter_porcelain(cwd) if not _untracked(st) and p not in allowed]
+    reset = [p for st, p in iter_porcelain(cwd)
+             if not _untracked(st) and p not in allowed and not path_owned(p, allowed)]
     if reset:
         _run(["git", "restore", "--source=HEAD", "--worktree", "--staged", "--"] + reset, cwd, env)
         print("[vps_git] DIRTY_RESET %s" % " ".join(reset))
