@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-23T18:33:57.982973Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-11-23T18:36:25.231936Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,19 +19,8 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "vps/code_lag:dispatch_prod.py.bak-t342u-20261123T082857Z",
-   "status": "ERROR",
-   "state": "CODE_LAG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-23T16:52:13Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (dispatch_prod.py.bak-t342u-20261123T082857Z, age_sec=5401)"
-  }
- ],
+ "needs_repair": false,
+ "issues": [],
  "unknown_count": 3,
  "feeds": [
   {
@@ -2493,16 +2482,6 @@
    "publication_frequency": "excluded",
    "slow_fallback": false,
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
-  },
-  {
-   "file": "vps/code_lag:dispatch_prod.py.bak-t342u-20261123T082857Z",
-   "status": "ERROR",
-   "state": "CODE_LAG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-23T16:52:13Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (dispatch_prod.py.bak-t342u-20261123T082857Z, age_sec=5401)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
