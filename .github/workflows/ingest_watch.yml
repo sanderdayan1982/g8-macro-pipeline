@@ -84,7 +84,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/health_monitor.py --notify
+        run: python scripts/health_monitor.py --notify --require-vps-status
 
       # t295u: maintenance_agent.yml está desactivado; el prediagnóstico sigue
       # sin Claude. No relanza workflows (--auto-recovery fuera). El artefacto

@@ -48,9 +48,8 @@ def auth_env(token, base=None):
     return env
 
 
-def porcelain(cwd):
+def iter_porcelain(cwd):
     r = subprocess.run(["git", "status", "--porcelain", "-u"], cwd=cwd, capture_output=True, text=True, check=True)
-    paths = []
     for line in r.stdout.splitlines():
         if not line:
             continue
@@ -59,8 +58,15 @@ def porcelain(cwd):
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         path = path.strip().strip('"')
-        paths.append(path)
-    return paths
+        yield line[:2], path
+
+
+def porcelain(cwd):
+    return [p for _, p in iter_porcelain(cwd)]
+
+
+def _untracked(status):
+    return status == "??"
 
 
 def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"):
@@ -73,11 +79,13 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
         raise PushError("el mensaje debe empezar por [vps-push]")
     if "[skip netlify]" not in message:
         raise PushError("el mensaje debe incluir [skip netlify]")
-    dirty = porcelain(cwd)
-    unexpected = [p for p in dirty if p not in allowed]
+    dirty = list(iter_porcelain(cwd))
+    # Untracked files outside the allowlist are left alone (cache, mac/, state/).
+    # Tracked unexpected dirty paths still abort: no se publica nada fuera de lista.
+    unexpected = [p for st, p in dirty if p not in allowed and not _untracked(st)]
     if unexpected:
         raise PushError("rutas no permitidas sucias: %s" % ",".join(unexpected[:8]))
-    change = [p for p in dirty if p in allowed]
+    change = [p for st, p in dirty if p in allowed]
     env = auth_env(token)
     if not change:
         sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cwd, text=True).strip()
@@ -107,7 +115,32 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
     return {"changed": True, "sha": sha, "files": change, "skipped": False}
 
 
-def fetch_ff_only(cwd, token, remote="origin", branch="main"):
+def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
+    """Fetch + merge --ff-only, without leaving foreign leftover dirt to block the job.
+
+    Tracked dirty files are stashed around the merge (same idea as commit_and_push
+    --autostash). After pop, if *allowed* is set, tracked files not in that list
+    are restored from HEAD and a DIRTY_RESET line is logged. Real fetch/merge
+    errors still raise PushError (nothing is silenced).
+    """
     env = auth_env(token)
     _run(["git", "fetch", "-q", remote, branch], cwd, env, timeout=180)
-    _run(["git", "merge", "-q", "--ff-only", "%s/%s" % (remote, branch)], cwd, env)
+    tracked = [p for st, p in iter_porcelain(cwd) if not _untracked(st)]
+    stashed = False
+    if tracked:
+        _run(["git", "stash", "push", "-q", "-m", "vps-ff-autostash", "--"] + tracked, cwd, env)
+        stashed = True
+    try:
+        _run(["git", "merge", "-q", "--ff-only", "%s/%s" % (remote, branch)], cwd, env)
+    except PushError:
+        if stashed:
+            subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, capture_output=True)
+        raise
+    if stashed:
+        subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, capture_output=True)
+    if allowed is None:
+        return
+    reset = [p for st, p in iter_porcelain(cwd) if not _untracked(st) and p not in allowed]
+    if reset:
+        _run(["git", "restore", "--source=HEAD", "--worktree", "--staged", "--"] + reset, cwd, env)
+        print("[vps_git] DIRTY_RESET %s" % " ".join(reset))
