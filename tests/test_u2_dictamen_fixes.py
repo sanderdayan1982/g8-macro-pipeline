@@ -19,6 +19,9 @@ MAX_GAP_DAYS = 5
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 HTML = os.path.join(ROOT, "docs", "index.html")
+# orden expresa Sander 24-nov: test A3 desacoplado de datos vivos
+A3_FIXTURE = os.path.join(ROOT, "tests", "fixtures", "s01b_shadow_a3_coherent.json")
+S01B_SESSION_FIXTURE = os.path.join(ROOT, "tests", "fixtures", "s01b_session.json")
 # re-congelado SALUD-1: orden t186u (Sander, 15-nov-2026) — cme_options_collector.py y cme_options.yml
 FROZEN = [
     ("scripts/cme_options_collector.py", "ba50e4b30dde2f3cf80acccd32a82d3c1ceea7e80730afb7e59b4dbb4b6956d2"),
@@ -210,25 +213,38 @@ class S01BShadowA3(unittest.TestCase):
         return _node(program)
 
     def test_a3_rows_on_the_real_files(self):
-        a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
-        s01b = json.loads(_read(os.path.join(ROOT, "data", "S01B.json")))
+        # orden expresa Sander 24-nov: test A3 desacoplado de datos vivos
+        a3 = json.loads(_read(A3_FIXTURE))
+        s01b = json.loads(_read(S01B_SESSION_FIXTURE))
         self.assertEqual(a3["mode"], "SHADOW")
-        if a3["t"] == s01b["as_of"]:
-            out = self._cells(a3, s01b["as_of"])
-            self.assertTrue(out["ok"])
-            self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
-            eur = a3["currencies"]["EUR"]
-            self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
-                             % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
-            for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
-                self.assertIn("local: ", out["rows"][c])
-                self.assertIn("ρ22: ", out["rows"][c])
-        else:
-            self.assertLessEqual(
-                abs((date.fromisoformat(a3["t"]) - date.fromisoformat(s01b["as_of"])).days),
-                MAX_GAP_DAYS,
-            )
-            self.assertFalse(self._cells(a3, s01b["as_of"])["ok"])
+        self.assertEqual(a3["t"], s01b["as_of"])
+        out = self._cells(a3, s01b["as_of"])
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
+        eur = a3["currencies"]["EUR"]
+        self.assertEqual(eur["status"], "OK")
+        self.assertEqual(out["rows"]["EUR"], "A3 · local: %+.1f pb (β %.2f) · ρ22: %+.2f"
+                         % (eur["dtp22_local"], eur["beta_usd"], eur["rho_tp_fx_22"]))
+        for c in ("EUR", "GBP", "JPY", "AUD", "CAD", "CHF"):
+            self.assertIn("local: ", out["rows"][c])
+            self.assertIn("ρ22: ", out["rows"][c])
+
+    def test_a3_non_ok_status_paints_dot_and_status(self):
+        # orden expresa Sander 24-nov: test A3 desacoplado de datos vivos
+        # El renderer (a3Cell) ya pinta los huecos numéricos con «·» y añade
+        # « · <estado>» si status !== OK. No se cambia el código de render.
+        a3 = json.loads(_read(A3_FIXTURE))
+        s01b = json.loads(_read(S01B_SESSION_FIXTURE))
+        eur = dict(a3["currencies"]["EUR"])
+        eur["status"] = "FECHAS_NO_CUADRAN"
+        eur["dtp22_local"] = None
+        eur["beta_usd"] = None
+        eur["rho_tp_fx_22"] = None
+        a3["currencies"]["EUR"] = eur
+        out = self._cells(a3, s01b["as_of"])
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["rows"]["EUR"], "A3 · local: · pb (β ·) · ρ22: · · FECHAS_NO_CUADRAN")
+        self.assertEqual(out["rows"]["NZD"], "A3 · EXCLUIDA_B5")
 
     def test_a3_is_dropped_when_the_session_differs(self):
         a3 = json.loads(_read(os.path.join(ROOT, "data", "S01B_shadow_a3.json")))
