@@ -21,6 +21,8 @@ from tools.finalize_session import session_due
 ROOT = Path(__file__).resolve().parents[1]
 BAD = set(FR.UNHEALTHY_STATES) | {"ERROR", "FINAL_MISSING", "MISSING"}
 GOOD = {"CURRENT", "NO_PUBLICATION"}
+VPS_STATUS_REL = "data/_ingest/vps_units_status.json"
+VPS_STATUS_STALE_SEC = 6 * 3600
 
 
 def read_json(path):
@@ -102,6 +104,80 @@ def outstanding_fetch_failure(facts, filename):
     return False
 
 
+
+def vps_unit_items(status, now, last_cut_utc=None, require=True, stale_sec=VPS_STATUS_STALE_SEC):
+    """Issues from the VPS systemd status file (t342u).
+
+    A failing timer is an incidencia even if the published file is still CURRENT.
+    Missing or stale status is itself an incidencia when *require* is True.
+    FALLÓ lines at or before the previous health cut are ignored (already seen).
+    Current failed units and later FALLÓ lines are deduped per unit.
+    """
+    items = []
+    if status is None:
+        if not require:
+            return items
+        return [{"file": "vps/units_status", "status": "MISSING", "state": "MISSING",
+                 "flags": ["VPS_UNITS"], "reason": "Falta data/_ingest/vps_units_status.json (vigilancia de timers VPS)"}]
+    if not isinstance(status, dict):
+        if not require:
+            return items
+        return [{"file": "vps/units_status", "status": "ERROR", "state": "ERROR",
+                 "flags": ["VPS_UNITS"], "reason": "data/_ingest/vps_units_status.json ilegible"}]
+    gen = status.get("generated_utc")
+    try:
+        gen_dt = datetime.fromisoformat(str(gen).replace("Z", "+00:00"))
+        if gen_dt.tzinfo is None:
+            gen_dt = gen_dt.replace(tzinfo=timezone.utc)
+        age = (now - gen_dt).total_seconds()
+        if age > stale_sec:
+            items.append({"file": "vps/units_status", "status": "ERROR", "state": "STALE",
+                          "flags": ["VPS_UNITS"], "have_max": gen,
+                          "reason": "estado de unidades VPS caducado (generated_utc=%s)" % gen})
+    except (ValueError, TypeError):
+        items.append({"file": "vps/units_status", "status": "ERROR", "state": "ERROR",
+                      "flags": ["VPS_UNITS"],
+                      "reason": "generated_utc ausente o ilegible en vps_units_status.json"})
+    seen = set()
+    for u in status.get("failed_units") or []:
+        name = u.get("unit") if isinstance(u, dict) else str(u)
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        rc = u.get("rc") if isinstance(u, dict) else None
+        result = u.get("result") if isinstance(u, dict) else None
+        detail = "unidad systemd en fallo"
+        if result or rc is not None:
+            detail += " (result=%s rc=%s)" % (result, rc)
+        items.append({"file": "vps/%s" % name, "status": "ERROR", "state": "FAILED",
+                      "flags": ["VPS_UNITS"],
+                      "reason": detail + "; un timer que falla es una incidencia aunque el fichero esté al día"})
+    for line in status.get("fallo_lines") or []:
+        if not isinstance(line, dict):
+            continue
+        utc = line.get("utc") or ""
+        unit = line.get("unit") or "unknown.service"
+        if last_cut_utc and utc and utc <= last_cut_utc:
+            continue
+        if unit in seen:
+            continue
+        seen.add(unit)
+        items.append({"file": "vps/%s" % unit, "status": "ERROR", "state": "FALLO_LOG",
+                      "flags": ["VPS_UNITS"], "have_max": utc,
+                      "reason": "ALERTAS.log FALLÓ desde el último corte (%s)" % (utc or "sin marca")})
+    return items
+
+
+def load_vps_status(root):
+    path = Path(root) / VPS_STATUS_REL
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"_invalid": True}
+
+
 def is_counted_issue(item):
     """A freshness issue shown as an incidencia. Excluded/not-monitored feeds do not count.
     PROHIBITED (retired annual file that reappeared) remains an issue even if frequency is excluded."""
@@ -116,7 +192,7 @@ def is_counted_issue(item):
 
 
 
-def build(root, now, report=None):
+def build(root, now, report=None, require_vps_status=False):
     root = Path(root)
     src = F.TreeSource(str(root))
     report = report if report is not None else F.build(str(root), now, src)
@@ -248,6 +324,13 @@ def build(root, now, report=None):
         items.append({"file": "manual/" + reg["feed_id"], "status": status, "state": "MANUAL",
                       "have_max": entry.get("date"), "expected_obs": None, "flags": ["MANUAL"], "publication_frequency": "excluded" if entry.get("disabled") else reg.get("frequency", "unknown"), "slow_fallback": False,
                       "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual" if entry.get("disabled") else "Constante manual; caducidad %s días; no es una observación diaria" % reg["manual_expiry_days"]})
+    prev_health = read_json(root / "data/_ingest/health.json")
+    raw_status = load_vps_status(root)
+    if isinstance(raw_status, dict) and raw_status.get("_invalid"):
+        vps_issues = vps_unit_items("bad", now, prev_health.get("generated_utc"), require=require_vps_status)
+    else:
+        vps_issues = vps_unit_items(raw_status, now, prev_health.get("generated_utc"), require=require_vps_status)
+    items.extend(vps_issues)
     issues = [x for x in items if is_counted_issue(x)]
     unknown = [x for x in items if x["status"] == "UNKNOWN"]
     return {"schema": "G8_HEALTH/1", "generated_utc": now.isoformat().replace("+00:00", "Z"),
@@ -262,10 +345,13 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="data/_ingest/health.json")
     ap.add_argument("--notify", action="store_true")
+    ap.add_argument("--require-vps-status", action="store_true",
+                    help="t342u: falta o caducidad de vps_units_status.json cuenta como incidencia")
     ap.add_argument("--at")
     args = ap.parse_args(argv)
     now = datetime.fromisoformat(args.at.replace("Z", "+00:00")) if args.at else datetime.now(timezone.utc)
-    report = build(ROOT, now)
+    require = args.require_vps_status or os.environ.get("G8_REQUIRE_VPS_STATUS") == "1"
+    report = build(ROOT, now, require_vps_status=require)
     series.write_atomic(str(ROOT / args.out), (json.dumps(report, ensure_ascii=False, indent=1) + "\n").encode())
     if args.notify:
         book = notify.AlertBook(str(ROOT / "data/_ingest/health_alert_state.json"))
