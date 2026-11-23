@@ -162,9 +162,23 @@ def vps_unit_items(status, now, last_cut_utc=None, require=True, stale_sec=VPS_S
         if unit in seen:
             continue
         seen.add(unit)
-        items.append({"file": "vps/%s" % unit, "status": "ERROR", "state": "FALLO_LOG",
-                      "flags": ["VPS_UNITS"], "have_max": utc,
-                      "reason": "ALERTAS.log FALLÓ desde el último corte (%s)" % (utc or "sin marca")})
+        if "DIRTY_RESET" in (line.get("text") or "") or str(unit).startswith("dirty_reset:"):
+            items.append({"file": "vps/%s" % unit, "status": "ERROR", "state": "DIRTY_RESET",
+                          "flags": ["VPS_UNITS"], "have_max": utc,
+                          "reason": "ALERTAS.log INCIDENCIA DIRTY_RESET desde el último corte (%s)" % (utc or "sin marca")})
+        else:
+            items.append({"file": "vps/%s" % unit, "status": "ERROR", "state": "FALLO_LOG",
+                          "flags": ["VPS_UNITS"], "have_max": utc,
+                          "reason": "ALERTAS.log FALLÓ desde el último corte (%s)" % (utc or "sin marca")})
+    for lag in status.get("code_lag") or []:
+        if not isinstance(lag, dict):
+            continue
+        name = lag.get("name") or "unknown"
+        first = lag.get("first_diff_utc") or ""
+        age = lag.get("age_sec")
+        items.append({"file": "vps/code_lag:%s" % name, "status": "ERROR", "state": "CODE_LAG",
+                      "flags": ["VPS_UNITS"], "have_max": first,
+                      "reason": "código en ejecución distinta de origin/main más de 1 h (%s, age_sec=%s)" % (name, age)})
     return items
 
 

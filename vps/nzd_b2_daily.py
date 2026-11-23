@@ -7,6 +7,7 @@ recuperación automática). Prefijo [vps-push]. No es un turno del dispatcher.
 from __future__ import annotations
 
 import argparse
+import job_flock
 import json
 import os
 import subprocess
@@ -97,7 +98,9 @@ def main(argv=None):
     try:
         if not token:
             raise RuntimeError("G8_FULL ausente")
-        result = run(args.workdir, token)
+        lock = os.environ.get("G8_NZD_LOCK") or "/srv/g8/prod/state/locks/nzd-b2.lock"
+        with job_flock.exclusive(lock):
+            result = run(args.workdir, token)
         rec.update(result)
         rec["ok"] = bool(result["ok"])
         rec["rc"] = 0 if result["ok"] else 1

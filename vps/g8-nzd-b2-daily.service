@@ -9,7 +9,10 @@ Type=oneshot
 User=g8
 Group=g8
 Environment=G8_MODE=prod
-Environment=G8_NZD_WORKDIR=/srv/g8/prod/work/pipeline
+Environment=G8_VPS_JOB=nzd-b2
+Environment=G8_NZD_LOCK=/srv/g8/prod/state/locks/nzd-b2.lock
+Environment=G8_ALERTAS_LOG=/srv/g8/logs/ALERTAS.log
+Environment=G8_NZD_WORKDIR=/srv/g8/prod/work/nzd-b2
 Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/nzd-b2.json
 Environment=G8_EXECUTOR_ID=vps-prod
 Environment=G8_RBNZ_PROXY_BASE=https://g8-institutional.netlify.app/proxy/rbnz

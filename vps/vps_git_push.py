@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import os
+import re
 import subprocess
 import sys
 
@@ -115,6 +116,41 @@ def commit_and_push(cwd, allowed, message, token, remote="origin", branch="main"
     return {"changed": True, "sha": sha, "files": change, "skipped": False}
 
 
+
+def _safe_reset_paths(paths):
+    """Repo-relative data paths or basenames. Never emit IPs or absolute VPS paths."""
+    out = []
+    for raw in paths:
+        p = str(raw).replace("\\", "/")
+        p = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "<ip>", p)
+        if p.startswith("/"):
+            idx = p.find("/data/")
+            p = p[idx + 1:] if idx >= 0 else p.rsplit("/", 1)[-1]
+        out.append(p)
+    return out
+
+
+def append_dirty_reset_alert(job, paths, log_path=None, now_utc=None):
+    """Append INCIDENCIA DIRTY_RESET to ALERTAS.log (t343u). Best-effort write; always prints."""
+    from datetime import datetime, timezone
+    job = (job or os.environ.get("G8_VPS_JOB") or "vps-job").strip() or "vps-job"
+    job = re.sub(r"\s+", "_", job)
+    now_utc = now_utc or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    safe = _safe_reset_paths(paths)
+    line = "%s 🔴 INCIDENCIA DIRTY_RESET %s %s\n" % (now_utc, job, " ".join(safe))
+    print("[vps_git] " + line.strip())
+    log_path = log_path or os.environ.get("G8_ALERTAS_LOG") or "/srv/g8/logs/ALERTAS.log"
+    try:
+        d = os.path.dirname(log_path)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        with open(log_path, "a", encoding="utf-8") as fh:
+            fh.write(line)
+        return line
+    except OSError as e:
+        print("[vps_git] no se pudo escribir ALERTAS.log (%s)" % type(e).__name__, file=sys.stderr)
+        return line
+
 def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
     """Fetch + merge --ff-only, without leaving foreign leftover dirt to block the job.
 
@@ -144,3 +180,4 @@ def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
     if reset:
         _run(["git", "restore", "--source=HEAD", "--worktree", "--staged", "--"] + reset, cwd, env)
         print("[vps_git] DIRTY_RESET %s" % " ".join(reset))
+        append_dirty_reset_alert(os.environ.get("G8_VPS_JOB"), reset)

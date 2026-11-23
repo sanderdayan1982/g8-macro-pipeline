@@ -9,7 +9,10 @@ Type=oneshot
 User=g8
 Group=g8
 Environment=G8_MODE=prod
-Environment=G8_SNB_WORKDIR=/srv/g8/prod/work/pipeline
+Environment=G8_VPS_JOB=snb1a
+Environment=G8_SNB_LOCK=/srv/g8/prod/state/locks/snb.lock
+Environment=G8_ALERTAS_LOG=/srv/g8/logs/ALERTAS.log
+Environment=G8_SNB_WORKDIR=/srv/g8/prod/work/snb
 Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/snb1a.json
 EnvironmentFile=/etc/g8/secrets.env
 ExecStart=/srv/g8/venv/bin/python /srv/g8/bin/snb_daily.py

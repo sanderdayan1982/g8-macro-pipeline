@@ -2,7 +2,8 @@
 """watch_vps_jobs.py — aviso Telegram si un job VPS (SNB/nzd-b2) falla 2 veces seguidas (t334u).
 
 t342u: también publica data/_ingest/vps_units_status.json (unidades systemd en fallo
-y líneas FALLÓ de ALERTAS.log) para que ingest_watch las cuente como incidencias.
+y líneas FALLÓ / INCIDENCIA DIRTY_RESET de ALERTAS.log, más el desfase del código
+ejecutado vs origin/main) para que ingest_watch las cuente como incidencias.
 El push es por Contents API, sin tocar el clon de trabajo compartido.
 
 Se lanza como segundo ExecStart del timer g8-watch-prod. No toca watch_prod.py ni el dispatcher.
@@ -41,7 +42,15 @@ G8_UNITS = (
 FALLO_RE = re.compile(
     r"^(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+.*FALLÓ.*"
 )
+INCIDENCIA_DIRTY_RE = re.compile(
+    r"^(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+.*INCIDENCIA\s+DIRTY_RESET\s+(\S+)\s+(.*)$"
+)
 UNIT_RE = re.compile(r"\b([A-Za-z0-9_@.-]+\.service)\b")
+CODE_LAG_MAX_SEC = 3600
+INFRA_REPO = "sanderdayan1982/g8-macro-data"
+INFRA_BIN = "infra/vps/bin"
+DEFAULT_BIN_DIR = "/srv/g8/bin"
+DEFAULT_LAG_STATE = "/srv/g8/prod/state/code_lag.json"
 
 
 def _utcnow():
@@ -130,10 +139,11 @@ def parse_fallo_lines(text, now_utc, keep_sec=FALLO_KEEP_SEC):
     out = []
     for raw in (text or "").splitlines():
         line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "<ip>", raw)
+        inc = INCIDENCIA_DIRTY_RE.match(line)
         m = FALLO_RE.match(line)
-        if not m:
+        if not inc and not m:
             continue
-        utc = m.group(1)
+        utc = (inc or m).group(1)
         try:
             ts = datetime.fromisoformat(utc.replace("Z", "+00:00"))
             if ts.tzinfo is None:
@@ -142,8 +152,11 @@ def parse_fallo_lines(text, now_utc, keep_sec=FALLO_KEEP_SEC):
                 continue
         except ValueError:
             continue
-        um = UNIT_RE.search(line)
-        unit = um.group(1) if um else "unknown.service"
+        if inc:
+            unit = "dirty_reset:" + inc.group(2)
+        else:
+            um = UNIT_RE.search(line)
+            unit = um.group(1) if um else "unknown.service"
         short = line
         if " — " in short:
             short = short.split(" — ", 1)[0]
@@ -153,12 +166,13 @@ def parse_fallo_lines(text, now_utc, keep_sec=FALLO_KEEP_SEC):
     return out
 
 
-def build_status(failed_units, fallo_lines, now_utc):
+def build_status(failed_units, fallo_lines, now_utc, code_lag=None):
     return {
         "schema": STATUS_SCHEMA,
         "generated_utc": now_utc,
         "failed_units": failed_units,
         "fallo_lines": fallo_lines,
+        "code_lag": code_lag or [],
     }
 
 
@@ -167,6 +181,7 @@ def status_payload_key(status):
     return json.dumps({
         "failed_units": status.get("failed_units") or [],
         "fallo_lines": status.get("fallo_lines") or [],
+        "code_lag": status.get("code_lag") or [],
     }, sort_keys=True, ensure_ascii=False)
 
 
@@ -250,7 +265,107 @@ def push_status_api(status, token, prev=None, transport=None, repo=STATUS_REPO, 
     raise RuntimeError("no se pudo publicar vps_units_status: %s" % last_err)
 
 
-def collect_status(alerts_path, now_utc=None, runner=None, read_text=None):
+
+def _basename_only(name):
+    name = str(name).replace("\\", "/").rstrip("/")
+    return name.rsplit("/", 1)[-1]
+
+
+def git_blob_sha(path, runner=None):
+    runner = runner or _run_cmd
+    rc, out, err = runner(["git", "hash-object", "--", path])
+    if rc != 0:
+        return None
+    return (out or "").strip() or None
+
+
+def list_main_bin_blobs(token, repo=INFRA_REPO, prefix=INFRA_BIN, transport=None):
+    """Map basename -> git blob sha from origin/main. Names only; no file bodies stored."""
+    if not token:
+        return {}
+    st, body = _api_json(
+        token, "GET",
+        "/repos/%s/contents/%s?ref=main" % (repo, prefix),
+        transport=transport,
+    )
+    if st != 200 or not isinstance(body, list):
+        return None
+    out = {}
+    for item in body:
+        if not isinstance(item, dict) or item.get("type") != "file":
+            continue
+        name = _basename_only(item.get("name") or "")
+        sha = item.get("sha")
+        if name and sha and not name.endswith(".bak"):
+            out[name] = sha
+    return out
+
+
+def evaluate_code_lag(bin_files, main_blobs, state, now_utc, max_sec=CODE_LAG_MAX_SEC):
+    """Return (incidencia list, updated state).
+
+    bin_files: {basename: git_blob_sha or None}
+    main_blobs: {basename: git_blob_sha} from origin/main
+    Local state remembers first_diff_utc. Only lags older than max_sec are incidencias.
+    Public records use basenames only (no VPS paths, no IPs).
+    """
+    now = datetime.fromisoformat(str(now_utc).replace("Z", "+00:00"))
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    state = dict(state or {})
+    names = sorted(set(bin_files) | set(main_blobs or {}))
+    lag = []
+    new_state = {}
+    for name in names:
+        name = _basename_only(name)
+        if not name or name.endswith(".bak"):
+            continue
+        bsha = (bin_files or {}).get(name)
+        msha = (main_blobs or {}).get(name)
+        if bsha and msha and bsha == msha:
+            continue
+        prev = state.get(name) or {}
+        first = prev.get("first_diff_utc")
+        if first and prev.get("bin_sha") == bsha and prev.get("main_sha") == msha:
+            first_utc = first
+        else:
+            first_utc = now_utc
+        new_state[name] = {"bin_sha": bsha, "main_sha": msha, "first_diff_utc": first_utc}
+        try:
+            ts = datetime.fromisoformat(str(first_utc).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            age = (now - ts).total_seconds()
+        except (ValueError, TypeError):
+            age = 0
+        if age > max_sec:
+            lag.append({
+                "name": name,
+                "first_diff_utc": first_utc,
+                "age_sec": int(age),
+            })
+    return lag, new_state
+
+
+def scan_bin_dir(bin_dir, runner=None):
+    files = {}
+    try:
+        names = os.listdir(bin_dir)
+    except OSError:
+        return files
+    for name in names:
+        if name.endswith(".bak") or name.startswith("."):
+            continue
+        path = os.path.join(bin_dir, name)
+        if not os.path.isfile(path):
+            continue
+        files[name] = git_blob_sha(path, runner=runner)
+    return files
+
+
+def collect_status(alerts_path, now_utc=None, runner=None, read_text=None,
+                   code_lag=None, lag_state=None, lag_state_path=None,
+                   bin_dir=None, token=None, transport=None):
     now_utc = now_utc or _utcnow()
     failed = list_failed_units(runner=runner)
     raw = ""
@@ -263,7 +378,22 @@ def collect_status(alerts_path, now_utc=None, runner=None, read_text=None):
         except OSError:
             raw = ""
     fallo = parse_fallo_lines(raw, now_utc)
-    return build_status(failed, fallo, now_utc)
+    if code_lag is None:
+        bin_dir = bin_dir or os.environ.get("G8_VPS_BIN") or DEFAULT_BIN_DIR
+        lag_state_path = lag_state_path or os.environ.get("G8_CODE_LAG_STATE") or DEFAULT_LAG_STATE
+        if lag_state is None:
+            lag_state = read_json(lag_state_path, {})
+        token = token if token is not None else os.environ.get("G8_FULL", "").strip()
+        blobs = list_main_bin_blobs(token, transport=transport) if token else None
+        if blobs is None:
+            # sin token o fallo de API: no se inventa un desfase
+            code_lag = []
+        else:
+            bin_files = scan_bin_dir(bin_dir, runner=runner)
+            code_lag, lag_state = evaluate_code_lag(bin_files, blobs, lag_state, now_utc)
+            if lag_state_path:
+                write_json(lag_state_path, lag_state)
+    return build_status(failed, fallo, now_utc, code_lag=code_lag)
 
 
 def evaluate(state_dir, alerts, jobs=JOBS, now=None):

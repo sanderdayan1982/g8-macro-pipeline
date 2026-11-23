@@ -6,6 +6,7 @@ No es un turno del dispatcher. Usa G8_FULL para git push. Nunca imprime el token
 from __future__ import annotations
 
 import argparse
+import job_flock
 import json
 import os
 import sys
@@ -81,7 +82,9 @@ def main(argv=None):
     try:
         if not token:
             raise RuntimeError("G8_FULL ausente")
-        result = run(args.workdir, args.state, token, from_date=args.from_date)
+        lock = os.environ.get("G8_SNB_LOCK") or "/srv/g8/prod/state/locks/snb.lock"
+        with job_flock.exclusive(lock):
+            result = run(args.workdir, args.state, token, from_date=args.from_date)
         rec["ok"] = True
         rec["rc"] = 0
         rec["consecutive_fail"] = 0
