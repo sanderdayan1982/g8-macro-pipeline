@@ -55,6 +55,7 @@ SOV10Y_OWNED = (
     "data/DE_10Y_PAR_DAILY.csv",
     "data/ES_10Y_DAILY.csv",
     "data/ES_DE_10Y_SPREAD_DAILY.csv",
+    "data/_ingest/derived_provenance/ES_DE_10Y_SPREAD_DAILY.json",
 )
 
 # workdirs distintos por job (t343u / t346u)

@@ -50,6 +50,17 @@ class TreeSource(object):
         with open(p, "rb") as fh:
             return fh.read()
 
+    def provenance(self, f):
+        from g8common import derived_provenance as DP
+        return DP.read(self.root, f)
+
+    def input_sha(self, f):
+        from g8common import derived_provenance as DP
+        return DP.sha256_path(os.path.join(self.root, "data", f))
+
+    def valued_obs(self, f, date_key=""):
+        return FR.valued_obs_dates_from_bytes(self.read(f), date_key) or set()
+
     def _git(self, *args):
         return subprocess.run(["git", "-C", self.root] + list(args), capture_output=True, check=True).stdout
 
@@ -293,6 +304,22 @@ class GitSource(TreeSource):
     def input_max_at(self, f, instant):
         return self.max_at(f, instant)
 
+    def provenance(self, f):
+        from g8common import derived_provenance as DP
+        base = os.path.basename(f)
+        stem = base.rsplit(".", 1)[0] if "." in base else base
+        rel = "_ingest/derived_provenance/%s.json" % stem
+        data = self.read(rel)
+        return DP.read_bytes(data) if data else None
+
+    def input_sha(self, f):
+        import hashlib
+        data = self.read(f)
+        return hashlib.sha256(data).hexdigest() if data is not None else None
+
+    def valued_obs(self, f, date_key=""):
+        return FR.valued_obs_dates_from_bytes(self.read(f), date_key) or set()
+
     def evidence(self, f):
         return []                                        # el historial de evidencia no existía en esas fechas
 
@@ -309,28 +336,80 @@ class GitSource(TreeSource):
     evidence_available = False
 
 
+def _have_dates(src, o, at):
+    if isinstance(src, GitSource):
+        m = src.max_at(o["file"], at, o.get("date_key", ""))
+        return {m} if m else (set() if src.commit_at(o["file"], at) else None)
+    return FR.obs_dates_from_bytes(src.read(o["file"]), o.get("date_key", ""))
+
+
+def _src_provenance(src, f):
+    fn = getattr(src, "provenance", None)
+    return fn(f) if callable(fn) else None
+
+
+def _src_sha(src, f):
+    fn = getattr(src, "input_sha", None)
+    return fn(f) if callable(fn) else None
+
+
+def _src_valued_obs(src, f, date_key=""):
+    fn = getattr(src, "valued_obs", None)
+    if callable(fn):
+        return fn(f, date_key)
+    data = src.read(f)
+    return FR.valued_obs_dates_from_bytes(data, date_key) or set()
+
+
+def _annotate_availability(r, ev):
+    if r.get("state") in FR.LATE_STATES or r.get("state") in ("DUE", "PENDING_TIME_UNKNOWN"):
+        obs = r.get("missing", [None])[0] if r.get("missing") else r.get("due_obs")
+        if obs and ev.get(r.get("file")):
+            r["availability"] = FR.availability(ev[r["file"]], obs)
+    return r
+
+
 def build(root, at, src):
     rules, params, outputs, cals = FR.load_config(root)
     passes = FR.SC.load_passes(root)
-    items = []
+    # dos pasadas: primero las entradas no derivadas, luego los derivados con
+    # el estado y la procedencia de esas entradas (t347u).
+    first, derived_jobs, by_file = [], [], {}
     for o in outputs:
         rule, param = rules[o["rule_id"]], params[o["rule_id"]]
-        if isinstance(src, GitSource):
-            m = src.max_at(o["file"], at, o.get("date_key", ""))
-            have = {m} if m else (set() if src.commit_at(o["file"], at) else None)
-        else:
-            have = FR.obs_dates_from_bytes(src.read(o["file"]), o.get("date_key", ""))
+        have = _have_dates(src, o, at)
         ev = {f: src.evidence(f) for f in [o["file"]] + [x for x in (o.get("inputs") or "").split(";") if x]}
         derived = param["model"] == "derived"
+        if derived:
+            derived_jobs.append((o, rule, param, have, ev))
+            continue
+        r = FR.evaluate(o, rule, param, cals, at, have, input_max_at=src.input_max_at, evidence=ev,
+                        facts=src.facts_for(o), passes=passes, runs=src.runs_for(o),
+                        evidence_available=src.evidence_available)
+        _annotate_availability(r, ev)
+        first.append(r)
+        by_file[o["file"]] = r
+    for o, rule, param, have, ev in derived_jobs:
+        inputs = [x for x in (o.get("inputs") or "").split(";") if x]
+        input_states = {f: by_file[f]["state"] for f in inputs if f in by_file}
+        input_shas = {f: _src_sha(src, f) for f in inputs}
+        input_shas = {f: s for f, s in input_shas.items() if s}
+        input_obs = {f: _src_valued_obs(src, f) for f in inputs}
+        input_dates = {f: max(s) for f, s in input_obs.items() if s}
         r = FR.evaluate(o, rule, param, cals, at, have, input_max_at=src.input_max_at, evidence=ev,
                         facts=src.facts_for(o), passes=passes, runs=src.runs_for(o),
                         evidence_available=src.evidence_available,
-                        written_at=src.written_at(o["file"]) if derived else None)
-        if r.get("state") in FR.LATE_STATES or r.get("state") in ("DUE", "PENDING_TIME_UNKNOWN"):
-            obs = r.get("missing", [None])[0] if r.get("missing") else r.get("due_obs")
-            if obs and ev.get(o["file"]):
-                r["availability"] = FR.availability(ev[o["file"]], obs)
-        items.append(r)
+                        written_at=src.written_at(o["file"]),
+                        provenance=_src_provenance(src, o["file"]),
+                        input_states=input_states, input_shas=input_shas,
+                        input_dates=input_dates, input_obs=input_obs)
+        _annotate_availability(r, ev)
+        by_file[o["file"]] = r
+    items = []
+    for o in outputs:
+        r = by_file.get(o["file"])
+        if r is not None:
+            items.append(r)
     counts = {}
     for r in items:
         counts[r["state"]] = counts.get(r["state"], 0) + 1
