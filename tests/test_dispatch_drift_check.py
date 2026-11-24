@@ -97,8 +97,17 @@ class Drift(Base):
         self.assertNotIn("31 21", out)
 
     def test_DR3_declared_exception(self):
-        self.edit("dispatch_schedule.json", lambda d: d.__setitem__(
-            "slots", [s for s in d["slots"] if s["id"] != "metals_shadow"]))
+        # orden Sander 24-nov: migrado al VPS, sin cron ni turno en GitHub.
+        # metals_shadow sale del horario (t354u), así que la excepción declarada se simula en la copia temporal del repo.
+        p = os.path.join(self.repo, "mac", "dispatch_schedule.json")
+        with open(p, encoding="utf-8") as fh:
+            d = json.load(fh)
+        d["slots"].append({"id": "metals_shadow", "workflow": "metals_update.yml", "cron": "45 22 * * 1-5"})
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(d, fh)
+        with open(os.path.join(self.repo, "mac", C.EXCEPTIONS), "w", encoding="utf-8") as fh:
+            json.dump({"exceptions": [{"file": "dispatch_schedule.json", "kind": "solo_repo", "id": "metals_shadow",
+                                       "motivo": "prueba"}]}, fh)
         rc, out = self.offline()
         self.assertEqual(rc, 0, out)
         self.assertIn("excepción declarada: dispatch_schedule.json solo_repo metals_shadow", out)

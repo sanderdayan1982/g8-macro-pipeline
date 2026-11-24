@@ -9,10 +9,11 @@
 # ============================================================================
 name: USD Factor
 
+# orden Sander 24-nov: migrado al VPS, sin cron ni turno en GitHub (t354u/t357u).
+# Los dos turnos (L–V 15:30 y 17:30 UTC) los publica el timer g8-usd-factor del VPS (vps/usd_factor_vps.py).
+# Aquí queda solo el lanzamiento manual de respaldo. Secretos (nombres): G8_DATA_READ_CI, G8_DATA_WRITE,
+# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Nunca dos publicaciones del mismo feed.
 on:
-  schedule:
-    - cron: '30 15 * * 1-5'
-    - cron: '30 17 * * 1-5'
   workflow_dispatch: {}
 
 permissions:

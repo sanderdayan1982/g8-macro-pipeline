@@ -1,0 +1,11 @@
+[Unit]
+Description=G8 VPS · Metals MDP semanal sáb 07:00 UTC (08:00 WAT) · orden Sander 24-nov (t354u)
+
+[Timer]
+OnCalendar=Sat 07:00:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-metals-weekly.service
+
+[Install]
+WantedBy=timers.target

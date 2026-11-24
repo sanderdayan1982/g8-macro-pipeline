@@ -1,0 +1,11 @@
+[Unit]
+Description=G8 VPS · Metals SHADOW B2 L–V 22:45 UTC (23:45 WAT) · orden Sander 24-nov (t354u)
+
+[Timer]
+OnCalendar=Mon..Fri 22:45:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-metals-shadow.service
+
+[Install]
+WantedBy=timers.target

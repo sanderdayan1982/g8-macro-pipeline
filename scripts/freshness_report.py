@@ -337,10 +337,18 @@ class GitSource(TreeSource):
 
 
 def _have_dates(src, o, at):
+    # t360u: en un derivado, solo cuentan las filas con todos los campos de valor completos.
+    date_key = o.get("date_key", "")
+    derived = bool((o.get("inputs") or "").strip())
     if isinstance(src, GitSource):
-        m = src.max_at(o["file"], at, o.get("date_key", ""))
-        return {m} if m else (set() if src.commit_at(o["file"], at) else None)
-    return FR.obs_dates_from_bytes(src.read(o["file"]), o.get("date_key", ""))
+        data = src.read_at(o["file"], at)
+        if data is None:
+            return None if src.commit_at(o["file"], at) is None else set()
+    else:
+        data = src.read(o["file"])
+    if derived and not date_key:
+        return FR.complete_obs_dates_from_bytes(data)
+    return FR.obs_dates_from_bytes(data, date_key)
 
 
 def _src_provenance(src, f):
@@ -392,6 +400,16 @@ def build(root, at, src):
     for o, rule, param, have, ev in derived_jobs:
         inputs = [x for x in (o.get("inputs") or "").split(";") if x]
         input_states = {f: by_file[f]["state"] for f in inputs if f in by_file}
+        input_meta = {}
+        for f in inputs:
+            if f not in by_file:
+                continue
+            row = by_file[f]
+            input_meta[f] = {"cause": row.get("cause"), "overdue_since": row.get("overdue_since"),
+                             "calendar": row.get("calendar"), "missing": list(row.get("missing") or []),
+                             "expected_obs": row.get("expected_obs"),
+                             "cause_certainty": row.get("cause_certainty"),
+                             "cause_detail": row.get("cause_detail")}
         input_shas = {f: _src_sha(src, f) for f in inputs}
         input_shas = {f: s for f, s in input_shas.items() if s}
         input_obs = {f: _src_valued_obs(src, f) for f in inputs}
@@ -402,7 +420,7 @@ def build(root, at, src):
                         written_at=src.written_at(o["file"]),
                         provenance=_src_provenance(src, o["file"]),
                         input_states=input_states, input_shas=input_shas,
-                        input_dates=input_dates, input_obs=input_obs)
+                        input_dates=input_dates, input_obs=input_obs, input_meta=input_meta)
         _annotate_availability(r, ev)
         by_file[o["file"]] = r
     items = []
