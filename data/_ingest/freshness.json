@@ -1,17 +1,17 @@
 {
- "at_utc": "2026-11-24T11:55:40Z",
+ "at_utc": "2026-11-24T12:03:54Z",
  "compare_summary": {
-  "ACUERDO": 42,
+  "ACUERDO": 41,
   "FUERA_DE_F3": 1,
-  "NUEVO_MAS_ESTRICTO": 6
+  "NUEVO_MAS_ESTRICTO": 7
  },
  "counts": {
   "CURRENT": 66,
-  "DUE": 7,
+  "DUE": 1,
   "NOT_MONITORED": 8,
   "NO_OBS_DATE": 4,
   "NO_PUBLICATION": 18,
-  "OVERDUE": 13,
+  "OVERDUE": 19,
   "PENDING_TIME_UNKNOWN": 16,
   "UNKNOWN_SCHEDULE": 8
  },
@@ -1746,9 +1746,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -1829,15 +1835,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_3M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1852,9 +1863,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -1935,15 +1952,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_6M.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -1958,9 +1980,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -2041,15 +2069,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_1Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -2064,9 +2097,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -2147,15 +2186,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -2170,9 +2214,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -2253,15 +2303,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_5Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
@@ -2276,9 +2331,15 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T11:00:00Z",
-   "expected_obs": "2026-11-20",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "cause_certainty": "configuracion",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": []
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -2359,15 +2420,20 @@
     "latest_source": "step:eur_bills"
    },
    "file": "EUR_BILL_10Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:00:00Z",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "EUR_CURVE",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "Europe/Berlin"
   },
   {
