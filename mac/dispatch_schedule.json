@@ -18,7 +18,6 @@
   {"id": "g8_port_sat",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 6"},
   {"id": "g8_port_mon",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 1"},
   {"id": "g8_port_tue",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 2"},
-  {"id": "metals",          "workflow": "metals_update.yml",  "cron": "0 7 * * 6"},
   {"id": "metals_shadow",   "workflow": "metals_update.yml",  "cron": "45 22 * * 1-5"},
   {"id": "votes_first",     "workflow": "votes_ingest.yml",   "cron": "0 3 * * 2-6", "inputs": {"attempt": "first"}},
   {"id": "votes_final",     "workflow": "votes_ingest.yml",   "cron": "20 4 * * 2-6", "inputs": {"attempt": "final"}}
