@@ -463,12 +463,19 @@ def check_feed_proxy(root, now_utc, alerts, info):
 
 
 # t352u / t353u / t354u: dos publicaciones con éxito en el mismo turno (dispatch + cron retrasado).
+# t374u (orden Sander 24-nov): además del prefijo del mensaje de Actions, cuenta como publicación del feed
+# un commit con el tag [vps-push] que toca alguna ruta del feed («paths», nunca data/_ingest/). Así un
+# commit [vps-push] solo de registros (_ingest: verify/steps) no es una publicación. «vps_prefix» acota
+# el job VPS cuando dos jobs comparten ficheros (metals y metals-shadow escriben ambos MFV_G8_*);
+# sin «vps_prefix», basta el tag. Sin «paths» (daily_update hasta #134) no hay reconocimiento VPS.
+VPS_TAG = "[vps-push]"
 PUBLISH_CYCLES = (
     {"id": "usd_factor", "paths": ("data/USD_FACTOR.json",), "message": "chore: usd factor update",
      "cycle_cron": "30 15 * * 1-5", "slots": 2},
     {"id": "daily_update", "paths": (), "message": "chore: daily data update",
      "cycle_cron": "30 21 * * 1-5", "slots": 1},
     {"id": "metals", "paths": ("data/MFV_G8_state.json",), "message": "chore: weekly metals fair value update",
+     "vps_prefix": "[vps-push] metals fair value",
      "cycle_cron": "0 7 * * 6", "slots": 1},
 )
 
@@ -516,8 +523,8 @@ def cycle_window(cron, now_utc):
     return start, (nxt[0] if nxt else None)
 
 
-def list_publish_commits(root, paths, message_prefix):
-    """Return [(sha, authored_utc, subject)] for commits whose subject starts with message_prefix."""
+def _git_log_subjects(root, paths):
+    """[(sha, authored_utc, subject)] newest first, optionally limited to commits touching paths."""
     import subprocess
     args = ["git", "-C", str(root), "log", "--format=%H\t%aI\t%s", "-n", "80"]
     if paths:
@@ -532,8 +539,6 @@ def list_publish_commits(root, paths, message_prefix):
         if len(parts) < 3:
             continue
         sha, when, subj = parts
-        if not subj.startswith(message_prefix):
-            continue
         try:
             t = datetime.fromisoformat(when.replace("Z", "+00:00"))
         except ValueError:
@@ -541,6 +546,28 @@ def list_publish_commits(root, paths, message_prefix):
         if t.tzinfo is None:
             t = t.replace(tzinfo=timezone.utc)
         rows.append((sha, t, subj))
+    return rows
+
+
+def feed_paths(paths):
+    """Rutas del feed: las de «paths» salvo registros internos (data/_ingest/)."""
+    return tuple(p for p in (paths or ()) if not p.replace("\\", "/").startswith("data/_ingest/"))
+
+
+def list_publish_commits(root, paths, message_prefix, vps_prefix=VPS_TAG):
+    """Return [(sha, authored_utc, subject)] for publications of the feed.
+
+    Actions: subject starts with message_prefix (paths, if any, limit the log as before).
+    VPS (t374u): subject starts with vps_prefix (always a [vps-push] subject) and the commit touches
+    a feed path; commits touching only data/_ingest/ never count. No feed paths, no VPS recognition.
+    """
+    rows = [r for r in _git_log_subjects(root, paths) if r[2].startswith(message_prefix)]
+    fp = feed_paths(paths)
+    if vps_prefix and vps_prefix.startswith(VPS_TAG) and fp:
+        seen = {r[0] for r in rows}
+        vps = [r for r in _git_log_subjects(root, fp) if r[2].startswith(vps_prefix) and r[0] not in seen]
+        if vps:
+            rows = sorted(rows + vps, key=lambda r: r[1], reverse=True)
     return rows
 
 
@@ -557,7 +584,7 @@ def check_duplicate_turn_publishes(root, now_utc, alerts, info):
     """Incidencia: mismo feed publicado dos veces en el mismo turno."""
     for job in PUBLISH_CYCLES:
         start, end = cycle_window(job["cycle_cron"], now_utc)
-        commits = list_publish_commits(root, job["paths"], job["message"])
+        commits = list_publish_commits(root, job["paths"], job["message"], job.get("vps_prefix", VPS_TAG))
         dup = duplicate_turn_alerts(commits, start, end, job["slots"])
         if not dup:
             continue
