@@ -8,8 +8,9 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 NEW = ("CHF_SPOT_SNB1A", "DE10Y_PAR", "ES10Y_DAILY", "ES_DE_10Y_SPREAD")
 # SHA-256 de sources/freshness_rules.csv y freshness_params.csv en origin/main
 # (22-nov-2026, tip 8023181c) — las reglas existentes no se tocan.
-MAIN_RULES_SHA256 = "423df2966a37572ee7a66f2b28ade5b8a4a43676a7b3c6eca132673465177130"
-MAIN_PARAMS_SHA256 = "b38608cdf8bddf18b7fb8fdc4e0f123706c465bbbb55dff202b39a6c8058e876"
+# orden Sander 23-nov: huellas actualizadas por la división CAD_CURVE en BILLS/BONDS, PR #125
+MAIN_RULES_SHA256 = "ee3294402ea17ffae13b88a16b11e9f0f9774e36cd231c4a9e3be0821a15954c"
+MAIN_PARAMS_SHA256 = "c121cc80443f3a788d06f0d51a735f9e9144db7a4b7875ed94632d83b5ca3d5c"
 
 
 def _rows(name):
@@ -54,6 +55,7 @@ class NewFreshnessRows(unittest.TestCase):
         # t336u, orden expresa Sander 22-nov: el candado ignora la fila nueva SWPT y restaura
         # SWPT en los feeds de NOT_INGESTED; el resto de reglas no se toca.
         # t336u, orden expresa Sander 22-nov: regla nueva, no modifica ninguna existente
+        # orden Sander 23-nov: huellas actualizadas por la división CAD_CURVE en BILLS/BONDS, PR #125
         prefix = _prefix_without_new("freshness_rules.csv", set(NEW) | {"SWPT", "CHF_CURVE_MONTH_END"})
         prefix = prefix.replace(b"NOT_INGESTED,RRPONTSYD,,", b"NOT_INGESTED,RRPONTSYD;SWPT,,", 1)
         self.assertEqual(hashlib.sha256(prefix).hexdigest(), MAIN_RULES_SHA256)
