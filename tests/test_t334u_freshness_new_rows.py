@@ -10,7 +10,9 @@ NEW = ("CHF_SPOT_SNB1A", "DE10Y_PAR", "ES10Y_DAILY", "ES_DE_10Y_SPREAD")
 # (22-nov-2026, tip 8023181c) — las reglas existentes no se tocan.
 # orden Sander 23-nov: huellas actualizadas por la división CAD_CURVE en BILLS/BONDS, PR #125
 MAIN_RULES_SHA256 = "ee3294402ea17ffae13b88a16b11e9f0f9774e36cd231c4a9e3be0821a15954c"
-MAIN_PARAMS_SHA256 = "c121cc80443f3a788d06f0d51a735f9e9144db7a4b7875ed94632d83b5ca3d5c"
+# orden Sander 24-nov t373u: exigibilidad de SOFR tras el turno US de las 16:47
+# Huella de freshness_params.csv actualizada: solo cambia la fila SOFR (g_min 60→270, g_basis, notes).
+MAIN_PARAMS_SHA256 = "c505dcc5788403dd626af201cee7c1ad9a35fd8f3cd65d21f125baf274a44591"
 
 
 def _rows(name):
