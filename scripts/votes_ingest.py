@@ -669,8 +669,12 @@ def parse_payload(body):
 
 
 # orden Sander 24-nov: FFVA VOL z63 validado (v1.6.0/a3, vol~63/1/4)
+# t359u: durante la transición también se acepta v1.6.0/a2 + vol~63/1/4[PROV]
+# (a3 aún no está cargada en TradingView).
 FFVA_VOL_FIXED_VERSION = "v1.6.0/a3"
 FFVA_VOL_FIXED_SPEC = "vol~63/1/4"
+FFVA_VOL_FIXED_VERSION_A2 = "v1.6.0/a2"
+FFVA_VOL_FIXED_SPEC_A2 = "vol~63/1/4[PROV]"
 FFVA_VOL_FIXED_CCYS = CCYS
 _PROV_MARK = "[PROV]"
 
@@ -680,25 +684,31 @@ def _config_key_tokens(raw):
 
 
 def ffva_vol_params_fixed(kv, ccy=None):
-    """True when CONFIG_KEY is the validated VOL z63 parameter set.
+    """True when CONFIG_KEY is a validated VOL z63 parameter set.
 
-    Accepted only if the key carries version v1.6.0/a3 and token
-    vol~63/1/4, without [PROV], for all 8 currencies (USD, EUR, GBP,
-    JPY, AUD, NZD, CAD, CHF). Any other config, or the same with
-    [PROV], is not fixed — the reader leaves it as it was.
+    During the t359u transition both of these are accepted, for all 8
+    currencies (USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF):
+      - v1.6.0/a3 with token vol~63/1/4 and no [PROV]
+      - v1.6.0/a2 with token vol~63/1/4[PROV]
+    Any other combination is not fixed — the reader leaves it as it was.
     VPART is not read and does not vote.
-    orden Sander 24-nov (t358u).
+    orden Sander 24-nov (t358u, t359u).
     """
     if ccy is not None and ccy not in FFVA_VOL_FIXED_CCYS:
         return False
     raw = kv.get("CONFIG_KEY", "") if isinstance(kv, dict) else (kv or "")
     raw = (raw or "").strip()
-    if not raw or _PROV_MARK in raw:
+    if not raw:
         return False
     tokens = _config_key_tokens(raw)
-    if not tokens or tokens[0] != FFVA_VOL_FIXED_VERSION:
+    if not tokens:
         return False
-    return FFVA_VOL_FIXED_SPEC in tokens
+    version = tokens[0]
+    if version == FFVA_VOL_FIXED_VERSION:
+        return FFVA_VOL_FIXED_SPEC in tokens and _PROV_MARK not in raw
+    if version == FFVA_VOL_FIXED_VERSION_A2:
+        return FFVA_VOL_FIXED_SPEC_A2 in tokens
+    return False
 
 
 def _ccys_for(name):

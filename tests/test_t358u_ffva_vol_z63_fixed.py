@@ -185,6 +185,33 @@ class FfvaVolZ63Fixed(unittest.TestCase):
             )
             self.assertFalse(V.ffva_vol_params_fixed(V.parse_payload(msgs[0]["body"])))
 
+    def test_transition_accepts_a2_prov_and_a3_and_vpart_does_not_vote(self):
+        # orden Sander 24-nov t359u: transición a2[PROV]/a3
+        a2_key = "v1.6.0/a2;vol~63/1/4[PROV]"
+        a3_key = "v1.6.0/a3;vol~63/1/4"
+        self.assertTrue(V.ffva_vol_params_fixed(a2_key))
+        self.assertTrue(V.ffva_vol_params_fixed(a3_key))
+        for ccy in CCYS:
+            self.assertTrue(V.ffva_vol_params_fixed({"CONFIG_KEY": a2_key}, ccy), ccy)
+            self.assertTrue(V.ffva_vol_params_fixed({"CONFIG_KEY": a3_key}, ccy), ccy)
+        # Cualquier otra combinación sigue sin aceptarse como fija.
+        self.assertFalse(V.ffva_vol_params_fixed("v1.6.0/a2;vol~63/1/4"))
+        self.assertFalse(V.ffva_vol_params_fixed("v1.6.0/a3;vol~63/1/4[PROV]"))
+        self.assertFalse(V.ffva_vol_params_fixed("v1.6.0/a2;use_2oi~true"))
+        for config_key in (a2_key, a3_key):
+            rows = _index(V.rows_from_messages(_complete(config_key), SESSION, False))
+            self.assertEqual(len([k for k in rows if k[0] == "FFVA_G8"]), 8, config_key)
+            for ccy in CCYS:
+                row = rows[("FFVA_G8", ccy)]
+                expected = VOTE_FROM_REGIME[REGIME[ccy]]
+                self.assertEqual(row["voto"], expected, (config_key, ccy))
+                self.assertEqual(row["estado"], REGIME[ccy], (config_key, ccy))
+                self.assertNotEqual(row["voto"], VPART[ccy], (config_key, ccy))
+                self.assertNotIn("VPART", row["voto"])
+                self.assertNotIn("VPLUS", row["voto"])
+                self.assertNotIn("VMINUS", row["voto"])
+                self.assertEqual(row["valor"], "", (config_key, ccy))
+
 
 if __name__ == "__main__":
     unittest.main()
