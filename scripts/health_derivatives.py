@@ -22,6 +22,22 @@ def b2_evidence_path(root):
     return latest/'mac-primary__nzchf-tona.json'
 
 
+def official_carries(kept_from_previous, official, all_dates):
+    """How many conserved dates count as a carry (t352u / 3b).
+
+    Days marked PROXY when the source does not print (e.g. RBNZ cash gaps) are
+    not carries. A conserved official value (no PROXY mark) is a carry: it is
+    an incidence and must not vote. A documented T+1 lag (e.g. CME OI) is not
+    a carry and is not counted here — it is calendar delay, not a conserved row.
+    Does not rewrite kept_from_previous; it only interprets the count.
+    """
+    kept = int(kept_from_previous or 0)
+    official = set(official or [])
+    all_dates = set(all_dates or [])
+    n_proxy = len(all_dates - official)
+    return max(0, kept - n_proxy)
+
+
 def cash(root, now, item, read_json):
     if item['status'] in ('ERROR','LATE'): return
     try:
@@ -48,14 +64,23 @@ def cash(root, now, item, read_json):
         except Exception:
             all_dates=dates
         latest=max(official) if official else None
+        carried=official_carries(file.get('kept_from_previous',0), official, all_dates)
+        item['verified_download_utc']=fetch['finished_utc']
+        # t352u, orden expresa Sander 23-nov: un valor arrastrado SIN marca PROXY
+        # cuenta como incidencia y no vota. Los días PROXY en que la fuente no
+        # imprime no cuentan como arrastrados. El desfase T+1 documentado no es un arrastre.
+        if carried>0:
+            item.update(status='LATE',state='CARRIED_OFFICIAL',
+                        have_max=((latest or (max(all_dates) if all_dates else None)).isoformat() if (latest or all_dates) else None),
+                        reason='Valor arrastrado sin marca PROXY (%d): cuenta como incidencia y no vota. kept_from_previous no se reescribe.' % carried)
+            return
         valid=(fetch['rc']==0 and not fetch.get('errors') and file['status']=='WRITTEN'
-               and file.get('kept_from_previous',0)==0 and publication['download_kind']=='FRESH'
+               and publication['download_kind']=='FRESH'
                and publication['status'] in ('PUBLISH','PUBLISHED','NOOP') and not publication.get('held')
                and accepted['status'] in ('PUBLISH','NOOP') and not accepted.get('held')
                and latest==_parse_date(file['max_date'])==_parse_date(accepted['src_max'])
                and latest<=now.date() and due<=finished<=now
                and book_date is not None and expected_book<=book_date<=now.date())
-        item['verified_download_utc']=fetch['finished_utc']
         if valid:
             has_proxy=bool(all_dates) and max(all_dates)!=latest
             have=max(all_dates) if has_proxy else latest

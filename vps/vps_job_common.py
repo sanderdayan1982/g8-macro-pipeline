@@ -82,29 +82,46 @@ def unstage_all(cwd, env=None):
     _git(["reset", "-q"], cwd, env)
 
 
-def start_clean(cwd, P, token, allowed, remote="origin", branch="main"):
-    """Arranque como checkout fresco de main: índice vacío, sin commits locales varados.
+class StrandedCommits(RuntimeError):
+    pass
 
-    Devuelve la lista de avisos (STRANDED_RESET si se descartó un commit local no empujado)."""
-    notes = []
+
+def append_stranded_alert(job, count, log_path=None, now_utc=None):
+    """«INCIDENCIA STRANDED <job> <n>» en ALERTAS.log (best-effort; el aborto del job ya dispara g8-alarm@)."""
+    from datetime import datetime, timezone
+    job = re.sub(r"\s+", "_", (job or "vps-job").strip() or "vps-job")
+    now_utc = now_utc or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    line = "%s 🔴 INCIDENCIA STRANDED %s %s commit(s) locales sin publicar\n" % (now_utc, job, count)
+    log_path = log_path or os.environ.get("G8_ALERTAS_LOG") or "/srv/g8/logs/ALERTAS.log"
+    try:
+        with open(log_path, "a", encoding="utf-8") as fh:
+            fh.write(line)
+    except OSError:
+        pass
+    return line
+
+
+def start_clean(cwd, P, token, allowed, remote="origin", branch="main"):
+    """Arranque como checkout fresco de main: índice vacío, fast-forward a origin/main.
+
+    Si HEAD tiene commits locales que no están en origin/main (un push anterior falló), NO se
+    descartan: se registra la alerta STRANDED y el job aborta (OnFailure → g8-alarm@) para revisión
+    manual. Nada se borra, nada se publica."""
     unstage_all(cwd)
     err = None
     try:
         P.fetch_ff_only(cwd, token, remote=remote, branch=branch, allowed=allowed)
-    except Exception as e:  # noqa: BLE001 - se reintenta tras resetear
+    except Exception as e:  # noqa: BLE001 - se decide tras mirar si hay commits varados
         err = e
     ahead = _git(["rev-list", "--count", "%s/%s..HEAD" % (remote, branch)], cwd)
-    if ahead.returncode == 0 and ahead.stdout.strip() not in ("", "0"):
-        _git(["reset", "-q", "--hard", "%s/%s" % (remote, branch)], cwd)
-        notes.append("STRANDED_RESET %s commit(s) locales no empujados descartados" % ahead.stdout.strip())
-        print("[vps_job] STRANDED_RESET: %s commit(s) local(es) descartado(s); se regeneran en esta corrida"
-              % ahead.stdout.strip())
-        if err is not None:
-            P.fetch_ff_only(cwd, token, remote=remote, branch=branch, allowed=allowed)
-            err = None
+    n = ahead.stdout.strip()
+    if ahead.returncode == 0 and n not in ("", "0"):
+        append_stranded_alert(os.environ.get("G8_VPS_JOB"), n)
+        print("[vps_job] STRANDED: %s commit(s) local(es) sin publicar; aborto sin descartar" % n, file=sys.stderr)
+        raise StrandedCommits("STRANDED: %s commit(s) locales sin publicar; aborto sin descartar (revisión manual)" % n)
     if err is not None:
         raise err
-    return notes
+    return []
 
 
 def remove_private_copies(workdir):
