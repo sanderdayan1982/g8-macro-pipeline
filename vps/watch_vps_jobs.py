@@ -2,7 +2,7 @@
 """watch_vps_jobs.py — aviso Telegram si un job VPS (SNB/nzd-b2) falla 2 veces seguidas (t334u).
 
 t342u: también publica data/_ingest/vps_units_status.json (unidades systemd en fallo
-y líneas FALLÓ / INCIDENCIA DIRTY_RESET de ALERTAS.log, más el desfase del código
+y líneas FALLÓ / INCIDENCIA DIRTY_RESET / INCIDENCIA STRANDED de ALERTAS.log, más el desfase del código
 ejecutado vs origin/main) para que ingest_watch las cuente como incidencias.
 El push es por Contents API, sin tocar el clon de trabajo compartido.
 
@@ -44,6 +44,10 @@ FALLO_RE = re.compile(
 )
 INCIDENCIA_DIRTY_RE = re.compile(
     r"^(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+.*INCIDENCIA\s+DIRTY_RESET\s+(\S+)\s+(.*)$"
+)
+# t357u: start_clean aborta sin descartar si hay commits locales sin publicar (vps_job_common.append_stranded_alert).
+INCIDENCIA_STRANDED_RE = re.compile(
+    r"^(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+.*INCIDENCIA\s+STRANDED\s+(\S+)\s+(.*)$"
 )
 UNIT_RE = re.compile(r"\b([A-Za-z0-9_@.-]+\.service)\b")
 CODE_LAG_MAX_SEC = 3600
@@ -140,10 +144,11 @@ def parse_fallo_lines(text, now_utc, keep_sec=FALLO_KEEP_SEC):
     for raw in (text or "").splitlines():
         line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "<ip>", raw)
         inc = INCIDENCIA_DIRTY_RE.match(line)
+        strand = INCIDENCIA_STRANDED_RE.match(line)
         m = FALLO_RE.match(line)
-        if not inc and not m:
+        if not inc and not strand and not m:
             continue
-        utc = (inc or m).group(1)
+        utc = (inc or strand or m).group(1)
         try:
             ts = datetime.fromisoformat(utc.replace("Z", "+00:00"))
             if ts.tzinfo is None:
@@ -154,6 +159,8 @@ def parse_fallo_lines(text, now_utc, keep_sec=FALLO_KEEP_SEC):
             continue
         if inc:
             unit = "dirty_reset:" + inc.group(2)
+        elif strand:
+            unit = "stranded:" + strand.group(2)
         else:
             um = UNIT_RE.search(line)
             unit = um.group(1) if um else "unknown.service"
