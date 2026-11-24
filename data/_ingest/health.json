@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T13:41:43.359526Z",
- "status": "UNVERIFIED",
+ "generated_utc": "2026-11-24T14:09:54.452574Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,21 +19,41 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
+ "needs_repair": true,
+ "issues": [
+  {
+   "file": "SOFR.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "US_REPO",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  }
+ ],
  "unknown_count": 2,
  "feeds": [
   {
    "file": "SOFR.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "US_REPO",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "PENDING",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -85,7 +105,7 @@
   },
   {
    "file": "CORRA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-20",
    "expected_obs": "2026-11-20",
    "calendar": "CA",
@@ -93,7 +113,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -2358,7 +2378,7 @@
    "file": "ES_10Y_DAILY.csv",
    "state": "CURRENT",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-11-20",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
