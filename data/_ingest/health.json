@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T18:34:48.892337Z",
+ "generated_utc": "2026-11-24T21:30:17.739945Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -38,6 +38,15 @@
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
+  },
+  {
+   "file": "vps/g8-nzd-b2-daily.service",
+   "status": "ERROR",
+   "state": "FAILED",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   }
  ],
  "unknown_count": 1,
@@ -2386,7 +2395,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-24T17:30:23Z",
+   "have_max": "2026-11-24T20:06:21Z",
    "flags": []
   },
   {
@@ -2501,6 +2510,15 @@
    "publication_frequency": "excluded",
    "slow_fallback": false,
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
+  },
+  {
+   "file": "vps/g8-nzd-b2-daily.service",
+   "status": "ERROR",
+   "state": "FAILED",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
