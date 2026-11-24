@@ -56,7 +56,7 @@ class SharedLock(unittest.TestCase):
 
 
 class StartClean(unittest.TestCase):
-    def test_stranded_local_commit_is_dropped(self):
+    def test_stranded_local_commit_aborts_without_discarding(self):
         with tempfile.TemporaryDirectory() as tmp:
             remote, clone = os.path.join(tmp, "r.git"), os.path.join(tmp, "c")
             subprocess.run(["git", "init", "-q", "--bare", "-b", "main", remote], check=True)
@@ -75,11 +75,34 @@ class StartClean(unittest.TestCase):
                 def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
                     subprocess.run(["git", "fetch", "-q", remote, branch], cwd=cwd, check=True)
 
-            notes = C.start_clean(clone, P, "tok", allowed=("a",))
-            self.assertTrue(notes and notes[0].startswith("STRANDED_RESET"))
-            self.assertEqual(Path(clone, "a").read_text(), "1")
-            st = subprocess.run(["git", "status", "--porcelain"], cwd=clone, capture_output=True, text=True).stdout
-            self.assertEqual(st.strip(), "")
+            log = os.path.join(tmp, "ALERTAS.log")
+            os.environ["G8_ALERTAS_LOG"] = log
+            self.addCleanup(os.environ.pop, "G8_ALERTAS_LOG", None)
+            head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=clone, capture_output=True, text=True).stdout
+            with self.assertRaises(C.StrandedCommits):
+                C.start_clean(clone, P, "tok", allowed=("a",))
+            # nada se descarta: el commit varado sigue en HEAD y la alerta queda registrada
+            self.assertEqual(subprocess.run(["git", "rev-parse", "HEAD"], cwd=clone, capture_output=True,
+                                            text=True).stdout, head)
+            self.assertEqual(Path(clone, "a").read_text(), "3")
+            self.assertIn("INCIDENCIA STRANDED", Path(log).read_text())
+
+    def test_clean_clone_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, clone = os.path.join(tmp, "r.git"), os.path.join(tmp, "c")
+            subprocess.run(["git", "init", "-q", "--bare", "-b", "main", remote], check=True)
+            git(tmp, "clone", "-q", remote, clone)
+            Path(clone, "a").write_text("1")
+            git(clone, "add", "a")
+            git(clone, "commit", "-qm", "base")
+            git(clone, "push", "-q", "origin", "HEAD:main")
+
+            class P:
+                @staticmethod
+                def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
+                    subprocess.run(["git", "fetch", "-q", remote, branch], cwd=cwd, check=True)
+
+            self.assertEqual(C.start_clean(clone, P, "tok", allowed=("a",)), [])
 
 
 class Wrappers(unittest.TestCase):

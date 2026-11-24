@@ -18,7 +18,8 @@ COT,weekly_before:3,60,Hora oficial CFTC (vie 15:30 ET) con datos del martes; 60
 US_BILLS,bd_offset,,Hora DESCONOCIDA: PENDING_TIME_UNKNOWN durante el día local de publicación; exigible al terminar ese día (sin día extra),PROVISIONAL,
 GBP_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
 JPY_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
-CAD_CURVE,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
+CAD_CURVE_BILLS,bd_offset,60,"Hora OFICIAL 11:30 America/Toronto (final de ventana BoC letras); 60 min = propuesta operativa (mismo margen que el resto de horas oficiales), t351u",PROVISIONAL,
+CAD_CURVE_BONDS,bd_offset,60,"Hora OFICIAL 10:00 America/Toronto (final de ventana BoC bonos); 60 min = propuesta operativa (mismo margen que el resto de horas oficiales), t351u",PROVISIONAL,
 USD_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
 GBP_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,La regla dice desfase 1 pero la evidencia es T−2 en 14/14 pasadas finales: conflicto para tu decisión (no se ajusta aquí)
 CAD_RY,bd_offset,,Hora DESCONOCIDA (misma regla),PROVISIONAL,
