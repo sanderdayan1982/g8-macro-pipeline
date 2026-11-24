@@ -1,0 +1,12 @@
+[Unit]
+Description=G8 VPS · Factor USD L–V 15:30 y 17:30 UTC (16:30 y 18:30 WAT) · orden Sander 24-nov (t354u/t357u)
+
+[Timer]
+OnCalendar=Mon..Fri 15:30:00
+OnCalendar=Mon..Fri 17:30:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-usd-factor.service
+
+[Install]
+WantedBy=timers.target
