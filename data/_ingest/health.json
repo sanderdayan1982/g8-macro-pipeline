@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T12:26:30.375376Z",
- "status": "UNVERIFIED",
+ "generated_utc": "2026-11-24T13:19:41.827146Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,25 +19,8 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
- "unknown_count": 2,
- "feeds": [
-  {
-   "file": "SOFR.csv",
-   "state": "CURRENT",
-   "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
-   "calendar": "US_REPO",
-   "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false
-  },
+ "needs_repair": true,
+ "issues": [
   {
    "file": "ESTR.csv",
    "state": "OVERDUE",
@@ -45,13 +28,12 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T08:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA"
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T08:00:00Z",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -63,13 +45,184 @@
    "expected_obs": "2026-11-20",
    "calendar": "GB",
    "basis": "OFICIAL_GENERAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T11:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA"
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
    ],
+   "status": "LATE",
+   "age_business_days": 3,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_3M.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_6M.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_1Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_2Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_5Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "EUR_BILL_10Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "ACM_G8_EUR.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-20",
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "INPUT_VERSION_UNKNOWN"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "derived",
+   "slow_fallback": false
+  }
+ ],
+ "unknown_count": 2,
+ "feeds": [
+  {
+   "file": "SOFR.csv",
+   "state": "DUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-20",
+   "calendar": "US_REPO",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": null,
+   "flags": [],
    "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T11:00:00Z",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "ESTR.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "TARGET",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  },
+  {
+   "file": "SONIA.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-19",
+   "expected_obs": "2026-11-20",
+   "calendar": "GB",
+   "basis": "OFICIAL_GENERAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
+   ],
+   "status": "LATE",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -318,14 +471,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -336,14 +488,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -354,14 +505,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -372,14 +522,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -390,14 +539,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -408,14 +556,13 @@
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T12:00:00Z",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1245,17 +1392,17 @@
   },
   {
    "file": "ACM_G8_EUR.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
    "expected_obs": "2026-11-20",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "PENDING",
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -2372,45 +2519,43 @@
   },
   {
    "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "DUE",
-   "have_max": "2026-11-23",
-   "expected_obs": "2026-11-23",
+   "state": "CURRENT",
+   "have_max": "2026-11-24",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "ES_10Y_DAILY.csv",
-   "state": "PENDING_TIME_UNKNOWN",
-   "have_max": "2026-11-19",
+   "state": "CURRENT",
+   "have_max": "2026-11-20",
    "expected_obs": "2026-11-19",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
-   "state": "DUE",
-   "have_max": "2026-11-19",
-   "expected_obs": "2026-11-19",
+   "state": "CURRENT",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-20",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
-   "flags": [
-    "INPUT_VERSION_UNKNOWN"
-   ],
-   "status": "PENDING",
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "derived",
    "slow_fallback": false
   },

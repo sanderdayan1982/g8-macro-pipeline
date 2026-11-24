@@ -1,26 +1,37 @@
 {
- "at_utc": "2026-11-24T12:26:28Z",
+ "at_utc": "2026-11-24T13:19:40Z",
  "compare_summary": {
-  "ACUERDO": 41,
+  "ACUERDO": 40,
   "FUERA_DE_F3": 1,
-  "NUEVO_MAS_ESTRICTO": 7
+  "NUEVO_MAS_ESTRICTO": 8
  },
  "counts": {
-  "CURRENT": 60,
-  "DUE": 5,
+  "CURRENT": 62,
+  "DUE": 3,
   "NOT_MONITORED": 8,
   "NO_OBS_DATE": 4,
   "NO_PUBLICATION": 20,
-  "OVERDUE": 19,
-  "PENDING_TIME_UNKNOWN": 18,
+  "OVERDUE": 20,
+  "PENDING_TIME_UNKNOWN": 17,
   "UNKNOWN_SCHEDULE": 6
  },
  "mode": "PARALELO_SIN_AVISOS",
  "official_engine": "dashboard_alerts.py §05 (sin cambios)",
  "outputs": [
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-23",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "OFICIAL_GENERAL",
    "calendar": "US_REPO",
+   "due_obs": "2026-11-23",
+   "due_since": "2026-11-24T13:00:00Z",
    "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
@@ -88,8 +99,9 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-24T14:00:00Z",
    "rule_id": "SOFR",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "America/New_York"
   },
   {
@@ -104,13 +116,18 @@
    },
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -174,7 +191,7 @@
    },
    "file": "ESTR.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA"
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
@@ -200,13 +217,18 @@
    },
    "basis": "OFICIAL_GENERAL",
    "calendar": "GB",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-20",
    "facts": {
@@ -270,7 +292,7 @@
    },
    "file": "SONIA.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA"
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
@@ -1746,13 +1768,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -1836,7 +1863,7 @@
    },
    "file": "EUR_BILL_3M.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -1863,13 +1890,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -1953,7 +1985,7 @@
    },
    "file": "EUR_BILL_6M.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -1980,13 +2012,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -2070,7 +2107,7 @@
    },
    "file": "EUR_BILL_1Y.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -2097,13 +2134,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -2187,7 +2229,7 @@
    },
    "file": "EUR_BILL_2Y.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -2214,13 +2256,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -2304,7 +2351,7 @@
    },
    "file": "EUR_BILL_5Y.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -2331,13 +2378,18 @@
    },
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "cause_certainty": "configuracion",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
    "cause_detail": {
     "downloads": 0,
     "evidence_available": true,
     "executed_runs": [],
-    "scheduled_passes": []
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
    },
    "expected_obs": "2026-11-23",
    "facts": {
@@ -2421,7 +2473,7 @@
    },
    "file": "EUR_BILL_10Y.csv",
    "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
     "RULE_PROVISIONAL"
    ],
    "g_min": "60",
@@ -7036,6 +7088,19 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "EU",
+      "2026-11-24T13:17Z"
+     ]
+    ]
+   },
    "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
@@ -7080,12 +7145,12 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
    "input_states": {
-    "EUR_BILL_10Y.csv": "DUE",
-    "EUR_BILL_1Y.csv": "DUE",
-    "EUR_BILL_2Y.csv": "DUE",
-    "EUR_BILL_3M.csv": "DUE",
-    "EUR_BILL_5Y.csv": "DUE",
-    "EUR_BILL_6M.csv": "DUE"
+    "EUR_BILL_10Y.csv": "OVERDUE",
+    "EUR_BILL_1Y.csv": "OVERDUE",
+    "EUR_BILL_2Y.csv": "OVERDUE",
+    "EUR_BILL_3M.csv": "OVERDUE",
+    "EUR_BILL_5Y.csv": "OVERDUE",
+    "EUR_BILL_6M.csv": "OVERDUE"
    },
    "inputs_max_at_final": {
     "EUR_BILL_10Y.csv": "2026-11-20",
@@ -7096,10 +7161,13 @@
     "EUR_BILL_6M.csv": "2026-11-20"
    },
    "last_common_session": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "derived",
+   "overdue_since": "2026-11-24T12:00:00Z",
    "rule_id": "ACM_DERIVED",
-   "state": "DUE",
+   "state": "OVERDUE",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -8682,9 +8750,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-24",
-   "due_since": "2026-11-24T11:29:00Z",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "facts": {
     "available": false,
     "reason": "sin registros todavía para scripts:fetch_sovereign_10y_daily"
@@ -8693,19 +8759,16 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T12:29:00Z",
    "rule_id": "DE10Y_PAR",
-   "state": "DUE",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "due_obs": "2026-11-20",
-   "due_since": "2026-11-23T23:00:00Z",
    "expected_obs": "2026-11-19",
    "facts": {
     "available": false,
@@ -8715,45 +8778,48 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-19",
+   "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T23:00:00Z",
    "rule_id": "ES10Y_DAILY",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "Europe/Madrid"
   },
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": false,
     "reason": "sin registros todavía para scripts:fetch_sovereign_10y_daily"
    },
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
-   "final_ref": "2026-11-23T21:30:00Z",
-   "flags": [
-    "INPUT_VERSION_UNKNOWN"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-19",
+   "generated_utc": "2026-11-24T13:00:12Z",
+   "have_max": "2026-11-20",
+   "input_provenance": {
+    "DE_10Y_PAR_DAILY.csv": {
+     "date": "2026-11-24",
+     "sha": "96d8560be6e4c309002739d74d0febb7e9c08907c42db153380715d35d8de0ef"
+    },
+    "ES_10Y_DAILY.csv": {
+     "date": "2026-11-20",
+     "sha": "6d69ffa5739fb461b61a29bcf3af32286036b606a0b9ad4ffd2cfdcdca6258bd"
+    }
+   },
    "input_states": {
-    "DE_10Y_PAR_DAILY.csv": "DUE",
-    "ES_10Y_DAILY.csv": "PENDING_TIME_UNKNOWN"
+    "DE_10Y_PAR_DAILY.csv": "CURRENT",
+    "ES_10Y_DAILY.csv": "CURRENT"
    },
-   "inputs_max_at_final": {
-    "DE_10Y_PAR_DAILY.csv": "2026-11-23",
-    "ES_10Y_DAILY.csv": "2026-11-19"
-   },
-   "last_common_session": "2026-11-19",
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ES_DE_10Y_SPREAD",
-   "state": "DUE",
+   "state": "CURRENT",
    "timezone": "Europe/Berlin",
-   "written_at": "2026-11-23T17:58:24Z"
+   "written_at": "2026-11-24T13:00:12Z"
   },
   {
    "basis": "OFICIAL_GENERAL",
