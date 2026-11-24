@@ -1,19 +1,19 @@
 {
- "at_utc": "2026-11-24T12:03:54Z",
+ "at_utc": "2026-11-24T12:26:28Z",
  "compare_summary": {
   "ACUERDO": 41,
   "FUERA_DE_F3": 1,
   "NUEVO_MAS_ESTRICTO": 7
  },
  "counts": {
-  "CURRENT": 66,
-  "DUE": 1,
+  "CURRENT": 60,
+  "DUE": 5,
   "NOT_MONITORED": 8,
   "NO_OBS_DATE": 4,
-  "NO_PUBLICATION": 18,
+  "NO_PUBLICATION": 20,
   "OVERDUE": 19,
-  "PENDING_TIME_UNKNOWN": 16,
-  "UNKNOWN_SCHEDULE": 8
+  "PENDING_TIME_UNKNOWN": 18,
+  "UNKNOWN_SCHEDULE": 6
  },
  "mode": "PARALELO_SIN_AVISOS",
  "official_engine": "dashboard_alerts.py §05 (sin cambios)",
@@ -7013,16 +7013,23 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "US_BILL_1Y.csv": "PENDING_TIME_UNKNOWN",
+    "US_BILL_2Y.csv": "PENDING_TIME_UNKNOWN",
+    "US_BILL_3M.csv": "PENDING_TIME_UNKNOWN",
+    "US_BILL_6M.csv": "PENDING_TIME_UNKNOWN"
+   },
    "inputs_max_at_final": {
     "US_BILL_1Y.csv": "2026-11-19",
     "US_BILL_2Y.csv": "2026-11-19",
     "US_BILL_3M.csv": "2026-11-19",
     "US_BILL_6M.csv": "2026-11-19"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -7072,6 +7079,14 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "EUR_BILL_10Y.csv": "DUE",
+    "EUR_BILL_1Y.csv": "DUE",
+    "EUR_BILL_2Y.csv": "DUE",
+    "EUR_BILL_3M.csv": "DUE",
+    "EUR_BILL_5Y.csv": "DUE",
+    "EUR_BILL_6M.csv": "DUE"
+   },
    "inputs_max_at_final": {
     "EUR_BILL_10Y.csv": "2026-11-20",
     "EUR_BILL_1Y.csv": "2026-11-20",
@@ -7080,10 +7095,11 @@
     "EUR_BILL_5Y.csv": "2026-11-20",
     "EUR_BILL_6M.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -7134,6 +7150,13 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "JPY_BILL_10Y.csv": "CURRENT",
+    "JPY_BILL_1Y.csv": "CURRENT",
+    "JPY_BILL_2Y.csv": "CURRENT",
+    "JPY_BILL_3Y.csv": "CURRENT",
+    "JPY_BILL_5Y.csv": "CURRENT"
+   },
    "inputs_max_at_final": {
     "JPY_BILL_10Y.csv": "2026-11-19",
     "JPY_BILL_1Y.csv": "2026-11-19",
@@ -7141,6 +7164,7 @@
     "JPY_BILL_3Y.csv": "2026-11-19",
     "JPY_BILL_5Y.csv": "2026-11-19"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
@@ -7194,6 +7218,13 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "GBP_BILL_10Y.csv": "PENDING_TIME_UNKNOWN",
+    "GBP_BILL_1Y.csv": "PENDING_TIME_UNKNOWN",
+    "GBP_BILL_2Y.csv": "PENDING_TIME_UNKNOWN",
+    "GBP_BILL_5Y.csv": "PENDING_TIME_UNKNOWN",
+    "GBP_BILL_6M.csv": "PENDING_TIME_UNKNOWN"
+   },
    "inputs_max_at_final": {
     "GBP_BILL_10Y.csv": "2026-11-20",
     "GBP_BILL_1Y.csv": "2026-11-20",
@@ -7201,10 +7232,11 @@
     "GBP_BILL_5Y.csv": "2026-11-20",
     "GBP_BILL_6M.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -7255,11 +7287,17 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "CAD_BILL_1Y.csv": "CURRENT",
+    "CAD_BILL_3M.csv": "CURRENT",
+    "CAD_BILL_6M.csv": "CURRENT"
+   },
    "inputs_max_at_final": {
     "CAD_BILL_1Y.csv": "2026-11-20",
     "CAD_BILL_3M.csv": "2026-11-20",
     "CAD_BILL_6M.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
@@ -7314,10 +7352,15 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-23",
+   "input_states": {
+    "AUD_BILL_3M.csv": "CURRENT",
+    "AUD_BILL_6M.csv": "CURRENT"
+   },
    "inputs_max_at_final": {
     "AUD_BILL_3M.csv": "2026-11-20",
     "AUD_BILL_6M.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-23",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
@@ -7371,6 +7414,13 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "NZD_BILL_90D.csv": "DUE",
+    "NZD_BOND_10Y.csv": "DUE",
+    "NZD_BOND_1Y.csv": "DUE",
+    "NZD_BOND_2Y.csv": "DUE",
+    "NZD_BOND_5Y.csv": "DUE"
+   },
    "inputs_max_at_final": {
     "NZD_BILL_90D.csv": "2026-11-20",
     "NZD_BOND_10Y.csv": "2026-11-20",
@@ -7378,10 +7428,11 @@
     "NZD_BOND_2Y.csv": "2026-11-20",
     "NZD_BOND_5Y.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -7431,9 +7482,23 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-23",
+   "input_states": {
+    "CHF_NOM_10Y.csv": "CURRENT",
+    "CHF_SPOT_10Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_1Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_2Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_3Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_4Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_5Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_6Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_7Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_8Y.csv": "NO_PUBLICATION",
+    "CHF_SPOT_9Y.csv": "NO_PUBLICATION"
+   },
    "inputs_max_at_final": {
     "CHF_NOM_10Y.csv": "2026-11-23"
    },
+   "last_common_session": "2026-11-23",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
@@ -7487,13 +7552,21 @@
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
+   "input_states": {
+    "NZD_BOND_10Y.csv": "DUE",
+    "NZD_IIB_2030.csv": "DUE",
+    "NZD_IIB_2035.csv": "DUE",
+    "NZD_IIB_2040.csv": "DUE",
+    "NZD_IIB_2050.csv": "DUE"
+   },
    "inputs_max_at_final": {
     "NZD_BOND_10Y.csv": "2026-11-20"
    },
+   "last_common_session": "2026-11-20",
    "missing": [],
    "model": "derived",
    "rule_id": "RY_NZD",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "UTC",
    "written_at": "2026-11-23T21:37:59Z"
   },
@@ -7592,6 +7665,9 @@
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-24",
+   "input_states": {
+    "pos_g8_cot.json": "NO_PUBLICATION"
+   },
    "inputs_max": {
     "pos_g8_cot.json": null
    },
@@ -7599,7 +7675,7 @@
    "model": "derived",
    "reason": "derivado sin hora exigible documentada",
    "rule_id": "METALS",
-   "state": "UNKNOWN_SCHEDULE",
+   "state": "NO_PUBLICATION",
    "timezone": "UTC"
   },
   {
@@ -7619,6 +7695,9 @@
    "g_min": null,
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-24",
+   "input_states": {
+    "pos_g8_cot.json": "NO_PUBLICATION"
+   },
    "inputs_max": {
     "pos_g8_cot.json": null
    },
@@ -7626,7 +7705,7 @@
    "model": "derived",
    "reason": "derivado sin hora exigible documentada",
    "rule_id": "METALS",
-   "state": "UNKNOWN_SCHEDULE",
+   "state": "NO_PUBLICATION",
    "timezone": "UTC"
   },
   {
@@ -8659,15 +8738,20 @@
    ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-19",
+   "input_states": {
+    "DE_10Y_PAR_DAILY.csv": "DUE",
+    "ES_10Y_DAILY.csv": "PENDING_TIME_UNKNOWN"
+   },
    "inputs_max_at_final": {
     "DE_10Y_PAR_DAILY.csv": "2026-11-23",
     "ES_10Y_DAILY.csv": "2026-11-19"
    },
+   "last_common_session": "2026-11-19",
    "missing": [],
    "model": "derived",
    "rule_id": "ES_DE_10Y_SPREAD",
-   "state": "CURRENT",
+   "state": "DUE",
    "timezone": "Europe/Berlin",
    "written_at": "2026-11-23T17:58:24Z"
   },
