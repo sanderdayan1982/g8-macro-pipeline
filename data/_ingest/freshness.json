@@ -1,48 +1,26 @@
 {
- "at_utc": "2026-11-24T14:32:28Z",
+ "at_utc": "2026-11-24T16:02:56Z",
  "compare_summary": {
   "ACUERDO": 43,
   "FUERA_DE_F3": 1,
   "NUEVO_MAS_ESTRICTO": 5
  },
  "counts": {
-  "CURRENT": 78,
-  "DUE": 3,
+  "CURRENT": 72,
+  "DUE": 2,
   "NOT_MONITORED": 8,
   "NO_OBS_DATE": 4,
   "NO_PUBLICATION": 20,
   "OVERDUE": 12,
-  "PENDING_TIME_UNKNOWN": 9,
+  "PENDING_TIME_UNKNOWN": 16,
   "UNKNOWN_SCHEDULE": 6
  },
  "mode": "PARALELO_SIN_AVISOS",
  "official_engine": "dashboard_alerts.py §05 (sin cambios)",
  "outputs": [
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-11-23",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "OFICIAL_GENERAL",
    "calendar": "US_REPO",
-   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
-   "cause_certainty": "incierta",
-   "cause_detail": {
-    "downloads": 0,
-    "evidence_available": true,
-    "executed_runs": [],
-    "scheduled_passes": [
-     [
-      "EU",
-      "2026-11-24T13:17Z"
-     ]
-    ]
-   },
    "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
@@ -53,12 +31,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:28:41Z",
-      "last_ok_utc": "2026-11-24T05:28:41Z",
+      "finished_utc": "2026-11-24T15:50:57Z",
+      "last_ok_utc": "2026-11-24T15:50:57Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -67,56 +45,51 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T052841Z_actions_fetch-sofr_d732",
+      "run_id": "20261124T155056Z_actions_fetch-sofr_87d0",
       "source": "actions",
-      "started_utc": "2026-11-24T05:28:41Z",
+      "started_utc": "2026-11-24T15:50:56Z",
       "where": "actions__fetch_sofr.json"
      },
      "step:sofr": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:28:41Z",
+      "started_utc": "2026-11-24T15:50:56Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:28:41Z",
+     "started_utc": "2026-11-24T15:50:56Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:sofr"
    },
    "file": "SOFR.csv",
-   "flags": [
-    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA"
-   ],
+   "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
-   "missing": [
-    "2026-11-23"
-   ],
+   "have_max": "2026-11-23",
+   "missing": [],
    "model": "bd_offset",
-   "overdue_since": "2026-11-24T14:00:00Z",
    "rule_id": "SOFR",
-   "state": "OVERDUE",
+   "state": "CURRENT",
    "timezone": "America/New_York"
   },
   {
@@ -348,32 +321,43 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:30Z",
+      "started_utc": "2026-11-24T05:28:47Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-19",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:32Z",
+     "last_ok_utc": "2026-11-24T13:41:32Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134130Z_actions_fetch-tona_b740",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:30Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_tona.json"
     },
-    "latest_source": "step:tona"
+    "latest_source": "actions:fetch_tona"
    },
    "file": "TONA.csv",
    "flags": [],
@@ -387,20 +371,9 @@
    "timezone": "Asia/Tokyo"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-11-23",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T14:00:00Z",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -410,12 +383,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:28:49Z",
-      "last_ok_utc": "2026-11-24T05:28:49Z",
+      "finished_utc": "2026-11-24T15:50:57Z",
+      "last_ok_utc": "2026-11-24T15:50:57Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -424,39 +397,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T052848Z_actions_fetch-corra_08bc",
+      "run_id": "20261124T155057Z_actions_fetch-corra_c5ab",
       "source": "actions",
-      "started_utc": "2026-11-24T05:28:48Z",
+      "started_utc": "2026-11-24T15:50:57Z",
       "where": "actions__fetch_corra.json"
      },
      "step:corra": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:28:48Z",
+      "started_utc": "2026-11-24T15:50:57Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:28:48Z",
+     "started_utc": "2026-11-24T15:50:57Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:corra"
    },
@@ -464,12 +437,11 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-11-24T15:00:00Z",
    "rule_id": "CORRA",
-   "state": "DUE",
+   "state": "CURRENT",
    "timezone": "America/Toronto"
   },
   {
@@ -508,32 +480,43 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:32Z",
+      "started_utc": "2026-11-24T05:28:45Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-23",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:33Z",
+     "last_ok_utc": "2026-11-24T13:41:33Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134132Z_actions_fetch-aonia_9f09",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:32Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_aonia.json"
     },
-    "latest_source": "step:aonia"
+    "latest_source": "actions:fetch_aonia"
    },
    "file": "AONIA.csv",
    "flags": [],
@@ -563,8 +546,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T06:57:05Z",
-      "last_ok_utc": "2026-11-24T06:57:05Z",
+      "finished_utc": "2026-11-24T15:51:07Z",
+      "last_ok_utc": "2026-11-24T15:51:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -581,60 +564,41 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
+      "run_id": "20261124T155059Z_actions_fetch-floor-spreads_9e35",
       "source": "actions",
-      "started_utc": "2026-11-24T06:57:03Z",
+      "started_utc": "2026-11-24T15:50:59Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:41Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
-     "errors": [],
-     "failing_since_utc": null,
      "file": {
-      "detail": "",
-      "held": 0,
-      "src_max": "2026-11-24",
-      "status": "NOOP",
-      "written": false
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T06:57:05Z",
-     "last_ok_utc": "2026-11-24T06:57:05Z",
-     "not_before": {},
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      }
-     ],
-     "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
-     "source": "actions",
-     "started_utc": "2026-11-24T06:57:03Z",
-     "where": "actions__fetch_floor_spreads.json"
+     "restored": [],
+     "run_id": "45430091671",
+     "source": "step",
+     "started_utc": "2026-11-24T15:50:58Z",
+     "status": "OK",
+     "where": "actions__job_intraday.json"
     },
-    "latest_source": "actions:fetch_floor_spreads"
+    "latest_source": "step:floors"
    },
    "file": "FLOOR_USD.csv",
    "flags": [],
@@ -664,8 +628,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T06:57:05Z",
-      "last_ok_utc": "2026-11-24T06:57:05Z",
+      "finished_utc": "2026-11-24T15:51:07Z",
+      "last_ok_utc": "2026-11-24T15:51:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -682,60 +646,41 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
+      "run_id": "20261124T155059Z_actions_fetch-floor-spreads_9e35",
       "source": "actions",
-      "started_utc": "2026-11-24T06:57:03Z",
+      "started_utc": "2026-11-24T15:50:59Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:41Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
-     "errors": [],
-     "failing_since_utc": null,
      "file": {
-      "detail": "",
-      "held": 0,
-      "src_max": "2026-11-24",
-      "status": "NOOP",
-      "written": false
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T06:57:05Z",
-     "last_ok_utc": "2026-11-24T06:57:05Z",
-     "not_before": {},
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      }
-     ],
-     "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
-     "source": "actions",
-     "started_utc": "2026-11-24T06:57:03Z",
-     "where": "actions__fetch_floor_spreads.json"
+     "restored": [],
+     "run_id": "45430091671",
+     "source": "step",
+     "started_utc": "2026-11-24T15:50:58Z",
+     "status": "OK",
+     "where": "actions__job_intraday.json"
     },
-    "latest_source": "actions:fetch_floor_spreads"
+    "latest_source": "step:floors"
    },
    "file": "FLOOR_EUR.csv",
    "flags": [],
@@ -749,19 +694,8 @@
    "timezone": "Europe/Berlin"
   },
   {
-   "availability": {
-    "episodes": [],
-    "limitation": null,
-    "lower_bound": null,
-    "obs_date": "2026-11-23",
-    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
-    "upper_bound": null,
-    "version": null
-   },
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "due_obs": "2026-11-23",
-   "due_since": "2026-11-24T05:00:00Z",
    "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
@@ -772,12 +706,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T06:57:05Z",
-      "last_ok_utc": "2026-11-24T06:57:05Z",
+      "finished_utc": "2026-11-24T15:51:07Z",
+      "last_ok_utc": "2026-11-24T15:51:07Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -794,75 +728,55 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
+      "run_id": "20261124T155059Z_actions_fetch-floor-spreads_9e35",
       "source": "actions",
-      "started_utc": "2026-11-24T06:57:03Z",
+      "started_utc": "2026-11-24T15:50:59Z",
       "where": "actions__fetch_floor_spreads.json"
      },
      "step:floors": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:41Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
-     "errors": [],
-     "failing_since_utc": null,
      "file": {
-      "detail": "",
-      "held": 0,
-      "src_max": "2026-11-20",
-      "status": "NOOP",
-      "written": false
+      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T06:57:05Z",
-     "last_ok_utc": "2026-11-24T06:57:05Z",
-     "not_before": {},
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
-     "requests": [
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      },
-      {
-       "cls": "OK",
-       "status": 200
-      }
-     ],
-     "run_id": "20261124T065703Z_actions_fetch-floor-spreads_7913",
-     "source": "actions",
-     "started_utc": "2026-11-24T06:57:03Z",
-     "where": "actions__fetch_floor_spreads.json"
+     "restored": [],
+     "run_id": "45430091671",
+     "source": "step",
+     "started_utc": "2026-11-24T15:50:58Z",
+     "status": "OK",
+     "where": "actions__job_intraday.json"
     },
-    "latest_source": "actions:fetch_floor_spreads"
+    "latest_source": "step:floors"
    },
    "file": "FLOOR_CAD.csv",
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
-   "overdue_at": "2026-11-25T05:00:00Z",
    "rule_id": "FLOORS",
-   "state": "PENDING_TIME_UNKNOWN",
+   "state": "CURRENT",
    "timezone": "America/Toronto"
   },
   {
-   "age_days": 4,
+   "age_days": 1,
    "basis": "PROVISIONAL",
    "calendar": "",
    "expected_obs": null,
@@ -880,12 +794,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:29:33Z",
-      "last_ok_utc": "2026-11-24T05:29:33Z",
+      "finished_utc": "2026-11-24T15:51:19Z",
+      "last_ok_utc": "2026-11-24T15:51:19Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -902,39 +816,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T052900Z_actions_fetch-bis-policy-gb_fb38",
+      "run_id": "20261124T155109Z_actions_fetch-bis-policy-gb_ee7e",
       "source": "actions",
-      "started_utc": "2026-11-24T05:29:00Z",
+      "started_utc": "2026-11-24T15:51:09Z",
       "where": "actions__fetch_bis_policy_GB.json"
      },
      "step:bis_gb": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:29:00Z",
+      "started_utc": "2026-11-24T15:51:09Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:29:00Z",
+     "started_utc": "2026-11-24T15:51:09Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:bis_gb"
    },
@@ -942,7 +856,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "event",
    "reason": "Evento sin calendario oficial de reuniones: sin observación exigible documentada → UNKNOWN_SCHEDULE",
@@ -959,7 +873,12 @@
     "available": true,
     "by_source": {
      "actions:fetch_bis_policy_JP": {
-      "errors": [],
+      "errors": [
+       {
+        "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
+        "kind": "DEGRADED"
+       }
+      ],
       "failing_since_utc": null,
       "file": {
        "detail": "",
@@ -968,49 +887,53 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T05:31:19Z",
-      "last_ok_utc": "2026-11-24T05:31:19Z",
+      "finished_utc": "2026-11-24T15:51:28Z",
+      "last_ok_utc": "2026-11-24T15:51:28Z",
       "not_before": {},
       "rc": 0,
       "requests": [
        {
         "cls": "OK",
         "status": 200
+       },
+       {
+        "cls": "OK",
+        "status": 200
        }
       ],
-      "run_id": "20261124T052934Z_actions_fetch-bis-policy-jp_a504",
+      "run_id": "20261124T155119Z_actions_fetch-bis-policy-jp_bef3",
       "source": "actions",
-      "started_utc": "2026-11-24T05:29:34Z",
+      "started_utc": "2026-11-24T15:51:19Z",
       "where": "actions__fetch_bis_policy_JP.json"
      },
      "step:bis_jp": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:29:33Z",
+      "started_utc": "2026-11-24T15:51:19Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:29:33Z",
+     "started_utc": "2026-11-24T15:51:19Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:bis_jp"
    },
@@ -1044,8 +967,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T05:31:26Z",
-      "last_ok_utc": "2026-11-24T05:31:26Z",
+      "finished_utc": "2026-11-24T15:51:59Z",
+      "last_ok_utc": "2026-11-24T15:51:59Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1054,39 +977,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053119Z_actions_fetch-bis-policy-ch_ddd7",
+      "run_id": "20261124T155128Z_actions_fetch-bis-policy-ch_40e1",
       "source": "actions",
-      "started_utc": "2026-11-24T05:31:19Z",
+      "started_utc": "2026-11-24T15:51:28Z",
       "where": "actions__fetch_bis_policy_CH.json"
      },
      "step:bis_ch": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:31:19Z",
+      "started_utc": "2026-11-24T15:51:28Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:31:19Z",
+     "started_utc": "2026-11-24T15:51:28Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:bis_ch"
    },
@@ -1125,8 +1048,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T05:32:09Z",
-      "last_ok_utc": "2026-11-24T05:32:09Z",
+      "finished_utc": "2026-11-24T15:52:10Z",
+      "last_ok_utc": "2026-11-24T15:52:10Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -1143,39 +1066,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053126Z_actions_fetch-bis-policy-au_64c0",
+      "run_id": "20261124T155159Z_actions_fetch-bis-policy-au_6739",
       "source": "actions",
-      "started_utc": "2026-11-24T05:31:26Z",
+      "started_utc": "2026-11-24T15:51:59Z",
       "where": "actions__fetch_bis_policy_AU.json"
      },
      "step:bis_au": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:31:26Z",
+      "started_utc": "2026-11-24T15:51:59Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:31:26Z",
+     "started_utc": "2026-11-24T15:51:59Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:bis_au"
    },
@@ -1200,7 +1123,12 @@
     "available": true,
     "by_source": {
      "actions:fetch_bis_ocr": {
-      "errors": [],
+      "errors": [
+       {
+        "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
+        "kind": "DEGRADED"
+       }
+      ],
       "failing_since_utc": null,
       "file": {
        "detail": "",
@@ -1209,51 +1137,75 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T05:29:00Z",
-      "last_ok_utc": "2026-11-24T05:29:00Z",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "last_ok_utc": "2026-11-24T15:52:37Z",
       "not_before": {},
       "rc": 0,
       "requests": [
        {
         "cls": "OK",
         "status": 200
+       },
+       {
+        "cls": "OK",
+        "status": 200
        }
       ],
-      "run_id": "20261124T052849Z_actions_fetch-bis-ocr_bde9",
+      "run_id": "20261124T155210Z_actions_fetch-bis-ocr_6983",
       "source": "actions",
-      "started_utc": "2026-11-24T05:28:49Z",
+      "started_utc": "2026-11-24T15:52:10Z",
       "where": "actions__fetch_bis_ocr.json"
      },
      "step:bis_ocr": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:28:49Z",
+      "started_utc": "2026-11-24T15:52:10Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
+     "errors": [
+      {
+       "detail": "BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations",
+       "kind": "DEGRADED"
+      }
+     ],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-13",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "last_ok_utc": "2026-11-24T15:52:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45333503934",
-     "source": "step",
-     "started_utc": "2026-11-24T05:28:49Z",
-     "status": "OK",
-     "where": "actions__job_daily.json"
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T155210Z_actions_fetch-bis-ocr_6983",
+     "source": "actions",
+     "started_utc": "2026-11-24T15:52:10Z",
+     "where": "actions__fetch_bis_ocr.json"
     },
-    "latest_source": "step:bis_ocr"
+    "latest_source": "actions:fetch_bis_ocr"
    },
    "file": "NZD_OCR.csv",
    "flags": [],
@@ -2967,9 +2919,20 @@
    "timezone": "Europe/London"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3006,32 +2969,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_1Y.csv",
    "flags": [],
@@ -3040,14 +3018,26 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3084,32 +3074,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_2Y.csv",
    "flags": [],
@@ -3118,14 +3123,26 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3162,32 +3179,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_3Y.csv",
    "flags": [],
@@ -3196,14 +3228,26 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3240,32 +3284,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_5Y.csv",
    "flags": [],
@@ -3274,14 +3333,26 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3318,32 +3389,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_10Y.csv",
    "flags": [],
@@ -3352,14 +3438,26 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-24",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-19",
+   "due_obs": "2026-11-24",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-20",
    "facts": {
     "available": true,
     "by_source": {
@@ -3396,32 +3494,47 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:34Z",
+      "started_utc": "2026-11-24T05:32:27Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-20",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:37Z",
+     "last_ok_utc": "2026-11-24T13:41:37Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      },
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134134Z_actions_fetch-jpy-bills_0761",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:34Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_jpy_bills.json"
     },
-    "latest_source": "step:jpy_bills"
+    "latest_source": "actions:fetch_jpy_bills"
    },
    "file": "JPY_BILL_20Y.csv",
    "flags": [],
@@ -3430,8 +3543,9 @@
    "have_max": "2026-11-20",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_CURVE",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -3447,12 +3561,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:32:14Z",
-      "last_ok_utc": "2026-11-24T05:32:14Z",
+      "finished_utc": "2026-11-24T15:50:58Z",
+      "last_ok_utc": "2026-11-24T15:50:58Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3461,39 +3575,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053213Z_actions_fetch-cad-bills_e34b",
+      "run_id": "20261124T155058Z_actions_fetch-cad-bills_8788",
       "source": "actions",
-      "started_utc": "2026-11-24T05:32:13Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:12Z",
+      "started_utc": "2026-11-24T15:50:57Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:32:12Z",
+     "started_utc": "2026-11-24T15:50:57Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:cad_bills"
    },
@@ -3501,7 +3615,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CAD_CURVE_BILLS",
@@ -3521,12 +3635,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:32:14Z",
-      "last_ok_utc": "2026-11-24T05:32:14Z",
+      "finished_utc": "2026-11-24T15:50:58Z",
+      "last_ok_utc": "2026-11-24T15:50:58Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3535,39 +3649,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053213Z_actions_fetch-cad-bills_e34b",
+      "run_id": "20261124T155058Z_actions_fetch-cad-bills_8788",
       "source": "actions",
-      "started_utc": "2026-11-24T05:32:13Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:12Z",
+      "started_utc": "2026-11-24T15:50:57Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:32:12Z",
+     "started_utc": "2026-11-24T15:50:57Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:cad_bills"
    },
@@ -3575,7 +3689,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CAD_CURVE_BILLS",
@@ -3595,12 +3709,12 @@
       "file": {
        "detail": "",
        "held": 0,
-       "src_max": "2026-11-20",
-       "status": "NOOP",
-       "written": false
+       "src_max": "2026-11-23",
+       "status": "PUBLISH",
+       "written": true
       },
-      "finished_utc": "2026-11-24T05:32:14Z",
-      "last_ok_utc": "2026-11-24T05:32:14Z",
+      "finished_utc": "2026-11-24T15:50:58Z",
+      "last_ok_utc": "2026-11-24T15:50:58Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -3609,39 +3723,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053213Z_actions_fetch-cad-bills_e34b",
+      "run_id": "20261124T155058Z_actions_fetch-cad-bills_8788",
       "source": "actions",
-      "started_utc": "2026-11-24T05:32:13Z",
+      "started_utc": "2026-11-24T15:50:58Z",
       "where": "actions__fetch_cad_bills.json"
      },
      "step:cad_bills": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:12Z",
+      "started_utc": "2026-11-24T15:50:57Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:32:12Z",
+     "started_utc": "2026-11-24T15:50:57Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:cad_bills"
    },
@@ -3649,7 +3763,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "CAD_CURVE_BILLS",
@@ -3659,7 +3773,20 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "CA",
-   "expected_obs": "2026-11-20",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "cause_certainty": "incierta",
+   "cause_detail": {
+    "downloads": 0,
+    "evidence_available": true,
+    "executed_runs": [],
+    "scheduled_passes": [
+     [
+      "US",
+      "2026-11-24T15:47Z"
+     ]
+    ]
+   },
+   "expected_obs": "2026-11-23",
    "facts": {
     "available": true,
     "by_source": {
@@ -3695,14 +3822,20 @@
     "latest_source": "step:acm_g8"
    },
    "file": "CAD_NOM_2Y.csv",
-   "flags": [],
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
    "g_min": "60",
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
-   "missing": [],
+   "missing": [
+    "2026-11-23"
+   ],
    "model": "bd_offset",
+   "overdue_since": "2026-11-24T16:00:00Z",
    "rule_id": "CAD_CURVE_BONDS",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "timezone": "America/Toronto"
   },
   {
@@ -3741,32 +3874,43 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:33Z",
+      "started_utc": "2026-11-24T05:32:14Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-23",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:34Z",
+     "last_ok_utc": "2026-11-24T13:41:34Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134133Z_actions_fetch-aud-bills_9752",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:33Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_aud_bills.json"
     },
-    "latest_source": "step:aud_bills"
+    "latest_source": "actions:fetch_aud_bills"
    },
    "file": "AUD_BILL_1M.csv",
    "flags": [],
@@ -3815,32 +3959,43 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:33Z",
+      "started_utc": "2026-11-24T05:32:14Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-23",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:34Z",
+     "last_ok_utc": "2026-11-24T13:41:34Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134133Z_actions_fetch-aud-bills_9752",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:33Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_aud_bills.json"
     },
-    "latest_source": "step:aud_bills"
+    "latest_source": "actions:fetch_aud_bills"
    },
    "file": "AUD_BILL_3M.csv",
    "flags": [],
@@ -3889,32 +4044,43 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:33Z",
+      "started_utc": "2026-11-24T05:32:14Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
+     "errors": [],
+     "failing_since_utc": null,
      "file": {
-      "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
+      "detail": "",
+      "held": 0,
+      "src_max": "2026-11-23",
+      "status": "NOOP",
+      "written": false
      },
-     "finished_utc": "2026-11-24T13:41:41Z",
-     "job": "intraday",
+     "finished_utc": "2026-11-24T13:41:34Z",
+     "last_ok_utc": "2026-11-24T13:41:34Z",
+     "not_before": {},
      "rc": 0,
-     "restored": [],
-     "run_id": "45405956549",
-     "source": "step",
+     "requests": [
+      {
+       "cls": "OK",
+       "status": 200
+      }
+     ],
+     "run_id": "20261124T134133Z_actions_fetch-aud-bills_9752",
+     "source": "actions",
      "started_utc": "2026-11-24T13:41:33Z",
-     "status": "OK",
-     "where": "actions__job_intraday.json"
+     "where": "actions__fetch_aud_bills.json"
     },
-    "latest_source": "step:aud_bills"
+    "latest_source": "actions:fetch_aud_bills"
    },
    "file": "AUD_BILL_6M.csv",
    "flags": [],
@@ -4308,9 +4474,20 @@
    "timezone": "Europe/Berlin"
   },
   {
+   "availability": {
+    "episodes": [],
+    "limitation": null,
+    "lower_bound": null,
+    "obs_date": "2026-11-25",
+    "scope": "endpoint consultado; no demuestra la publicación en otros sistemas del proveedor",
+    "upper_bound": null,
+    "version": null
+   },
    "basis": "PROVISIONAL",
    "calendar": "JP",
-   "expected_obs": "2026-11-20",
+   "due_obs": "2026-11-25",
+   "due_since": "2026-11-24T15:00:00Z",
+   "expected_obs": "2026-11-24",
    "facts": {
     "available": true,
     "by_source": {
@@ -4343,15 +4520,15 @@
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T13:41:41Z",
-      "job": "intraday",
+      "finished_utc": "2026-11-24T05:34:54Z",
+      "job": "daily",
       "rc": 0,
       "restored": [],
-      "run_id": "45405956549",
+      "run_id": "45333503934",
       "source": "step",
-      "started_utc": "2026-11-24T13:41:38Z",
+      "started_utc": "2026-11-24T05:34:47Z",
       "status": "OK",
-      "where": "actions__job_intraday.json"
+      "where": "actions__job_daily.json"
      }
     },
     "latest": {
@@ -4388,8 +4565,9 @@
    "have_max": "2026-11-24",
    "missing": [],
    "model": "bd_offset",
+   "overdue_at": "2026-11-25T15:00:00Z",
    "rule_id": "JPY_RY",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "Asia/Tokyo"
   },
   {
@@ -4420,8 +4598,8 @@
        "status": "NOOP",
        "written": false
       },
-      "finished_utc": "2026-11-24T05:32:47Z",
-      "last_ok_utc": "2026-11-24T05:32:47Z",
+      "finished_utc": "2026-11-24T15:51:09Z",
+      "last_ok_utc": "2026-11-24T15:51:09Z",
       "not_before": {},
       "rc": 0,
       "requests": [
@@ -4430,39 +4608,39 @@
         "status": 200
        }
       ],
-      "run_id": "20261124T053245Z_actions_fetch-acm_d7a1",
+      "run_id": "20261124T155107Z_actions_fetch-acm_d97e",
       "source": "actions",
-      "started_utc": "2026-11-24T05:32:45Z",
+      "started_utc": "2026-11-24T15:51:07Z",
       "where": "actions__fetch_acm.json"
      },
      "step:acm_tp": {
       "file": {
        "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
       },
-      "finished_utc": "2026-11-24T05:34:54Z",
-      "job": "daily",
+      "finished_utc": "2026-11-24T15:52:37Z",
+      "job": "intraday",
       "rc": 0,
       "restored": [],
-      "run_id": "45333503934",
+      "run_id": "45430091671",
       "source": "step",
-      "started_utc": "2026-11-24T05:32:45Z",
+      "started_utc": "2026-11-24T15:51:07Z",
       "status": "OK",
-      "where": "actions__job_daily.json"
+      "where": "actions__job_intraday.json"
      }
     },
     "latest": {
      "file": {
       "status": "SIN_RESULTADO_PARA_ESTE_FICHERO"
      },
-     "finished_utc": "2026-11-24T05:34:54Z",
-     "job": "daily",
+     "finished_utc": "2026-11-24T15:52:37Z",
+     "job": "intraday",
      "rc": 0,
      "restored": [],
-     "run_id": "45333503934",
+     "run_id": "45430091671",
      "source": "step",
-     "started_utc": "2026-11-24T05:32:45Z",
+     "started_utc": "2026-11-24T15:51:07Z",
      "status": "OK",
-     "where": "actions__job_daily.json"
+     "where": "actions__job_intraday.json"
     },
     "latest_source": "step:acm_tp"
    },
@@ -7233,11 +7411,11 @@
    "g_status": "PROVISIONAL",
    "have_max": "2026-11-20",
    "input_states": {
-    "JPY_BILL_10Y.csv": "CURRENT",
-    "JPY_BILL_1Y.csv": "CURRENT",
-    "JPY_BILL_2Y.csv": "CURRENT",
-    "JPY_BILL_3Y.csv": "CURRENT",
-    "JPY_BILL_5Y.csv": "CURRENT"
+    "JPY_BILL_10Y.csv": "PENDING_TIME_UNKNOWN",
+    "JPY_BILL_1Y.csv": "PENDING_TIME_UNKNOWN",
+    "JPY_BILL_2Y.csv": "PENDING_TIME_UNKNOWN",
+    "JPY_BILL_3Y.csv": "PENDING_TIME_UNKNOWN",
+    "JPY_BILL_5Y.csv": "PENDING_TIME_UNKNOWN"
    },
    "inputs_max_at_final": {
     "JPY_BILL_10Y.csv": "2026-11-19",
@@ -7250,7 +7428,7 @@
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "timezone": "UTC",
    "written_at": "2026-11-24T05:36:00Z"
   },
@@ -7379,7 +7557,7 @@
     "CAD_BILL_3M.csv": "2026-11-20",
     "CAD_BILL_6M.csv": "2026-11-20"
    },
-   "last_common_session": "2026-11-20",
+   "last_common_session": "2026-11-23",
    "missing": [],
    "model": "derived",
    "rule_id": "ACM_DERIVED",
@@ -7655,7 +7833,7 @@
   {
    "basis": "OFICIAL_GENERAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
@@ -7664,7 +7842,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "USD_FACTOR",
@@ -7683,7 +7861,7 @@
    "flags": [],
    "g_min": null,
    "g_status": "APROBADO",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "missing": [],
    "model": "not_monitored",
    "reason": "EXCLUIDO_DE_CAMBIOS_F6: solo se muestra su fecha",
@@ -7893,7 +8071,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
@@ -7902,7 +8080,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "ECB_CACHE",
@@ -7912,7 +8090,7 @@
   {
    "basis": "PROVISIONAL",
    "calendar": "TARGET",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "facts": {
     "available": false,
     "reason": "sin registro de ejecución (workflow propio sin registro de ingestión)"
@@ -7921,7 +8099,7 @@
    "flags": [],
    "g_min": "60",
    "g_status": "PROVISIONAL",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "missing": [],
    "model": "bd_offset",
    "rule_id": "ECB_CACHE",

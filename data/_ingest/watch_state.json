@@ -1,24 +1,32 @@
 {
  "active": {
   "actions:daily_update:duplicate_turn": {
-   "sent_ts": 1795534228.0718727,
-   "text": "mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1, turno 2026-11-23T21:30Z–2026-11-24T21:30Z, commits fe69b984, 1af9b7a3)."
+   "sent_ts": 1795536168.664613,
+   "text": "mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1, turno 2026-11-23T21:30Z–2026-11-24T21:30Z, commits fe69b984, 1af9b7a3). — su registro ya no existe: sin evidencia de recuperación"
+  },
+  "actions:fetch_bis_ocr:degraded": {
+   "sent_ts": 1795536168.664613,
+   "text": "Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
   },
   "actions:fetch_bis_policy_AU:degraded": {
-   "sent_ts": 1795447871.417968,
+   "sent_ts": 1795536168.664613,
    "text": "Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
   },
   "actions:fetch_bis_policy_GB:degraded": {
-   "sent_ts": 1795447871.417968,
+   "sent_ts": 1795536168.664613,
    "text": "Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
   },
+  "actions:fetch_bis_policy_JP:degraded": {
+   "sent_ts": 1795536168.664613,
+   "text": "Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallback verified on 20 observations. Se publicó lo disponible; la parte afectada puede no estar al día."
+  },
   "actions:job:verify_freshness:step:private_verify_freshness": {
-   "sent_ts": 1795447871.417968,
+   "sent_ts": 1795536168.664613,
    "text": "Actions verify_freshness: el paso private_verify_freshness terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:metals:duplicate_turn": {
-   "sent_ts": 1795534228.0718727,
-   "text": "mismo feed publicado dos veces en el mismo turno (metals: 3 publicaciones, cabían 1, turno 2026-11-21T07:00Z–2026-11-28T07:00Z, commits 607f7c9b, fd725530, b71e2ea6)."
+   "sent_ts": 1795536168.664613,
+   "text": "mismo feed publicado dos veces en el mismo turno (metals: 3 publicaciones, cabían 1, turno 2026-11-21T07:00Z–2026-11-28T07:00Z, commits 607f7c9b, fd725530, b71e2ea6). — su registro ya no existe: sin evidencia de recuperación"
   },
   "actions:usd_factor:duplicate_turn": {
    "sent_ts": 1795520740.247954,
@@ -27,10 +35,6 @@
   "proxy:active:NZD_CASH_ON": {
    "sent_ts": 1795480465.1451547,
    "text": "G8 · NZD_CASH_ON: PROXY activo = NZD_OCR del 2026-11-13 al 2026-11-23 (fuente/fecha visibles en el CSV). Un dato PROXY no vota. Cuando RBNZ B2 INM.DN.NZK (RBNZ vía proxy CF) vuelva, recuperación automática."
-  },
-  "proxy:late2:FLOOR_CAD": {
-   "sent_ts": 1795480465.1451547,
-   "text": "G8 · FLOOR_CAD: 2 días hábiles tarde (último oficial 2026-11-20, esperado 2026-11-24, 2 d.h.). Aviso; aún no se activa sustituto."
   },
   "proxy:late3:CHF_SPOT_10Y": {
    "sent_ts": 1795480465.1451547,

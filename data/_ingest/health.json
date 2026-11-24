@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T15:52:39.368172Z",
- "status": "UNVERIFIED",
+ "generated_utc": "2026-11-24T16:02:58.220395Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,8 +19,27 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
+ "needs_repair": true,
+ "issues": [
+  {
+   "file": "CAD_NOM_2Y.csv",
+   "state": "OVERDUE",
+   "have_max": "2026-11-20",
+   "expected_obs": "2026-11-23",
+   "calendar": "CA",
+   "basis": "PROVISIONAL",
+   "reason": null,
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false
+  }
+ ],
  "unknown_count": 2,
  "feeds": [
   {
@@ -588,15 +607,18 @@
   },
   {
    "file": "CAD_NOM_2Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "PENDING",
+   "cause": "PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+   "flags": [
+    "CAUSA_PROGRAMADA_SIN_EJECUCION_REGISTRADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "LATE",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1357,7 +1379,7 @@
    "file": "USD_FACTOR.json",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
@@ -1794,7 +1816,7 @@
    "file": "usd_factor/ecb_rates.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1808,7 +1830,7 @@
    "file": "usd_factor/canonical.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
