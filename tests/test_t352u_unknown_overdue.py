@@ -45,14 +45,16 @@ class ResolutionClock(unittest.TestCase):
         self.assertGreater(resol, pub)
 
     def test_no_clock_without_pub_local(self):
-        # A non-derived rule without pub_local still has no clock (ES10Y_DAILY).
-        rule = self.rules["ES10Y_DAILY"]
+        # A non-derived rule without pub_local still has no clock (ACM_TP).
+        # orden Sander 24-nov t364u: ejemplo actualizado, ES_10Y ya tiene pub_local
+        rule = self.rules["ACM_TP"]
         self.assertFalse((rule.get("pub_local") or "").strip())
         self.assertNotEqual(rule.get("frequency"), "derived")
         self.assertIsNone(HM.expected_resolution_utc(rule, self.passes, self.cals, date(2026, 11, 20), self.rule_list, self.outputs))
 
     def test_derived_clock_is_latest_of_inputs(self):
         # t357u: el reloj de una serie derivada es la hora prevista más tardía de sus entradas.
+        # orden Sander 24-nov t364u: ejemplo actualizado, ES_10Y ya tiene pub_local
         spread = self.rules["ES_DE_10Y_SPREAD"]
         de = self.rules["DE10Y_PAR"]
         es = self.rules["ES10Y_DAILY"]
@@ -61,8 +63,9 @@ class ResolutionClock(unittest.TestCase):
         es_clock = HM.expected_resolution_utc(es, self.passes, self.cals, day, self.rule_list, self.outputs)
         spread_clock = HM.expected_resolution_utc(spread, self.passes, self.cals, day, self.rule_list, self.outputs)
         self.assertIsNotNone(de_clock)
-        self.assertIsNone(es_clock)  # sin pub_local, ES no aporta reloj
-        self.assertEqual(spread_clock, de_clock)
+        self.assertIsNotNone(es_clock)
+        self.assertEqual(es_clock, max(de_clock, es_clock))
+        self.assertEqual(spread_clock, es_clock)
 
     def test_spread_can_become_unknown_overdue(self):
         day = date(2026, 11, 20)

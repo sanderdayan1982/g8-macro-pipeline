@@ -61,16 +61,25 @@ class LastCommonSession(unittest.TestCase):
         self.assertEqual(ev["state"], "CURRENT")
 
     def test_es_tplus2_ceiling_is_not_late_before_next_exigency(self):
-        # Viernes 20-nov publicó obs. del 18-nov (T+2). Lunes 23-nov 14:00 WAT:
-        # la obs. del 19-nov aún no es exigible (sin pub_local, exig = medianoche del día siguiente).
+        # ES se exige en T+2 a las 10:15 Madrid con g_min 60.
+        # orden Sander 24-nov t371u: exigibilidad de ES con pub_local 10:15 y g_min 60
+        # Viernes 20-nov publicó la obs. del 18-nov (T+2). La del 19-nov se exige
+        # el lunes 23-nov a las 11:15 WAT (10:15 Madrid + 60 min).
         o = OUT["ES_10Y_DAILY.csv"]
         ev = FR.evaluate(
             o, RULES[o["rule_id"]], PARAMS[o["rule_id"]], CALS,
-            T("2026-11-23T13:00Z"),
+            T("2026-11-23T10:00Z"),  # 11:00 WAT, aún no exigible
             {date(2026, 11, 18)},
         )
         self.assertNotIn(ev["state"], FR.LATE_STATES)
         self.assertEqual(ev.get("expected_obs"), "2026-11-18")
+        ev_due = FR.evaluate(
+            o, RULES[o["rule_id"]], PARAMS[o["rule_id"]], CALS,
+            T("2026-11-23T10:15Z"),  # 11:15 WAT, ya exigible
+            {date(2026, 11, 18)},
+        )
+        self.assertEqual(ev_due["state"], "OVERDUE")
+        self.assertEqual(ev_due.get("expected_obs"), "2026-11-19")
 
     def test_de_t0_friday_obs_current_before_monday_pub_window(self):
         # Antes de las 12:29 Europe/Berlin del lunes, la obs. del viernes sigue vigente.
