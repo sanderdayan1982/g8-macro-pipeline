@@ -46,36 +46,46 @@ def load_prev(path):
         return {}
 
 
-def run(workdir, token):
+def run(workdir, token, no_push=False, now=None, opener=None, repo_root=None):
     sys.path.insert(0, os.path.join(workdir, "scripts"))
     sys.path.insert(0, HERE)
     import fetch_sovereign_10y_daily as F  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
 
-    P.fetch_ff_only(workdir, token, allowed=ALLOWED)
+    if not no_push:
+        P.fetch_ff_only(workdir, token, allowed=ALLOWED)
     data = os.path.join(workdir, "data")
-    result = F.run(data_dir=data)
+    # t372u: solo se salta ES si ya tiene el dato esperado del día.
+    # Si la pasada de las 11:30 no lo trajo, esta lo recoge como respaldo.
+    has_exp, ev = F.es_already_has_expected(data, now=now, repo_root=repo_root or workdir)
+    result = F.run(data_dir=data, opener=opener, fetch_de=True, fetch_es=not has_exp)
+    result["es_skipped"] = bool(has_exp)
+    result["es_expected"] = (ev or {}).get("expected_obs")
     last = "%s/%s" % (result.get("de_last"), result.get("es_last"))
     msg = "[vps-push] sovereign-10y de=%s es=%s [skip netlify]" % (
         result.get("de_last"), result.get("es_last"))
-    pub_out = P.commit_and_push(workdir, ALLOWED, msg, token)
+    if no_push:
+        pub_out = {"changed": False, "sha": None, "files": [], "skipped": True, "no_push": True}
+    else:
+        pub_out = P.commit_and_push(workdir, ALLOWED, msg, token)
     return {"ok": True, "push": pub_out, "fetch": result, "last": last}
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="VPS DE/ES 10Y diario (t345u)")
+    ap = argparse.ArgumentParser(description="VPS DE/ES 10Y diario (t345u/t372u)")
     ap.add_argument("--workdir", default=os.environ.get("G8_SOV10Y_WORKDIR", ROOT_DEFAULT))
     ap.add_argument("--state", default=os.environ.get("G8_VPS_JOB_STATE", "/srv/g8/prod/state/vps_jobs/sovereign-10y.json"))
+    ap.add_argument("--no-push", action="store_true", help="pasada en seco: no hace fetch ff ni push")
     args = ap.parse_args(argv)
     token = os.environ.get("G8_FULL", "").strip()
     prev = load_prev(args.state)
     rec = {"job": "sovereign-10y", "utc": _utcnow(), "ok": False, "rc": 1, "consecutive_fail": 0}
     try:
-        if not token:
+        if not args.no_push and not token:
             raise RuntimeError("G8_FULL ausente")
         lock = os.environ.get("G8_SOV10Y_LOCK") or "/srv/g8/prod/state/locks/sovereign-10y.lock"
         with job_flock.exclusive(lock):
-            result = run(args.workdir, token)
+            result = run(args.workdir, token, no_push=args.no_push)
         rec["ok"] = True
         rec["rc"] = 0
         rec["consecutive_fail"] = 0

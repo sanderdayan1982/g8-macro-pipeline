@@ -1,0 +1,25 @@
+[Unit]
+Description=G8 VPS · pasada extra ES 10Y 11:30 WAT (t372u) · no es un turno del dispatcher
+OnFailure=g8-alarm@%n.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=g8
+Group=g8
+Environment=G8_MODE=prod
+Environment=G8_VPS_JOB=sovereign-10y-es-1130
+Environment=G8_SOV10Y_ES1130_LOCK=/srv/g8/prod/state/locks/sovereign-10y-es-1130.lock
+Environment=G8_ALERTAS_LOG=/srv/g8/logs/ALERTAS.log
+Environment=G8_SOV10Y_ES1130_WORKDIR=/srv/g8/prod/work/sovereign-10y-es-1130
+Environment=G8_VPS_JOB_STATE=/srv/g8/prod/state/vps_jobs/sovereign-10y-es-1130.json
+EnvironmentFile=/etc/g8/secrets.env
+ExecStart=/srv/g8/venv/bin/python /srv/g8/bin/sovereign_10y_es_1130.py
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+ReadWritePaths=/srv/g8/prod/work /srv/g8/prod/state /srv/g8/logs
+TimeoutStartSec=600
