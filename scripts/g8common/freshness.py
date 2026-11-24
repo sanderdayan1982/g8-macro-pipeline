@@ -31,9 +31,15 @@ Reglas (sources/freshness_rules.csv + freshness_params.csv + freshness_outputs.c
   · prev_month_end — publicación el primer día hábil del mes con datos hasta el último día hábil del mes anterior.
   · derived — sin procedencia: exigible = mínimo de las fechas máximas de sus entradas MOTORAS (columna drivers;
     por defecto todas) del repo en la última pasada FINAL (hora programada + G), y marca INPUT_VERSION_UNKNOWN.
-    Con procedencia (sha y fecha de cada entrada + generated_utc): estado = peor de las entradas y fecha =
-    última sesión común, SOLO si se generó después de su entrada más reciente; BEHIND_INPUTS si alguna entrada
-    es más nueva; INPUT_VERSION_UNKNOWN si no guarda procedencia. AUD_NOWCAST sigue EST y no vota (t347u).
+    Fecha de la salida = última fila completa ∩ última sesión común de las motoras (t360u/t364u); si el
+    catálogo no define motoras, de todas las entradas. Estado = peor estado operativo de las entradas, cada
+    una con su propio calendario (t364u): se hereda DUE (operativo PENDING) mientras una entrada OVERDUE con
+    causa SIN_PASADA_PROGRAMADA sigue dentro de la gracia B1 (1 día hábil desde overdue_since), no el OVERDUE
+    de frescura. Entradas al día en su calendario (CURRENT / NO_PUBLICATION, p. ej. mensuales) no empeoran el
+    estado. Con procedencia (sha y fecha de cada entrada + generated_utc): estado = peor operativo de las
+    entradas y fecha = última sesión común de las motoras, SOLO si se generó después de su entrada más
+    reciente; BEHIND_INPUTS si alguna entrada es más nueva; INPUT_VERSION_UNKNOWN si no guarda procedencia.
+    AUD_NOWCAST sigue EST y no vota (t347u).
     INPUTS_REVISED_AFTER si hay evidencia de una revisión de una entrada posterior a la última escritura.
   · event / none — UNKNOWN_SCHEDULE (sin obligación inventada). · not_monitored — NOT_MONITORED con su motivo.
 G solo gobierna DUE → OVERDUE: no retrasa ninguna consulta ni hace CURRENT un dato que falta.
@@ -63,6 +69,26 @@ def load_config(root):
     params = {r["rule_id"]: r for r in _rows(root, "freshness_params.csv")}
     outputs = _rows(root, "freshness_outputs.csv")
     return rules, params, outputs, SC.load_calendars(root)
+
+
+def sla_deadline(since_iso, calendar, cals):
+    """B1: límite de la espera operativa = mismo instante del siguiente día hábil del calendario del feed.
+    Misma regla que health_monitor.sla_deadline (consenso 2026-10-16); copiada aquí para no importar el monitor."""
+    if not since_iso:
+        return None
+    try:
+        t = datetime.fromisoformat(str(since_iso).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    cal = {"EU": "TARGET"}.get(calendar, calendar)
+    d = t.date()
+    for _ in range(15):
+        d += timedelta(days=1)
+        if not cal or SC.is_bd(cals, cal, d):
+            break
+    return t + timedelta(days=(d - t.date()).days)
 
 
 # ── fechas de observación de un fichero ─────────────────────────────────────────────────────────────────────────
@@ -106,6 +132,25 @@ def valued_obs_dates_from_bytes(data, date_key=""):
         parts = line.split(",")
         d = _parse_date(parts[0] if parts else "")
         if d and any(p.strip() for p in parts[1:]):
+            out.add(d)
+    return out
+
+
+def complete_obs_dates_from_bytes(data, date_key=""):
+    """Fechas cuya fila tiene todos los campos de valor no vacíos. Las filas parciales no cuentan.
+    orden Sander 24-nov t360u."""
+    if data is None:
+        return None
+    if date_key:
+        return obs_dates_from_bytes(data, date_key)
+    out = set()
+    for line in data.decode("utf-8", errors="ignore").splitlines():
+        if not line or line.lstrip().startswith("#"):
+            continue
+        parts = line.split(",")
+        d = _parse_date(parts[0] if parts else "")
+        vals = parts[1:]
+        if d and vals and all(p.strip() for p in vals):
             out.add(d)
     return out
 
@@ -302,7 +347,7 @@ def classify_cause(fname, obs, due_first, now, scheduled, runs, downloads, evide
 
 def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evidence=None, facts=None, passes=None,
              runs=None, evidence_available=True, written_at=None, provenance=None, input_states=None,
-             input_shas=None, input_dates=None, input_obs=None):
+             input_shas=None, input_dates=None, input_obs=None, input_meta=None):
     """→ dict con el estado del eje A, sus fundamentos y los hechos del eje B.
     have_dates: fechas de observación presentes en la salida (None = fichero ausente).
     input_max_at(file, instant) → fecha máxima de esa entrada en ese instante (o None si no se puede saber).
@@ -310,7 +355,7 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
     runs: ejecuciones REALES registradas de las fuentes de la salida (Actions, g8step, latido del Mac).
     evidence_available: False en reproducciones históricas (no existía el historial): la causa queda incierta.
     written_at: instante de la última escritura publicada de la salida (derivados), o None si se desconoce.
-    provenance/input_states/input_shas/input_dates/input_obs: procedencia de un derivado (t347u); opcionales."""
+    provenance/input_states/input_shas/input_dates/input_obs/input_meta: procedencia de un derivado (t347u/t364u); opcionales."""
     model = param["model"]
     cal = output.get("calendar") or rule.get("calendar") or ""
     tz = output.get("timezone") or rule.get("timezone") or "UTC"
@@ -336,7 +381,8 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
     if model == "derived":
         return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at,
                                  provenance=provenance, input_states=input_states, input_shas=input_shas,
-                                 input_dates=input_dates, input_obs=input_obs)
+                                 input_dates=input_dates, input_obs=input_obs, have_dates=have_dates,
+                                 cals=cals, input_meta=input_meta)
 
     pubs = publications(rule, param, cal, tz, cals, now)
     exigible = [(d, due, ex) for d, due, ex in pubs if ex <= now]
@@ -492,17 +538,121 @@ def _input_is_newer(provenance, inputs, input_shas, input_dates, input_max_at, n
     return False, None, None
 
 
+def _derived_dated_max(have_max, have_dates, input_obs):
+    """Última fila con todas las entradas motoras y el valor completos (t360u/t364u)."""
+    dates = set(have_dates) if have_dates else ({have_max} if have_max else set())
+    if input_obs:
+        common = last_common_session(input_obs)
+        if common is not None:
+            inter = set.intersection(*input_obs.values())
+            dates = (dates & inter) if dates else inter
+    return max(dates) if dates else have_max
+
+
+def _apply_derived_date(res, have_max, have_dates, input_obs):
+    dated = _derived_dated_max(have_max, have_dates, input_obs)
+    if dated is not None:
+        have_max = dated
+        res["have_max"] = dated.isoformat()
+    common = last_common_session(input_obs) if input_obs is not None else None
+    if common is not None:
+        res["last_common_session"] = common.isoformat()
+        res.setdefault("expected_obs", common.isoformat())
+    return have_max
+
+
+def _operational_state(state, meta, now, cals):
+    """F3 → voto operativo (t364u c): OVERDUE dentro de la gracia B1 vota DUE (PENDING), no OVERDUE."""
+    if state == "OVERDUE" and (meta or {}).get("cause") == "SIN_PASADA_PROGRAMADA" and now is not None:
+        deadline = sla_deadline((meta or {}).get("overdue_since"), (meta or {}).get("calendar") or "", cals)
+        if deadline is None or now < deadline:
+            return "DUE"
+    return state
+
+
+def _worst_input_voters(inputs, input_states, input_meta=None, now=None, cals=None):
+    voters = {}
+    for f, st in (input_states or {}).items():
+        if f not in inputs or f == "AUD_NOWCAST.csv":
+            continue
+        voters[f] = _operational_state(st, (input_meta or {}).get(f), now, cals)
+    worst = worst_input_state(voters.values()) if voters else None
+    return voters, worst
+
+
+_CAUSE_CERTAINTY = {
+    "SIN_PASADA_PROGRAMADA": "configuracion",
+    "PROGRAMADA_SIN_EJECUCION_REGISTRADA": "incierta",
+}
+
+
+def _attach_inherited_late(res, voters, input_meta):
+    """Si el derivado hereda OVERDUE/STALE, copia causa, certeza y missing de las entradas votantes (C3-1)."""
+    if res.get("state") not in ("OVERDUE", "STALE"):
+        return
+    for f, st in (voters or {}).items():
+        if st not in ("OVERDUE", "STALE"):
+            continue
+        meta = (input_meta or {}).get(f) or {}
+        if not res.get("cause") and meta.get("cause"):
+            res["cause"] = meta["cause"]
+        if not res.get("overdue_since") and meta.get("overdue_since"):
+            res["overdue_since"] = meta["overdue_since"]
+        if not res.get("missing"):
+            miss = list(meta.get("missing") or [])
+            if not miss and meta.get("expected_obs"):
+                miss = [meta["expected_obs"]]
+            if miss:
+                res["missing"] = miss
+        if not res.get("cause_certainty"):
+            res["cause_certainty"] = meta.get("cause_certainty") or _CAUSE_CERTAINTY.get(res.get("cause") or "")
+        if not res.get("cause_detail") and meta.get("cause_detail"):
+            res["cause_detail"] = meta["cause_detail"]
+        if res.get("cause") and res.get("missing") and res.get("cause_certainty"):
+            break
+
+
+def _finish_derived_state(res, output, inputs, input_states, behind=False, behind_missing=None,
+                          input_meta=None, now=None, cals=None):
+    """Estado = peor operativo de las entradas; BEHIND_INPUTS si no cubre la sesión de las motoras (t360u/t364u)."""
+    if output.get("rule_id") == "AUD_NOWCAST":
+        return res
+    voters, worst = _worst_input_voters(inputs, input_states, input_meta=input_meta, now=now, cals=cals)
+    cands = []
+    if behind:
+        cands.append("BEHIND_INPUTS")
+    if worst is not None:
+        cands.append(worst)
+        res["input_states"] = voters
+    if cands:
+        res["state"] = worst_input_state(cands)
+        if res["state"] == "BEHIND_INPUTS" and behind_missing:
+            res["missing"] = behind_missing
+        _attach_inherited_late(res, voters, input_meta)
+    return res
+
+
 def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None,
-                      provenance=None, input_states=None, input_shas=None, input_dates=None, input_obs=None):
+                      provenance=None, input_states=None, input_shas=None, input_dates=None, input_obs=None,
+                      have_dates=None, cals=None, input_meta=None):
     inputs = [x for x in (output.get("inputs") or "").split(";") if x]
+    drivers = [x for x in (output.get("drivers") or "").split(";") if x] or inputs
     if output.get("external_inputs"):
         res["flags"].append("EXTERNAL_INPUTS_UNVERSIONED")
     # AUD_NOWCAST sigue EST y no vota: se evalúa por el camino legado (t347u).
+    apply_t360u = output.get("rule_id") != "AUD_NOWCAST"
+    if apply_t360u:
+        date_obs = input_obs
+        if input_obs is not None:
+            date_obs = {f: input_obs[f] for f in drivers if f in input_obs} or input_obs
+        have_max = _apply_derived_date(res, have_max, have_dates, date_obs)
     use_legacy = (output.get("rule_id") == "AUD_NOWCAST") or not _provenance_complete(provenance, inputs)
     if use_legacy:
         res["flags"].append("INPUT_VERSION_UNKNOWN")         # no guarda procedencia (o no vota)
         if not inputs or input_max_at is None:
             res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin entradas del repo evaluables")
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states, input_meta=input_meta, now=now, cals=cals)
             return res
         g = timedelta(minutes=int(param["g_min"])) if (param.get("g_min") or "").strip() else None
         if g is None:
@@ -512,6 +662,8 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
             known = [d for d in cur if d]
             res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin hora exigible documentada",
                        covers_inputs=bool(known) and have_max >= min(known))
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states, input_meta=input_meta, now=now, cals=cals)
             return res
         drivers = [x for x in (output.get("drivers") or "").split(";") if x] or inputs
         fin = last_final(now)
@@ -524,6 +676,8 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
         known = [d for d in at_ref if d]
         if not known:
             res.update(state="UNKNOWN_SCHEDULE", reason="fechas de las entradas desconocidas")
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states, input_meta=input_meta, now=now, cals=cals)
             return res
         need = min(known)
         res["expected_obs"] = need.isoformat()
@@ -532,6 +686,10 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
         else:
             res["state"] = "BEHIND_INPUTS"
             res["missing"] = [need.isoformat()]
+        if apply_t360u:
+            _finish_derived_state(res, output, inputs, input_states,
+                                  behind=have_max < need, behind_missing=[need.isoformat()],
+                                  input_meta=input_meta, now=now, cals=cals)
     else:
         # procedencia completa: peor estado y última sesión común SOLO si se generó después
         # de su entrada más reciente (t347u, orden expresa Sander 23-nov: derivadas con procedencia).
@@ -559,17 +717,11 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
                 res["newer_input"] = which
         else:
             # generado después de la entrada más reciente (sha y fecha coinciden con lo guardado)
-            voters = {}
-            for f, st in (input_states or {}).items():
-                if f not in inputs:
-                    continue
-                if f == "AUD_NOWCAST.csv":          # no vota
-                    continue
-                voters[f] = st
-            worst = worst_input_state(voters.values()) if voters else None
+            voters, worst = _worst_input_voters(inputs, input_states, input_meta=input_meta, now=now, cals=cals)
             if worst is not None:
                 res["state"] = worst
                 res["input_states"] = voters
+                _attach_inherited_late(res, voters, input_meta)
             elif common is not None and have_max >= common:
                 res["state"] = "CURRENT"
             elif common is not None:
