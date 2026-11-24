@@ -220,6 +220,80 @@ def load_freshness_outputs(root):
     return out
 
 
+def load_freshness_params(root=None):
+    path = Path(root or ROOT) / "sources/freshness_params.csv"
+    out = {}
+    if not path.is_file():
+        return out
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if row.get("rule_id"):
+                out[row["rule_id"]] = row
+    return out
+
+
+def source_clock_rule(rule, rules, params):
+    """For model=none / VERIFIED_SPARSE, use the source table rule of the same family.
+
+    The cash column of RBNZ B2 is sparse; the table itself is daily. The overdue
+    clock must follow that table (t360u), not a daily obligation on have_max.
+    """
+    rid = (rule.get("rule_id") or "").strip()
+    model = ((params or {}).get(rid) or {}).get("model")
+    if model != "none":
+        return rule
+    family = (rule.get("family") or "").strip()
+    if not family:
+        return rule
+    candidates = []
+    for r in rules or []:
+        if (r.get("rule_id") or "").strip() == rid:
+            continue
+        if (r.get("family") or "").strip() != family:
+            continue
+        if (r.get("frequency") or "").strip() != "daily":
+            continue
+        if not (r.get("pub_local") or "").strip() or not (r.get("query_groups") or "").strip():
+            continue
+        candidates.append(r)
+    if not candidates:
+        return rule
+    for r in candidates:
+        if r.get("rule_id") == "NZ_B2":
+            return r
+    return candidates[0]
+
+
+def uses_source_table_clock(rule, params, item=None):
+    rid = (rule.get("rule_id") or "").strip()
+    model = ((params or {}).get(rid) or {}).get("model")
+    if model == "none":
+        return True
+    if item is not None and item.get("state") == "VERIFIED_SPARSE":
+        return True
+    return False
+
+
+def next_source_pub_day_after(rule, cals, instant):
+    """First source-table publication day strictly after instant (anchors a missed fetch)."""
+    if instant is None or not (rule.get("pub_local") or "").strip():
+        return None
+    try:
+        start = instant.date() - timedelta(days=1)
+        end = start + timedelta(days=21)
+        days = SC.publication_days(rule, cals, start, end)
+    except (KeyError, ValueError, TypeError):
+        return None
+    for d in days:
+        try:
+            pub = SC.publication_utc(rule, cals, d)
+        except (KeyError, ValueError, TypeError):
+            continue
+        if pub > instant:
+            return d
+    return None
+
+
 def expected_resolution_utc(rule, passes, cals, pub_day, rules=None, outputs=None):
     """First scheduled query after the official publication instant (pub_local).
 
@@ -267,13 +341,22 @@ def expected_resolution_utc(rule, passes, cals, pub_day, rules=None, outputs=Non
     return cov[0]["passes"][0][0]
 
 
-def mark_unknown_overdue(items, now, rules, passes, cals, outputs=None):
-    """Flag UNKNOWN items still unresolved 24 h after expected_resolution_utc (t352u / t357u)."""
+def mark_unknown_overdue(items, now, rules, passes, cals, outputs=None, params=None):
+    """Flag UNKNOWN items still unresolved 24 h after expected_resolution_utc (t352u / t357u).
+
+    t360u: a VERIFIED_SPARSE / model=none series uses the source table clock,
+    not have_max as if the sparse column itself printed daily.
+    """
     by_file = {}
     for r in rules:
         for name in (r.get("files") or "").split(";"):
             if name:
                 by_file[name] = r
+    if params is None:
+        try:
+            params = load_freshness_params()
+        except (OSError, ValueError, csv.Error):
+            params = {}
     overdue_after = timedelta(hours=24)
     for item in items:
         if item.get("status") != "UNKNOWN":
@@ -281,16 +364,41 @@ def mark_unknown_overdue(items, now, rules, passes, cals, outputs=None):
         rule = by_file.get(item.get("file") or "")
         if not rule:
             continue
+        clock_rule = rule
         pub_day = None
-        exp = item.get("expected_obs") or item.get("have_max")
-        if exp:
-            try:
-                pub_day = date.fromisoformat(str(exp)[:10])
-            except ValueError:
-                pub_day = None
+        if uses_source_table_clock(rule, params, item):
+            clock_rule = source_clock_rule(rule, rules, params)
+            finished = None
+            raw_fin = item.get("verified_download_utc")
+            if raw_fin:
+                try:
+                    finished = datetime.fromisoformat(str(raw_fin).replace("Z", "+00:00"))
+                    if finished.tzinfo is None:
+                        finished = finished.replace(tzinfo=timezone.utc)
+                except ValueError:
+                    finished = None
+            if finished is not None:
+                # Anchor to the first table publication after the last good fetch,
+                # so the +24 h clock does not slide to the next business day.
+                pub_day = next_source_pub_day_after(clock_rule, cals, finished)
+            else:
+                # Without a fetch timestamp, keep the have_max path (t352u tests).
+                exp = item.get("expected_obs") or item.get("have_max")
+                if exp:
+                    try:
+                        pub_day = date.fromisoformat(str(exp)[:10])
+                    except ValueError:
+                        pub_day = None
+        else:
+            exp = item.get("expected_obs") or item.get("have_max")
+            if exp:
+                try:
+                    pub_day = date.fromisoformat(str(exp)[:10])
+                except ValueError:
+                    pub_day = None
         if pub_day is None:
             continue
-        resol = expected_resolution_utc(rule, passes, cals, pub_day, rules, outputs)
+        resol = expected_resolution_utc(clock_rule, passes, cals, pub_day, rules, outputs)
         if resol is None:
             continue
         item["expected_resolution_utc"] = resol.isoformat().replace("+00:00", "Z")
