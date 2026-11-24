@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-24T15:52:38Z",
+ "generated_utc": "2026-11-24T17:30:23Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-24",
   "cot": "2026-11-17",
-  "options": null,
+  "options": "2026-11-23",
   "metals": "2026-11-24",
   "s01b": "2026-11-24",
   "factor": "2026-11-24"
@@ -214,7 +214,8 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM"
+    "COT DIV LF/AM",
+    "walls PROXY"
    ],
    "nom": 0.583,
    "real": -0.917,
@@ -233,19 +234,14 @@
    "cot_state": "CROWD SHORT"
   }
  ],
- "notes": [
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
- ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 12,
+   "daily": 13,
    "weekly": 1,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 13,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 12 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:daily_update:duplicate_turn: mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1,\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:job:verify_freshness:step:private_verify_freshness: Actions verify_freshness: el paso private_verify_freshness terminó con código 1 (ver el re\n• [1º/WARNING] actions:usd_factor:duplicate_turn: mismo feed publicado dos veces en el mismo turno (usd_factor: 4 publicaciones, cabían 2, t"
+  "incidents_count": 14,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 13 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:daily_update:duplicate_turn: mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1,\n• [1º/WARNING] actions:fetch_bis_ocr:degraded: Actions fetch_bis_ocr: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk fallba\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_JP:degraded: Actions fetch_bis_policy_JP: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
  }
 }
