@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T10:03:22.655551Z",
- "status": "DEGRADED",
+ "generated_utc": "2026-11-24T12:03:55.509199Z",
+ "status": "UNVERIFIED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,29 +19,9 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": true,
- "issues": [
-  {
-   "file": "NZD_CASH_ON.csv",
-   "state": "UNKNOWN_SCHEDULE",
-   "have_max": "2026-11-20",
-   "expected_obs": null,
-   "calendar": "NZ",
-   "basis": "PROVISIONAL",
-   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena. UNKNOWN más de 24 h tras la hora prevista de resolución (2026-11-20T18:30:00Z): cuenta como incidencia.",
-   "cause": null,
-   "flags": [
-    "UNKNOWN_OVERDUE"
-   ],
-   "status": "UNKNOWN",
-   "age_business_days": 2,
-   "publication_frequency": "daily",
-   "slow_fallback": false,
-   "verified_download_utc": "2026-11-23T20:02:55Z",
-   "expected_resolution_utc": "2026-11-20T18:30:00Z"
-  }
- ],
- "unknown_count": 1,
+ "needs_repair": false,
+ "issues": [],
+ "unknown_count": 2,
  "feeds": [
   {
    "file": "SOFR.csv",
@@ -78,15 +58,18 @@
   },
   {
    "file": "SONIA.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-19",
+   "expected_obs": "2026-11-20",
    "calendar": "GB",
    "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T11:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T11:00:00Z",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -330,85 +313,109 @@
   },
   {
    "file": "EUR_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-20",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-25T12:00:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -995,17 +1002,15 @@
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena. UNKNOWN más de 24 h tras la hora prevista de resolución (2026-11-20T18:30:00Z): cuenta como incidencia.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena.",
    "cause": null,
-   "flags": [
-    "UNKNOWN_OVERDUE"
-   ],
+   "flags": [],
    "status": "UNKNOWN",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false,
    "verified_download_utc": "2026-11-23T20:02:55Z",
-   "expected_resolution_utc": "2026-11-20T18:30:00Z"
+   "expected_resolution_utc": "2026-11-24T18:30:00Z"
   },
   {
    "file": "NZD_IIB_2025.csv",
@@ -2367,7 +2372,7 @@
   },
   {
    "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "TARGET",
@@ -2375,7 +2380,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },

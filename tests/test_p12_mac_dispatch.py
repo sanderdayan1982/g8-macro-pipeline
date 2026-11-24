@@ -84,14 +84,16 @@ class Schedule(Base):
         self.assertEqual([c[1].rsplit("/", 2)[-2] for c in f.calls], ["intraday_fetch.yml"])
         rc, f = self.run_at("2026-10-06T16:30", Fake())               # 13:17 + 3 h 13 min → fuera; 15:30 y 15:47 sí
         ids = sorted(c[1].rsplit("/", 2)[-2] for c in f.calls)
-        self.assertEqual(ids, ["cme_options.yml", "intraday_fetch.yml", "usd_factor.yml"])  # orden expresa de Sander 19-nov (t271u): turno cme_options 13:30 dentro de la ventana
+        # orden Sander 24-nov: migrado al VPS, sin cron ni turno en GitHub (t354u/t357u: usd_factor sale con sus 2 turnos).
+        self.assertEqual(ids, ["cme_options.yml", "intraday_fetch.yml"])  # orden expresa de Sander 19-nov (t271u): turno cme_options 13:30 dentro de la ventana
         self.assertEqual(f.calls[0][2].get("inputs"), {"group": "US"})
 
     def test_D2_weekday(self):
         rc, f = self.run_at("2026-10-10T13:20")                       # sábado: el intradía no corre
         self.assertEqual(f.calls, [])
-        rc, f = self.run_at("2026-10-10T07:05", Fake())               # sábado 07:00 → metales
-        self.assertEqual([c[1].rsplit("/", 2)[-2] for c in f.calls], ["metals_update.yml", "votes_ingest.yml"])  # orden expresa de Sander 14-nov-2026 (t166u): ventana de recuperación sábado acepta votes_ingest.yml
+        rc, f = self.run_at("2026-10-10T07:05", Fake())               # sábado 07:00 → (metales ya no: VPS)
+        # orden Sander 24-nov: migrado al VPS, sin cron ni turno en GitHub (t354u: metals sale del horario).
+        self.assertEqual([c[1].rsplit("/", 2)[-2] for c in f.calls], ["votes_ingest.yml"])  # orden expresa de Sander 14-nov-2026 (t166u): ventana de recuperación sábado acepta votes_ingest.yml
         rc, f = self.run_at("2026-10-05T00:30", Fake())               # lunes 00:23 UTC → Asia
         self.assertEqual(f.calls[0][2], {"ref": "main", "inputs": {"group": "ASIA"}})
 
