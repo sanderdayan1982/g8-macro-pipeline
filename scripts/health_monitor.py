@@ -10,7 +10,7 @@ import csv
 import html
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import freshness_report as F
@@ -194,8 +194,13 @@ def load_vps_status(root):
 
 def is_counted_issue(item):
     """A freshness issue shown as an incidencia. Excluded/not-monitored feeds do not count.
-    PROHIBITED (retired annual file that reappeared) remains an issue even if frequency is excluded."""
+    PROHIBITED (retired annual file that reappeared) remains an issue even if frequency is excluded.
+    UNKNOWN is not an incidencia, except UNKNOWN_OVERDUE (t352u: still UNKNOWN past
+    expected resolution + 24 h)."""
     status = item.get("status")
+    flags = item.get("flags") or []
+    if "UNKNOWN_OVERDUE" in flags and status == "UNKNOWN":
+        return True
     if item.get("state") == "PROHIBITED":
         return status in ("LATE", "ERROR", "MISSING")
     if status == "EXCLUDED" or (
@@ -203,6 +208,101 @@ def is_counted_issue(item):
     ):
         return False
     return status in ("LATE", "ERROR", "MISSING")
+
+
+def load_freshness_outputs(root):
+    path = Path(root) / "sources/freshness_outputs.csv"
+    out = {}
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if row.get("file"):
+                out[row["file"]] = row
+    return out
+
+
+def expected_resolution_utc(rule, passes, cals, pub_day, rules=None, outputs=None):
+    """First scheduled query after the official publication instant (pub_local).
+
+    That instant is the 'hora prevista de resolución': the first query_groups pass
+    after pub_local on the publication day. The +24 h clock starts there.
+    Rules without pub_local (or without a query pass after publication) have no clock.
+
+    t357u: for a derived series the clock is the latest expected_resolution_utc
+    of its inputs (freshness_outputs.inputs), so e.g. ES_DE_10Y_SPREAD can
+    become UNKNOWN_OVERDUE.
+    """
+    if (rule.get("frequency") or "").strip() == "derived" and rules is not None and outputs is not None:
+        by_file = {}
+        for r in rules:
+            for name in (r.get("files") or "").split(";"):
+                name = name.strip()
+                if name:
+                    by_file[name] = r
+        clocks = []
+        rid = rule.get("rule_id")
+        for out_name in (rule.get("files") or "").split(";"):
+            out_name = out_name.strip()
+            if not out_name:
+                continue
+            meta = outputs.get(out_name) or {}
+            for inp in (meta.get("inputs") or "").split(";"):
+                inp = inp.strip()
+                if not inp:
+                    continue
+                irule = by_file.get(inp)
+                if not irule or irule.get("rule_id") == rid:
+                    continue
+                clock = expected_resolution_utc(irule, passes, cals, pub_day, rules, outputs)
+                if clock is not None:
+                    clocks.append(clock)
+        return max(clocks) if clocks else None
+    if not (rule.get("pub_local") or "").strip() or not (rule.get("query_groups") or "").strip():
+        return None
+    try:
+        cov = SC.coverage(rule, passes, cals, pub_day, pub_day, horizon_h=24)
+    except (KeyError, ValueError, TypeError):
+        return None
+    if not cov or not cov[0].get("passes"):
+        return None
+    return cov[0]["passes"][0][0]
+
+
+def mark_unknown_overdue(items, now, rules, passes, cals, outputs=None):
+    """Flag UNKNOWN items still unresolved 24 h after expected_resolution_utc (t352u / t357u)."""
+    by_file = {}
+    for r in rules:
+        for name in (r.get("files") or "").split(";"):
+            if name:
+                by_file[name] = r
+    overdue_after = timedelta(hours=24)
+    for item in items:
+        if item.get("status") != "UNKNOWN":
+            continue
+        rule = by_file.get(item.get("file") or "")
+        if not rule:
+            continue
+        pub_day = None
+        exp = item.get("expected_obs") or item.get("have_max")
+        if exp:
+            try:
+                pub_day = date.fromisoformat(str(exp)[:10])
+            except ValueError:
+                pub_day = None
+        if pub_day is None:
+            continue
+        resol = expected_resolution_utc(rule, passes, cals, pub_day, rules, outputs)
+        if resol is None:
+            continue
+        item["expected_resolution_utc"] = resol.isoformat().replace("+00:00", "Z")
+        if now >= resol + overdue_after:
+            flags = list(item.get("flags") or [])
+            if "UNKNOWN_OVERDUE" not in flags:
+                flags.append("UNKNOWN_OVERDUE")
+            item["flags"] = flags
+            why = item.get("reason") or ""
+            suffix = "UNKNOWN más de 24 h tras la hora prevista de resolución (%s): cuenta como incidencia." % item["expected_resolution_utc"]
+            if suffix not in why:
+                item["reason"] = (why + " " + suffix).strip()
 
 
 
@@ -345,8 +445,19 @@ def build(root, now, report=None, require_vps_status=False):
     else:
         vps_issues = vps_unit_items(raw_status, now, prev_health.get("generated_utc"), require=require_vps_status)
     items.extend(vps_issues)
+    # t352u: incidencias = issues[]; UNKNOWN aparte, salvo resolución+24 h.
+    try:
+        with (root / "sources/freshness_rules.csv").open(encoding="utf-8") as fh:
+            overdue_rules = list(csv.DictReader(fh))
+        with (root / "sources/schedules.csv").open(encoding="utf-8") as fh:
+            overdue_passes = list(csv.DictReader(fh))
+        overdue_cals = SC.load_calendars(str(root))
+        overdue_outputs = load_freshness_outputs(root)
+        mark_unknown_overdue(items, now, overdue_rules, overdue_passes, overdue_cals, overdue_outputs)
+    except (OSError, ValueError, KeyError, TypeError, csv.Error):
+        pass
     issues = [x for x in items if is_counted_issue(x)]
-    unknown = [x for x in items if x["status"] == "UNKNOWN"]
+    unknown = [x for x in items if x["status"] == "UNKNOWN" and "UNKNOWN_OVERDUE" not in (x.get("flags") or [])]
     return {"schema": "G8_HEALTH/1", "generated_utc": now.isoformat().replace("+00:00", "Z"),
             "status": "DEGRADED" if issues else "UNVERIFIED" if unknown else "CURRENT",
             "slow_fallbacks": [x["file"] for x in items if x.get("slow_fallback")],
