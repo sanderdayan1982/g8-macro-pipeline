@@ -1,7 +1,7 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T00:49:45.727894Z",
- "status": "UNVERIFIED",
+ "generated_utc": "2026-11-24T02:39:21.597786Z",
+ "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
   "CHF_SPOT_2Y.csv",
@@ -19,8 +19,28 @@
   "CHF_CURVE_MONTH_END_CONTROL.csv"
  ],
  "source_priority": "daily > weekly > monthly as last resort; quarterly and slower prohibited",
- "needs_repair": false,
- "issues": [],
+ "needs_repair": true,
+ "issues": [
+  {
+   "file": "NZD_CASH_ON.csv",
+   "state": "UNKNOWN_SCHEDULE",
+   "have_max": "2026-11-20",
+   "expected_obs": null,
+   "calendar": "NZ",
+   "basis": "PROVISIONAL",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena. UNKNOWN más de 24 h tras la hora prevista de resolución (2026-11-20T18:30:00Z): cuenta como incidencia.",
+   "cause": null,
+   "flags": [
+    "UNKNOWN_OVERDUE"
+   ],
+   "status": "UNKNOWN",
+   "age_business_days": 2,
+   "publication_frequency": "daily",
+   "slow_fallback": false,
+   "verified_download_utc": "2026-11-23T20:02:55Z",
+   "expected_resolution_utc": "2026-11-20T18:30:00Z"
+  }
+ ],
  "unknown_count": 1,
  "feeds": [
   {
@@ -72,7 +92,7 @@
    "file": "TONA.csv",
    "state": "CURRENT",
    "have_max": "2026-11-19",
-   "expected_obs": "2026-11-18",
+   "expected_obs": "2026-11-19",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -132,7 +152,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-23",
+   "have_max": "2026-11-24",
    "expected_obs": "2026-11-20",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -140,7 +160,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 1,
+   "age_business_days": 0,
    "publication_frequency": "event+daily",
    "slow_fallback": false
   },
@@ -216,7 +236,7 @@
   {
    "file": "AU_POLICY.csv",
    "state": "VERIFIED_POLICY",
-   "have_max": "2026-11-20",
+   "have_max": "2026-11-23",
    "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
@@ -224,7 +244,7 @@
    "cause": null,
    "flags": [],
    "status": "CURRENT",
-   "age_business_days": 2,
+   "age_business_days": 1,
    "publication_frequency": "event",
    "slow_fallback": false,
    "evidence_source": "https://www.rba.gov.au/media-releases/2026/mr-26-30.html",
@@ -923,19 +943,22 @@
   },
   {
    "file": "NZD_CASH_ON.csv",
-   "state": "VERIFIED_SPARSE",
+   "state": "UNKNOWN_SCHEDULE",
    "have_max": "2026-11-20",
    "expected_obs": null,
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": "Última observación disponible en B2 diario, contrastada con descarga y publicación. Los huecos de cash del proveedor se conservan; no se inventan valores diarios.",
+   "reason": "Falta comprobar la última publicación B2 o su recepción íntegra. Una observación cash dispersa no se rellena. UNKNOWN más de 24 h tras la hora prevista de resolución (2026-11-20T18:30:00Z): cuenta como incidencia.",
    "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "flags": [
+    "UNKNOWN_OVERDUE"
+   ],
+   "status": "UNKNOWN",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false,
-   "verified_download_utc": "2026-11-23T20:02:55Z"
+   "verified_download_utc": "2026-11-23T20:02:55Z",
+   "expected_resolution_utc": "2026-11-20T18:30:00Z"
   },
   {
    "file": "NZD_IIB_2025.csv",
@@ -1327,7 +1350,7 @@
    "file": "S01B.json",
    "state": "NOT_MONITORED",
    "have_max": "2026-11-23",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
@@ -2358,7 +2381,7 @@
    "state": "CURRENT",
    "status": "CURRENT",
    "have_max": "2026-11-23",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre",
    "flags": []
   },
@@ -2366,7 +2389,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-24T00:49:45Z",
+   "have_max": "2026-11-24T02:39:20Z",
    "flags": []
   },
   {
