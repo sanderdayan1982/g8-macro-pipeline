@@ -1,14 +1,14 @@
 {
- "generated_utc": "2026-11-24T13:41:42Z",
+ "generated_utc": "2026-11-24T15:30:27Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-24",
   "cot": "2026-11-17",
-  "options": null,
+  "options": "2026-11-23",
   "metals": "2026-11-24",
-  "s01b": "2026-11-23",
-  "factor": "2026-11-23"
+  "s01b": "2026-11-24",
+  "factor": "2026-11-24"
  },
  "gates": {
   "pos_twin": {
@@ -46,11 +46,11 @@
   },
   {
    "sec": "§01-b CTF",
-   "text": "CTF ON: ninguna · ΔTP22 USD -21 EUR -5 GBP -6 JPY -9 AUD -10 NZD -31 CAD -9 CHF +3"
+   "text": "CTF ON: ninguna (PROVISIONAL) · ΔTP22 USD -9 EUR -6 GBP -9 JPY -4 AUD -5 NZD -26 CAD -12 CHF +5"
   },
   {
    "sec": "§07 Factor USD",
-   "text": "f USD 21 s. +2.95 % (z +1.78) · dispersión COMUN UN NOMBRE AUD p81.0 · S 62 %"
+   "text": "f USD 21 s. +2.54 % (z +1.52) · dispersión COMUN UN NOMBRE AUD p83.7 · S 62 %"
   }
  ],
  "dqm": [],
@@ -214,7 +214,8 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM"
+    "COT DIV LF/AM",
+    "walls PROXY"
    ],
    "nom": 0.583,
    "real": -0.917,
@@ -233,19 +234,14 @@
    "cot_state": "CROWD SHORT"
   }
  ],
- "notes": [
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
- ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 10,
+   "daily": 11,
    "weekly": 1,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 11,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 10 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:job:verify_freshness:step:private_verify_freshness: Actions verify_freshness: el paso private_verify_freshness terminó con código 1 (ver el re\n• [1º/WARNING] actions:usd_factor:duplicate_turn: mismo feed publicado dos veces en el mismo turno (usd_factor: 4 publicaciones, cabían 2, t\n• [1º/WARNING] proxy:active:NZD_CASH_ON: G8 · NZD_CASH_ON: PROXY activo = NZD_OCR del 2026-11-13 al 2026-11-23 (fuente/fecha visibl"
+  "incidents_count": 12,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 11 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:job:verify_freshness:step:private_verify_freshness: Actions verify_freshness: el paso private_verify_freshness terminó con código 1 (ver el re\n• [1º/WARNING] actions:usd_factor:duplicate_turn: mismo feed publicado dos veces en el mismo turno (usd_factor: 4 publicaciones, cabían 2, t\n• [1º/WARNING] proxy:active:NZD_CASH_ON: G8 · NZD_CASH_ON: PROXY activo = NZD_OCR del 2026-11-13 al 2026-11-23 (fuente/fecha visibl"
  }
 }
