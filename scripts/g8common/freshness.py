@@ -110,6 +110,25 @@ def valued_obs_dates_from_bytes(data, date_key=""):
     return out
 
 
+def complete_obs_dates_from_bytes(data, date_key=""):
+    """Fechas cuya fila tiene todos los campos de valor no vacíos. Las filas parciales no cuentan.
+    orden Sander 24-nov t360u."""
+    if data is None:
+        return None
+    if date_key:
+        return obs_dates_from_bytes(data, date_key)
+    out = set()
+    for line in data.decode("utf-8", errors="ignore").splitlines():
+        if not line or line.lstrip().startswith("#"):
+            continue
+        parts = line.split(",")
+        d = _parse_date(parts[0] if parts else "")
+        vals = parts[1:]
+        if d and vals and all(p.strip() for p in vals):
+            out.add(d)
+    return out
+
+
 def last_common_session(obs_by_file):
     """Última fecha presente (con valor) en todas las entradas; None si falta alguna o no hay intersección."""
     if not obs_by_file:
@@ -336,7 +355,7 @@ def evaluate(output, rule, param, cals, now, have_dates, input_max_at=None, evid
     if model == "derived":
         return _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at,
                                  provenance=provenance, input_states=input_states, input_shas=input_shas,
-                                 input_dates=input_dates, input_obs=input_obs)
+                                 input_dates=input_dates, input_obs=input_obs, have_dates=have_dates)
 
     pubs = publications(rule, param, cal, tz, cals, now)
     exigible = [(d, due, ex) for d, due, ex in pubs if ex <= now]
@@ -492,17 +511,74 @@ def _input_is_newer(provenance, inputs, input_shas, input_dates, input_max_at, n
     return False, None, None
 
 
+def _derived_dated_max(have_max, have_dates, input_obs):
+    """Última fila con todas las entradas y el valor completos (t360u)."""
+    dates = set(have_dates) if have_dates else ({have_max} if have_max else set())
+    if input_obs:
+        common = last_common_session(input_obs)
+        if common is not None:
+            inter = set.intersection(*input_obs.values())
+            dates = (dates & inter) if dates else inter
+    return max(dates) if dates else have_max
+
+
+def _apply_derived_date(res, have_max, have_dates, input_obs):
+    dated = _derived_dated_max(have_max, have_dates, input_obs)
+    if dated is not None:
+        have_max = dated
+        res["have_max"] = dated.isoformat()
+    common = last_common_session(input_obs) if input_obs is not None else None
+    if common is not None:
+        res["last_common_session"] = common.isoformat()
+        res.setdefault("expected_obs", common.isoformat())
+    return have_max
+
+
+def _worst_input_voters(inputs, input_states):
+    voters = {}
+    for f, st in (input_states or {}).items():
+        if f not in inputs or f == "AUD_NOWCAST.csv":
+            continue
+        voters[f] = st
+    worst = worst_input_state(voters.values()) if voters else None
+    return voters, worst
+
+
+def _finish_derived_state(res, output, inputs, input_states, behind=False, behind_missing=None):
+    """Estado = peor de las entradas; BEHIND_INPUTS si la salida no cubre la sesión común (t360u)."""
+    if output.get("rule_id") == "AUD_NOWCAST":
+        return res
+    voters, worst = _worst_input_voters(inputs, input_states)
+    cands = []
+    if behind:
+        cands.append("BEHIND_INPUTS")
+    if worst is not None:
+        cands.append(worst)
+        res["input_states"] = voters
+    if cands:
+        res["state"] = worst_input_state(cands)
+        if res["state"] == "BEHIND_INPUTS" and behind_missing:
+            res["missing"] = behind_missing
+    return res
+
+
 def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence, written_at=None,
-                      provenance=None, input_states=None, input_shas=None, input_dates=None, input_obs=None):
+                      provenance=None, input_states=None, input_shas=None, input_dates=None, input_obs=None,
+                      have_dates=None):
     inputs = [x for x in (output.get("inputs") or "").split(";") if x]
     if output.get("external_inputs"):
         res["flags"].append("EXTERNAL_INPUTS_UNVERSIONED")
     # AUD_NOWCAST sigue EST y no vota: se evalúa por el camino legado (t347u).
+    apply_t360u = output.get("rule_id") != "AUD_NOWCAST"
+    if apply_t360u:
+        have_max = _apply_derived_date(res, have_max, have_dates, input_obs)
     use_legacy = (output.get("rule_id") == "AUD_NOWCAST") or not _provenance_complete(provenance, inputs)
     if use_legacy:
         res["flags"].append("INPUT_VERSION_UNKNOWN")         # no guarda procedencia (o no vota)
         if not inputs or input_max_at is None:
             res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin entradas del repo evaluables")
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states)
             return res
         g = timedelta(minutes=int(param["g_min"])) if (param.get("g_min") or "").strip() else None
         if g is None:
@@ -512,6 +588,8 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
             known = [d for d in cur if d]
             res.update(state="UNKNOWN_SCHEDULE", reason="derivado sin hora exigible documentada",
                        covers_inputs=bool(known) and have_max >= min(known))
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states)
             return res
         drivers = [x for x in (output.get("drivers") or "").split(";") if x] or inputs
         fin = last_final(now)
@@ -524,6 +602,8 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
         known = [d for d in at_ref if d]
         if not known:
             res.update(state="UNKNOWN_SCHEDULE", reason="fechas de las entradas desconocidas")
+            if apply_t360u:
+                _finish_derived_state(res, output, inputs, input_states)
             return res
         need = min(known)
         res["expected_obs"] = need.isoformat()
@@ -532,6 +612,9 @@ def _evaluate_derived(res, output, param, now, have_max, input_max_at, evidence,
         else:
             res["state"] = "BEHIND_INPUTS"
             res["missing"] = [need.isoformat()]
+        if apply_t360u:
+            _finish_derived_state(res, output, inputs, input_states,
+                                  behind=have_max < need, behind_missing=[need.isoformat()])
     else:
         # procedencia completa: peor estado y última sesión común SOLO si se generó después
         # de su entrada más reciente (t347u, orden expresa Sander 23-nov: derivadas con procedencia).

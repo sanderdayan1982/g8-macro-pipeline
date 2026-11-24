@@ -337,10 +337,18 @@ class GitSource(TreeSource):
 
 
 def _have_dates(src, o, at):
+    # t360u: en un derivado, solo cuentan las filas con todos los campos de valor completos.
+    date_key = o.get("date_key", "")
+    derived = bool((o.get("inputs") or "").strip())
     if isinstance(src, GitSource):
-        m = src.max_at(o["file"], at, o.get("date_key", ""))
-        return {m} if m else (set() if src.commit_at(o["file"], at) else None)
-    return FR.obs_dates_from_bytes(src.read(o["file"]), o.get("date_key", ""))
+        data = src.read_at(o["file"], at)
+        if data is None:
+            return None if src.commit_at(o["file"], at) is None else set()
+    else:
+        data = src.read(o["file"])
+    if derived and not date_key:
+        return FR.complete_obs_dates_from_bytes(data)
+    return FR.obs_dates_from_bytes(data, date_key)
 
 
 def _src_provenance(src, f):
