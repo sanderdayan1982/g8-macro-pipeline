@@ -184,6 +184,62 @@ def _write(path, text):
     os.replace(tmp, path)
 
 
+def _write_if_changed(path, text):
+    """Write only if content changed (t346u: no republicar el mismo feed)."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            if fh.read() == text:
+                return False
+    except OSError:
+        pass
+    _write(path, text)
+    return True
+
+
+def load_dv(path):
+    """Load a Date,Value[,Source] CSV written by render_dv. Keys are ISO date strings."""
+    series = {}
+    with open(path, encoding="utf-8") as fh:
+        rows = list(csv.reader(fh))
+    if not rows:
+        return series
+    for r in rows[1:]:
+        if not r or not (r[0] or "").strip():
+            continue
+        day = r[0].strip()
+        if len(day) < 10 or not day[0].isdigit():
+            continue
+        if len(r) < 2 or not (r[1] or "").strip():
+            continue
+        try:
+            series[day[:10]] = float(r[1])
+        except ValueError:
+            continue
+    return series
+
+
+def es_already_has_expected(data_dir, now=None, repo_root=None):
+    """True if ES already has the observation freshness expects at `now` (t372u)."""
+    from datetime import datetime, timezone
+    from g8common import freshness as FR
+
+    root = repo_root or os.path.abspath(os.path.join(data_dir, os.pardir))
+    rules, params, outputs, cals = FR.load_config(root)
+    out = next(o for o in outputs if o["file"] == ES_FILE)
+    path = os.path.join(data_dir, ES_FILE)
+    have = set()
+    if os.path.isfile(path):
+        with open(path, "rb") as fh:
+            have = FR.valued_obs_dates_from_bytes(fh.read()) or set()
+    now = now or datetime.now(timezone.utc)
+    ev = FR.evaluate(out, rules[out["rule_id"]], params[out["rule_id"]], cals, now, have)
+    exp = ev.get("expected_obs")
+    have_max = ev.get("have_max")
+    if not exp or not have_max:
+        return False, ev
+    return have_max >= exp, ev
+
+
 def http_get(url, opener=None):
     if opener:
         return opener(url)
@@ -193,20 +249,42 @@ def http_get(url, opener=None):
         return r.read()
 
 
-def run(data_dir="data", opener=None):
-    assert_not_wtontherun(DE_URL)
-    de_raw = http_get(DE_URL, opener=opener)
-    es_raw = http_get(ES_URL, opener=opener)
-    stand, de = parse_de_csv(de_raw)
-    es, es_src = parse_es_csv(es_raw)
-    if not de:
-        raise RuntimeError("BBSIS R10XX ZAR: sin observaciones")
-    if not es:
-        raise RuntimeError("BdE D_G0B1F0ZP: sin observaciones")
-    _write(os.path.join(data_dir, DE_FILE), render_dv(de, "BBSIS.R10XX.ZAR"))
-    _write(os.path.join(data_dir, ES_FILE), render_dv(es, "BdE.%s" % ES_CODE))
+def run(data_dir="data", opener=None, fetch_de=True, fetch_es=True):
+    """Fetch DE and/or ES and refresh the spread.
+
+    fetch_de/fetch_es default True (comportamiento previo). Si una pata no se
+    pide, se lee del disco. Un fichero solo se reescribe si el contenido cambia
+    (t346u / t372u: la pasada de las 14:00 no republica ES si ya está al día).
+    """
+    stand = None
+    es_src = None
+    de_path = os.path.join(data_dir, DE_FILE)
+    es_path = os.path.join(data_dir, ES_FILE)
+    if fetch_de:
+        assert_not_wtontherun(DE_URL)
+        stand, de = parse_de_csv(http_get(DE_URL, opener=opener))
+        if not de:
+            raise RuntimeError("BBSIS R10XX ZAR: sin observaciones")
+    else:
+        if not os.path.isfile(de_path):
+            raise RuntimeError("falta %s para recomponer el spread" % DE_FILE)
+        de = load_dv(de_path)
+        if not de:
+            raise RuntimeError("BBSIS R10XX ZAR: sin observaciones en disco")
+    if fetch_es:
+        es, es_src = parse_es_csv(http_get(ES_URL, opener=opener))
+        if not es:
+            raise RuntimeError("BdE D_G0B1F0ZP: sin observaciones")
+    else:
+        if not os.path.isfile(es_path):
+            raise RuntimeError("falta %s para recomponer el spread" % ES_FILE)
+        es = load_dv(es_path)
+        if not es:
+            raise RuntimeError("BdE D_G0B1F0ZP: sin observaciones en disco")
+    de_changed = _write_if_changed(de_path, render_dv(de, "BBSIS.R10XX.ZAR")) if fetch_de else False
+    es_changed = _write_if_changed(es_path, render_dv(es, "BdE.%s" % ES_CODE)) if fetch_es else False
     spread = same_session_spread(es, de)
-    _write(os.path.join(data_dir, SPREAD_FILE), render_spread(spread))
+    spread_changed = _write_if_changed(os.path.join(data_dir, SPREAD_FILE), render_spread(spread))
     # t347u: procedencia del derivado; el cálculo del spread no cambia.
     _scripts = os.path.dirname(os.path.abspath(__file__))
     if _scripts not in sys.path:
@@ -224,6 +302,11 @@ def run(data_dir="data", opener=None):
         "es_source": es_src,
         "spread_same_session": both,
         "spread_blank": blank,
+        "fetch_de": fetch_de,
+        "fetch_es": fetch_es,
+        "de_changed": de_changed,
+        "es_changed": es_changed,
+        "spread_changed": spread_changed,
     }
 
 
