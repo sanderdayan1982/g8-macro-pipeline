@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-24T22:45:28.325793Z",
+ "generated_utc": "2026-11-24T23:01:04.315125Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -110,7 +110,7 @@
   },
   {
    "file": "AONIA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "AU",
@@ -118,7 +118,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -143,7 +143,7 @@
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -613,7 +613,7 @@
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "AU",
@@ -621,13 +621,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "AU",
@@ -635,13 +635,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "AU",
@@ -649,7 +649,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -730,15 +730,15 @@
   },
   {
    "file": "RY_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1250,7 +1250,7 @@
   },
   {
    "file": "ACM_G8_AUD.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "",
@@ -1261,7 +1261,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1729,18 +1729,17 @@
   {
    "file": "OPTIONS_SURFACE.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-11-23",
+   "have_max": null,
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Dentro del presupuesto; calendario exacto de publicación sin validar",
+   "reason": "Sin observación legible para un feed del registro",
    "cause": null,
    "flags": [],
    "status": "EXCLUDED",
-   "age_business_days": 1,
    "publication_frequency": "excluded",
    "slow_fallback": false,
-   "note": "Inconsistencia en opciones: Incomplete canonical session"
+   "note": "Inconsistencia en opciones: 'latest_session'"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -2375,7 +2374,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-24T22:45:27Z",
+   "have_max": "2026-11-24T23:01:03Z",
    "flags": []
   },
   {

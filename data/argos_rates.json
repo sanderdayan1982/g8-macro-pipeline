@@ -1,9 +1,9 @@
 {
  "schema": "argos_rates/1",
- "as_of": "2026-11-23",
- "generated_at": "2026-11-24T21:35:31Z",
+ "as_of": "2026-11-24",
+ "generated_at": "2026-11-24T23:01:05Z",
  "clock": "UTC",
- "s01b_as_of": "UNAVAILABLE",
+ "s01b_as_of": "2026-11-24",
  "currencies": {
   "USD": {
    "date": "2026-11-23",
@@ -42,8 +42,21 @@
     "breakeven_10y": -24.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 1,
+    "d_tp": -10,
+    "d_fit": -9,
+    "resid": 1,
+    "d_2y": -6,
+    "d_be": -21,
+    "d_fx": "+2.71 %",
+    "theta": 20,
+    "ctf": "OFF",
+    "persist": 41,
+    "quality": "OK",
+    "acm_asof": "2026-11-23"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -54,12 +67,12 @@
    "breakeven_10y": 2.13
   },
   "EUR": {
-   "date": "2026-11-23",
+   "date": "2026-11-24",
    "estimate": false,
    "panel_deltas_bp": {
     "nominal_10y": {
      "1W": -8,
-     "1M": -2
+     "1M": -10
     },
     "term_premium": {
      "1W": -6,
@@ -70,44 +83,57 @@
      "1M": 7
     },
     "real_10y": {
-     "1W": 3,
-     "1M": 23
+     "1W": 5,
+     "1M": 21
     },
     "breakeven_10y": {
-     "1W": -11,
-     "1M": -25
+     "1W": -14,
+     "1M": -31
     }
    },
    "level_change_1d": {
-    "nominal_10y": -1.66,
-    "real_10y": 1.1,
-    "breakeven_10y": -2.76,
+    "nominal_10y": -4.05,
+    "real_10y": 0.78,
+    "breakeven_10y": -4.84,
     "source": "computed"
    },
    "level_change_22d": {
-    "nominal_10y": -7.33,
-    "real_10y": 19.78,
-    "breakeven_10y": -27.1,
+    "nominal_10y": -5.7,
+    "real_10y": 23.9,
+    "breakeven_10y": -29.61,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 7,
+    "d_tp": -12,
+    "d_fit": -6,
+    "resid": 0,
+    "d_2y": 4,
+    "d_be": -30,
+    "d_fx": "-2.08 %",
+    "theta": 21,
+    "ctf": "OFF",
+    "persist": 41,
+    "quality": "OK",
+    "acm_asof": "2026-11-23"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
-   "nominal_10y": 3.31,
+   "nominal_10y": 3.27,
    "term_premium": 1.04,
    "rny": 2.23,
-   "real_10y": 1.33,
-   "breakeven_10y": 1.98
+   "real_10y": 1.34,
+   "breakeven_10y": 1.94
   },
   "JPY": {
-   "date": "2026-11-20",
+   "date": "2026-11-24",
    "estimate": false,
    "panel_deltas_bp": {
     "nominal_10y": {
-     "1W": 3,
-     "1M": -6
+     "1W": -6,
+     "1M": -9
     },
     "term_premium": {
      "1W": -8,
@@ -118,36 +144,49 @@
      "1M": 7
     },
     "real_10y": {
-     "1W": 12,
-     "1M": 22
+     "1W": 14,
+     "1M": 21
     },
     "breakeven_10y": {
-     "1W": -8,
-     "1M": -27
+     "1W": -20,
+     "1M": -30
     }
    },
    "level_change_1d": {
-    "nominal_10y": -4.63,
-    "real_10y": -2.26,
-    "breakeven_10y": -2.36,
+    "nominal_10y": -3.26,
+    "real_10y": 0.69,
+    "breakeven_10y": -3.96,
     "source": "computed"
    },
    "level_change_22d": {
-    "nominal_10y": -6.55,
-    "real_10y": 25.05,
-    "breakeven_10y": -31.59,
+    "nominal_10y": -8.97,
+    "real_10y": 22.38,
+    "breakeven_10y": -31.35,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 4,
+    "d_tp": -4,
+    "d_fit": 0,
+    "resid": -8,
+    "d_2y": -5,
+    "d_be": -28,
+    "d_fx": "-1.44 %",
+    "theta": 14,
+    "ctf": "OFF",
+    "persist": 31,
+    "quality": "OK",
+    "acm_asof": "2026-11-20"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
-   "nominal_10y": 2.87,
+   "nominal_10y": 2.84,
    "term_premium": 1.83,
    "rny": 1.01,
-   "real_10y": 0.97,
-   "breakeven_10y": 1.9
+   "real_10y": 0.98,
+   "breakeven_10y": 1.86
   },
   "GBP": {
    "date": "2026-11-23",
@@ -186,8 +225,21 @@
     "breakeven_10y": -26.35,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": -1,
+    "d_tp": -15,
+    "d_fit": -15,
+    "resid": 0,
+    "d_2y": -3,
+    "d_be": -27,
+    "d_fx": "-2.04 %",
+    "theta": 24,
+    "ctf": "OFF",
+    "persist": 41,
+    "quality": "OK",
+    "acm_asof": "2026-11-23"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -234,8 +286,21 @@
     "breakeven_10y": -17.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": -1,
+    "d_tp": -14,
+    "d_fit": -15,
+    "resid": 6,
+    "d_2y": -12,
+    "d_be": -14,
+    "d_fx": "-2.34 %",
+    "theta": 19,
+    "ctf": "OFF",
+    "persist": 41,
+    "quality": "OK",
+    "acm_asof": "2026-11-23"
+   },
+   "dominant_driver": "BE_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -282,8 +347,26 @@
     "breakeven_10y": -11.27,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": -4,
+    "d_tp": -5,
+    "d_fit": -9,
+    "resid": -14,
+    "d_2y": -19,
+    "d_be": -9,
+    "d_fx": "-5.58 %",
+    "theta": 19,
+    "ctf": "OFF",
+    "persist": 31,
+    "quality": "CTX_EST ACM_FFILL",
+    "acm_asof": "2026-11-23 · curva 2026-11-18",
+    "estimate_fields": [
+     "resid",
+     "d_2y",
+     "d_be"
+    ]
+   },
+   "dominant_driver": "REAL_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -330,8 +413,21 @@
     "breakeven_10y": -3.79,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
-   "dominant_driver": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 4,
+    "d_tp": -28,
+    "d_fit": -24,
+    "resid": 6,
+    "d_2y": -7,
+    "d_be": -6,
+    "d_fx": "-3.87 %",
+    "theta": 24,
+    "ctf": "OFF",
+    "persist": 31,
+    "quality": "SHORT",
+    "acm_asof": "2026-11-23"
+   },
+   "dominant_driver": "REAL_LED",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
@@ -342,20 +438,18 @@
    "breakeven_10y": 2.19
   },
   "CHF": {
-   "date": "2026-11-23",
+   "date": "2026-11-24",
    "estimate": false,
    "panel_deltas_bp": {
     "nominal_10y": {
-     "1W": -1,
-     "1M": 9
+     "1M": 4
     },
     "term_premium": "UNAVAILABLE",
     "rny": {
      "1M": 5
     },
     "real_10y": {
-     "1W": -1,
-     "1M": -41
+     "1M": -46
     },
     "breakeven_10y": {
      "1M": 50,
@@ -363,26 +457,39 @@
     }
    },
    "level_change_1d": {
-    "nominal_10y": 2.8,
-    "real_10y": 2.8,
+    "nominal_10y": -2.0,
+    "real_10y": -2.0,
     "breakeven_10y": 50.0,
     "source": "computed"
    },
    "level_change_22d": {
-    "nominal_10y": 5.8,
-    "real_10y": -44.2,
+    "nominal_10y": 7.2,
+    "real_10y": -42.8,
     "breakeven_10y": 90.0,
     "source": "computed"
    },
-   "s01b": "UNAVAILABLE",
+   "s01b": {
+    "d_rny": 3,
+    "d_tp": 4,
+    "d_fit": 8,
+    "resid": -1,
+    "d_2y": "mensual SNB 10-30 nowcast 2Y: 0.26% · +3e pb al 11-24",
+    "d_be": "UNAVAILABLE",
+    "d_fx": "UNAVAILABLE",
+    "theta": 17,
+    "ctf": "lectura NO_QUAL",
+    "persist": "UNAVAILABLE",
+    "quality": "NOWCAST",
+    "acm_asof": "2026-11-24"
+   },
    "dominant_driver": "UNAVAILABLE",
    "staleness": "LIVE",
    "stale": false,
    "blocked": false,
-   "nominal_10y": 0.58,
+   "nominal_10y": 0.56,
    "term_premium": -0.09,
    "rny": 0.66,
-   "real_10y": -0.92,
+   "real_10y": -0.94,
    "breakeven_10y": 1.5
   }
  },
