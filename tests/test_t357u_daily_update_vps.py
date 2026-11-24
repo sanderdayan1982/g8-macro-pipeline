@@ -1,5 +1,6 @@
-"""Pieza 1 de la migración de daily_update al VPS. Pruebas sin red."""
+"""Migración de daily_update al VPS. Pruebas sin red."""
 import contextlib
+import hashlib
 import inspect
 import io
 import json
@@ -15,6 +16,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "vps"))
 import daily_update_vps as D
+import compare_daily_dryrun as Compare
 
 
 class DailyUpdateVps(unittest.TestCase):
@@ -188,3 +190,136 @@ class DailyUpdateVps(unittest.TestCase):
                 self.assertFalse(Path(tmp, path).exists(), path)
             for path in keep:
                 self.assertTrue(Path(tmp, path).is_file(), path)
+
+    @staticmethod
+    def git(cwd, *args):
+        env = {"PATH": os.defpath, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+        return subprocess.check_output(
+            ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", *args],
+            cwd=cwd, env=env, stderr=subprocess.PIPE,
+        ).decode().strip()
+
+    @staticmethod
+    def put(repo, path, text):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+
+    def init_main(self, repo):
+        repo.mkdir()
+        self.git(repo, "init", "-q", "-b", "main")
+        self.put(repo, "data/base.txt", "baseline")
+        self.git(repo, "add", "data")
+        self.git(repo, "commit", "-qm", "base")
+        return self.git(repo, "rev-parse", "HEAD")
+
+    def test_dry_run_refuses_production_and_requires_explicit_workdir(self):
+        with patch.dict(os.environ, {"G8_DAILY_WORKDIR": D.WORKDIR}, clear=True), \
+             patch.object(D, "dryrun_git") as git, contextlib.redirect_stderr(io.StringIO()) as err:
+            with self.assertRaises(SystemExit) as missing:
+                D.main(["--dry-run"])
+            self.assertEqual(missing.exception.code, 2)
+            self.assertEqual(D.main(["--dry-run", "--workdir", D.WORKDIR]), 1)
+            self.assertIn("producción", err.getvalue())
+            git.assert_not_called()
+
+    def test_dry_run_manifest_secrets_and_cleanup(self):
+        for with_unused_secrets in (False, True):
+            with self.subTest(with_unused_secrets=with_unused_secrets), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                remote, scratch = root / "remote", root / "scratch"
+                self.init_main(remote)
+                self.git(root, "clone", "-q", str(remote), str(scratch))
+                # The fetch must pick up a commit that was absent at clone time.
+                self.put(remote, "data/base.txt", "new baseline")
+                self.git(remote, "commit", "-qam", "new base")
+                base = self.git(remote, "rev-parse", "HEAD")
+                manifest = root / "manifest.json"
+                read_token = self.credentials()["G8_DATA_READ_CI"]
+
+                def step(cmd, workdir, env, timeout, secrets=(), log=None):
+                    self.assertEqual(env["G8_NO_SEND"], "1")
+                    self.assertFalse(any(key.startswith("TELEGRAM_") for key in env))
+                    self.assertFalse({"G8_FULL", "G8_DATA_WRITE", "G8_DATA_READ_CI"} & env.keys())
+                    if D.PRIVATE_TOOL in cmd and "pull" in cmd:
+                        self.assertEqual(env["G8_DATA_TOKEN"], read_token)
+                    else:
+                        self.assertNotIn("G8_DATA_TOKEN", env)
+                    if "scripts/ingest_watch.py" in cmd:
+                        Path(cmd[cmd.index("--result") + 1]).write_text('{"delivery":"DRY"}')
+                        for path in ("data/base.txt", "data/options/state.json", "data/OPTIONS_SURFACE.json",
+                                     "data/futures/canonical/6E.csv", "data/options/shadow_history.json",
+                                     "data/alerts/private/brief.json"):
+                            self.put(workdir, path, "fixture content")
+                        self.put(workdir, "data/alerts/brief.json", '{"walls":["private"],"public":true}')
+                        self.git(workdir, "add", "--", "data/base.txt")
+                    return 0
+
+                env = dict(self.credentials(), TELEGRAM_EXTRA="unused") if with_unused_secrets else {
+                    "G8_DATA_READ_CI": read_token
+                }
+                with patch.dict(os.environ, env, clear=True), patch.object(D, "step", side_effect=step), \
+                     patch.object(D.C, "start_clean") as start_clean, \
+                     patch.object(D.P, "commit_and_push") as push, patch.object(D, "private_push") as private, \
+                     patch.object(D.C, "publish_record", return_value=(0, True)), \
+                     contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(D.main(["--dry-run", "--workdir", str(scratch),
+                                             "--manifest", str(manifest)]), 0)
+                    start_clean.assert_not_called()
+                    push.assert_not_called()
+                    private.assert_not_called()
+                    self.assertEqual(out.getvalue().count("skipped: dry-run"), 3)
+                    self.assertNotIn("fixture content", out.getvalue())
+
+                doc = json.loads(manifest.read_text())
+                self.assertEqual(doc["schema"], "G8_DAILY_DRYRUN/1")
+                self.assertEqual(doc["base_sha"], base)
+                self.assertTrue(doc["started_utc"].endswith("+00:00"))
+                self.assertTrue(any(row["name"] == "ingest_watch" and row["rc"] == 0
+                                    and row["seconds"] >= 0 for row in doc["steps"]))
+                fixture_hash = hashlib.sha256(b"fixture content").hexdigest()
+                brief_hash = hashlib.sha256(b'{\n "public": true\n}').hexdigest()
+                self.assertEqual(doc["files"], [
+                    {"path": "data/alerts/brief.json", "sha256": brief_hash},
+                    {"path": "data/base.txt", "sha256": fixture_hash},
+                    {"path": "data/options/state.json", "sha256": fixture_hash},
+                ])
+                self.assertEqual(self.git(scratch, "status", "--porcelain", "--ignored"), "")
+                self.assertEqual(self.git(scratch, "rev-parse", "HEAD"), base)
+                self.assertEqual(self.git(scratch, "rev-parse", "--abbrev-ref", "HEAD"), "HEAD")
+
+    def test_compare_counts_and_timing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            base = self.init_main(repo)
+            for path in ("data/same", "data/different", "data/actions only", "data/_ingest/clock",
+                         "data/ledger.json", "data/options/secret", "data/alerts/private/brief.json"):
+                self.put(repo, path, "Actions content")
+            self.git(repo, "add", "data")
+            self.git(repo, "commit", "-qm", "Actions")
+            sha = self.git(repo, "rev-parse", "HEAD")
+            manifest = root / "manifest.json"
+            doc = {"schema": D.DRYRUN_SCHEMA, "base_sha": base, "started_utc": "", "steps": []}
+
+            def entry(path, content=b"VPS content"):
+                return {"path": path, "sha256": hashlib.sha256(content).hexdigest()}
+
+            doc["files"] = [
+                entry("data/same", b"Actions content"), entry("data/different"), entry("data/vps only"),
+                entry("data/_ingest/clock"), entry("data/health.json"),
+            ]
+            manifest.write_text(json.dumps(doc))
+            args = ["--manifest", str(manifest), "--repo", str(repo), "--actions-sha", sha]
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(Compare.main(args), 1)
+            self.assertEqual(out.getvalue().splitlines(), [
+                "SAME 1", "  data/same", "DIFF 1", "  data/different", "ONLY_VPS 1", "  data/vps only",
+                "ONLY_ACTIONS 1", "  data/actions only", "TIMING 3", "  data/_ingest/clock",
+                "  data/health.json", "  data/ledger.json",
+            ])
+            doc["files"] = [entry(path, b"Actions content")
+                            for path in ("data/same", "data/different", "data/actions only")]
+            manifest.write_text(json.dumps(doc))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(Compare.main(args), 0)

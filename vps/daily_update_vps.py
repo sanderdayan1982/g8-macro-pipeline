@@ -7,11 +7,15 @@ Secretos de la corrida: G8_FULL, G8_DATA_READ_CI, G8_DATA_WRITE, FRED_API_KEY
 (opcional), TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID. Se excluyen del entorno
 heredado también G8_DATA_TOKEN, G8_RO_DATA, G8_RO_MESA y G8_RO_PIPELINE.
 Nunca se imprimen.
+
+Pieza 2: --dry-run usa un clon temporal y produce un manifiesto de hashes.
+Solo requiere G8_DATA_READ_CI y admite FRED_API_KEY si está disponible.
 """
 from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
 import json
 import os
 import shutil
@@ -19,6 +23,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -56,6 +61,9 @@ LICENSED_GLOBS = (
 # Los archivos públicos ya versionados bajo data/options también entran en ese git add.
 PUBLISH_PREFIXES = ("data/",)
 PUBLIC_OPTIONS = ("data/options/canonical/.gitkeep", "data/options/state.json")
+DRYRUN_SCHEMA = "G8_DAILY_DRYRUN/1"
+DRYRUN_SECRETS = ("G8_DATA_READ_CI", "FRED_API_KEY")
+DRYRUN_SKIP = "skipped: dry-run"
 
 # Nombre, límite de g8step, timeout de Actions (segundos), comando.
 SCRAPERS = (
@@ -108,8 +116,9 @@ def publishable(path):
             and path not in ("data/options", "data/futures", "data/alerts/private"))
 
 
-def required_secrets():
-    missing = [name for name in REQUIRED if not os.environ.get(name, "").strip()]
+def required_secrets(dry_run=False):
+    required = ("G8_DATA_READ_CI",) if dry_run else REQUIRED
+    missing = [name for name in required if not os.environ.get(name, "").strip()]
     if missing:
         raise RuntimeError("secretos ausentes: " + ",".join(missing))
 
@@ -146,13 +155,13 @@ def step(cmd, workdir, env, timeout, secrets=(), log=None):
     return rc
 
 
-def remove_licensed(workdir):
+def remove_licensed(workdir, env=None):
     for pattern in LICENSED_GLOBS:
         for path in glob.glob(os.path.join(workdir, pattern)):
             os.unlink(path)
     # Borra también los ignorados que trajo rsync; conserva el estado público y .gitkeep.
     subprocess.run(["git", "clean", "-ffdx", "--", "data/options/"], cwd=workdir,
-                   capture_output=True, check=True)
+                   env=env, capture_output=True, check=True)
 
 
 def public_changes(workdir, env):
@@ -171,6 +180,10 @@ def prepare_alerts(workdir, full):
         source = private if private.is_file() else path
         if source.is_file():
             shutil.copy2(source, full / path.name)
+    sanitize_public_alerts(workdir)
+
+
+def sanitize_public_alerts(workdir):
     for rel in ALERT_FILES:
         path = Path(workdir, rel)
         if path.is_file():
@@ -239,6 +252,74 @@ def push_verify_record(workdir, tmp, env, token, today, isolate):
         C.restore_paths(workdir, (VERIFY_FILE,), env)
 
 
+def dryrun_git(workdir, env, *args):
+    return subprocess.check_output(
+        ["git", "-c", "credential.helper=", "-c", "core.hooksPath=/dev/null", *args],
+        cwd=workdir, env=env, stderr=subprocess.PIPE, timeout=180,
+    )
+
+
+def write_manifest(path, workdir, env, base_sha, started, steps):
+    sanitize_public_alerts(workdir)
+    changed = dryrun_git(workdir, env, "diff", "--name-only", "--no-renames", "-z", "HEAD", "--", "data")
+    untracked = dryrun_git(workdir, env, "ls-files", "-z", "--others", "--exclude-standard", "--", "data")
+    files = []
+    for rel in sorted(set(map(os.fsdecode, (changed + untracked).split(b"\0")))):
+        if not publishable(rel):
+            continue
+        source = Path(workdir, rel)
+        if source.is_file() and source.resolve() == source:
+            with source.open("rb") as handle:
+                files.append({"path": rel, "sha256": hashlib.file_digest(handle, "sha256").hexdigest()})
+    doc = {"schema": DRYRUN_SCHEMA, "base_sha": base_sha, "started_utc": started.isoformat(),
+           "steps": steps, "files": files}
+    Path(path).write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+
+
+def run_dry(workdir, manifest):
+    workdir = Path(workdir).resolve()
+    if workdir == Path(WORKDIR).resolve():
+        raise ValueError("dry-run requiere un clon temporal fuera del workdir de producción")
+    manifest = Path(manifest).resolve()
+    if manifest.is_relative_to(workdir):
+        raise ValueError("dry-run requiere un manifiesto fuera del clon temporal")
+    if not (workdir / ".git").is_dir() or (workdir / ".git").is_symlink():
+        raise ValueError("dry-run requiere un clon temporal independiente")
+    required_secrets(dry_run=True)
+    credentials = {name: os.environ[name] for name in DRYRUN_SECRETS if name in os.environ}
+    start = datetime.now(timezone.utc)
+    steps = []
+    with tempfile.TemporaryDirectory(prefix="g8daily-home-") as home:
+        base = {name: value for name, value in os.environ.items()
+                if name not in SECRET_NAMES and not name.startswith(("TELEGRAM_", "GIT_"))}
+        base.update(HOME=home, XDG_CONFIG_HOME=home, GIT_CONFIG_GLOBAL=os.devnull,
+                    GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0", G8_NO_SEND="1")
+        if Path(os.fsdecode(dryrun_git(workdir, base, "rev-parse", "--show-toplevel").strip())) != workdir:
+            raise ValueError("dry-run requiere la raíz del clon temporal")
+        if dryrun_git(workdir, base, "status", "--porcelain", "-z", "--untracked-files=all"):
+            raise ValueError("dry-run requiere un clon temporal limpio")
+        dryrun_git(workdir, base, "fetch", "origin")
+        dryrun_git(workdir, base, "checkout", "--detach", "origin/main")
+        try:
+            base_sha = dryrun_git(workdir, base, "rev-parse", "HEAD").decode().strip()
+            try:
+                return run_steps(workdir, credentials, dry_base=base, start=start, timings=steps)
+            finally:
+                write_manifest(manifest, workdir, base, base_sha, start, steps)
+        finally:
+            try:
+                remove_licensed(workdir, base)
+            finally:
+                C.remove_private_copies(workdir)
+                try:
+                    dryrun_git(workdir, base, "reset", "--quiet", "HEAD", "--", ".")
+                finally:
+                    try:
+                        dryrun_git(workdir, base, "checkout", "--", ".")
+                    finally:
+                        dryrun_git(workdir, base, "clean", "-fdq", "--", "data")
+
+
 def run(workdir):
     required_secrets()
     credentials = {name: os.environ.pop(name) for name in SECRET_NAMES if name in os.environ}
@@ -248,34 +329,43 @@ def run(workdir):
         os.environ.update(credentials)
 
 
-def run_steps(workdir, credentials):
-    start = datetime.now(timezone.utc)
+def run_steps(workdir, credentials, *, dry_base=None, start=None, timings=None):
+    dry_run = dry_base is not None
+    start = start or datetime.now(timezone.utc)
     today = start.date().isoformat()
-    token = credentials["G8_FULL"].strip()
+    token = None if dry_run else credentials["G8_FULL"].strip()
     secrets = tuple(credentials.values()) + tuple(value.strip() for value in credentials.values())
-    telegram = {name: credentials[name].strip() for name in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")}
+    telegram = {} if dry_run else {
+        name: credentials[name].strip() for name in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
+    }
     py = sys.executable
     out = {"push": None, "errors": [], "scrapers": {}}
 
     def report(name, error, tolerant=False):
         # PushError puede incluir texto de git, por ejemplo un conflicto en un archivo privado.
-        detail = type(error).__name__ if isinstance(error, P.PushError) else str(error)
+        detail = type(error).__name__ if isinstance(error, P.PushError) or (
+            dry_run and isinstance(error, Exception)
+        ) else str(error)
         msg = C.sanitize("%s: %s" % (name, detail), secrets)
         if not tolerant:
             out["errors"].append(msg)
         print("[daily_update_vps] %s" % msg, file=sys.stderr)
 
-    try:
-        with step_deadline(180):
-            out["notes"] = C.start_clean(workdir, P, token, allowed=PUBLISH_PREFIXES)
-    except Exception as exc:
-        report("checkout", exc)
-        return out
-    home, cfg = P.prepare_git_home(workdir)
-    base = {name: value for name, value in os.environ.items() if name not in SECRET_NAMES}
+    if dry_run:
+        base = dry_base.copy()
+    else:
+        try:
+            with step_deadline(180):
+                out["notes"] = C.start_clean(workdir, P, token, allowed=PUBLISH_PREFIXES)
+        except Exception as exc:
+            report("checkout", exc)
+            return out
+        home, cfg = P.prepare_git_home(workdir)
+        base = {name: value for name, value in os.environ.items() if name not in SECRET_NAMES}
+        base.update(HOME=home, XDG_CONFIG_HOME=os.path.join(home, ".config"), GIT_CONFIG_GLOBAL=cfg,
+                    GIT_TERMINAL_PROMPT="0")
     jsda = base.pop("JSDA_BASE", None)
-    base.update(HOME=home, XDG_CONFIG_HOME=os.path.join(home, ".config"), GIT_CONFIG_GLOBAL=cfg,
-                GIT_TERMINAL_PROMPT="0", G8_JOB="daily", G8_JOB_RESERVE_S="780",
+    base.update(G8_JOB="daily", G8_JOB_RESERVE_S="780",
                 G8_STEP_GUARD="data", G8_GUARD_SKIP="options,futures",
                 G8_JOB_DEADLINE_EPOCH=str(int(start.timestamp()) + 31 * 60 - 90))
     tmp = tempfile.mkdtemp(prefix="g8daily-")
@@ -297,20 +387,33 @@ def run_steps(workdir, credentials):
         return execute(cmd, timeout, extra, log)
 
     def checked(name, action, tolerant=False):
+        started = time.monotonic()
+        rc = 1
         try:
             rc = action()
             if rc:
                 report(name, "rc=%s" % rc, tolerant)
             return rc
         except Exception as exc:
+            rc = 1
             report(name, exc, tolerant)
             return 1
+        finally:
+            if timings is not None:
+                timings.append({"name": name, "rc": rc, "seconds": time.monotonic() - started})
+
+    def skip_publication(key):
+        out[key] = DRYRUN_SKIP
+        print("[daily_update_vps] %s %s" % (key, DRYRUN_SKIP))
 
     def ledger(job, *only):
         args = [arg for name in only for arg in ("--only", name)]
         checked(job, lambda: execute([py, STEP_TOOL, "--ledger", job, *args], 60), tolerant=True)
 
     public_commit_failed = False
+    if dry_run:
+        for key in ("push", "private_push", "push_records"):
+            skip_publication(key)
     try:
         # Python 3.11 se aprovisiona en /srv/g8/venv, como en las otras unidades.
         pip = os.path.join(os.path.dirname(py), "pip")
@@ -364,7 +467,8 @@ def run_steps(workdir, credentials):
                "s01b_shadow_a3", "credit_fred_shadow")
         ledger("daily_dashboard", "dashboard_alerts")
 
-        try:
+        def project_public():
+            nonlocal public_commit_failed
             with step_deadline(180):
                 rc = execute([py, "scripts/argos_rates.py"], 180, {"TZ": "UTC"})
                 if rc:
@@ -377,24 +481,25 @@ def run_steps(workdir, credentials):
                               "--out", "data/public/CME_FXVOL_public.json", "data/CME_FXVOL_shadow.json"], 180)
                 if rc:
                     raise RuntimeError("cme_public_projection rc=%s" % rc)
-                C.unstage_all(workdir, base)
-                public_commit_failed = True
-                out["push"] = P.commit_and_push(
-                    workdir, public_changes(workdir, base),
-                    "[vps-push] daily data update %s [skip netlify]" % today, token, owned=PUBLISH_PREFIXES)
-        except Exception as exc:
-            report("push público", exc)
-        else:
-            public_commit_failed = False
+                if not dry_run:
+                    C.unstage_all(workdir, base)
+                    public_commit_failed = True
+                    out["push"] = P.commit_and_push(
+                        workdir, public_changes(workdir, base),
+                        "[vps-push] daily data update %s [skip netlify]" % today, token, owned=PUBLISH_PREFIXES)
+                    public_commit_failed = False
 
-        try:
-            with step_deadline(300):
-                out["private_push"] = private_push(workdir, priv, full, alerts_log, base,
-                                                   credentials["G8_DATA_WRITE"].strip(), today)
-        except Exception as exc:
-            report("push privado", exc)
+        checked("proyección pública" if dry_run else "push público", project_public)
 
-        try:
+        if not dry_run:
+            try:
+                with step_deadline(300):
+                    out["private_push"] = private_push(workdir, priv, full, alerts_log, base,
+                                                       credentials["G8_DATA_WRITE"].strip(), today)
+            except Exception as exc:
+                report("push privado", exc)
+
+        def verify():
             with step_deadline(120):
                 vrc = execute([py, PRIVATE_TOOL, "verify", priv, "--paths", *PRIVATE_PATHS,
                                "--credit-if-present"], 120)
@@ -406,38 +511,64 @@ def run_steps(workdir, credentials):
                 if rc:
                     raise RuntimeError("step_alarm publish rc=%s" % rc)
                 # Las copias completas solo se necesitan hasta verify.
-                C.restore_paths(workdir, ALERT_FILES, base)
-                if changed:
-                    out["push_records"] = push_verify_record(workdir, tmp, base, token, today,
-                                                             isolate=public_commit_failed)
-        except Exception as exc:
-            report("registro verify (continue-on-error)", exc, tolerant=True)
+                if not dry_run:
+                    C.restore_paths(workdir, ALERT_FILES, base)
+                    if changed:
+                        out["push_records"] = push_verify_record(workdir, tmp, base, token, today,
+                                                                 isolate=public_commit_failed)
+                return vrc if dry_run else 0
+
+        checked("registro verify (continue-on-error)", verify, tolerant=True)
 
         try:
             delivery = json.loads(Path(iw_result).read_text(encoding="utf-8")).get("delivery")
         except (OSError, ValueError, AttributeError):
             delivery = "NO_RESULT"
-        out["delivery"] = delivery if delivery in ("SENT", "DRY", "NOTHING") else "NO_RESULT"
-        if delivery not in ("SENT", "DRY", "NOTHING"):
-            report("ingest_watch", "entrega=%s" % C.sanitize(delivery, secrets))
+        accepted = ("DRY", "NOTHING") if dry_run else ("SENT", "DRY", "NOTHING")
+        out["delivery"] = delivery if delivery in accepted else "NO_RESULT"
+        if delivery not in accepted:
+            report("ingest_watch", "entrega=%s" % (
+                "NO_RESULT" if dry_run else C.sanitize(delivery, secrets)
+            ))
         # Alert on failure (if: failure()) lo ejecuta OnFailure=g8-alarm@.
     finally:
         try:
-            C.restore_paths(workdir, ALERT_FILES, base)
-            remove_licensed(workdir)
+            if not dry_run:
+                C.restore_paths(workdir, ALERT_FILES, base)
+                remove_licensed(workdir)
         except Exception as exc:
             report("limpieza", exc)
         finally:
-            C.remove_private_copies(workdir)
+            if not dry_run:
+                C.remove_private_copies(workdir)
             shutil.rmtree(tmp, ignore_errors=True)
     return out
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="VPS Daily Update (t354u/t357u)")
-    ap.add_argument("--workdir", default=os.environ.get("G8_DAILY_WORKDIR", WORKDIR))
+    ap.add_argument("--workdir")
+    ap.add_argument("--dry-run", action="store_true", help="ejecutar en un clon temporal sin publicar")
+    ap.add_argument("--manifest", type=Path, help="ruta fuera del clon (por defecto, <clon>.dryrun.json)")
     ap.add_argument("--state", default=os.environ.get("G8_VPS_JOB_STATE", "/srv/g8/prod/state/vps_jobs/%s.json" % JOB))
     args = ap.parse_args(argv)
+    if args.dry_run:
+        if not args.workdir:
+            ap.error("--dry-run requiere --workdir explícito")
+        try:
+            workdir = Path(args.workdir).resolve()
+            manifest = args.manifest or workdir.with_name(workdir.name + ".dryrun.json")
+            result = run_dry(workdir, manifest)
+        except (ValueError, RuntimeError) as exc:
+            print("[daily_update_vps] FATAL: %s" % exc, file=sys.stderr)
+            return 1
+        except (OSError, subprocess.SubprocessError) as exc:
+            print("[daily_update_vps] FATAL: %s" % type(exc).__name__, file=sys.stderr)
+            return 1
+        return int(bool(result["errors"]))
+    if args.manifest is not None:
+        ap.error("--manifest requiere --dry-run")
+    args.workdir = args.workdir or os.environ.get("G8_DAILY_WORKDIR", WORKDIR)
     prev = load_prev(args.state)
     rec = {"job": JOB, "utc": _utcnow(), "ok": False, "rc": 1, "consecutive_fail": 0}
     C.scrub_git_trace_env()
