@@ -743,6 +743,69 @@ def _is_rtf10_v4(kv):
     return (kv.get("ALERT_VERSION") or "").strip() == "4"
 
 
+# orden Sander 24-nov t361u: un correo RTF10 3.10.x con cierre D1 posterior
+# al 23-nov se rechaza y no vota (alerta antigua activa). <= 23-nov sigue
+# leyéndose como histórico.
+RTF10_V310_HISTORICAL_UNTIL = date(2026, 11, 23)
+RTF10_V310_AFTER_CUTOFF = "RTF10_V310_AFTER_CUTOFF"
+
+
+def is_rtf10_v310_version(version):
+    """SCRIPT_VERSION 3.10 o 3.10.x (no 3.1 ni 3.100)."""
+    v = (version or "").strip()
+    if v == "3.10":
+        return True
+    if not v.startswith("3.10."):
+        return False
+    rest = v[len("3.10."):]
+    return bool(rest) and rest[0].isdigit()
+
+
+def _as_iso_date(value):
+    if isinstance(value, date):
+        return value
+    text = str(value or "").strip()[:10]
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def rtf10_v310_after_cutoff(version, fecha_cierre):
+    """True si es un correo v3.10.x con cierre D1 posterior al 23-nov-2026."""
+    if not is_rtf10_v310_version(version):
+        return False
+    day = _as_iso_date(fecha_cierre)
+    if day is None:
+        return False
+    return day > RTF10_V310_HISTORICAL_UNTIL
+
+
+def rtf10_v310_cutoff_deadline():
+    """Cierre D1 del 23-nov, último día en que el v3.10 sigue siendo histórico."""
+    return datetime.fromtimestamp(
+        expected_bar_close_ms(RTF10_V310_HISTORICAL_UNTIL) / 1000, tz=UTC
+    )
+
+
+def record_rtf10_v310_rejection(rejected, session, version):
+    """Acumula el rechazo visible (sin fila de voto)."""
+    rec = {
+        "fecha_cierre": session.isoformat() if isinstance(session, date) else str(session),
+        "script": "RTF10_G8",
+        "ccy": "",
+        "version": version or "",
+        "reason": RTF10_V310_AFTER_CUTOFF,
+    }
+    if rejected is not None:
+        rejected.append(rec)
+    sys.stderr.write(
+        "reject %s %s RTF10_G8 version=%s\n"
+        % (RTF10_V310_AFTER_CUTOFF, rec["fecha_cierre"], version or "")
+    )
+    return rec
+
+
 def _rtf10_fresh_n(kv):
     """Cuántas de las 8 divisas traen {CCY}_STATUS=FRESH.
 
@@ -1245,7 +1308,7 @@ def _snapshot_incomplete_reason(name, part_items):
     return bad, merged, received, declared_n, detail
 
 
-def rows_from_messages(messages, session, write_missing, first_rtf10_v4_session=None):
+def rows_from_messages(messages, session, write_missing, first_rtf10_v4_session=None, rejected=None):
     """Bodies in, rows out. No network and no disk.
 
     `write_missing` is true only on the final attempt (scheduled 05:20 WAT,
@@ -1329,6 +1392,22 @@ def rows_from_messages(messages, session, write_missing, first_rtf10_v4_session=
         bar_stale = bar_ms != expected
         # Catalog count stays a reference. Rows use the PARTS the mails declared.
         parts_n = "" if declared_n is None else declared_n
+        # orden Sander 24-nov t361u: v3.10.x con cierre D1 posterior al 23-nov
+        # se rechaza y no vota. No se escriben filas de voto. Si ya rige el
+        # régimen v4 y es el intento final, el STALE por falta de v4 se
+        # mantiene (no es un voto del correo v3).
+        if (name == "RTF10_G8" and not _is_rtf10_v4(merged)
+                and rtf10_v310_after_cutoff(version, session)):
+            record_rtf10_v310_rejection(rejected, session, version)
+            if v4_regime and write_missing:
+                rows.extend(_rtf10_stale_rows(
+                    session, snap_id=snap_id, received_at=received_at,
+                    mail_ids=mail_ids, bar_ms=bar_ms, parts_n=parts_n,
+                    received=received, version=version,
+                ))
+                continue
+            present.discard(name)
+            continue
         # t340u: desde el primer v4, un día con solo v3 no escribe DRIVER
         # (votes.csv es append-only). En el final, estado=STALE.
         if (name == "RTF10_G8" and v4_regime and not _is_rtf10_v4(merged)):
@@ -2044,10 +2123,11 @@ def default_sender(text):
     notify_telegram.send(text)
 
 
-def build_rows(messages, session, write_missing, factor_doc, first_rtf10_v4_session=None):
+def build_rows(messages, session, write_missing, factor_doc, first_rtf10_v4_session=None, rejected=None):
     rows = rows_from_messages(
         messages, session, write_missing,
         first_rtf10_v4_session=first_rtf10_v4_session,
+        rejected=rejected,
     )
     rows.extend(rows_from_factor(factor_doc, session))
     return rows
@@ -2100,12 +2180,14 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
 
     failure = None
     messages = []
+    rejected_v310 = []
     if args.from_json:
         with open(args.from_json, encoding="utf-8") as fh:
             messages = json.load(fh)
         rows = build_rows(messages, session, write_missing, factor_doc,
                         first_rtf10_v4_session=resolve_first_rtf10_v4_session(
-                            None, messages, session, history_date=first_v4_hist))
+                            None, messages, session, history_date=first_v4_hist),
+                        rejected=rejected_v310)
     else:
         http = http or urllib_http
         sleep = sleep or time.sleep
@@ -2123,7 +2205,8 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
         else:
             rows = build_rows(messages, session, write_missing, factor_doc,
                         first_rtf10_v4_session=resolve_first_rtf10_v4_session(
-                            None, messages, session, history_date=first_v4_hist))
+                            None, messages, session, history_date=first_v4_hist),
+                        rejected=rejected_v310)
 
     # RELOJES-01 Anexo 1 A1. No mail on a full close: nothing, including no
     # MISSING on the final attempt. Mail that did arrive is stored normally.
@@ -2147,10 +2230,20 @@ def run(argv=None, http=None, sender=None, env=None, sleep=None, now=None, enfor
             return 1
         return 0
 
+    written = _e7_now_z(now)
+    rejected_path = os.path.join(os.path.dirname(os.path.abspath(votes_path)), "_ingest", "votes_rejected.jsonl")
+    for rec in rejected_v310:
+        register_rejected(
+            rejected_path,
+            {"fecha_cierre": rec["fecha_cierre"], "script": rec["script"],
+             "ccy": rec.get("ccy") or ""},
+            rtf10_v310_cutoff_deadline(),
+            written,
+            reason=rec.get("reason") or RTF10_V310_AFTER_CUTOFF,
+        )
+
     if enforce_tplus1:
         kept = []
-        written = _e7_now_z(now)
-        rejected_path = os.path.join(os.path.dirname(os.path.abspath(votes_path)), "_ingest", "votes_rejected.jsonl")
         for row in rows:
             row = dict(row)
             if not row.get("written_at_utc"):
