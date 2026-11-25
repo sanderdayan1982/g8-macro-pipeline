@@ -8,12 +8,14 @@ hacia o desde el clon de g8-macro-data. El token solo entra por el entorno
     pull  CLONE --rows 1,4-8     clona (depth 1) y rsync de esas filas al workspace
     push  CLONE --paths ...      copia esas rutas al clon, commit y push con reintento
     redact                       brief/state públicos y data/public/*.json (no lo llama PR-A)
+    public-alerts                proyección pública de brief/state (0 claves BRIEF_KEYS)
     verify CLONE --paths ...     sha256; imprime solo cuentas y rutas distintas
 
 Filas (plan §1.1): ver ROWS. La enmienda de crédito solo entra con --credit-if-present
 y solo si el fichero existe.
 """
 import argparse
+import shutil
 import hashlib
 import json
 import os
@@ -49,6 +51,16 @@ CME_STATUS_FILES = [
     "data/CME_FXVOL_shadow.json",
 ]
 FXVOL_FILE = "data/CME_FXVOL_shadow.json"
+
+
+# Mismos nombres que tests/test_cme_public_guardian.py (el test no se modifica).
+SHARED_KEYS = frozenset({
+    "walls", "front_oi", "front_metrics", "pin_k", "call_k", "put_k",
+})
+BRIEF_KEYS = SHARED_KEYS | frozenset({
+    "pin", "strikes_c", "strikes_p", "call", "put", "oi", "top",
+})
+PRIVATE_ALERT_NAMES = ("brief.json", "state.json")
 
 
 def safe_rel(path):
@@ -197,10 +209,11 @@ def rsync_path(src, dst):
         sys.exit(proc.returncode or 1)
 
 
-def copy_paths(paths, src_root, dst_root, optional):
+def copy_paths(paths, src_root, dst_root, optional, src_overrides=None):
     copied, missing = [], []
+    src_overrides = src_overrides or {}
     for rel in paths:
-        src = os.path.join(src_root, rel)
+        src = src_overrides.get(rel) or os.path.join(src_root, rel)
         dst = os.path.join(dst_root, rel)
         if not os.path.exists(src):
             missing.append(rel)
@@ -290,7 +303,14 @@ def cmd_push(args, token):
         return 2
     clone, env = ensure_clone(args.clone, args.repo, token)
     prepare_clone(clone, env, token)
-    missing = copy_paths(paths, os.path.abspath(args.workspace), clone, optional=tuple(CREDIT))
+    src_root = os.path.abspath(args.workspace)
+    overrides = {}
+    if getattr(args, "from_private_copies", False):
+        for rel in ("data/alerts/brief.json", "data/alerts/state.json"):
+            alt = os.path.join(src_root, "data", "alerts", "private", os.path.basename(rel))
+            if rel in paths and os.path.isfile(alt):
+                overrides[rel] = alt
+    missing = copy_paths(paths, src_root, clone, optional=tuple(CREDIT), src_overrides=overrides)
     if missing:
         return 1
     for rel in paths:
@@ -324,6 +344,116 @@ def dump_json(path, obj):
         json.dump(obj, fh, indent=1, ensure_ascii=False)
         fh.write("\n")
     os.replace(tmp, path)
+
+
+def collect_keys(obj, found=None):
+    if found is None:
+        found = set()
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            found.add(str(key))
+            collect_keys(value, found)
+    elif isinstance(obj, list):
+        for item in obj:
+            collect_keys(item, found)
+    return found
+
+
+def drop_keys(obj, keys):
+    if isinstance(obj, dict):
+        return {key: drop_keys(value, keys) for key, value in obj.items() if key not in keys}
+    if isinstance(obj, list):
+        return [drop_keys(item, keys) for item in obj]
+    return obj
+
+
+def public_projection(doc, keys=None):
+    """Recorte público de dashboard_alerts: quita walls y cualquier BRIEF_KEYS restante."""
+    keys = BRIEF_KEYS if keys is None else keys
+    if not isinstance(doc, dict):
+        return doc
+    public = dict(doc)
+    public.pop("walls", None)
+    return drop_keys(public, keys)
+
+
+def forbidden_in_doc(doc, keys=None):
+    keys = BRIEF_KEYS if keys is None else keys
+    return sorted(collect_keys(doc) & set(keys))
+
+
+def forbidden_in_path(path, keys=None):
+    if not os.path.isfile(path):
+        return []
+    try:
+        return forbidden_in_doc(load_json(path), keys)
+    except (OSError, ValueError):
+        return []
+
+
+def stash_private_alerts(workspace):
+    """Si el path público aún tiene claves prohibidas y no hay copia en private/, la guarda."""
+    root = os.path.abspath(workspace)
+    priv_dir = os.path.join(root, "data", "alerts", "private")
+    stashed = 0
+    for name, keys in (("brief.json", BRIEF_KEYS), ("state.json", SHARED_KEYS)):
+        src = os.path.join(root, "data", "alerts", name)
+        dst = os.path.join(priv_dir, name)
+        if not os.path.isfile(src) or os.path.isfile(dst):
+            continue
+        if forbidden_in_path(src, keys):
+            os.makedirs(priv_dir, exist_ok=True)
+            shutil.copyfile(src, dst)
+            stashed += 1
+    return stashed
+
+
+def apply_public_alerts(workspace):
+    """Proyección pública de brief/state también en éxito. Devuelve (claves restantes en brief, n_stashed)."""
+    root = os.path.abspath(workspace)
+    stashed = stash_private_alerts(root)
+    for name, keys in (("brief.json", BRIEF_KEYS), ("state.json", SHARED_KEYS)):
+        path = os.path.join(root, "data", "alerts", name)
+        if not os.path.isfile(path):
+            continue
+        stash = os.path.join(root, "data", "alerts", "private", name)
+        src = stash if os.path.isfile(stash) else path
+        try:
+            doc = load_json(src)
+        except (OSError, ValueError):
+            continue
+        dump_json(path, public_projection(doc, keys))
+    remaining = forbidden_in_path(os.path.join(root, "data", "alerts", "brief.json"), BRIEF_KEYS)
+    return remaining, stashed
+
+
+def exclude_forbidden_public_alerts(paths, workspace):
+    """No publicar brief.json si aún tiene BRIEF_KEYS, ni nada bajo data/alerts/private/."""
+    brief = os.path.join(os.path.abspath(workspace), "data", "alerts", "brief.json")
+    blocked = bool(forbidden_in_path(brief, BRIEF_KEYS))
+    out = []
+    for path in paths:
+        rel = path.replace("\\", "/")
+        if rel.startswith("data/alerts/private/") or "/private/" in rel:
+            continue
+        if blocked and rel == "data/alerts/brief.json":
+            continue
+        out.append(path)
+    return tuple(out)
+
+
+def cmd_public_alerts(args):
+    remaining, stashed = apply_public_alerts(args.workspace)
+    brief = os.path.join(os.path.abspath(args.workspace), "data", "alerts", "brief.json")
+    total = 0
+    if os.path.isfile(brief):
+        try:
+            total = len(collect_keys(load_json(brief)))
+        except (OSError, ValueError):
+            total = 0
+    print("public-alerts stashed=%s brief_keys=%s remaining=%s names=%s" % (
+        stashed, total, len(remaining), ",".join(remaining)))
+    return 1 if remaining else 0
 
 
 def wall_public(item, session):
@@ -534,9 +664,13 @@ def build_parser():
     push.add_argument("--retries", type=int, default=5)
     push.add_argument("--retry-sleep", type=float, default=5)
     push.add_argument("--no-push", action="store_true")
+    push.add_argument("--from-private-copies", action="store_true")
 
     redact = sub.add_parser("redact")
     redact.add_argument("--workspace", default=".")
+
+    public_alerts = sub.add_parser("public-alerts")
+    public_alerts.add_argument("--workspace", default=".")
 
     verify = sub.add_parser("verify")
     verify.add_argument("clone")
@@ -556,6 +690,8 @@ def main(argv=None):
         return cmd_push(args, token)
     if args.cmd == "redact":
         return cmd_redact(args)
+    if args.cmd == "public-alerts":
+        return cmd_public_alerts(args)
     if args.cmd == "verify":
         return cmd_verify(args, token)
     return 2

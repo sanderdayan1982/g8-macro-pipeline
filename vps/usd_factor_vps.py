@@ -173,6 +173,12 @@ def run(workdir):
             C.restore_paths(workdir, restore_paths, base)
         # always(), continue-on-error
         dash_rc = step([py, "scripts/dashboard_alerts.py"], workdir, dict(base, **tg), secrets, log=alerts_log)
+        tools_dir = os.path.join(workdir, "scripts", "tools")
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+        import private_data as PD  # noqa: WPS433
+        # t385u: proyección pública también en éxito; no dejar el brief privado en el path público.
+        remaining, _stashed = PD.apply_public_alerts(workdir)
         if dash_rc != 0:
             # state.json/brief.json pueden seguir siendo las copias privadas (filas 11,12): nunca al público.
             C.restore_paths(workdir, ["data/alerts/state.json", "data/alerts/brief.json"], base)
@@ -181,7 +187,12 @@ def run(workdir):
         if main_ok:
             try:
                 discard_unpublished(workdir, base)
+                remaining, _stashed = PD.apply_public_alerts(workdir)
                 change = tuple(p for st, p in dirty(workdir) if publishable(p))
+                change = PD.exclude_forbidden_public_alerts(change, workdir)
+                if remaining:
+                    out["errors"].append("brief.json público: %s claves BRIEF_KEYS (%s); no se publica" % (
+                        len(remaining), ",".join(remaining)))
                 C.unstage_all(workdir)
                 out["push"] = P.commit_and_push(workdir, change,
                                                 "[vps-push] usd factor update %s [skip netlify]" % today,
@@ -194,7 +205,9 @@ def run(workdir):
                     raise RuntimeError("omitido: el push público falló (en Actions el paso no corre)")
                 P.fetch_ff_only(priv, write_tok, allowed=private_paths)
                 for rel in private_paths[:2]:
-                    shutil.copyfile(os.path.join(workdir, rel), os.path.join(priv, rel))
+                    src_priv = os.path.join(workdir, "data", "alerts", "private", os.path.basename(rel))
+                    if os.path.isfile(src_priv):
+                        shutil.copyfile(src_priv, os.path.join(priv, rel))
                 if os.path.exists(alerts_log):
                     shutil.copyfile(alerts_log, os.path.join(priv, private_paths[2]))
                 C.unstage_all(priv)

@@ -77,6 +77,12 @@ jobs:
           echo "dashboard_alerts rc=${rc} rows=${rows}"
           exit "$rc"
 
+      - name: Public alerts projection
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 scripts/tools/private_data.py public-alerts
+
       # ── Lote 1 (2026-09-24): latido del Mac y credenciales ──
       - name: Ingest watch (latido del Mac + credenciales)
         if: always()
@@ -93,6 +99,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # v1.0.1: book_snapshots solo existe cuando hay data/book.csv → add condicional
           git add data/usd_factor data/USD_FACTOR.json data/BOOK_RISK.json data/alerts
+          git reset -q -- data/alerts/private 2>/dev/null || true
           if [ -f data/S01B.json ]; then git add data/S01B.json; fi
           if [ -d data/s01b ]; then git add data/s01b; fi
           if [ -d data/book_snapshots ]; then git add data/book_snapshots; fi
@@ -120,7 +127,7 @@ jobs:
             fi
           fi
           python3 scripts/tools/private_data.py push "$RUNNER_TEMP/g8data" \
-            --rows 11,12 --workflow "usd_factor" --session "$(date -u +%F)"
+            --rows 11,12 --from-private-copies --workflow "usd_factor" --session "$(date -u +%F)"
 
       - name: Private data verify
         if: always()
