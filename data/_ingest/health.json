@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-25T00:10:35.015950Z",
+ "generated_utc": "2026-11-25T00:25:56.633146Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -29,16 +29,6 @@
     "VPS_UNITS"
    ],
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
-  },
-  {
-   "file": "vps/g8-watch-prod.service",
-   "status": "ERROR",
-   "state": "FALLO_LOG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-24T23:52:16Z",
-   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-24T23:52:16Z)"
   }
  ],
  "unknown_count": 1,
@@ -90,16 +80,16 @@
   },
   {
    "file": "TONA.csv",
-   "state": "DUE",
-   "have_max": "2026-11-19",
+   "state": "CURRENT",
+   "have_max": "2026-11-20",
    "expected_obs": "2026-11-19",
    "calendar": "JP",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
-   "age_business_days": 3,
+   "status": "CURRENT",
+   "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -120,20 +110,16 @@
   },
   {
    "file": "AONIA.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-23",
+   "state": "CURRENT",
+   "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T23:53:00Z",
-   "age_business_days": 2,
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
+   "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -627,55 +613,43 @@
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-23",
+   "state": "CURRENT",
+   "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-23",
+   "state": "CURRENT",
+   "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "OVERDUE",
-   "have_max": "2026-11-23",
+   "state": "CURRENT",
+   "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
    "basis": "PROVISIONAL",
-   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-25T23:53:00Z UTC)",
-   "cause": "SIN_PASADA_PROGRAMADA",
-   "flags": [
-    "CAUSA_SIN_PASADA_PROGRAMADA",
-    "RULE_PROVISIONAL"
-   ],
-   "status": "PENDING",
-   "sla_deadline_utc": "2026-11-25T23:53:00Z",
+   "reason": null,
+   "cause": null,
+   "flags": [],
+   "status": "CURRENT",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1276,7 +1250,7 @@
   },
   {
    "file": "ACM_G8_AUD.csv",
-   "state": "DUE",
+   "state": "CURRENT",
    "have_max": "2026-11-23",
    "expected_obs": "2026-11-23",
    "calendar": "",
@@ -1287,7 +1261,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "PENDING",
+   "status": "CURRENT",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -2400,7 +2374,7 @@
    "file": "alerts/brief.json",
    "status": "CURRENT",
    "state": "CURRENT",
-   "have_max": "2026-11-25T00:10:34Z",
+   "have_max": "2026-11-25T00:25:55Z",
    "flags": []
   },
   {
@@ -2524,16 +2498,6 @@
     "VPS_UNITS"
    ],
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
-  },
-  {
-   "file": "vps/g8-watch-prod.service",
-   "status": "ERROR",
-   "state": "FALLO_LOG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-24T23:52:16Z",
-   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-24T23:52:16Z)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
