@@ -1,0 +1,11 @@
+[Unit]
+Description=G8 VPS · Daily Update L–V 21:30 UTC (22:30 WAT) · orden Sander 24-nov (t354u/t357u)
+
+[Timer]
+OnCalendar=Mon..Fri 21:30:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-daily-update.service
+
+[Install]
+WantedBy=timers.target
