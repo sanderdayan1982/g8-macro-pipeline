@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-25T22:29:27.927597Z",
+ "generated_utc": "2026-11-25T23:22:27.201449Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -31,6 +31,16 @@
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-25T22:46:51Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-25T22:46:51Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -38,7 +48,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -48,7 +58,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -58,7 +68,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -68,7 +78,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=35996)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=38689)"
   },
   {
    "file": "vps/code_lag:usd_factor_vps.py",
@@ -78,7 +88,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T20:52:23Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (usd_factor_vps.py, age_sec=5391)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (usd_factor_vps.py, age_sec=8084)"
   }
  ],
  "unknown_count": 2,
@@ -160,7 +170,7 @@
   },
   {
    "file": "AONIA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
@@ -168,7 +178,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -193,7 +203,7 @@
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -663,7 +673,7 @@
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
@@ -671,13 +681,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
@@ -685,13 +695,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "AU",
@@ -699,7 +709,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -780,15 +790,15 @@
   },
   {
    "file": "RY_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1215,7 +1225,7 @@
    "file": "ACM_G8_USD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-23",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1233,7 +1243,7 @@
    "file": "ACM_G8_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1250,7 +1260,7 @@
    "file": "ACM_G8_JPY.csv",
    "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-20",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1268,7 +1278,7 @@
    "file": "ACM_G8_GBP.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1285,7 +1295,7 @@
    "file": "ACM_G8_CAD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1301,9 +1311,9 @@
   },
   {
    "file": "ACM_G8_AUD.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1312,7 +1322,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1321,7 +1331,7 @@
    "file": "ACM_G8_NZD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1338,7 +1348,7 @@
    "file": "ACM_G8_CHF.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1356,7 +1366,7 @@
    "file": "RY_G8_NZD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1433,32 +1443,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1481,34 +1491,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1541,32 +1551,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1589,34 +1599,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1649,32 +1659,32 @@
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "BE10": {
       "source": "data/RY_G8_USD.csv:BE10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DGS10": {
       "source": "FRED:DGS10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "EFFR": {
       "source": "FRED:EFFR",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "NFA_DEBT": {
       "source": "Treasury:DebtToPenny",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "WRESBAL": {
       "source": "FRED:WRESBAL",
@@ -1697,34 +1707,34 @@
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      }
     },
     "XAG": {
      "price:XAG": {
       "source": "yfinance:SI=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:XAU": {
       "source": "yfinance:GC=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "price:COPPER": {
       "source": "yfinance:HG=F",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
+      "latest_observation": "2026-11-25",
       "used_observation": "2026-11-24"
      },
      "REAL10": {
       "source": "data/RY_G8_USD.csv:REAL10",
       "publication_frequency": "daily",
-      "latest_observation": "2026-11-23",
-      "used_observation": "2026-11-23"
+      "latest_observation": "2026-11-24",
+      "used_observation": "2026-11-24"
      },
      "DTWEXBGS": {
       "source": "FRED:DTWEXBGS",
@@ -1838,7 +1848,7 @@
    "file": "AUD_NOWCAST.csv",
    "state": "CURRENT",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2551,6 +2561,16 @@
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-25T22:46:51Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-25T22:46:51Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -2558,7 +2578,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2568,7 +2588,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2578,7 +2598,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=4493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=7186)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2588,7 +2608,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=35996)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=38689)"
   },
   {
    "file": "vps/code_lag:usd_factor_vps.py",
@@ -2598,7 +2618,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T20:52:23Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (usd_factor_vps.py, age_sec=5391)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (usd_factor_vps.py, age_sec=8084)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
