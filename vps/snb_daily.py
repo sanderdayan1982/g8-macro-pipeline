@@ -56,12 +56,15 @@ def snb_opener():
 
 
 def run(workdir, state_path, token, from_date=None):
-    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    # t385u: importar el fetch del clon solo después del fast-forward.
     sys.path.insert(0, HERE)
-    import fetch_chf_snb1a as F  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
 
     P.fetch_ff_only(workdir, token, allowed=P.SNB_ALLOWED)
+    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    import importlib
+    import fetch_chf_snb1a as F  # noqa: WPS433
+    F = importlib.reload(F)
     out = F.run(data_dir=os.path.join(workdir, "data"), from_date=from_date, opener=snb_opener())
     last = out.get("last_observation")
     pub = out.get("publishing_date")
