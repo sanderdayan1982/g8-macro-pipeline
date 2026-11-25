@@ -1,13 +1,7 @@
 {
   "schema": "G8_VPS_UNITS/1",
-  "generated_utc": "2026-11-25T15:52:24Z",
-  "failed_units": [
-    {
-      "unit": "g8-dispatch-prod.service",
-      "result": "exit-code",
-      "rc": 1
-    }
-  ],
+  "generated_utc": "2026-11-25T16:07:18Z",
+  "failed_units": [],
   "fallo_lines": [
     {
       "utc": "2026-11-23T20:00:01Z",
@@ -33,13 +27,23 @@
       "utc": "2026-11-25T15:50:09Z",
       "unit": "g8-dispatch-prod.service",
       "text": "VPS: la unidad g8-dispatch-prod.service FALLÓ (result=exit-code rc=1)"
+    },
+    {
+      "utc": "2026-11-25T15:55:12Z",
+      "unit": "g8-dispatch-prod.service",
+      "text": "VPS: la unidad g8-dispatch-prod.service FALLÓ (result=exit-code rc=1)"
+    },
+    {
+      "utc": "2026-11-25T16:00:14Z",
+      "unit": "g8-vps-status.service",
+      "text": "VPS: la unidad g8-vps-status.service FALLÓ (result=exit-code rc=1)"
     }
   ],
   "code_lag": [
     {
       "name": "swpt_weekly.py",
       "first_diff_utc": "2026-11-25T12:22:18Z",
-      "age_sec": 12606
+      "age_sec": 13500
     }
   ]
 }
