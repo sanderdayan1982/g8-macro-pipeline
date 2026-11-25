@@ -5,7 +5,7 @@ No es un turno del dispatcher. Usa G8_FULL para git push. Nunca imprime el token
 ni FRED_API_KEY. El cron de GitHub queda retirado; este job es la publicación
 calendarizada, con el workflow público solo como respaldo manual.
 
-El timer dispara jueves y viernes 21:00 UTC. El fetch solo corre si hoy
+El timer dispara jueves y viernes 22:00 UTC (orden Sander 25-nov t378u: swpt a las 22:00 UTC). El fetch solo corre si hoy
 (America/New_York) es el día oficial de publicación de la regla SWPT ya
 existente (weekly:THU, festivo US → siguiente día hábil). Así se cubre
 Thanksgiving y no hay dos publicaciones en una semana hábil normal.
@@ -83,7 +83,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="VPS SWPT semanal (t348u)")
     ap.add_argument("--workdir", default=os.environ.get("G8_SWPT_WORKDIR", ROOT_DEFAULT))
     ap.add_argument("--state", default=os.environ.get("G8_VPS_JOB_STATE", ""))
-    ap.add_argument("--now", default=None, help="ISO-8601 UTC de prueba (p. ej. 2026-11-27T21:00:00Z)")
+    ap.add_argument("--now", default=None, help="ISO-8601 UTC de prueba (p. ej. 2026-11-27T22:00:00Z)")
     ap.add_argument("--force", action="store_true", help="publicar aunque hoy no sea día oficial")
     args = ap.parse_args(argv)
     if args.now:

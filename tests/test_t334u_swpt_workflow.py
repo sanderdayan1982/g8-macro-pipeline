@@ -23,8 +23,9 @@ class SwptWorkflow(unittest.TestCase):
         self.assertTrue(os.path.isfile(TIMER))
         with open(TIMER, encoding="utf-8") as fh:
             timer = fh.read()
-        self.assertIn("OnCalendar=Thu 21:00:00", timer)
-        self.assertIn("OnCalendar=Fri 21:00:00", timer)
+        # orden Sander 25-nov t378u: swpt a las 22:00 UTC
+        self.assertIn("OnCalendar=Thu 22:00:00", timer)
+        self.assertIn("OnCalendar=Fri 22:00:00", timer)
 
     def test_only_adds_swpt_csv(self):
         adds = re.findall(r"git add (.+)", self.text)

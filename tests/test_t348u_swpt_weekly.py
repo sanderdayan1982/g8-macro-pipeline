@@ -27,8 +27,9 @@ class SwptWeeklyPubDay(unittest.TestCase):
     def test_timer_mirrors_thursday_and_friday(self):
         with open(os.path.join(ROOT, "vps", "g8-swpt-weekly.timer"), encoding="utf-8") as fh:
             timer = fh.read()
-        self.assertIn("OnCalendar=Thu 21:00:00", timer)
-        self.assertIn("OnCalendar=Fri 21:00:00", timer)
+        # orden Sander 25-nov t378u: swpt a las 22:00 UTC
+        self.assertIn("OnCalendar=Thu 22:00:00", timer)
+        self.assertIn("OnCalendar=Fri 22:00:00", timer)
         with open(os.path.join(ROOT, "vps", "g8-swpt-weekly.service"), encoding="utf-8") as fh:
             svc = fh.read()
         self.assertIn("ProtectHome=yes", svc)

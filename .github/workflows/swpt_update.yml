@@ -2,9 +2,10 @@
 # t348u, orden Sander: cron swpt migrado al VPS, workflow solo manual.
 # El workflow queda solo con workflow_dispatch, como respaldo manual.
 # Publicación oficial ~16:30 America/New_York (jueves, o el siguiente día hábil US si el jueves es festivo).
-# Timer systemd g8-swpt-weekly: OnCalendar Thu 21:00 UTC y Fri 21:00 UTC (22:00 WAT).
+# Timer systemd g8-swpt-weekly: OnCalendar Thu 22:00 UTC y Fri 22:00 UTC (23:00 WAT).
+# orden Sander 25-nov t378u: swpt a las 22:00 UTC
 # El script no publica si hoy no es el día oficial de la regla de frescura (evita dos publicaciones).
-# El timer queda SIN habilitar hasta OK y fusión (t371u). Esta semana no se corta: Actions se queda como está.
+# El timer queda SIN habilitar hasta la primera pasada del jueves 3-dic (t371u).
 # Idempotente: sin cambio en data/SWPT.csv no hay commit.
 name: SWPT weekly
 
