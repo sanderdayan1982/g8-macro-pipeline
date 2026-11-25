@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-25T03:20:49Z",
+ "generated_utc": "2026-11-25T04:37:16Z",
  "section_numbering": "00-07",
  "doctrine": "Contexto de composición. La dirección nace en el embudo 7+1 (TradingView); el dashboard informa, no decide. Ninguna línea es una señal de entrada.",
  "as_of": {
   "rates": "2026-11-25",
   "cot": "2026-11-17",
-  "options": null,
+  "options": "2026-11-23",
   "metals": "2026-11-24",
   "s01b": "2026-11-24",
   "factor": "2026-11-24"
@@ -26,7 +26,7 @@
   },
   {
    "sec": "§03 Term premium",
-   "text": "JPY TP 1.83 % (TP/NOM 64 % ▲60)"
+   "text": "JPY TP 1.76 % (TP/NOM 63 % ▲60)"
   },
   {
    "sec": "§01 Spread 10Y vs USD",
@@ -123,9 +123,9 @@
    "real": 0.9869,
    "be": 1.7896,
    "nom_asof": "2026-11-25",
-   "tp": 1.8264,
-   "tp_z": -0.21434232028365616,
-   "tp_asof": "2026-11-20",
+   "tp": 1.7595,
+   "tp_z": -0.47098549995426564,
+   "tp_asof": "2026-11-24",
    "rfr": 1.228,
    "floor_bp": -2.2,
    "floor_badge": "AMPLE",
@@ -138,22 +138,22 @@
   {
    "ccy": "AUD",
    "flags": [
-    "NOM/REAL/BE EST 23-11 ±5 pb (curva F2 RBA 18-11; vs USD y alertas con RBA)",
+    "NOM/REAL/BE EST 24-11 ±6 pb (curva F2 RBA 18-11; vs USD y alertas con RBA)",
     "TP curva arrastrada (ffill)",
     "REAL vs USD z suelo",
     "vs USD z suelo",
     "COT DIV LF/AM"
    ],
-   "nom": 4.9287,
-   "real": 2.6874,
-   "be": 2.2413,
-   "nom_asof": "2026-11-23",
+   "nom": 4.9344,
+   "real": 2.6997,
+   "be": 2.2347,
+   "nom_asof": "2026-11-24",
    "nom_rba": 5.08,
    "nom_rba_asof": "2026-11-18",
    "nom_est": true,
-   "tp": 1.1608,
-   "tp_z": 0.7615810069985224,
-   "tp_asof": "2026-11-23",
+   "tp": 1.1629,
+   "tp_z": 0.7730007516784297,
+   "tp_asof": "2026-11-24",
    "rfr": 4.85,
    "floor_bp": 0.0,
    "floor_badge": "AMPLE",
@@ -214,7 +214,8 @@
     "NOM SNB live",
     "REAL ex post (nom − IPC a/a BFS 10/2026); BE = IPC a/a, no breakeven",
     "TP ACM K=3 (nowcast 10Y)",
-    "COT DIV LF/AM"
+    "COT DIV LF/AM",
+    "walls PROXY"
    ],
    "nom": 0.563,
    "real": -0.937,
@@ -233,19 +234,14 @@
    "cot_state": "CROWD SHORT"
   }
  ],
- "notes": [
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')",
-  "DQM · OPTIONS_SURFACE.json ilegible ([Errno 2] No such file or directory: '/home/runner/work/g8-macro-pipeline/g8-macro-pipeline/data/OPTIONS_SURFACE.json')"
- ],
  "doctor_summary": {
   "priority_counts": {
-   "daily": 12,
+   "daily": 13,
    "weekly": 1,
    "monthly": 0,
    "prohibited": 0
   },
-  "incidents_count": 13,
-  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 12 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/ERROR] vps/g8-nzd-b2-daily.service: unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunq\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:daily_update:duplicate_turn: mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1,\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
+  "incidents_count": 14,
+  "telegram_summary": "⚡ <b>Frescura G8</b> (1º Diaria: 13 · 2º Semanal: 1 · 3º Mensual: 0):\n• [1º/ERROR] vps/g8-nzd-b2-daily.service: unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunq\n• [1º/WARNING] CME_C1_public.json: Proyección pública en UNAVAILABLE\n• [1º/WARNING] actions:daily_update:duplicate_turn: mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1,\n• [1º/WARNING] actions:fetch_bis_policy_AU:degraded: Actions fetch_bis_policy_AU: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_CH:degraded: Actions fetch_bis_policy_CH: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk \n• [1º/WARNING] actions:fetch_bis_policy_GB:degraded: Actions fetch_bis_policy_GB: ejecución DEGRADADA — BIS API failed; official WS_CBPOL bulk "
  }
 }
