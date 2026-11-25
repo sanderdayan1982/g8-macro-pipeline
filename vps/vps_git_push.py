@@ -274,15 +274,58 @@ def append_dirty_reset_alert(job, paths, log_path=None, now_utc=None):
         print("[vps_git] no se pudo escribir ALERTAS.log (%s)" % type(e).__name__, file=sys.stderr)
         return line
 
+def _unmerged_paths(cwd):
+    r = subprocess.run(["git", "diff", "--name-only", "--diff-filter=U"], cwd=cwd, capture_output=True, text=True)
+    return [p.strip() for p in (r.stdout or "").splitlines() if p.strip()]
+
+
+def _reset_unmerged_to_head(cwd, env, why):
+    """Unmerged paths (conflicto de un stash pop) vuelven a HEAD; aviso DIRTY_RESET (t375u).
+
+    El sobrante local de estas rutas no se publica por git (las familias van por API), así que manda main.
+    Devuelve la lista de rutas restauradas.
+    """
+    paths = _unmerged_paths(cwd)
+    if not paths:
+        return []
+    _run(["git", "reset", "-q", "--"] + paths, cwd, env)
+    _run(["git", "checkout", "HEAD", "--"] + paths, cwd, env)
+    print("[vps_git] %s %s" % (why, " ".join(_safe_reset_paths(paths))))
+    append_dirty_reset_alert(os.environ.get("G8_VPS_JOB"), paths)
+    return paths
+
+
+def _stash_pop_checked(cwd, env):
+    """``git stash pop`` con resultado comprobado (t375u).
+
+    rc=0 → nada. Conflicto → las rutas en conflicto vuelven a HEAD, el stash se conserva como evidencia
+    (git no lo borra si el pop falla) y el job sigue con el clon fusionable. Otro fallo → PushError.
+    Devuelve {"rc", "conflicts"}.
+    """
+    r = subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, env=env, capture_output=True, text=True)
+    if r.returncode == 0:
+        return {"rc": 0, "conflicts": []}
+    conflicts = _reset_unmerged_to_head(cwd, env, "STASH_POP_CONFLICT")
+    if not conflicts:
+        out = " ".join(((r.stdout or "") + (r.stderr or "")).split())[:400]
+        raise PushError("git stash pop rc=%s: %s" % (r.returncode, out))
+    return {"rc": r.returncode, "conflicts": conflicts}
+
+
 def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
     """Fetch + merge --ff-only, without leaving foreign leftover dirt to block the job.
 
     Tracked dirty files are stashed around the merge (same idea as _sync_then_push). After pop, if *allowed* is set, tracked files not in that list
     are restored from HEAD and a DIRTY_RESET line is logged. Real fetch/merge
     errors still raise PushError (nothing is silenced).
+
+    t375u: an index left unmerged by an earlier pop no longer blocks ``stash push`` ("needs merge"): those
+    paths go back to HEAD first. The pop result is checked: on conflict the conflicting paths go back to
+    HEAD (DIRTY_RESET alert) and the stash entry is kept as evidence.
     """
     env = auth_env(token, cwd=cwd)
     _run(["git", "fetch", "-q", remote, branch], cwd, env, timeout=180)
+    _reset_unmerged_to_head(cwd, env, "UNMERGED_RESET")
     tracked = [p for st, p in iter_porcelain(cwd) if not _untracked(st)]
     stashed = False
     if tracked:
@@ -292,10 +335,13 @@ def fetch_ff_only(cwd, token, remote="origin", branch="main", allowed=None):
         _run(["git", "merge", "-q", "--ff-only", "%s/%s" % (remote, branch)], cwd, env)
     except PushError:
         if stashed:
-            subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, capture_output=True)
+            try:
+                _stash_pop_checked(cwd, env)
+            except PushError as e:
+                print("[vps_git] %s" % e, file=sys.stderr)
         raise
     if stashed:
-        subprocess.run(["git", "stash", "pop", "-q"], cwd=cwd, capture_output=True)
+        _stash_pop_checked(cwd, env)
     if allowed is None:
         return
     reset = [p for st, p in iter_porcelain(cwd)

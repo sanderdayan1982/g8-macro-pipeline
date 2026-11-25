@@ -25,7 +25,20 @@ from urllib.parse import urlencode
 from . import defer, g8http, runlog, series as S
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-EXECUTOR = "actions"
+EXECUTOR = "actions"            # ejecutor por defecto (Actions); el VPS lo fija con G8_EXECUTOR_ID (t375u)
+
+
+def executor_id(env=None):
+    """Ejecutor del registro: G8_EXECUTOR_ID si está (p. ej. vps-prod en el VPS); si no, "actions" (t375u).
+
+    Así el VPS no reescribe los registros de Actions (actions__<descargador>.json) que también llegan por main.
+    Un identificador no válido es un error, no un valor por defecto silencioso.
+    """
+    env = os.environ if env is None else env
+    value = str(env.get("G8_EXECUTOR_ID") or "").strip()
+    if not value:
+        return EXECUTOR
+    return runlog._check(value)
 TEST_TRANSPORT = None          # las pruebas inyectan aquí un transporte local (respuestas grabadas)
 TEST_CLOCK = None              # las pruebas inyectan un reloj simulado (sin esperas reales)
 
@@ -133,9 +146,10 @@ class Ingest(object):
         self.root = root or ROOT
         self.now = now
         self.started = datetime.fromtimestamp(now(), tz=timezone.utc)
-        self.run_id = runlog.new_run_id(EXECUTOR, job.replace("_", "-"), self.started)
+        self.executor = executor_id()
+        self.run_id = runlog.new_run_id(self.executor, job.replace("_", "-"), self.started)
         self.budget = g8http.Budget(budget_s, now=now, env=env)
-        self.latest_path = os.path.join(self.root, runlog.LATEST_DIR, "%s__%s.json" % (EXECUTOR, job))
+        self.latest_path = os.path.join(self.root, runlog.LATEST_DIR, "%s__%s.json" % (self.executor, job))
         self.latest = _load_json(self.latest_path, {})
         self.not_before = dict(self.latest.get("not_before", {}))
         self.requests_log = []
@@ -146,8 +160,8 @@ class Ingest(object):
     def rename(self, job):
         """Para descargadores con varias series por argumento (p. ej. fetch_bis_policy GB): un registro por serie."""
         self.job = job
-        self.run_id = runlog.new_run_id(EXECUTOR, job.replace("_", "-").lower(), self.started)
-        self.latest_path = os.path.join(self.root, runlog.LATEST_DIR, "%s__%s.json" % (EXECUTOR, job))
+        self.run_id = runlog.new_run_id(self.executor, job.replace("_", "-").lower(), self.started)
+        self.latest_path = os.path.join(self.root, runlog.LATEST_DIR, "%s__%s.json" % (self.executor, job))
         self.latest = _load_json(self.latest_path, {})
         self.not_before = dict(self.latest.get("not_before", {}))
 
@@ -335,7 +349,7 @@ class Ingest(object):
     def finish(self, rc):
         """Registra la ejecución y devuelve el código de salida: 1 si hubo descarga fallida o inválida."""
         bad = [f for f, v in self.files.items() if v.get("status") in (S.INVALID, S.REGRESSION_BLOCKED)]
-        rec = {"run_id": self.run_id, "job": self.job, "executor": EXECUTOR,
+        rec = {"run_id": self.run_id, "job": self.job, "executor": self.executor,
                "started_utc": self.started.strftime("%Y-%m-%dT%H:%M:%SZ"),
                "finished_utc": datetime.fromtimestamp(self.now(), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "rc": 1 if (rc or bad) else 0, "requests": self.requests_log, "files": self.files,
@@ -353,7 +367,7 @@ class Ingest(object):
             rec["failing_since_utc"] = prev.get("failing_since_utc") or prev.get("started_utc") or rec["started_utc"]
         else:
             rec["failing_since_utc"] = rec["started_utc"]
-        runs = os.path.join(self.root, runlog.RUNS_DIR, EXECUTOR, self.job, self.started.strftime("%Y-%m") + ".jsonl")
+        runs = os.path.join(self.root, runlog.RUNS_DIR, self.executor, self.job, self.started.strftime("%Y-%m") + ".jsonl")
         os.makedirs(os.path.dirname(runs), exist_ok=True)
         with open(runs, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec, sort_keys=True, ensure_ascii=False) + "\n")
