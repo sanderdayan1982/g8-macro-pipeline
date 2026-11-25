@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-25T16:01:40.448835Z",
+ "generated_utc": "2026-11-25T16:15:38.797880Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -71,15 +71,6 @@
    "slow_fallback": false
   },
   {
-   "file": "vps/g8-dispatch-prod.service",
-   "status": "ERROR",
-   "state": "FAILED",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
-  },
-  {
    "file": "vps/code_lag:swpt_weekly.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -87,7 +78,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=12606)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=13500)"
   }
  ],
  "unknown_count": 2,
@@ -2557,15 +2548,6 @@
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
   },
   {
-   "file": "vps/g8-dispatch-prod.service",
-   "status": "ERROR",
-   "state": "FAILED",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
-  },
-  {
    "file": "vps/code_lag:swpt_weekly.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -2573,7 +2555,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=12606)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=13500)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
