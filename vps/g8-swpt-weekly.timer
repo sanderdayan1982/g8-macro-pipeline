@@ -1,0 +1,18 @@
+[Unit]
+Description=G8 VPS · SWPT semanal H.4.1/FRED · orden Sander t348u · timer sin habilitar
+
+[Timer]
+# orden Sander 25-nov t378u: swpt a las 22:00 UTC
+# Jueves y viernes 22:00 UTC (23:00 WAT). En invierno 16:30 ET = 21:30 UTC,
+# así queda margen tras la publicación oficial en ambos regímenes.
+# El viernes cubre festivos US: la regla de frescura ya mueve la publicación
+# al siguiente día hábil (p. ej. Thanksgiving 26-nov-2026 → viernes 27).
+# El script no publica si hoy no es día oficial.
+OnCalendar=Thu 22:00:00
+OnCalendar=Fri 22:00:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-swpt-weekly.service
+
+[Install]
+WantedBy=timers.target
