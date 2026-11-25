@@ -47,13 +47,16 @@ def load_prev(path):
 
 
 def run(workdir, token, no_push=False, now=None, opener=None, repo_root=None):
-    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    # t385u: importar el fetch del clon solo después del fast-forward.
     sys.path.insert(0, HERE)
-    import fetch_sovereign_10y_daily as F  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
 
     if not no_push:
         P.fetch_ff_only(workdir, token, allowed=ALLOWED)
+    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    import importlib
+    import fetch_sovereign_10y_daily as F  # noqa: WPS433
+    F = importlib.reload(F)
     data = os.path.join(workdir, "data")
     # t372u: solo se salta ES si ya tiene el dato esperado del día.
     # Si la pasada de las 11:30 no lo trajo, esta lo recoge como respaldo.

@@ -46,13 +46,16 @@ def load_prev(path):
 
 
 def run(workdir, token, no_push=False, opener=None):
-    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    # t385u: importar el fetch del clon solo después del fast-forward.
     sys.path.insert(0, HERE)
-    import fetch_sovereign_10y_daily as F  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
 
     if not no_push:
         P.fetch_ff_only(workdir, token, allowed=ALLOWED)
+    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    import importlib
+    import fetch_sovereign_10y_daily as F  # noqa: WPS433
+    F = importlib.reload(F)
     data = os.path.join(workdir, "data")
     result = F.run(data_dir=data, opener=opener, fetch_de=False, fetch_es=True)
     last = result.get("es_last")

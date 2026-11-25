@@ -66,12 +66,15 @@ def is_official_pub_day(now, root):
 
 
 def run(workdir, token):
-    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    # t385u: importar el fetch del clon solo después del fast-forward.
     sys.path.insert(0, HERE)
-    import fetch_swpt as F  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
 
     P.fetch_ff_only(workdir, token, allowed=SWPT_ALLOWED)
+    sys.path.insert(0, os.path.join(workdir, "scripts"))
+    import importlib
+    import fetch_swpt as F  # noqa: WPS433
+    F = importlib.reload(F)
     out = F.run(data_dir=os.path.join(workdir, "data"))
     last = out.get("last")
     msg = "[vps-push] swpt last=%s channel=%s [skip netlify]" % (last or "none", out.get("channel") or "none")
