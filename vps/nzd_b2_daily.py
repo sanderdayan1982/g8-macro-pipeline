@@ -59,29 +59,29 @@ def stage_fetch_records(workdir):
     return copied
 
 
-def refresh_argos_and_drop_mac_latest(workdir, token):
-    """Regenerate argos_rates.json if inputs changed; drop leftover Mac latest pointer (t345u)."""
-    sys.path.insert(0, os.path.join(workdir, "scripts"))
+def drop_mac_latest(workdir, token):
+    """Drop leftover Mac latest pointer (t345u). argos_rates.json NO se publica aquí (t375u).
+
+    argos_rates.json lo publica una sola vez por turno el workflow «NZD CHF TONA shadow» de Actions,
+    calculado sobre lo ya publicado en main. Antes el VPS lo publicaba también desde su clon local:
+    dos publicaciones del mismo feed por turno (t346u) y, a veces, con entradas distintas a main.
+    """
     sys.path.insert(0, HERE)
-    import argos_rates as AR  # noqa: WPS433
     import vps_git_push as P  # noqa: WPS433
-    result = AR.refresh_if_inputs_changed(root=workdir)
     mac_latest = os.path.join(workdir, "data", "_ingest", "latest", "mac-primary__nzchf-tona.json")
     removed = False
     if os.path.isfile(mac_latest):
         os.remove(mac_latest)
         removed = True
-    allowed = (
-        "data/argos_rates.json",
-        "data/_ingest/latest/mac-primary__nzchf-tona.json",
-    )
-    if not result.get("changed") and not removed:
-        return {"argos": result, "removed_mac_latest": False, "push": None}
-    msg = "[vps-push] argos refresh / clear mac-primary latest [skip netlify]"
+    if not removed:
+        return {"argos": "actions", "removed_mac_latest": False, "push": None}
+    allowed = ("data/_ingest/latest/mac-primary__nzchf-tona.json",)
+    msg = "[vps-push] clear mac-primary latest [skip netlify]"
     # If the mac-primary file was deleted, it must already be tracked for commit_and_push
     # to pick it up (tracked dirty). Untracked deletions are N/A.
     push = P.commit_and_push(workdir, allowed, msg, token, owned=P.NZD_B2_OWNED)
-    return {"argos": result, "removed_mac_latest": removed, "push": push}
+    return {"argos": "actions", "removed_mac_latest": removed, "push": push}
+
 
 def _run(cmd, cwd, env, timeout=600):
     r = subprocess.run(cmd, cwd=cwd, env=env, timeout=timeout)
@@ -128,11 +128,11 @@ def run(workdir, token):
     extra = {}
     if rc_push == 0:
         try:
-            extra = refresh_argos_and_drop_mac_latest(workdir, token)
+            extra = drop_mac_latest(workdir, token)
         except Exception as e:
-            # the B2 publish already succeeded; argos/mac-latest is a follow-up
-            extra = {"argos_error": "%s: %s" % (type(e).__name__, e)}
-            print("[nzd_b2_daily] AVISO argos/mac-latest: %s: %s" % (type(e).__name__, e), file=sys.stderr)
+            # the B2 publish already succeeded; mac-latest is a follow-up
+            extra = {"mac_latest_error": "%s: %s" % (type(e).__name__, e)}
+            print("[nzd_b2_daily] AVISO mac-latest: %s: %s" % (type(e).__name__, e), file=sys.stderr)
     return {"rc_nzd": rc_nzd, "rc_chf": rc_chf, "rc_tona": rc_tona, "rc_push": rc_push,
             "proxy": env["G8_RBNZ_PROXY_BASE"], "ok": rc_push == 0,
             "fetch_records": staged, "argos": extra}
