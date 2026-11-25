@@ -1,11 +1,14 @@
 # t334u: Fed H.4.1 / FRED SWPT semanal. OK expreso Sander a enganchar .github/.
-# Publicación oficial ~jueves 20:30 UTC → cron 21:00 UTC jueves.
+# t348u, orden Sander: cron swpt migrado al VPS, workflow solo manual.
+# El workflow queda solo con workflow_dispatch, como respaldo manual.
+# Publicación oficial ~16:30 America/New_York (jueves, o el siguiente día hábil US si el jueves es festivo).
+# Timer systemd g8-swpt-weekly: OnCalendar Thu 21:00 UTC y Fri 21:00 UTC (22:00 WAT).
+# El script no publica si hoy no es el día oficial de la regla de frescura (evita dos publicaciones).
+# El timer queda SIN habilitar hasta OK y fusión (t371u). Esta semana no se corta: Actions se queda como está.
 # Idempotente: sin cambio en data/SWPT.csv no hay commit.
 name: SWPT weekly
 
 on:
-  schedule:
-    - cron: '0 21 * * 4'
   workflow_dispatch: {}
 
 permissions:

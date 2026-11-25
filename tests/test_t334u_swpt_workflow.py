@@ -1,10 +1,11 @@
-"""t334u: el workflow SWPT solo toca data/SWPT.csv, tiene dispatch y usa FRED_API_KEY por nombre."""
+"""t334u / t348u: el workflow SWPT solo toca data/SWPT.csv, tiene dispatch y, tras t348u, ningún cron."""
 import os
 import re
 import unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 WF = os.path.join(ROOT, ".github", "workflows", "swpt_update.yml")
+TIMER = os.path.join(ROOT, "vps", "g8-swpt-weekly.timer")
 
 
 class SwptWorkflow(unittest.TestCase):
@@ -14,9 +15,16 @@ class SwptWorkflow(unittest.TestCase):
             cls.text = fh.read()
 
     def test_workflow_exists_and_has_dispatch_and_thursday_cron(self):
+        # orden Sander t348u: cron swpt migrado al VPS, workflow solo manual
         self.assertTrue(os.path.isfile(WF))
         self.assertIn("workflow_dispatch:", self.text)
-        self.assertRegex(self.text, r"cron:\s*'0 21 \* \* 4'")
+        self.assertNotIn("schedule:", self.text)
+        self.assertNotRegex(self.text, r"^\s*- cron:", re.M)
+        self.assertTrue(os.path.isfile(TIMER))
+        with open(TIMER, encoding="utf-8") as fh:
+            timer = fh.read()
+        self.assertIn("OnCalendar=Thu 21:00:00", timer)
+        self.assertIn("OnCalendar=Fri 21:00:00", timer)
 
     def test_only_adds_swpt_csv(self):
         adds = re.findall(r"git add (.+)", self.text)
