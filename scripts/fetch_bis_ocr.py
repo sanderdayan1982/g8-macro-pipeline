@@ -72,7 +72,10 @@ def fetch_bis_ocr_data(date_from: datetime, date_to: datetime) -> list[tuple[str
     Returns list of (date_str_YYYYMMDD, rate_value) tuples sorted ascending.
     Missing observations (OBS_STATUS=M, value=NaN) are filtered out.
     """
-    params = {"format": "csv"}
+    # t375u: mismo arreglo que fetch_bis_policy (t374u). Sin startPeriod la API v1 de WS_CBPOL
+    # puede responder 200 con 0 bytes; con la fecha inicial de la ventana que ya usa el script
+    # devuelve la serie. La ventana y el filtro de fechas no cambian.
+    params = {"format": "csv", "startPeriod": date_from.strftime("%Y-%m-%d")}
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "text/csv",
@@ -189,16 +192,31 @@ def main() -> int:
         rows, bis_rc = None, 1
 
     published = _pd.read_published(os.path.join(_ctx.root, 'data', OUTPUT_PATH.name))
+    # t375u: mismo criterio que fetch_bis_policy (t374u). El CSV publicado mezcla filas del BIS con
+    # decisiones verificadas (Acta P-1), que van por delante del BIS. Que lo publicado sea más reciente
+    # que la API no prueba que la API vaya atrasada: solo se consulta el bulk oficial y el respaldo se
+    # activa (DEGRADED) si el propio BIS (bulk) va por delante de la API. Filas no BIS más recientes no degradan.
     if rows is None or (published and rows[-1][0] < published[-1][0]):
         try:
             response = _ctx.requests(provider='bis', max_attempts=1).get(_bulk.URL, timeout=60)
             backup = _bulk.parse(response.content, 'NZ', date_from.date().isoformat(), today.date().isoformat())
-            overlap = _bulk.verify_overlap(backup, published)
-            if published and backup[-1][0] < published[-1][0]:
-                backup = backup + [r for r in published if r[0] > backup[-1][0]]
-            rows = backup
-            _ctx.degraded('BIS API failed; official WS_CBPOL bulk fallback verified on %d observations' % overlap)
-            print('BIS bulk fallback: %d observations; latest %s' % (len(rows), rows[-1][0]))
+            if rows is not None and backup[-1][0] <= rows[-1][0]:
+                print('BIS bulk: último %s, la API está al día (último %s); las filas posteriores de lo publicado '
+                      'no son del BIS (decisiones verificadas): sin respaldo'
+                      % (backup[-1][0], rows[-1][0]))
+            else:
+                overlap = _bulk.verify_overlap(backup, published)
+                bulk_last = backup[-1][0]
+                if published and backup[-1][0] < published[-1][0]:
+                    backup = backup + [r for r in published if r[0] > backup[-1][0]]
+                if rows is None:
+                    _ctx.degraded('BIS API failed; official WS_CBPOL bulk fallback verified on %d observations'
+                                  % overlap)
+                else:
+                    _ctx.degraded('API BIS por detrás del bulk (API %s, bulk %s); respaldo WS_CBPOL bulk '
+                                  'verificado en %d observaciones' % (rows[-1][0], bulk_last, overlap))
+                rows = backup
+                print('BIS bulk fallback: %d observations; latest %s' % (len(rows), rows[-1][0]))
         except Exception as exc:
             if rows is None:
                 _ctx.fail('BIS bulk fallback unavailable: %s' % exc)
