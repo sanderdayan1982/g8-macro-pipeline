@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-26T21:33:45.691620Z",
+ "generated_utc": "2026-11-26T22:19:57.968406Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -270,7 +270,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=37794)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40494)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -280,7 +280,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=87288)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=89988)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -290,7 +290,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=87288)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=89988)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -300,7 +300,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=37794)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=40494)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -310,7 +310,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=118791)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=121491)"
   }
  ],
  "unknown_count": 2,
@@ -2045,18 +2045,17 @@
   {
    "file": "OPTIONS_SURFACE.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-11-25",
+   "have_max": null,
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Dentro del presupuesto; calendario exacto de publicación sin validar",
+   "reason": "Sin observación legible para un feed del registro",
    "cause": null,
    "flags": [],
    "status": "EXCLUDED",
-   "age_business_days": 1,
    "publication_frequency": "excluded",
    "slow_fallback": false,
-   "note": "Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación incompleta."
+   "note": "Inconsistencia en opciones: 'latest_session'"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -2824,7 +2823,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=37794)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40494)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2834,7 +2833,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=87288)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=89988)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2844,7 +2843,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=87288)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=89988)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -2854,7 +2853,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=37794)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=40494)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2864,7 +2863,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=118791)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=121491)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
