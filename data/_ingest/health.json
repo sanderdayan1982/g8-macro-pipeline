@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-26T22:19:57.968406Z",
+ "generated_utc": "2026-11-26T23:22:23.139961Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -247,6 +247,57 @@
    "slow_fallback": false
   },
   {
+   "file": "MFV_G8_state.json",
+   "state": "NO_OBS_DATE",
+   "have_max": "2026-11-24",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAU.csv",
+   "state": "NO_PUBLICATION",
+   "have_max": "2026-11-24",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "INPUT_VERSION_UNKNOWN"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
+   "file": "MFV_G8_XAG.csv",
+   "state": "NO_PUBLICATION",
+   "have_max": "2026-11-24",
+   "expected_obs": null,
+   "calendar": "",
+   "basis": "PROVISIONAL",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
+   "cause": null,
+   "flags": [
+    "EXTERNAL_INPUTS_UNVERSIONED",
+    "INPUT_VERSION_UNKNOWN"
+   ],
+   "status": "ERROR",
+   "age_business_days": 2,
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
+  },
+  {
    "file": "alerts/brief.json",
    "status": "LATE",
    "state": "LATE",
@@ -263,6 +314,16 @@
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-26T22:49:22Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-26T22:49:22Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -270,7 +331,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40494)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=44099)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -280,7 +341,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=89988)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=93593)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -290,7 +351,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=89988)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=93593)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -300,7 +361,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=40494)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=44099)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -310,7 +371,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=121491)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=125096)"
   }
  ],
  "unknown_count": 2,
@@ -392,7 +453,7 @@
   },
   {
    "file": "AONIA.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "AU",
@@ -400,7 +461,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -425,7 +486,7 @@
    "file": "FLOOR_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -895,7 +956,7 @@
   },
   {
    "file": "AUD_BILL_1M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "AU",
@@ -903,13 +964,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "AU",
@@ -917,13 +978,13 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "AUD_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "AU",
@@ -931,7 +992,7 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1012,15 +1073,15 @@
   },
   {
    "file": "RY_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 0,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1480,7 +1541,7 @@
    "file": "ACM_G8_USD.csv",
    "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1498,7 +1559,7 @@
    "file": "ACM_G8_EUR.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1515,7 +1576,7 @@
    "file": "ACM_G8_JPY.csv",
    "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1533,7 +1594,7 @@
    "file": "ACM_G8_GBP.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1550,7 +1611,7 @@
    "file": "ACM_G8_CAD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1566,9 +1627,9 @@
   },
   {
    "file": "ACM_G8_AUD.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1577,7 +1638,7 @@
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 1,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -1681,324 +1742,54 @@
   },
   {
    "file": "MFV_G8_state.json",
-   "state": "VERIFIED_INPUTS",
+   "state": "NO_OBS_DATE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-17",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_XAU.csv",
-   "state": "VERIFIED_INPUTS",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-17",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_XAG.csv",
-   "state": "VERIFIED_INPUTS",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-17",
+   "expected_obs": null,
    "calendar": "",
    "basis": "PROVISIONAL",
-   "reason": "Salida semanal ligada por huellas a sus entradas originales verificadas; fechas previas al arrastre. Frescura operativa, no validación de señal o rentabilidad.",
+   "reason": "Última ejecución de metales falló o agotó el plazo; se conserva la publicación completa anterior.",
    "cause": null,
    "flags": [
     "EXTERNAL_INPUTS_UNVERSIONED",
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "ERROR",
    "age_business_days": 2,
-   "publication_frequency": "weekly",
-   "slow_fallback": false,
-   "input_evidence": {
-    "XAU": {
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "BE10": {
-      "source": "data/RY_G8_USD.csv:BE10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DGS10": {
-      "source": "FRED:DGS10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "EFFR": {
-      "source": "FRED:EFFR",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "NFA_DEBT": {
-      "source": "Treasury:DebtToPenny",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "WRESBAL": {
-      "source": "FRED:WRESBAL",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "WTREGEN": {
-      "source": "FRED:WTREGEN",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-18",
-      "used_observation": "2026-11-18"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     }
-    },
-    "XAG": {
-     "price:XAG": {
-      "source": "yfinance:SI=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:XAU": {
-      "source": "yfinance:GC=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "price:COPPER": {
-      "source": "yfinance:HG=F",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-25",
-      "used_observation": "2026-11-24"
-     },
-     "REAL10": {
-      "source": "data/RY_G8_USD.csv:REAL10",
-      "publication_frequency": "daily",
-      "latest_observation": "2026-11-24",
-      "used_observation": "2026-11-24"
-     },
-     "DTWEXBGS": {
-      "source": "FRED:DTWEXBGS",
-      "publication_frequency": "weekly",
-      "latest_observation": "2026-11-20",
-      "used_observation": "2026-11-20"
-     }
-    }
-   }
+   "publication_frequency": "weekly:SAT",
+   "slow_fallback": false
   },
   {
    "file": "MFV_G8_walkforward_XAU.csv",
@@ -2103,7 +1894,7 @@
    "file": "AUD_NOWCAST.csv",
    "state": "CURRENT",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2816,6 +2607,16 @@
    "reason": "unidad systemd en fallo (result=exit-code rc=1); un timer que falla es una incidencia aunque el fichero esté al día"
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-26T22:49:22Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-26T22:49:22Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -2823,7 +2624,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40494)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=44099)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2833,7 +2634,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=89988)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=93593)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2843,7 +2644,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=89988)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=93593)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -2853,7 +2654,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=40494)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=44099)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2863,7 +2664,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=121491)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=125096)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
