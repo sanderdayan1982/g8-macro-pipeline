@@ -1,15 +1,15 @@
 {
   "schema": "G8_METALS_INPUTS/1",
-  "generated_utc": "2026-11-25T22:46:41.377498+00:00",
+  "generated_utc": "2026-11-26T22:48:47.681408+00:00",
   "anchor": "2026-11-24",
-  "status": "VERIFIED",
-  "error": null,
+  "status": "ERROR",
+  "error": "XAU: Daily Treasury debt unavailable; no verified weekly/monthly equivalent. Quarterly fallback prohibited.",
   "inputs": {
     "XAU": {
       "price:XAU": {
         "source": "yfinance:GC=F",
         "publication_frequency": "daily",
-        "latest_observation": "2026-11-25",
+        "latest_observation": "2026-11-26",
         "used_observation": "2026-11-24"
       },
       "BE10": {
@@ -29,55 +29,25 @@
         "publication_frequency": "daily",
         "latest_observation": "2026-11-24",
         "used_observation": "2026-11-24"
-      },
-      "NFA_DEBT": {
-        "source": "Treasury:DebtToPenny",
-        "publication_frequency": "daily",
-        "latest_observation": "2026-11-24",
-        "used_observation": "2026-11-24"
-      },
-      "WRESBAL": {
-        "source": "FRED:WRESBAL",
-        "publication_frequency": "weekly",
-        "latest_observation": "2026-11-18",
-        "used_observation": "2026-11-18"
-      },
-      "WTREGEN": {
-        "source": "FRED:WTREGEN",
-        "publication_frequency": "weekly",
-        "latest_observation": "2026-11-18",
-        "used_observation": "2026-11-18"
-      },
-      "DTWEXBGS": {
-        "source": "FRED:DTWEXBGS",
-        "publication_frequency": "weekly",
-        "latest_observation": "2026-11-20",
-        "used_observation": "2026-11-20"
-      },
-      "REAL10": {
-        "source": "data/RY_G8_USD.csv:REAL10",
-        "publication_frequency": "daily",
-        "latest_observation": "2026-11-24",
-        "used_observation": "2026-11-24"
       }
     },
     "XAG": {
       "price:XAG": {
         "source": "yfinance:SI=F",
         "publication_frequency": "daily",
-        "latest_observation": "2026-11-25",
+        "latest_observation": "2026-11-26",
         "used_observation": "2026-11-24"
       },
       "price:XAU": {
         "source": "yfinance:GC=F",
         "publication_frequency": "daily",
-        "latest_observation": "2026-11-25",
+        "latest_observation": "2026-11-26",
         "used_observation": "2026-11-24"
       },
       "price:COPPER": {
         "source": "yfinance:HG=F",
         "publication_frequency": "daily",
-        "latest_observation": "2026-11-25",
+        "latest_observation": "2026-11-26",
         "used_observation": "2026-11-24"
       },
       "REAL10": {
@@ -94,11 +64,5 @@
       }
     }
   },
-  "outputs": {
-    "MFV_G8_XAU.csv": "39b712c4519cada84a0e7418b69a3a6e3e4b44697015b08e338c4f79ee12107c",
-    "MFV_G8_XAG.csv": "f48d09c47a564905369b2c779a112d32d74fd670cced073e8c97b05c2e9fa05d",
-    "MFV_G8_state.json": "ad9f1b7fbaa97c86747d019711d8eae4efddedd6882feb3da1a4ffefedf556f1",
-    "MFV_G8_walkforward_XAU.csv": "2a65698486b6676445906363272fa8c9a437427af79f14e0f7dc3301635ce585",
-    "MFV_G8_walkforward_XAG.csv": "599225f063358521a0087d8afdc57c0f8bc7c712a341e1b1ea49d676b9e0d31e"
-  }
+  "outputs": {}
 }

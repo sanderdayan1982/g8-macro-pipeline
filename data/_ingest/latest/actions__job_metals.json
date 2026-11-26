@@ -1,7 +1,13 @@
 {
  "deadline_utc": null,
  "executor": "actions",
- "failed": [],
+ "failed": [
+  {
+   "name": "metals_fairvalue",
+   "rc": 1,
+   "status": "FAILED"
+  }
+ ],
  "job": "metals",
  "reserve_s": null,
  "restored": [],
@@ -11,15 +17,24 @@
    "allowed_s": 1080.0,
    "cap_s": 1080.0,
    "cmd": "/srv/g8/venv/bin/python scripts/metals_fairvalue_g8.py",
+   "kept_valid_outputs": [
+    "MFV_G8_XAG.csv",
+    "MFV_G8_XAG_daily_shadow.csv",
+    "MFV_G8_XAU.csv",
+    "MFV_G8_state.json",
+    "MFV_G8_walkforward_XAG.csv",
+    "MFV_G8_walkforward_XAU.csv",
+    "_ingest/metals_provenance.json"
+   ],
    "name": "metals_fairvalue",
    "phase": "fetch",
-   "rc": 0,
-   "secs": 83.9,
-   "started_utc": "2026-11-25T22:45:17Z",
-   "status": "OK"
+   "rc": 1,
+   "secs": 207.2,
+   "started_utc": "2026-11-26T22:45:20Z",
+   "status": "FAILED"
   }
  ],
  "time_limited": [],
  "unrestorable": [],
- "written_utc": "2026-11-25T22:46:41Z"
+ "written_utc": "2026-11-26T22:48:48Z"
 }
