@@ -11,8 +11,7 @@
 name: Ingest Watch
 
 on:
-  schedule:
-    - cron: '13 17 * * 1,3,5'
+  # t399u: el calendario pasa al timer g8-ingest-watch del VPS. Queda solo el disparo manual.
   workflow_dispatch: {}
 
 permissions:
@@ -122,7 +121,7 @@ jobs:
           git add data/_ingest/freshness.json data/_ingest/freshness_compare/ 2>/dev/null || true
           git add data/_ingest/health.json data/_ingest/health_alert_state.json 2>/dev/null || true
           if git diff --cached --quiet; then echo "sin cambios de estado"; exit 0; fi
-          git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ)"
+          git commit -m "chore: ingest watch state $(date -u +%Y-%m-%dT%H:%MZ) [skip netlify]"
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7)
 
       - name: Telegram no entregado → job en rojo (GitHub envía email)
