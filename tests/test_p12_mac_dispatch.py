@@ -28,7 +28,8 @@ sys.path.insert(0, os.path.join(ROOT, "mac"))
 import dispatch_workflows as D  # noqa: E402
 
 TOKEN = "github_pat_SECRET_DISPATCH_do_not_print"
-EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml"}  # cme_options sale: el colector ya no paga dos veces (orden Sander 19-nov)
+# t402u · orden expresa de Sander 26-nov-2026: g8_port_run pasa al timer g8-port-run del VPS; el cron de GitHub se retira y la comprobación apunta al timer.
+EXCLUDED = {"ingest_watch.yml", "maintenance_agent.yml", "g8_port_run.yml"}  # cme_options sale: el colector ya no paga dos veces (orden Sander 19-nov)
 # t334u, orden expresa Sander 22-nov: SWPT se engancha en .github/ con cron propio.
 # No es un turno del dispatcher (candado de 49 de test_dispatch_prod.py intacto).
 # t339u, orden expresa Sander 23-nov: nuevo workflow soberano 10Y

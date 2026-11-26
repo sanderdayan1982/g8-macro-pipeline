@@ -141,8 +141,16 @@ class SuiteContract(unittest.TestCase):
     def test_cot_calendar_is_friday_release_and_saturday_retry(self):
         cal = self.c["cot_calendar"]
         yml = (ROOT / cal["workflow"]).read_text(encoding="utf-8")
+        # t402u · orden expresa de Sander 26-nov-2026: g8_port_run pasa al timer g8-port-run del VPS; el cron de GitHub se retira y la comprobación apunta al timer.
+        timer = (ROOT / "vps" / "g8-port-run.timer").read_text(encoding="utf-8")
+        cron_to_oncalendar = {
+            "5 21 * * 5": "OnCalendar=Fri *-*-* 21:05:00",
+            "5 9 * * 6": "OnCalendar=Sat *-*-* 09:05:00",
+            "5 21 * * 1": "OnCalendar=Mon *-*-* 21:05:00",
+            "5 9 * * 2": "OnCalendar=Tue *-*-* 09:05:00",
+        }
         for cron in cal["dashboard_cron_utc"]:
-            self.assertIn("cron: '%s'" % cron, yml)
+            self.assertIn(cron_to_oncalendar[cron], timer)
         self.assertIn("report as of Tue", yml)
         with (ROOT / "sources" / "schedules.csv").open(encoding="utf-8") as fh:
             rows = {r["pass_id"]: r for r in csv.DictReader(fh)}

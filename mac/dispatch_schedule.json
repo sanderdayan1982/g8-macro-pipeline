@@ -1,5 +1,5 @@
 {
- "_doc": "acta P-12 · turnos que el Mac lanza con workflow_dispatch a su hora nominal (UTC). Mismas expresiones cron que los workflows (tests/test_p12_mac_dispatch.py lo comprueba); el cron de GitHub queda como segundo intento. Excluidos: ingest_watch y maintenance_agent (un lanzamiento manual se salta su calendario de días alternos). cme_options entra con sus dos crons diarios: el colector calcula lo pendiente desde canonical/ y ya no paga dos veces (orden Sander 19-nov).",
+ "_doc": "acta P-12 · turnos que el Mac lanza con workflow_dispatch a su hora nominal (UTC). Mismas expresiones cron que los workflows (tests/test_p12_mac_dispatch.py lo comprueba); el cron de GitHub queda como segundo intento. Excluidos: ingest_watch y maintenance_agent (un lanzamiento manual se salta su calendario de días alternos); g8_port_run (pasa al timer g8-port-run del VPS, orden t402u). cme_options entra con sus dos crons diarios: el colector calcula lo pendiente desde canonical/ y ya no paga dos veces (orden Sander 19-nov).",
  "repo": "sanderdayan1982/g8-macro-pipeline",
  "ref": "main",
  "catchup_hours": 3,
@@ -12,10 +12,6 @@
   {"id": "cme_options_1",   "workflow": "cme_options.yml",    "cron": "30 13 * * *"},
   {"id": "cme_options_2",   "workflow": "cme_options.yml",    "cron": "0 17 * * *"},
   {"id": "daily",           "workflow": "daily_update.yml",   "cron": "30 21 * * 1-5"},
-  {"id": "g8_port_fri",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 5"},
-  {"id": "g8_port_sat",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 6"},
-  {"id": "g8_port_mon",     "workflow": "g8_port_run.yml",    "cron": "5 21 * * 1"},
-  {"id": "g8_port_tue",     "workflow": "g8_port_run.yml",    "cron": "5 9 * * 2"},
   {"id": "votes_first",     "workflow": "votes_ingest.yml",   "cron": "0 3 * * 2-6", "inputs": {"attempt": "first"}},
   {"id": "votes_final",     "workflow": "votes_ingest.yml",   "cron": "20 4 * * 2-6", "inputs": {"attempt": "final"}}
  ]
