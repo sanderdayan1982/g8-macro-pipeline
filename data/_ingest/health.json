@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-26T05:01:13.905569Z",
+ "generated_utc": "2026-11-26T08:34:16.089775Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -38,7 +38,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -48,7 +48,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -58,7 +58,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -68,7 +68,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=59397)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=71999)"
   }
  ],
  "unknown_count": 2,
@@ -90,15 +90,18 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "TARGET",
    "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T08:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T08:00:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1945,8 +1948,8 @@
   {
    "file": "CHF_SPOT_1Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1959,8 +1962,8 @@
   {
    "file": "CHF_SPOT_2Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1973,8 +1976,8 @@
   {
    "file": "CHF_SPOT_3Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1987,8 +1990,8 @@
   {
    "file": "CHF_SPOT_4Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2001,8 +2004,8 @@
   {
    "file": "CHF_SPOT_5Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2015,8 +2018,8 @@
   {
    "file": "CHF_SPOT_6Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2029,8 +2032,8 @@
   {
    "file": "CHF_SPOT_7Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2043,8 +2046,8 @@
   {
    "file": "CHF_SPOT_8Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2057,8 +2060,8 @@
   {
    "file": "CHF_SPOT_9Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2071,8 +2074,8 @@
   {
    "file": "CHF_SPOT_10Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2085,8 +2088,8 @@
   {
    "file": "CHF_SPOT_11Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2099,8 +2102,8 @@
   {
    "file": "CHF_SPOT_12Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2113,8 +2116,8 @@
   {
    "file": "CHF_SPOT_13Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2127,8 +2130,8 @@
   {
    "file": "CHF_SPOT_14Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2141,8 +2144,8 @@
   {
    "file": "CHF_SPOT_15Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2155,8 +2158,8 @@
   {
    "file": "CHF_SPOT_16Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2169,8 +2172,8 @@
   {
    "file": "CHF_SPOT_17Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2183,8 +2186,8 @@
   {
    "file": "CHF_SPOT_18Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2197,8 +2200,8 @@
   {
    "file": "CHF_SPOT_19Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2211,8 +2214,8 @@
   {
    "file": "CHF_SPOT_20Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2225,8 +2228,8 @@
   {
    "file": "CHF_SPOT_21Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2239,8 +2242,8 @@
   {
    "file": "CHF_SPOT_22Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2253,8 +2256,8 @@
   {
    "file": "CHF_SPOT_23Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2267,8 +2270,8 @@
   {
    "file": "CHF_SPOT_24Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2281,8 +2284,8 @@
   {
    "file": "CHF_SPOT_25Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2295,8 +2298,8 @@
   {
    "file": "CHF_SPOT_26Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2309,8 +2312,8 @@
   {
    "file": "CHF_SPOT_27Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2323,8 +2326,8 @@
   {
    "file": "CHF_SPOT_28Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2337,8 +2340,8 @@
   {
    "file": "CHF_SPOT_29Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2351,8 +2354,8 @@
   {
    "file": "CHF_SPOT_30Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2592,7 +2595,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2602,7 +2605,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2612,7 +2615,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=27894)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=40496)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2622,7 +2625,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=59397)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=71999)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
