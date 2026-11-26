@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-26T03:46:37.233019Z",
+ "generated_utc": "2026-11-26T05:01:13.905569Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -38,7 +38,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -48,7 +48,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -58,7 +58,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -68,14 +68,14 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=54897)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=59397)"
   }
  ],
  "unknown_count": 2,
  "feeds": [
   {
    "file": "SOFR.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-24",
    "calendar": "US_REPO",
@@ -167,7 +167,7 @@
    "file": "FLOOR_USD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": "Última fecha efectiva vigente. Las fechas futuras publicadas por FRED se conservan como anuncios y no cuentan como observaciones actuales.",
@@ -196,15 +196,15 @@
   },
   {
    "file": "FLOOR_CAD.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "event+daily",
    "slow_fallback": false
@@ -301,9 +301,9 @@
   },
   {
    "file": "US_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -315,9 +315,9 @@
   },
   {
    "file": "US_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -329,9 +329,9 @@
   },
   {
    "file": "US_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -343,9 +343,9 @@
   },
   {
    "file": "US_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -725,9 +725,9 @@
   },
   {
    "file": "RY_G8_USD.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -755,15 +755,15 @@
   },
   {
    "file": "RY_G8_CAD.csv",
-   "state": "CURRENT",
+   "state": "PENDING_TIME_UNKNOWN",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "CA",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -800,9 +800,9 @@
   },
   {
    "file": "ACM_TP_10Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-23",
+   "expected_obs": "2026-11-24",
    "calendar": "US",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -815,159 +815,203 @@
   },
   {
    "file": "NZD_BILL_30D.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_60D.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BILL_90D.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_1Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_2Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_5Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_BOND_10Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2030.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2035.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2040.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "NZD_IIB_2050.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-27T04:04:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-27T04:04:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
@@ -1203,7 +1247,7 @@
   },
   {
    "file": "ACM_G8_USD.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-24",
    "expected_obs": "2026-11-23",
    "calendar": "",
@@ -1770,18 +1814,17 @@
   {
    "file": "OPTIONS_SURFACE.json",
    "state": "NOT_MONITORED",
-   "have_max": "2026-11-24",
+   "have_max": null,
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Dentro del presupuesto; calendario exacto de publicación sin validar",
+   "reason": "Sin observación legible para un feed del registro",
    "cause": null,
    "flags": [],
    "status": "EXCLUDED",
-   "age_business_days": 2,
    "publication_frequency": "excluded",
    "slow_fallback": false,
-   "note": "Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación incompleta."
+   "note": "Inconsistencia en opciones: 'latest_session'"
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -2549,7 +2592,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2559,7 +2602,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2569,7 +2612,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=23394)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=27894)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2579,7 +2622,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=54897)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=59397)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
