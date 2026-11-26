@@ -9,7 +9,8 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
-    "ASIA": [("tona", "fetch_tona.py"), ("aonia", "fetch_aonia.py"),
+    # t402u: TONA.csv + ingest los publica solo g8-nzd-b2-daily (VPS), no el cron de GitHub.
+    "ASIA": [("aonia", "fetch_aonia.py"),
              ("aud_bills", "fetch_aud_bills.py"), ("jpy_bills", "fetch_jpy_bills.py"), ("jpy_real", "fetch_jpy_real.py")],
     "EU": [("estr", "fetch_estr.py"), ("sonia", "fetch_sonia.py"),
            ("eur_bills", "fetch_eur_bills.py"), ("gbp_bills", "fetch_gbp_bills.py"),

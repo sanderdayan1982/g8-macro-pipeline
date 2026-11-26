@@ -100,12 +100,7 @@ jobs:
         continue-on-error: true
         id: aonia
 
-      - name: Fetch TONA (JPY RFR)
-        timeout-minutes: 6
-        run: python scripts/tools/g8step.py --name tona --cap 240 -- python scripts/fetch_tona.py
-        continue-on-error: true
-        id: tona
-
+      # t402u: TONA.csv + ingest solo desde g8-nzd-b2-daily (VPS).
       - name: Fetch CORRA (CAD RFR)
         timeout-minutes: 6
         run: python scripts/tools/g8step.py --name corra --cap 240 -- python scripts/fetch_corra.py
@@ -210,7 +205,6 @@ jobs:
           echo "| ESTR       | ${{ steps.estr.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SONIA      | ${{ steps.sonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AONIA      | ${{ steps.aonia.outcome }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TONA       | ${{ steps.tona.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CORRA      | ${{ steps.corra.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NZD OCR    | ${{ steps.ocr.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| BoE Bank Rate (GB)  | ${{ steps.gb_policy.outcome }} |" >> $GITHUB_STEP_SUMMARY
@@ -427,7 +421,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          TZ=UTC python scripts/argos_rates.py
+          # t402u: argos_rates.json solo lo publica nzd_b2_daily en el VPS.
           mkdir -p "$RUNNER_TEMP/alerts-full"
           for f in brief.json state.json; do
             if [ -f "data/alerts/private/$f" ]; then
@@ -474,7 +468,7 @@ jobs:
           fi
 
           CHANGED=$(git diff --staged --name-only | wc -l)
-          git commit -m "chore: daily data update $(date -u '+%Y-%m-%d') [${CHANGED} files]"
+          git commit -m "chore: daily data update $(date -u '+%Y-%m-%d') [${CHANGED} files] [skip netlify]"
           bash scripts/tools/git_push_retry.sh 5   # acta P-11 (helper P-7): on 6-oct the old loop hit a rebase conflict and lost the run
 
       # PR-A: filas 4, 5, 7 y 8 más brief/state completos. El crédito solo si el fichero existe.
