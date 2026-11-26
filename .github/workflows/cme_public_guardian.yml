@@ -1,0 +1,36 @@
+# t384u: guardián CME en todo push a main (también los de solo datos) y en PR.
+# No filtra por rutas: así un push que solo toca data/ no se salta el chequeo
+# (Validate smoke sí lo hace, y por eso no saltó el 25-nov).
+# Solo corre tests/test_cme_public_guardian.py. Aviso Telegram con los secretos
+# ya existentes (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID). No crea secretos.
+name: CME public guardian
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guardian:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run CME public guardian
+        run: python3 -m unittest tests.test_cme_public_guardian
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/notify_telegram.py --fail "workflow=cme_public_guardian run=${{ github.run_number }} event=${{ github.event_name }} — guardián CME en rojo"
