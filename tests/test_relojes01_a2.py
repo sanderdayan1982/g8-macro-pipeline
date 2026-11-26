@@ -32,16 +32,28 @@ def _doc(day, generated="2026-11-16T21:05:00+00:00", lf_z=0.2):
 class MondayTuesdayCrons(unittest.TestCase):
     def test_monday_and_tuesday_crons_are_present(self):
         yml = (ROOT / ".github" / "workflows" / "g8_port_run.yml").read_text(encoding="utf-8")
-        for cron in ("5 21 * * 5", "5 9 * * 6", "5 21 * * 1", "5 9 * * 2"):
-            self.assertIn("cron: '%s'" % cron, yml)
+        # t402u · orden expresa de Sander 26-nov-2026: g8_port_run pasa al timer g8-port-run del VPS; el cron de GitHub se retira y la comprobación apunta al timer.
+        timer = (ROOT / "vps" / "g8-port-run.timer").read_text(encoding="utf-8")
+        for oncal in (
+            "OnCalendar=Fri *-*-* 21:05:00",
+            "OnCalendar=Sat *-*-* 09:05:00",
+            "OnCalendar=Mon *-*-* 21:05:00",
+            "OnCalendar=Tue *-*-* 09:05:00",
+        ):
+            self.assertIn(oncal, timer)
         self.assertIn("20:30 UTC in winter", yml)
         self.assertIn("report as of Tue", yml)
         self.assertIn("--metals-after-cot", yml)
         self.assertNotIn("metals_fairvalue_g8.py", yml)
-        with open(ROOT / "mac" / "dispatch_schedule.json", encoding="utf-8") as fh:
-            slots = json.load(fh)["slots"]
-        port = {s["cron"] for s in slots if s["workflow"] == "g8_port_run.yml"}
-        self.assertEqual(port, {"5 21 * * 5", "5 9 * * 6", "5 21 * * 1", "5 9 * * 2"})
+        self.assertEqual(
+            {line for line in timer.splitlines() if line.startswith("OnCalendar=")},
+            {
+                "OnCalendar=Mon *-*-* 21:05:00",
+                "OnCalendar=Tue *-*-* 09:05:00",
+                "OnCalendar=Fri *-*-* 21:05:00",
+                "OnCalendar=Sat *-*-* 09:05:00",
+            },
+        )
         with open(ROOT / "sources" / "schedules.csv", encoding="utf-8") as fh:
             rows = {r["pass_id"]: r for r in csv.DictReader(fh)}
         self.assertEqual(rows["COT_MON"]["cron_utc"], "5 21 * * 1")

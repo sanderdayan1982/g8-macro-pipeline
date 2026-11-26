@@ -1,0 +1,16 @@
+[Unit]
+Description=G8 VPS · g8_port_run lun/vie 21:05 UTC (22:05 WAT) y mar/sáb 09:05 UTC (10:05 WAT) · orden Sander t400u · timer sin habilitar
+
+[Timer]
+# Mismo calendario que el cron de GitHub que el PR hermano apaga en g8-macro-pipeline (g8_port_run.yml).
+# No se habilita sin el OK de Sander (t371u). Fusionar ese PR en el mismo momento que se habilite.
+OnCalendar=Mon *-*-* 21:05:00
+OnCalendar=Tue *-*-* 09:05:00
+OnCalendar=Fri *-*-* 21:05:00
+OnCalendar=Sat *-*-* 09:05:00
+Persistent=true
+AccuracySec=1min
+Unit=g8-port-run.service
+
+[Install]
+WantedBy=timers.target
