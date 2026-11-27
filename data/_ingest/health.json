@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-27T08:46:06.427102Z",
+ "generated_utc": "2026-11-27T12:17:32.160084Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -321,7 +321,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=78303)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=90900)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -331,7 +331,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=127797)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=140394)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -341,7 +341,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=127797)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=140394)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -351,7 +351,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=78303)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=90900)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -361,7 +361,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=159300)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=171897)"
   }
  ],
  "unknown_count": 2,
@@ -401,15 +401,18 @@
   },
   {
    "file": "SONIA.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "GB",
    "basis": "OFICIAL_GENERAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T11:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T11:00:00Z",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -653,85 +656,109 @@
   },
   {
    "file": "EUR_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "EUR_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
-   "status": "CURRENT",
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T12:00:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
+   "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T12:00:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1333,30 +1360,38 @@
   },
   {
    "file": "CHF_NOM_10Y.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-25",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "CH",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T09:01:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T09:01:00Z",
    "age_business_days": 2,
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "CHF_SARON.csv",
-   "state": "DUE",
+   "state": "OVERDUE",
    "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-25",
    "calendar": "CH",
    "basis": "PROVISIONAL",
-   "reason": null,
-   "cause": null,
-   "flags": [],
+   "reason": "Publicada; espera la próxima pasada programada (1 observación, dentro de plazo hasta 2026-11-30T09:01:00Z UTC)",
+   "cause": "SIN_PASADA_PROGRAMADA",
+   "flags": [
+    "CAUSA_SIN_PASADA_PROGRAMADA",
+    "RULE_PROVISIONAL"
+   ],
    "status": "PENDING",
+   "sla_deadline_utc": "2026-11-30T09:01:00Z",
    "age_business_days": 3,
    "publication_frequency": "daily",
    "slow_fallback": false
@@ -1550,7 +1585,7 @@
   },
   {
    "file": "ACM_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "",
@@ -1560,7 +1595,7 @@
    "flags": [
     "INPUT_VERSION_UNKNOWN"
    ],
-   "status": "CURRENT",
+   "status": "PENDING",
    "age_business_days": 2,
    "publication_frequency": "derived",
    "slow_fallback": false
@@ -2407,7 +2442,7 @@
   },
   {
    "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "CURRENT",
+   "state": "DUE",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -2415,15 +2450,15 @@
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "daily",
    "slow_fallback": false
   },
   {
    "file": "ES_10Y_DAILY.csv",
    "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -2435,15 +2470,15 @@
   },
   {
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
-   "state": "CURRENT",
-   "have_max": "2026-11-24",
-   "expected_obs": "2026-11-24",
+   "state": "DUE",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "CURRENT",
+   "status": "PENDING",
    "publication_frequency": "derived",
    "slow_fallback": false
   },
@@ -2607,7 +2642,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=78303)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=90900)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2617,7 +2652,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=127797)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=140394)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2627,7 +2662,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=127797)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=140394)"
   },
   {
    "file": "vps/code_lag:freshness_watch.py",
@@ -2637,7 +2672,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=78303)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (freshness_watch.py, age_sec=90900)"
   },
   {
    "file": "vps/code_lag:swpt_weekly.py",
@@ -2647,7 +2682,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T12:22:18Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=159300)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (swpt_weekly.py, age_sec=171897)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
