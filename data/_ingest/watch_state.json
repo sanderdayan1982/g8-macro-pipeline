@@ -1,8 +1,12 @@
 {
  "active": {
   "actions:daily_update:duplicate_turn": {
-   "sent_ts": 1795642504.9300096,
+   "sent_ts": 1795751309.1237113,
    "text": "mismo feed publicado dos veces en el mismo turno (daily_update: 2 publicaciones, cabían 1, turno 2026-11-24T21:30Z–2026-11-25T21:30Z, commits 0477368d, 80d1f0c4). — su registro ya no existe: sin evidencia de recuperación"
+  },
+  "actions:job:metals:step:metals_fairvalue": {
+   "sent_ts": 1795751309.1237113,
+   "text": "Actions metals: el paso metals_fairvalue terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:job:verify_freshness:step:private_verify_freshness": {
    "sent_ts": 1795714227.0110016,
@@ -13,7 +17,7 @@
    "text": "Actions verify_usd_factor: el paso private_verify_usd_factor terminó con código 1 (ver el registro del job). Sus salidas válidas se conservan; las inválidas se restauraron al último válido."
   },
   "actions:metals:duplicate_turn": {
-   "sent_ts": 1795664799.9636433,
+   "sent_ts": 1795751309.1237113,
    "text": "mismo feed publicado dos veces en el mismo turno (metals: 3 publicaciones, cabían 1, turno 2026-11-21T07:00Z–2026-11-28T07:00Z, commits 607f7c9b, fd725530, b71e2ea6)."
   },
   "actions:usd_factor:duplicate_turn": {
@@ -25,12 +29,36 @@
    "text": "vps-prod: sin latido de la ejecución de las 19:30 (Africa/Malabo) del 26-Nov; último latido 2026-11-25T18:30:17Z. NZD/CHF/TONA pueden no estar actualizándose."
   },
   "proxy:active:NZD_CASH_ON": {
-   "sent_ts": 1795654749.1419308,
-   "text": "G8 · NZD_CASH_ON: PROXY activo = NZD_OCR del 2026-11-13 al 2026-11-25 (fuente/fecha visibles en el CSV). Un dato PROXY no vota. Cuando RBNZ B2 INM.DN.NZK (RBNZ vía proxy CF) vuelva, recuperación automática."
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · NZD_CASH_ON: PROXY activo = NZD_OCR del 2026-11-13 al 2026-11-26 (fuente/fecha visibles en el CSV). Un dato PROXY no vota. Cuando RBNZ B2 INM.DN.NZK (RBNZ vía proxy CF) vuelva, recuperación automática."
+  },
+  "proxy:late2:FLOOR_CAD": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · FLOOR_CAD: 2 días hábiles tarde (último oficial 2026-11-25, esperado 2026-11-27, 2 d.h.). Aviso; aún no se activa sustituto."
+  },
+  "proxy:late2:NZD_BILL_90D": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · NZD_BILL_90D: 2 días hábiles tarde (último oficial 2026-11-24, esperado 2026-11-26, 2 d.h.). Aviso; aún no se activa sustituto."
+  },
+  "proxy:late2:NZD_BOND_5Y": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · NZD_BOND_5Y: 2 días hábiles tarde (último oficial 2026-11-24, esperado 2026-11-26, 2 d.h.). Aviso; aún no se activa sustituto."
+  },
+  "proxy:late2:NZD_IIB_2035": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · NZD_IIB_2035: 2 días hábiles tarde (último oficial 2026-11-24, esperado 2026-11-26, 2 d.h.). Aviso; aún no se activa sustituto."
+  },
+  "proxy:late2:NZD_NOM_RBNZ": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · NZD_NOM_RBNZ: 2 días hábiles tarde (último oficial 2026-11-24, esperado 2026-11-26, 2 d.h.). Aviso; aún no se activa sustituto."
+  },
+  "proxy:late2:SONIA": {
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · SONIA: 2 días hábiles tarde (último oficial 2026-11-24, esperado 2026-11-26, 2 d.h.). Aviso; aún no se activa sustituto."
   },
   "proxy:late3:CHF_SPOT_10Y": {
-   "sent_ts": 1795654749.1419308,
-   "text": "G8 · CHF_SPOT_10Y: 3 días hábiles tarde (último oficial 2026-10-30, esperado 2026-11-26, 19 d.h.). no hay sustituto preaprobado."
+   "sent_ts": 1795751309.1237113,
+   "text": "G8 · CHF_SPOT_10Y: 3 días hábiles tarde (último oficial 2026-10-30, esperado 2026-11-27, 20 d.h.). no hay sustituto preaprobado."
   }
  },
  "pending": []
