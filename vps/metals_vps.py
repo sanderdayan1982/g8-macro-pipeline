@@ -2,12 +2,14 @@
 """metals_vps.py — job systemd VPS: Metals Fair Value / MDP (t354u).
 
 Orden Sander 24-nov (t354u): migrado al VPS, sin cron ni turno en GitHub.
-Mismos pasos que .github/workflows/metals_update.yml (que queda solo con
-workflow_dispatch como respaldo manual):
+El respaldo manual sigue en .github/workflows/metals_update.yml (solo workflow_dispatch).
+t399u: este binario trae la cadena (fila 1) y no publica el brief ya recortado:
 
-  private pull (filas 6,11,12) → metals_fairvalue_g8.py vía g8step → ledger,
-  refresh_brief_snapshot, health_monitor → commit [vps-push] de las rutas del job
-  → private push (filas 11,12) → private verify → registro verify_metals [vps-push].
+  private pull (filas 1,6,11,12) → metals_fairvalue_g8.py vía g8step → ledger,
+  refresh_brief_snapshot, health_monitor → proyección pública (apply_public_alerts)
+  → commit [vps-push] de las rutas del job (sin BRIEF_KEYS)
+  → private push desde data/alerts/private/ (filas 11,12) → private verify
+  → registro verify_metals [vps-push].
 
 Dos unidades usan este binario, cada una con su clon y su flock:
   g8-metals-weekly  (G8_VPS_JOB=metals)         sáb 07:00 UTC (MDP semanal)
@@ -17,11 +19,13 @@ publicaciones del mismo feed a la vez.
 
 Secretos (por nombre, desde /etc/g8/secrets.env; nunca se imprimen):
   G8_FULL            push al repo público (commit_and_push)
-  G8_DATA_READ_CI    private pull de g8-macro-data (filas 6,11,12)
+  G8_DATA_READ_CI    private pull de g8-macro-data (filas 1,6,11,12; la 1 es la cadena)
   G8_DATA_WRITE      private push de g8-macro-data (filas 11,12)
   FRED_API_KEY       opcional (sin ella, CSV de FRED sin clave)
   TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID  los usa g8-alarm@ (OnFailure), no este script.
-Datos con licencia: data/OPTIONS_SURFACE.json (fila 6) se borra del clon al terminar.
+Datos con licencia (filas 1 y 6, y los otros basenames de figura) se borran del workdir
+antes del push público y otra vez al terminar. El verify privado sigue en 11,12.
+t399u: el push privado sale de data/alerts/private/, nunca del brief público recortado.
 """
 from __future__ import annotations
 
@@ -60,7 +64,22 @@ ALWAYS_FILES = (
 VERIFY_FILES = ("data/_ingest/latest/actions__job_verify_metals.json",)
 # Rutas del job que pueden quedar sucias sin publicarse (copia privada de state.json).
 PRIVATE_TRACKED = ("data/alerts/state.json",)
-LICENSED_UNTRACKED = ("data/OPTIONS_SURFACE.json",)
+# Fila 6 + fila 1 (cadena) + los otros dos basenames del guardián. Nunca al público.
+LICENSED_UNTRACKED = (
+    "data/OPTIONS_SURFACE.json",
+    "data/CME_OPTIONS_C1_shadow.json",
+    "data/CME_FXVOL_shadow.json",
+    "data/options/canonical",
+)
+# Mismos basenames que tests/test_cme_public_guardian.py (ese test no se modifica).
+PUBLIC_FIGURE_BASENAMES = frozenset({
+    "OPTIONS_SURFACE.json",
+    "CME_OPTIONS_C1_shadow.json",
+    "CME_FXVOL_shadow.json",
+})
+PRIVATE_ALERT_NAMES = ("brief.json", "state.json")
+PULL_ROWS = "1,6,11,12"
+VERIFY_ROWS = "11,12"
 OWNED = COMPUTE_FILES + ALWAYS_FILES + VERIFY_FILES + PRIVATE_TRACKED
 
 JOBS = {
@@ -126,14 +145,85 @@ def required_secrets():
         raise RuntimeError("secretos ausentes: %s" % ",".join(missing))
 
 
+def _import_private_data(workdir):
+    tools = os.path.join(workdir, "scripts", "tools")
+    if os.path.isdir(tools) and tools not in sys.path:
+        sys.path.insert(0, tools)
+    import private_data as PD  # noqa: WPS433
+    return PD
+
+
+def scrub_licensed(workdir):
+    """Quita superficie y cadena del workdir. No toca data/alerts/private/."""
+    for rel in LICENSED_UNTRACKED:
+        path = os.path.join(workdir, rel)
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path, ignore_errors=True)
+            continue
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def after_brief_snapshot(workdir, refresh_failed, env):
+    """Tras el snapshot: proyección pública. Si refresh falló, el path público vuelve a HEAD.
+
+    El stash a data/alerts/private/ ocurre dentro de apply_public_alerts, antes del restore.
+    El restore solo nombra el path público: no pisa el brief privado.
+    """
+    PD = _import_private_data(workdir)
+    remaining, stashed = PD.apply_public_alerts(workdir)
+    if refresh_failed:
+        C.restore_paths(workdir, ["data/alerts/brief.json"], env)
+    return remaining, stashed
+
+
+def public_push_paths(allowed, workdir):
+    """Rutas del push público: sin BRIEF_KEYS, sin data/alerts/private/, sin ficheros CME."""
+    PD = _import_private_data(workdir)
+    out = []
+    for rel in PD.exclude_forbidden_public_alerts(tuple(allowed), workdir):
+        norm = rel.replace("\\", "/")
+        base = norm.rsplit("/", 1)[-1]
+        if base in PUBLIC_FIGURE_BASENAMES:
+            continue
+        if norm.startswith("data/alerts/private/") or "/private/" in norm:
+            continue
+        if norm == "data/options/canonical" or norm.startswith("data/options/canonical/"):
+            continue
+        if norm in LICENSED_UNTRACKED:
+            continue
+        out.append(rel)
+    return tuple(out)
+
+
+def prepare_public_push(workdir, compute_ok):
+    """Borra la licencia y devuelve lo que el push público puede llevar."""
+    scrub_licensed(workdir)
+    allowed = (COMPUTE_FILES if compute_ok else ()) + ALWAYS_FILES
+    return public_push_paths(allowed, workdir)
+
+
+def copy_private_alerts(workdir, dest_root):
+    """Copia data/alerts/private/{brief,state}.json. Nunca lee el path público."""
+    copied = []
+    for name in PRIVATE_ALERT_NAMES:
+        src = os.path.join(workdir, "data", "alerts", "private", name)
+        if not os.path.isfile(src):
+            continue
+        rel = "data/alerts/" + name
+        dst = os.path.join(dest_root, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copyfile(src, dst)
+        copied.append(rel)
+    return tuple(copied)
+
+
 def cleanup(workdir, P, env):
     subprocess.run(["git", "restore", "--source=HEAD", "--worktree", "--staged", "--"] + list(PRIVATE_TRACKED),
                    cwd=workdir, env=env, capture_output=True)
-    for rel in LICENSED_UNTRACKED:
-        try:
-            os.remove(os.path.join(workdir, rel))
-        except OSError:
-            pass
+    scrub_licensed(workdir)
     C.remove_private_copies(workdir)
 
 
@@ -166,7 +256,7 @@ def run(job, workdir):
     base["G8_STEP_LOG"] = os.path.join(tmp, "steps.jsonl")
     try:
         # 1. Private pull (sin always(): si falla, el cálculo no corre; los pasos always() sí).
-        rc = step([py, "scripts/tools/private_data.py", "pull", priv, "--rows", "6,11,12"], workdir,
+        rc = step([py, "scripts/tools/private_data.py", "pull", priv, "--rows", PULL_ROWS], workdir,
                   dict(base, G8_DATA_TOKEN=read_tok), secrets)
         out["pull_ok"] = rc == 0
         if not out["pull_ok"]:
@@ -190,11 +280,26 @@ def run(job, workdir):
                 out["errors"].append("%s rc=%s" % (name, post[name]))
                 break  # bash sin «|| true»: el primer fallo corta el resto del paso
         out["post_rc"] = post
-        if post.get("refresh_brief") != 0:
-            # brief.json aún es la copia privada de la fila 11: nunca al público.
-            C.restore_paths(workdir, ["data/alerts/brief.json"], base)
-        # 4. always(): commit público.
-        allowed = (COMPUTE_FILES if out["compute_ok"] else ()) + ALWAYS_FILES
+        # t399u: proyección también en éxito. Si refresh falló, HEAD en el path público
+        # y el brief de data/alerts/private/ no se pisa.
+        refresh_failed = post.get("refresh_brief") != 0
+        remaining = []
+        try:
+            remaining, _stashed = after_brief_snapshot(workdir, refresh_failed, base)
+        except Exception as e:  # noqa: BLE001
+            fail("proyección pública", e)
+            remaining = ["apply_public_alerts"]
+            if refresh_failed:
+                C.restore_paths(workdir, ["data/alerts/brief.json"], base)
+        if remaining:
+            out["errors"].append("brief.json público: %s claves BRIEF_KEYS (%s); no se publica" % (
+                len(remaining), ",".join(remaining)))
+        # 4. always(): commit público. La licencia sale del workdir antes de añadir.
+        try:
+            allowed = prepare_public_push(workdir, out["compute_ok"])
+        except Exception as e:  # noqa: BLE001
+            fail("filtro público", e)
+            allowed = ()
         msg = "[vps-push] %s fair value %s compute=%s [skip netlify]" % (
             job, today, "ok" if out["compute_ok"] else "fallo")
         try:
@@ -202,14 +307,15 @@ def run(job, workdir):
             out["push"] = P.commit_and_push(workdir, allowed, msg, token, owned=OWNED)
         except Exception as e:  # noqa: BLE001
             fail("push público", e)
-        # 5. always(): private push (filas 11,12) también [vps-push], solo esas rutas.
-        private_paths = ("data/alerts/brief.json", "data/alerts/state.json")
+        # 5. always(): private push (filas 11,12) desde data/alerts/private/, nunca del path público.
+        private_paths = tuple("data/alerts/" + name for name in PRIVATE_ALERT_NAMES)
         try:
             if not out["pull_ok"]:
                 raise RuntimeError("sin clon privado (pull fallido)")
             P.fetch_ff_only(priv, write_tok, allowed=private_paths)
-            for rel in private_paths:
-                shutil.copyfile(os.path.join(workdir, rel), os.path.join(priv, rel))
+            copied = copy_private_alerts(workdir, priv)
+            if not copied:
+                raise RuntimeError("sin copias en data/alerts/private; no se empuja el path público")
             C.unstage_all(priv)
             out["private_push"] = P.commit_and_push(
                 priv, private_paths, "[vps-push] metals_update %s [skip netlify]" % today, write_tok,
@@ -218,7 +324,7 @@ def run(job, workdir):
             fail("push privado", e)
         # 6. always(), continue-on-error: verify + registro (dedup 20 h como --commit).
         try:
-            vrc = step([py, "scripts/tools/private_data.py", "verify", priv, "--rows", "11,12"], workdir, base,
+            vrc = step([py, "scripts/tools/private_data.py", "verify", priv, "--rows", VERIFY_ROWS], workdir, base,
                        secrets)
             out["verify_rc"] = vrc
             step([py, "scripts/tools/step_alarm.py", "record", "private_verify_metals", str(vrc),
