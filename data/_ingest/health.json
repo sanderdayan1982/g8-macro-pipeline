@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-27T21:57:41.779955Z",
+ "generated_utc": "2026-11-27T23:22:30.809776Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -97,6 +97,16 @@
    "flags": []
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-27T22:45:39Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-27T22:45:39Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -104,7 +114,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=125999)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=130500)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -114,7 +124,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=175493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=179994)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -124,7 +134,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=175493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=179994)"
   }
  ],
  "unknown_count": 1,
@@ -146,7 +156,7 @@
   },
   {
    "file": "ESTR.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -237,9 +247,9 @@
   },
   {
    "file": "FLOOR_EUR.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -413,7 +423,7 @@
   },
   {
    "file": "EUR_BILL_3M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -427,7 +437,7 @@
   },
   {
    "file": "EUR_BILL_6M.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -441,7 +451,7 @@
   },
   {
    "file": "EUR_BILL_1Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -455,7 +465,7 @@
   },
   {
    "file": "EUR_BILL_2Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -469,7 +479,7 @@
   },
   {
    "file": "EUR_BILL_5Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -483,7 +493,7 @@
   },
   {
    "file": "EUR_BILL_10Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
@@ -826,9 +836,9 @@
   },
   {
    "file": "RY_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
-   "expected_obs": "2026-11-26",
+   "expected_obs": "2026-11-27",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1059,7 +1069,7 @@
   },
   {
    "file": "CHF_NOM_10Y.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1074,7 +1084,7 @@
   },
   {
    "file": "CHF_SARON.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-25",
    "calendar": "CH",
@@ -1276,9 +1286,9 @@
   },
   {
    "file": "ACM_G8_EUR.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1295,7 +1305,7 @@
    "file": "ACM_G8_JPY.csv",
    "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1313,7 +1323,7 @@
    "file": "ACM_G8_GBP.csv",
    "state": "CURRENT",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1330,7 +1340,7 @@
    "file": "ACM_G8_CAD.csv",
    "state": "CURRENT",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1348,7 +1358,7 @@
    "file": "ACM_G8_AUD.csv",
    "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1366,7 +1376,7 @@
    "file": "ACM_G8_NZD.csv",
    "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1381,9 +1391,9 @@
   },
   {
    "file": "ACM_G8_CHF.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-27",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1401,7 +1411,7 @@
    "file": "RY_G8_NZD.csv",
    "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-24",
+   "expected_obs": "2026-11-26",
    "calendar": "NZ",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1416,7 +1426,7 @@
   },
   {
    "file": "USD_FACTOR.json",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
    "expected_obs": "2026-11-27",
    "calendar": "TARGET",
@@ -1585,7 +1595,7 @@
   },
   {
    "file": "usd_factor/ecb_rates.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
    "expected_obs": "2026-11-27",
    "calendar": "TARGET",
@@ -1599,7 +1609,7 @@
   },
   {
    "file": "usd_factor/canonical.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
    "expected_obs": "2026-11-27",
    "calendar": "TARGET",
@@ -1615,7 +1625,7 @@
    "file": "AUD_NOWCAST.csv",
    "state": "CURRENT",
    "have_max": "2026-11-26",
-   "expected_obs": "2026-11-25",
+   "expected_obs": "2026-11-26",
    "calendar": "",
    "basis": "PROVISIONAL",
    "reason": null,
@@ -1687,7 +1697,7 @@
   },
   {
    "file": "CHF_SPOT_1Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1701,7 +1711,7 @@
   },
   {
    "file": "CHF_SPOT_2Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1715,7 +1725,7 @@
   },
   {
    "file": "CHF_SPOT_3Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1729,7 +1739,7 @@
   },
   {
    "file": "CHF_SPOT_4Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1743,7 +1753,7 @@
   },
   {
    "file": "CHF_SPOT_5Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1757,7 +1767,7 @@
   },
   {
    "file": "CHF_SPOT_6Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1771,7 +1781,7 @@
   },
   {
    "file": "CHF_SPOT_7Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1785,7 +1795,7 @@
   },
   {
    "file": "CHF_SPOT_8Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1799,7 +1809,7 @@
   },
   {
    "file": "CHF_SPOT_9Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1813,7 +1823,7 @@
   },
   {
    "file": "CHF_SPOT_10Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1827,7 +1837,7 @@
   },
   {
    "file": "CHF_SPOT_11Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1841,7 +1851,7 @@
   },
   {
    "file": "CHF_SPOT_12Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1855,7 +1865,7 @@
   },
   {
    "file": "CHF_SPOT_13Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1869,7 +1879,7 @@
   },
   {
    "file": "CHF_SPOT_14Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1883,7 +1893,7 @@
   },
   {
    "file": "CHF_SPOT_15Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1897,7 +1907,7 @@
   },
   {
    "file": "CHF_SPOT_16Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1911,7 +1921,7 @@
   },
   {
    "file": "CHF_SPOT_17Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1925,7 +1935,7 @@
   },
   {
    "file": "CHF_SPOT_18Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1939,7 +1949,7 @@
   },
   {
    "file": "CHF_SPOT_19Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1953,7 +1963,7 @@
   },
   {
    "file": "CHF_SPOT_20Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1967,7 +1977,7 @@
   },
   {
    "file": "CHF_SPOT_21Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1981,7 +1991,7 @@
   },
   {
    "file": "CHF_SPOT_22Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -1995,7 +2005,7 @@
   },
   {
    "file": "CHF_SPOT_23Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2009,7 +2019,7 @@
   },
   {
    "file": "CHF_SPOT_24Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2023,7 +2033,7 @@
   },
   {
    "file": "CHF_SPOT_25Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2037,7 +2047,7 @@
   },
   {
    "file": "CHF_SPOT_26Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2051,7 +2061,7 @@
   },
   {
    "file": "CHF_SPOT_27Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2065,7 +2075,7 @@
   },
   {
    "file": "CHF_SPOT_28Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2079,7 +2089,7 @@
   },
   {
    "file": "CHF_SPOT_29Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2093,7 +2103,7 @@
   },
   {
    "file": "CHF_SPOT_30Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-26",
    "expected_obs": "2026-11-26",
    "calendar": "CH",
@@ -2135,7 +2145,7 @@
   },
   {
    "file": "DE_10Y_PAR_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-27",
    "expected_obs": "2026-11-27",
    "calendar": "TARGET",
@@ -2149,7 +2159,7 @@
   },
   {
    "file": "ES_10Y_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "TARGET",
@@ -2163,7 +2173,7 @@
   },
   {
    "file": "ES_DE_10Y_SPREAD_DAILY.csv",
-   "state": "CURRENT",
+   "state": "NO_PUBLICATION",
    "have_max": "2026-11-25",
    "expected_obs": "2026-11-25",
    "calendar": "TARGET",
@@ -2177,15 +2187,15 @@
   },
   {
    "file": "SWPT.csv",
-   "state": "DUE",
-   "have_max": "2026-11-18",
-   "expected_obs": "2026-11-18",
+   "state": "CURRENT",
+   "have_max": "2026-11-25",
+   "expected_obs": "2026-11-25",
    "calendar": "US",
    "basis": "OFICIAL_GENERAL",
    "reason": null,
    "cause": null,
    "flags": [],
-   "status": "PENDING",
+   "status": "CURRENT",
    "publication_frequency": "weekly:THU",
    "slow_fallback": false
   },
@@ -2319,6 +2329,16 @@
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
   },
   {
+   "file": "vps/g8-metals-shadow.service",
+   "status": "ERROR",
+   "state": "FALLO_LOG",
+   "flags": [
+    "VPS_UNITS"
+   ],
+   "have_max": "2026-11-27T22:45:39Z",
+   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-27T22:45:39Z)"
+  },
+  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -2326,7 +2346,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=125999)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=130500)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2336,7 +2356,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=175493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=179994)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2346,7 +2366,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=175493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=179994)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
