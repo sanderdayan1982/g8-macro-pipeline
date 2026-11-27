@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-27T23:22:30.809776Z",
+ "generated_utc": "2026-11-27T23:46:32.775413Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -97,16 +97,6 @@
    "flags": []
   },
   {
-   "file": "vps/g8-metals-shadow.service",
-   "status": "ERROR",
-   "state": "FALLO_LOG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-27T22:45:39Z",
-   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-27T22:45:39Z)"
-  },
-  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -114,7 +104,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=130500)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=132299)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -124,7 +114,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=179994)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=181793)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -134,7 +124,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=179994)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=181793)"
   }
  ],
  "unknown_count": 1,
@@ -2329,16 +2319,6 @@
    "reason": "NO DISPONIBLE: fuente trimestral excluida; máximo mensual"
   },
   {
-   "file": "vps/g8-metals-shadow.service",
-   "status": "ERROR",
-   "state": "FALLO_LOG",
-   "flags": [
-    "VPS_UNITS"
-   ],
-   "have_max": "2026-11-27T22:45:39Z",
-   "reason": "ALERTAS.log FALLÓ desde el último corte (2026-11-27T22:45:39Z)"
-  },
-  {
    "file": "vps/code_lag:enzo_ops.py",
    "status": "ERROR",
    "state": "CODE_LAG",
@@ -2346,7 +2326,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=130500)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=132299)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2356,7 +2336,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=179994)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=181793)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2366,7 +2346,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=179994)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=181793)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
