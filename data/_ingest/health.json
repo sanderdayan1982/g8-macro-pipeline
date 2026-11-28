@@ -1,6 +1,6 @@
 {
  "schema": "G8_HEALTH/1",
- "generated_utc": "2026-11-28T00:31:27.747319Z",
+ "generated_utc": "2026-11-28T03:32:16.888608Z",
  "status": "DEGRADED",
  "slow_fallbacks": [
   "CHF_SPOT_1Y.csv",
@@ -97,7 +97,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=134999)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=145800)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -107,7 +107,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=184493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=195294)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -117,7 +117,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=184493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=195294)"
   }
  ],
  "unknown_count": 1,
@@ -231,7 +231,7 @@
   {
    "file": "FLOOR_EUR.csv",
    "state": "NO_PUBLICATION",
-   "have_max": "2026-11-27",
+   "have_max": "2026-11-28",
    "expected_obs": "2026-11-26",
    "calendar": "TARGET",
    "basis": "PROVISIONAL",
@@ -1426,7 +1426,7 @@
    "file": "S01B.json",
    "state": "NOT_MONITORED",
    "have_max": "2026-11-27",
-   "expected_obs": "2026-11-26",
+   "expected_obs": "2026-11-27",
    "calendar": "TARGET",
    "basis": "EXCLUIDO_DE_CAMBIOS_F6",
    "reason": "Fecha del panel contrastada con estado y log definitivos CTF; no certifica por sí sola todas las entradas macro.",
@@ -1550,17 +1550,18 @@
   {
    "file": "OPTIONS_SURFACE.json",
    "state": "NOT_MONITORED",
-   "have_max": null,
+   "have_max": "2026-11-25",
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
-   "reason": "Sin observación legible para un feed del registro",
+   "reason": "Dentro del presupuesto; calendario exacto de publicación sin validar",
    "cause": null,
    "flags": [],
    "status": "EXCLUDED",
+   "age_business_days": 2,
    "publication_frequency": "excluded",
    "slow_fallback": false,
-   "note": "Inconsistencia en opciones: 'latest_session'"
+   "note": "Estado del colector y resumen no coinciden; verificar sesión sin negociación o publicación incompleta."
   },
   {
    "file": "OFFICIAL_GOLD_DEMAND.csv",
@@ -1653,7 +1654,7 @@
   {
    "file": "votes.csv",
    "state": "NOT_MONITORED",
-   "have_max": "2026-11-26",
+   "have_max": "2026-11-27",
    "expected_obs": null,
    "calendar": "",
    "basis": "EXCLUIDO",
@@ -2187,7 +2188,7 @@
    "state": "CURRENT",
    "status": "CURRENT",
    "have_max": "2026-11-27",
-   "expected_obs": "2026-11-26",
+   "expected_obs": "2026-11-27",
    "reason": "Última evaluación definitiva; PROVISIONAL no cuenta como cierre",
    "flags": []
   },
@@ -2319,7 +2320,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-26T10:52:15Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=134999)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops.py, age_sec=145800)"
   },
   {
    "file": "vps/code_lag:enzo_ops_clean_clone.py",
@@ -2329,7 +2330,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=184493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_clean_clone.py, age_sec=195294)"
   },
   {
    "file": "vps/code_lag:enzo_ops_sudo.sh",
@@ -2339,7 +2340,7 @@
     "VPS_UNITS"
    ],
    "have_max": "2026-11-25T21:07:21Z",
-   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=184493)"
+   "reason": "código en ejecución distinta de origin/main más de 1 h (enzo_ops_sudo.sh, age_sec=195294)"
   }
  ],
  "note": "Fechas de observación y calendario de cada fuente. UNKNOWN no significa fresco. EST no es dato oficial."
